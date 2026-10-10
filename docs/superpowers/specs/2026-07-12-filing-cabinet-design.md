@@ -154,7 +154,7 @@ See the requirements doc §6 for the full future list. It is split into "Before 
 |---|---|
 | Classification accuracy (heuristics) | Start simple; make override one tap; upgrade to Core ML later. |
 | Apple sherlocking (Preview, Wallet Digital ID) | Compete on organization + cleanup + UX, not scanning. |
-| Sensitive data (IDs) stored unlocked in MVP | On-device only; device passcode protects; add Face ID lock in phase 2. |
+| Sensitive data (IDs) stored unlocked in MVP | On-device only; device passcode protects; add a per-scan document lock (Face ID or Touch ID, falling back to the passcode) before App Store release. |
 | Memory blowups on large libraries | Thumbnails-only grid, ImageIO downsampling, disk-backed originals, lazy loading. |
 | Category is crowded | Lean, personal, private niche; not competing on business PDF features. |
 
