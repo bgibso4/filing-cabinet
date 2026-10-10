@@ -1,6 +1,6 @@
 # Filing Cabinet — Project Guide
 
-> Formerly the working title "DocuScan" (taken). The repo folder is still `docuscan`.
+> Formerly the working title "DocuScan" (taken).
 
 A private, Photos-style library just for personal documents (IDs, receipts, notes, cards, forms). It scans with Apple's document camera, understands scans on-device with Vision, auto-files them into smart collections, and cleans itself up over time. The pitch is **organized + self-cleaning + private**, not "a scanner."
 
@@ -12,7 +12,7 @@ Personal tool first; possible App Store release later.
 
 **Phase: design.** There is no app code yet.
 
-- Design spec: `docs/superpowers/specs/2026-07-12-docuscan-design.md` (draft; open questions in §15).
+- Design spec: `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` (draft; open questions in §15).
 - We work **mock-driven**: flow diagrams → high-fidelity mocks → interactive mocks (Claude Design), *then* code. Product questions such as the collection set, the cleanup flow, and the home screen are settled in the mocks, not guessed in code.
 - Process is Superpowers: brainstorming → spec → plan → TDD → verification. Don't write app code until there's an approved implementation plan.
 
