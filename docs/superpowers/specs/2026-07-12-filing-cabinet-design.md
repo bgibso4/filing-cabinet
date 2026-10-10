@@ -140,7 +140,7 @@ See the requirements doc §3 (user stories) and §4 (non-functional requirements
 
 ## 12. Later phases (Phase 2+)
 
-See the requirements doc §6 for the full future list. It is split into "Before App Store release" (hand-written classification rules, Face ID lock) and "Someday" (field search, tags, custom collections, an Expiring view, iCloud sync, camera-roll backlog import, Files app visibility, more cleanup rule types, widgets/Shortcuts/share extension, Core ML). Monetization, *if* released: favor a one-time purchase or a generous free tier (research flagged subscription fatigue).
+See the requirements doc §6 for the full future list. It is split into "Before App Store release" (hand-written classification rules, per-scan document lock) and "Someday" (field search, tags, custom collections, an Expiring view, iCloud sync, camera-roll backlog import, Files app visibility, more cleanup rule types, widgets/Shortcuts/share extension, Core ML). Monetization, *if* released: favor a one-time purchase or a generous free tier (research flagged subscription fatigue).
 
 ## 13. Testing strategy
 

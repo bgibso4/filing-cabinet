@@ -378,7 +378,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <div class="future">
       <div class="card release"><h4>Before App Store release</h4><ul>
         <li><b>Hand-written classification rules</b> for devices without Apple Intelligence. Examples: Wallet from the ID-1 card shape (~1.59:1) plus keywords; Receipts from money amounts plus "TOTAL"/"TAX" plus a date.</li>
-        <li><b>Face ID lock</b> for the sensitive-documents use case.</li>
+        <li><b>Document lock</b> for sensitive documents (design below).</li>
       </ul></div>
       <div class="card"><h4>Someday</h4><ul>
         <li><b>Field search:</b> find a field such as "policy number" across all scans and copy its value.</li>
@@ -392,6 +392,19 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
         <li>Widgets, Shortcuts, and a share extension.</li>
       </ul></div>
     </div>
+
+    <h3>Intended design: document lock</h3>
+    <p>Locking is <b>per scan</b>, not a collection. A locked passport is still a Wallet item kept forever, so a "Sensitive" collection would clash with one collection per scan.</p>
+    <ul class="rules">
+      <li>Any scan can be marked <b>Locked</b>, from the review sheet or the detail view. It stays in its collection, with a blurred thumbnail and an optionally hidden title.</li>
+      <li>Opening a locked scan requires <b>device owner authentication</b>: Face ID or Touch ID, with an automatic fallback to the device passcode.</li>
+      <li>A locked scan's text is <b>left out of search results</b> until you unlock, so a search can't leak a preview.</li>
+      <li>Each collection has a <b>"Lock new scans automatically"</b> setting. It's on by default for Wallet.</li>
+      <li>An optional, separate <b>whole-app lock</b> covers everything.</li>
+      <li><b>No device passcode:</b> locking is unavailable, the toggle is disabled, and a note says to set a passcode. If the passcode is removed later, locked scans become viewable again, with a banner saying locking is paused until a passcode is set.</li>
+      <li><b>No app PIN.</b> It would mean owning PIN recovery and give a false sense of security on a phone with no passcode.</li>
+    </ul>
+    <p class="note">v1 needs no work for this. A per-scan <code>isLocked</code> flag and a per-collection setting can be added later.</p>
   </div>
 </section>
 
