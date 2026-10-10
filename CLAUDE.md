@@ -1,6 +1,6 @@
-# DocuScan — Project Guide
+# Filing Cabinet — Project Guide
 
-> Working title. "DocuScan" is taken on the App Store several times over — the real name is still open (see the spec).
+> Formerly the working title "DocuScan" (taken). The repo folder is still `docuscan`.
 
 A private, Photos-style library just for personal documents (IDs, receipts, notes, cards, forms). It scans with Apple's document camera, understands scans on-device with Vision, auto-files them into smart collections, and cleans itself up over time. The pitch is **organized + self-cleaning + private**, not "a scanner."
 

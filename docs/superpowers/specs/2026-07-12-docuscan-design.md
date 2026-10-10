@@ -1,15 +1,15 @@
-# DocuScan — Design Spec
+# Filing Cabinet — Design Spec
 
 - **Status:** Draft. Next: mock-driven design phase (see §15).
 - **Date:** 2026-07-12
-- **Working title:** DocuScan (**taken** — confirmed 2026-10-09: at least four App Store apps use "DocuScan" and a live US "DOCUSCAN" service mark exists. A new name is required.)
+- **Name:** **Filing Cabinet** (chosen 2026-10-10; formerly the working title "DocuScan", which is taken). The cabinet keeps what matters; the cleanup clears out the rest. An old, unmaintained "Filing Cabinet" iPad app exists. App Store names must be unique, so a release would use a longer store name (e.g. "Filing Cabinet: Self-Cleaning Docs") unless that listing is gone. Run a trademark check before any release.
 - **Destination:** Personal tool first (build for the author's own use); possible App Store release later.
 
 ---
 
 ## 1. Summary
 
-DocuScan is a private, Photos-style library **just for personal documents** — IDs, receipts, notes, cards, and forms. It scans them with Apple's built-in document camera, understands them on-device with the iOS 26 Vision engine, auto-files them into smart collections, and **cleans itself up** over time.
+Filing Cabinet is a private, Photos-style library **just for personal documents** — IDs, receipts, notes, cards, and forms. It scans them with Apple's built-in document camera, understands them on-device with the iOS 26 Vision engine, auto-files them into smart collections, and **cleans itself up** over time.
 
 The pitch is **organized + self-cleaning + private** — *not* "a scanner." Apple gives away scanning for free; the value here is the tidy, self-maintaining, personal-life gallery around it.
 
@@ -21,6 +21,7 @@ Condensed from competitive research (see conversation history for sourced detail
 - **The genuinely new iOS 26 capability is document *understanding*:** `RecognizeDocumentsRequest` (Vision) — on-device OCR (26 languages), table/list structure, and entity detection (dates, currency, emails, phone numbers). This is our smart layer.
 - **"Separate from the camera roll" is table stakes** — nearly every dedicated scanner already sandboxes scans. The differentiated combination nobody ships together is: **self-cleaning library + personal-life gallery + iCloud-native privacy.**
 - **Tailwinds:** Microsoft Lens retired (Dec 2025); iOS 26 Photos redesign is drawing clutter complaints.
+- **Direct competitors found while naming (2026-10-10):** *Tuck — Save Anything* (iOS 26, private, on-device OCR, keyword smart collections, iCloud sync), *Sift: PDF Scanner & OCR* (auto-names and files scans by type, no servers), *SafeKeep*, *Fold & File*, *fileee*, and an old *Filing Cabinet* iPad app. None of them advertises automatic cleanup, which is still our wedge.
 - **Risks:** Apple sherlocking (Preview app; Digital ID in Wallet for official IDs); crowded/commoditized category; AI "declutter" startups (Filex AI, Captr) circling the same wedge. Our moat is the *organization + cleanup + UX*, not the scan.
 
 ## 3. Goals & non-goals
@@ -164,7 +165,6 @@ This is the real engineering (it's effectively a Photos-style app):
 
 ## 15. Open questions
 
-- **App name** — DocuScan is taken (see header). Needs a naming pass.
 - **Minimum OS** — ship iOS 27-only, or keep iOS 26 support?
 
 **Settled in the design phase, not here.** Next we work mock-first: flow diagrams, then high-fidelity mocks, then interactive mocks (Claude Design). These questions are answered there:
