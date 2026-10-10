@@ -1,7 +1,7 @@
 # Filing Cabinet — Design Spec
 
 - **Status:** Draft. Next: mock-driven design phase in Claude Design (see §15).
-- **Requirements:** `2026-10-10-filing-cabinet-requirements.md` defines what v1 does. Where the two documents conflict, the requirements document wins.
+- **Requirements:** `2026-10-10-filing-cabinet-requirements.html` defines what v1 does. Where the two documents conflict, the requirements document wins.
 - **Date:** 2026-07-12
 - **Name:** **Filing Cabinet** (chosen 2026-10-10; formerly the working title "DocuScan", which is taken). The cabinet keeps what matters; the cleanup clears out the rest. An old, unmaintained "Filing Cabinet" iPad app exists. App Store names must be unique, so a release would use a longer store name (e.g. "Filing Cabinet: Self-Cleaning Docs") unless that listing is gone. Run a trademark check before any release.
 - **Destination:** Personal tool first (build for the author's own use); possible App Store release later.

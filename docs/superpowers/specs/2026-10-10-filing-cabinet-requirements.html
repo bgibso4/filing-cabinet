@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filing Cabinet Requirements</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4efe4;
+  --paper: #fffdf8;
+  --ink: #23201b;
+  --ink-soft: #5d574c;
+  --ink-faint: #8f8778;
+  --rule: #e2d9c6;
+  --manila: #e9cf8f;
+  --manila-deep: #c9a24f;
+  --accent: #b5462f;
+  --accent-soft: #f3ddd5;
+  --ok: #3f7a52;
+  --ok-soft: #dcebdf;
+  --shadow: 0 1px 0 rgba(60,45,20,.06), 0 8px 24px -12px rgba(60,45,20,.25);
+  --c-wallet: #3a6ea5;
+  --c-receipts: #b5462f;
+  --c-notes: #7a5ea8;
+  --c-documents: #4d7d5b;
+  --c-throwaways: #a07a1f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17150f;
+    --paper: #211e17;
+    --ink: #efe8d8;
+    --ink-soft: #bdb4a1;
+    --ink-faint: #8a826f;
+    --rule: #39342a;
+    --manila: #6b5626;
+    --manila-deep: #c9a24f;
+    --accent: #e57a60;
+    --accent-soft: #3d2620;
+    --ok: #7fbf8f;
+    --ok-soft: #22332a;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.8);
+    --c-wallet: #7fa9d8;
+    --c-receipts: #e57a60;
+    --c-notes: #b39ce0;
+    --c-documents: #86bf95;
+    --c-throwaways: #d9b456;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17150f; --paper: #211e17; --ink: #efe8d8; --ink-soft: #bdb4a1; --ink-faint: #8a826f;
+  --rule: #39342a; --manila: #6b5626; --manila-deep: #c9a24f; --accent: #e57a60; --accent-soft: #3d2620;
+  --ok: #7fbf8f; --ok-soft: #22332a; --shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.8);
+  --c-wallet: #7fa9d8; --c-receipts: #e57a60; --c-notes: #b39ce0; --c-documents: #86bf95; --c-throwaways: #d9b456;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 48px 16px 96px; }
+h1, h2, h3 { font-family: Fraunces, Georgia, serif; font-weight: 600; line-height: 1.15; margin: 0; }
+code { font: 500 .86em "JetBrains Mono", ui-monospace, monospace; background: var(--rule); padding: .1em .35em; border-radius: 4px; }
+p { margin: .4em 0 .8em; }
+a { color: var(--accent); }
+
+/* Header */
+.eyebrow { font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+header h1 { font-size: clamp(40px, 7vw, 68px); font-weight: 700; letter-spacing: -.02em; margin: 14px 0 10px; }
+header h1 span { color: var(--accent); font-style: italic; font-weight: 400; }
+.lede { font-size: 19px; color: var(--ink-soft); max-width: 640px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.chip { font-size: 13px; padding: 5px 11px; border-radius: 999px; background: var(--paper); border: 1px solid var(--rule); color: var(--ink-soft); }
+.chip b { color: var(--ink); font-weight: 600; }
+
+/* Table of contents */
+nav.toc { margin: 36px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+nav.toc a { text-decoration: none; color: var(--ink-soft); font-size: 14px; padding: 6px 12px 6px 10px; border-radius: 8px 8px 2px 2px; background: var(--manila); border-bottom: 2px solid var(--manila-deep); }
+nav.toc a:hover { color: var(--ink); }
+nav.toc a span { font-family: "JetBrains Mono", monospace; font-size: 12px; opacity: .7; margin-right: 6px; }
+
+/* Sections as folders */
+section { margin-top: 56px; }
+.folder-tab { display: inline-block; background: var(--manila); border-radius: 10px 10px 0 0; padding: 7px 18px 6px; font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+.sheet { background: var(--paper); border-radius: 0 14px 14px 14px; border-top: 3px solid var(--manila); padding: 28px clamp(18px, 4vw, 40px); box-shadow: var(--shadow); }
+.sheet > h2 { font-size: clamp(26px, 4vw, 34px); margin-bottom: 6px; }
+.sheet > .sub { color: var(--ink-soft); margin-bottom: 22px; }
+h3 { font-size: 21px; margin: 30px 0 12px; }
+h3:first-of-type { margin-top: 8px; }
+
+/* Jobs */
+.jobs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; counter-reset: job; }
+.job { border: 1px dashed var(--rule); border-radius: 12px; padding: 16px; position: relative; }
+.job::before { counter-increment: job; content: counter(job); font: 700 30px/1 Fraunces, serif; color: var(--manila-deep); display: block; margin-bottom: 8px; }
+.job p { margin: 0; font-size: 15px; }
+
+/* Collections */
+.collections { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 14px; margin: 6px 0 14px; }
+.coll { position: relative; padding-top: 14px; }
+.coll .tab { position: absolute; top: 0; left: 14px; height: 18px; width: 64px; border-radius: 6px 6px 0 0; background: var(--c); }
+.coll .body { background: var(--bg); border-radius: 4px 12px 12px 12px; border-top: 4px solid var(--c); padding: 14px 14px 16px; height: 100%; }
+.coll h4 { margin: 0 0 4px; font: 600 18px/1.2 Fraunces, serif; }
+.coll p { margin: 0 0 12px; font-size: 13.5px; color: var(--ink-soft); }
+.life { font: 500 12px/1 "JetBrains Mono", monospace; padding: 5px 8px; border-radius: 6px; background: var(--paper); border: 1px solid var(--rule); display: inline-block; }
+.views { font-size: 14px; color: var(--ink-soft); }
+
+/* Rule lists */
+.rules { list-style: none; margin: 0; padding: 0; }
+.rules li { padding: 10px 0 10px 28px; border-bottom: 1px solid var(--rule); position: relative; }
+.rules li:last-child { border-bottom: 0; }
+.rules li::before { content: ""; position: absolute; left: 4px; top: 19px; width: 10px; height: 10px; border-radius: 3px; background: var(--manila-deep); transform: rotate(45deg); }
+
+/* Lifecycle */
+.lifecycle { display: flex; align-items: stretch; gap: 0; margin: 16px 0 6px; flex-wrap: wrap; }
+.stage { flex: 1 1 150px; padding: 14px; background: var(--bg); border-radius: 10px; text-align: center; }
+.stage b { display: block; font-family: Fraunces, serif; font-size: 17px; }
+.stage small { color: var(--ink-soft); font-size: 13px; }
+.arrow { align-self: center; padding: 0 8px; color: var(--ink-faint); font-size: 20px; }
+@media (max-width: 620px) { .arrow { transform: rotate(90deg); width: 100%; text-align: center; padding: 4px 0; } }
+
+/* Stories */
+.stories { display: grid; gap: 10px; }
+.story { display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding: 16px; border-radius: 12px; border: 1px solid var(--rule); }
+.story .n { font: 700 22px/1 Fraunces, serif; color: var(--accent); padding-top: 2px; }
+.story h4 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+.story p, .story ul { margin: 0; font-size: 15px; color: var(--ink-soft); }
+.story ul { padding-left: 18px; }
+.story li { margin: 3px 0; }
+.group-label { font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); margin: 26px 0 10px; }
+.group-label:first-of-type { margin-top: 4px; }
+
+/* NFR grid */
+.nfr { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.card h4 { margin: 0 0 6px; font: 600 17px/1.2 Fraunces, serif; }
+.card p, .card ul { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+.card ul { padding-left: 18px; }
+.card li { margin: 3px 0; }
+
+/* Storage diagram */
+.tree { font: 13px/1.7 "JetBrains Mono", monospace; background: var(--bg); border-radius: 10px; padding: 14px 16px; overflow-x: auto; color: var(--ink-soft); white-space: pre; margin-top: 10px; }
+.tree b { color: var(--ink); font-weight: 500; }
+
+/* Decisions table */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 560px; }
+th { text-align: left; font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); padding: 0 12px 10px 0; border-bottom: 2px solid var(--rule); }
+td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td:first-child { font-weight: 600; width: 26%; }
+.chosen { display: inline-block; background: var(--ok-soft); color: var(--ok); padding: 3px 8px; border-radius: 6px; font-weight: 500; }
+.rejected { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ink-faint) 60%, transparent); }
+
+/* Future */
+.future { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .future { grid-template-columns: 1fr; } }
+.future .card.release { border-color: var(--accent); background: var(--accent-soft); }
+.future .card.release h4 { color: var(--accent); }
+.note { font-size: 14px; color: var(--ink-faint); margin-top: 14px; }
+
+/* Open questions */
+.open { display: grid; gap: 10px; }
+.open .card { border-left: 4px solid var(--manila-deep); }
+
+footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Filing Cabinet · v1 requirements</div>
+  <h1>Keeps what matters. <span>Shreds the rest.</span></h1>
+  <p class="lede">A private, Photos-style library just for personal documents. It files each scan itself and cleans up after itself. This document defines <em>what</em> v1 does. The design spec defines <em>how</em>.</p>
+  <div class="meta">
+    <span class="chip"><b>Status</b> Draft for review</span>
+    <span class="chip"><b>Date</b> 2026-10-10</span>
+    <span class="chip"><b>Platform</b> iPhone · iOS 27+</span>
+    <span class="chip"><b>Next</b> Mocks in Claude Design</span>
+  </div>
+  <nav class="toc" aria-label="Contents">
+    <a href="#intent"><span>01</span>Intent</a>
+    <a href="#model"><span>02</span>Core model</a>
+    <a href="#stories"><span>03</span>User stories</a>
+    <a href="#nfr"><span>04</span>Non-functional</a>
+    <a href="#decisions"><span>05</span>Decisions</a>
+    <a href="#future"><span>06</span>Future</a>
+    <a href="#open"><span>07</span>Open questions</a>
+  </nav>
+</header>
+
+<section id="intent">
+  <div class="folder-tab">01 · Intent</div>
+  <div class="sheet">
+    <h2>Audience &amp; intent</h2>
+    <p class="sub">v1 is built for the author's own use, with an App Store release as the intended next step. It must work well for its author, and anything that would block strangers from using it is listed under <a href="#future">Before App Store release</a>.</p>
+    <div class="jobs">
+      <div class="job"><p>Scan my driver's license or insurance card and find it instantly later.</p></div>
+      <div class="job"><p>Snap receipts that quietly disappear after they stop mattering.</p></div>
+      <div class="job"><p>Photograph class notes and forms without polluting my camera roll.</p></div>
+      <div class="job"><p>Grab a throwaway doc (a coat-check tag) that deletes itself in a week.</p></div>
+    </div>
+    <p class="note">These four jobs were confirmed on 2026-10-10 as the complete set. No others are in scope.</p>
+    <p class="note">Where this document and the design spec (<code>2026-07-12-filing-cabinet-design.md</code>) conflict, this document wins.</p>
+  </div>
+</section>
+
+<section id="model">
+  <div class="folder-tab">02 · Core model</div>
+  <div class="sheet">
+    <h2>Collections, expiry, cleanup</h2>
+    <p class="sub">Every scan belongs to exactly one collection. A collection is what the document <em>is</em>, and it supplies the scan's default lifespan.</p>
+
+    <div class="collections">
+      <div class="coll" style="--c: var(--c-wallet)"><div class="tab"></div><div class="body"><h4>Wallet</h4><p>IDs and cards: license, insurance, membership</p><span class="life">Forever</span></div></div>
+      <div class="coll" style="--c: var(--c-receipts)"><div class="tab"></div><div class="body"><h4>Receipts</h4><p>Purchase receipts</p><span class="life">90 days</span></div></div>
+      <div class="coll" style="--c: var(--c-notes)"><div class="tab"></div><div class="body"><h4>Notes</h4><p>Handwritten and class notes</p><span class="life">Forever</span></div></div>
+      <div class="coll" style="--c: var(--c-documents)"><div class="tab"></div><div class="body"><h4>Documents</h4><p>Forms, letters, anything else</p><span class="life">Forever</span></div></div>
+      <div class="coll" style="--c: var(--c-throwaways)"><div class="tab"></div><div class="body"><h4>Throwaways</h4><p>Short-lived scraps: coat-check tag, parking stub</p><span class="life">1 week</span></div></div>
+    </div>
+    <p class="views"><b>Recent</b> and <b>All</b> are views over every scan, not collections.</p>
+
+    <h3>Automatic filing</h3>
+    <ul class="rules">
+      <li>The app checks whether <b>Apple Intelligence is available</b> using the on-device model's availability API. If it is, the model suggests a collection and the review sheet comes pre-filled with it.</li>
+      <li>If it isn't available (the device isn't eligible, Apple Intelligence is turned off, or the model isn't downloaded yet), <b>you pick the collection</b> on the review sheet. Every other feature works the same.</li>
+      <li>A wrong guess always costs <b>one tap</b> to fix.</li>
+      <li>Accuracy is checked with a throwaway experiment on 20–30 of the author's real scans before the implementation plan. If it's poor, v1 ships with manual picking only, and the review sheet doesn't change.</li>
+    </ul>
+
+    <h3>Expiry</h3>
+    <ul class="rules">
+      <li>A scan's expiry is its <b>collection's default lifespan</b> unless you've set a <b>custom expiry</b> for it.</li>
+      <li>Expiry is counted from <b>when the scan was taken</b>.</li>
+      <li><b>Forever</b> means the scan is never cleaned up. This replaces the design spec's separate "cleanup exemption" toggle.</li>
+      <li>Changing a scan's collection moves its expiry to the new collection's default. A custom expiry is kept.</li>
+      <li>Changing a collection's default lifespan in Settings applies to <b>every scan still on that default</b>, existing scans included. Scans with a custom expiry aren't affected.</li>
+    </ul>
+
+    <h3>Cleanup</h3>
+    <div class="lifecycle">
+      <div class="stage"><b>In library</b><small>Shows its expiry status</small></div>
+      <div class="arrow">→</div>
+      <div class="stage"><b>Expiry passes</b><small>No warning beforehand; you saw the expiry when you saved</small></div>
+      <div class="arrow">→</div>
+      <div class="stage"><b>Trash</b><small>30 days to restore</small></div>
+      <div class="arrow">→</div>
+      <div class="stage"><b>Deleted</b><small>Permanently</small></div>
+    </div>
+    <p class="note">There is no archive in v1.</p>
+  </div>
+</section>
+
+<section id="stories">
+  <div class="folder-tab">03 · User stories</div>
+  <div class="sheet">
+    <h2>User stories</h2>
+    <p class="sub">What the mocks must cover. The home screen layout is decided in the mocks.</p>
+
+    <div class="group-label">Capture &amp; filing</div>
+    <div class="stories">
+      <div class="story"><div class="n">1</div><div><h4>Scan</h4><p>One tap from home opens the document camera. A scan can have multiple pages. Cancelling saves nothing.</p></div></div>
+      <div class="story"><div class="n">2</div><div><h4>Review &amp; save</h4><p>After capture, a review sheet shows these, and then you save:</p><ul>
+        <li>a <b>title</b> taken from the scan's text, which you can edit;</li>
+        <li>the <b>collection</b>, pre-filled when automatic filing is available and a required pick otherwise;</li>
+        <li>the <b>expiry</b>, defaulting to the collection's lifespan. Quick choices are 1 week, 1 month, 3 months, 1 year and Forever, plus a custom date.</li>
+      </ul></div></div>
+      <div class="story"><div class="n">3</div><div><h4>Out of the camera roll</h4><p>Scans are never written to Photos unless you explicitly export them.</p></div></div>
+    </div>
+
+    <div class="group-label">Finding</div>
+    <div class="stories">
+      <div class="story"><div class="n">4</div><div><h4>Browse</h4><p>Each collection (Wallet, Receipts, Notes, Documents, Throwaways), plus Recent and All, is one tap from home.</p></div></div>
+      <div class="story"><div class="n">5</div><div><h4>Search</h4><p>Full-text search across the recognized text of every scan. Results show thumbnails.</p></div></div>
+      <div class="story"><div class="n">6</div><div><h4>Favorites</h4><p>You can favorite any scan, and favorites are one tap from home, so you can pull up your license at a counter.</p></div></div>
+    </div>
+
+    <div class="group-label">Viewing &amp; editing</div>
+    <div class="stories">
+      <div class="story"><div class="n">7</div><div><h4>Detail view</h4><ul>
+        <li>Swipe between pages and pinch to zoom at full resolution.</li>
+        <li>See the collection and the expiry status ("Expires in 23 days" / "Kept forever").</li>
+      </ul></div></div>
+      <div class="story"><div class="n">8</div><div><h4>Edit anytime</h4><p>The title, collection, expiry and favorite can be changed whenever you like, following the <a href="#model">expiry rules</a>.</p></div></div>
+      <div class="story"><div class="n">9</div><div><h4>Export</h4><p>Share as PDF or images, or save to Photos or Files.</p></div></div>
+      <div class="story"><div class="n">10</div><div><h4>Delete</h4><p>Deleting a scan by hand moves it to Trash.</p></div></div>
+    </div>
+
+    <div class="group-label">Self-cleaning</div>
+    <div class="stories">
+      <div class="story"><div class="n">11</div><div><h4>Auto-trash</h4><p>Expired scans move to Trash when the app opens and during background refresh. One batched notification covers each run, for example "4 scans moved to Trash, restore within 30 days."</p></div></div>
+      <div class="story"><div class="n">12</div><div><h4>Trash</h4><ul>
+        <li>See what's in it, restore a scan, delete one now, or empty it.</li>
+        <li>Items are permanently deleted 30 days after entering Trash.</li>
+        <li>A restored scan is set to <b>Forever</b>, so it doesn't immediately expire again.</li>
+      </ul></div></div>
+      <div class="story"><div class="n">13</div><div><h4>Lifespan settings</h4><p>You can edit each collection's default lifespan. Scans still on the default follow the change.</p></div></div>
+    </div>
+
+    <div class="group-label">Privacy</div>
+    <div class="stories">
+      <div class="story"><div class="n">14</div><div><h4>On-device only</h4><p>Everything stays on the device. There's no account and no network calls, and automatic filing runs on-device.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="nfr">
+  <div class="folder-tab">04 · Non-functional</div>
+  <div class="sheet">
+    <h2>Non-functional requirements</h2>
+    <p class="sub">The parts you don't see: where things live, how fast they are, and what can never go wrong.</p>
+    <div class="nfr">
+      <div class="card"><h4>Platform</h4><ul>
+        <li>iPhone only, SwiftUI.</li>
+        <li><b>iOS 27 minimum.</b> Apple Intelligence doesn't require it, since Foundation Models arrived in iOS 26. iOS 27 was chosen so there are no availability branches, the newest APIs are available, and most active iPhones will be on 27 by an App Store release.</li>
+      </ul></div>
+      <div class="card"><h4>Backup</h4><p>The library is covered by the normal iCloud device backup. There's no iCloud sync in v1, but the data model is kept sync-ready.</p></div>
+      <div class="card"><h4>Performance</h4><ul>
+        <li>A library of ~2,000 scans scrolls smoothly.</li>
+        <li>Grid cells only ever decode thumbnails.</li>
+        <li>Memory use doesn't grow with library size.</li>
+      </ul></div>
+      <div class="card"><h4>No data loss</h4><ul>
+        <li>Saving is all-or-nothing: page files are written before the database record, and orphaned files are cleaned up.</li>
+        <li>The only permanent deletions are the 30-day Trash purge and the user deleting from Trash.</li>
+      </ul></div>
+      <div class="card"><h4>Graceful fallback</h4><p>Without Apple Intelligence, every feature works, and the collection is picked by hand.</p></div>
+      <div class="card"><h4>Accessibility</h4><p>Supports Dynamic Type and VoiceOver.</p></div>
+    </div>
+
+    <h3>Storage</h3>
+    <p>Full-quality page images are HEIC files in the app's private folder. The database stores information about each scan and the file names of its pages, <b>never image data</b>. Thumbnails (~400 px) are generated once when a scan is saved and kept in <code>Caches</code>, where they can be regenerated if iOS clears them. Nothing is visible in the Files app.</p>
+<div class="tree">Filing Cabinet's private folder
+├── <b>Application Support/</b>
+│   ├── Library.store          <span>← information about each scan: title, collection, expiry, text for search</span>
+│   └── Originals/&lt;scan-id&gt;/page-1.heic …   <span>← full-quality pages</span>
+└── <b>Caches/</b>
+    └── Thumbnails/&lt;scan-id&gt;/page-1.jpg …  <span>← ~400px previews, regenerable</span></div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="folder-tab">05 · Decisions</div>
+  <div class="sheet">
+    <h2>Decisions log</h2>
+    <p class="sub">Settled on 2026-10-10.</p>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Decision</th><th>Chosen</th><th>Rejected</th></tr></thead>
+      <tbody>
+        <tr><td>Who sets lifespan</td><td><span class="chosen">Collection default, overridable per scan</span></td><td class="rejected">Collection rules only · per-scan choice only</td></tr>
+        <tr><td>At expiry</td><td><span class="chosen">Straight to Trash, 30-day purge, batched notification</span></td><td class="rejected">Warn first · archive · ask each time</td></tr>
+        <tr><td>Collections</td><td><span class="chosen">Wallet · Receipts · Notes · Documents · Throwaways</span></td><td class="rejected">IDs and Cards as separate collections · a short-lived "Other" catch-all</td></tr>
+        <tr><td>Automatic filing</td><td><span class="chosen">On-device model when Apple Intelligence is available, manual otherwise</span></td><td class="rejected">Hand-written rules in v1</td></tr>
+        <tr><td>Editing a collection's default lifespan</td><td><span class="chosen">Applies to existing scans still on the default</span></td><td class="rejected">Fixed defaults · new scans only</td></tr>
+        <tr><td>Tags</td><td><span class="chosen">Not in v1</span></td><td class="rejected">Manual tags · auto-suggested tags</td></tr>
+        <tr><td>Pinning</td><td><span class="chosen">Becomes Favorites; exemption is "Forever"</span></td><td class="rejected">A separate exemption toggle</td></tr>
+        <tr><td>Restore from Trash</td><td><span class="chosen">Sets expiry to Forever</span></td><td class="rejected">Restore with the original expiry</td></tr>
+        <tr><td>iCloud</td><td><span class="chosen">Device backup only; sync-ready model</span></td><td class="rejected">Sync in v1</td></tr>
+        <tr><td>Minimum OS</td><td><span class="chosen">iOS 27</span></td><td class="rejected">Supporting iOS 26</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<section id="future">
+  <div class="folder-tab">06 · Future</div>
+  <div class="sheet">
+    <h2>Future (not v1)</h2>
+    <p class="sub">Each item becomes a GitHub issue once the repo has a remote.</p>
+    <div class="future">
+      <div class="card release"><h4>Before App Store release</h4><ul>
+        <li><b>Hand-written classification rules</b> for devices without Apple Intelligence. Examples: Wallet from the ID-1 card shape (~1.59:1) plus keywords; Receipts from money amounts plus "TOTAL"/"TAX" plus a date.</li>
+        <li><b>Face ID lock</b> for the sensitive-documents use case.</li>
+      </ul></div>
+      <div class="card"><h4>Someday</h4><ul>
+        <li><b>Field search:</b> find a field such as "policy number" across all scans and copy its value.</li>
+        <li>Tags.</li>
+        <li>Custom collections.</li>
+        <li>An <b>Expiring</b> view: everything with an expiry, soonest first.</li>
+        <li>iCloud sync across iPhone, iPad and Mac.</li>
+        <li>Importing and classifying the existing camera-roll backlog.</li>
+        <li>Showing scans in the Files app.</li>
+        <li>More cleanup rule types (count-based, size-based).</li>
+        <li>Widgets, Shortcuts, and a share extension.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="open">
+  <div class="folder-tab">07 · Open questions</div>
+  <div class="sheet">
+    <h2>Open questions</h2>
+    <div class="open">
+      <div class="card"><h4>Home screen layout</h4><p>Collections first or a Recent stream. Settled in the Claude Design mocks, built from a Filing Cabinet design system.</p></div>
+      <div class="card"><h4>Accuracy of automatic filing</h4><p>Settled by the experiment with real scans before the implementation plan.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>Filing Cabinet · Requirements &amp; user stories · 2026-10-10</footer>
+</div>
+</body>
+</html>
