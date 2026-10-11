@@ -67,14 +67,16 @@ Four cooperating units, each with one job and a clear interface:
 3. **Classification** — takes `{ fullText, detectedEntities, pageAspectRatio }` and returns an optional suggested `collection`. v1 has one implementation backed by Foundation Models, and it returns nil when the model is unavailable. Callers depend on a protocol, so hand-written rules (needed before an App Store release) and Core ML can be added later without changing callers.
 4. **Library** — owns the SwiftData store, on-disk image files, thumbnail cache, collection queries, and the cleanup engine. Everything else talks to it through a narrow store interface.
 
-Flow: **Capture → Understanding → Classification → Library (persist) → UI (browse)**. The cleanup engine is a background process inside Library.
+Flow: **Capture → Understanding → Classification → Library (persist) → UI (browse)**. The cleanup engine lives inside Library. What the person sees never depends on it having run (see below).
 
 **Cleanup engine — extensible by design (open/closed).** New rule *types* must drop in without modifying existing code. MVP ships exactly one rule type, but the seams are built now:
 
 - A **`CleanupTrigger`** is a `Codable` value describing *when* a rule fires. MVP ships one case, `.expired`. It matches scans whose effective expiry (the scan's override, otherwise its collection's default lifespan from `createdAt`) has passed. Future cases (`.count(keepNewest:)`, `.size(...)`) are purely additive.
 - Each trigger maps to a **`CleanupEvaluating`** strategy — `func matches(_ scans: [Scan], on date: Date) -> [Scan]` — a pure, unit-testable function with no persistence or UI.
 - A small **factory/registry** resolves `CleanupTrigger → CleanupEvaluating`. Adding a rule type = add an enum case + one evaluator + register it; the `CleanupEngine`, the store, and the rule-editing UI are untouched.
-- The **`CleanupEngine`** only orchestrates: load enabled rules → resolve each rule's evaluator via the factory → collect matched scans (never "Forever" ones) → move them to Trash → schedule one batched notification → purge Trash items older than 30 days. It never references a concrete trigger type.
+- **Trash state is derived, not waited for.** A scan matched by a date-based trigger *is* in Trash from its expiry moment, and its 30-day clock starts at the expiry date. Library queries apply the evaluators as of "now", so the UI is right even if the app hasn't run for weeks. iOS background time is unpredictable, so correctness never depends on it.
+- The **`CleanupEngine`** only orchestrates, on launch and whenever iOS grants background time: load enabled rules → resolve each rule's evaluator via the factory → materialize matched scans (never "Forever" ones) by stamping `trashedAt` with the moment they matched → delete the files of Trash items past 30 days → reschedule notifications. It never references a concrete trigger type.
+- **Notifications are scheduled ahead.** The engine projects upcoming expiries and books one local notification per day that has any ("4 scans moved to Trash · restore within 30 days"), capped at iOS's 64 pending requests and topped up on each launch. It reschedules after any save, edit, delete, restore or lifespan change.
 
 ## 7. Data model (SwiftData)
 
@@ -99,11 +101,11 @@ Flow: **Capture → Understanding → Classification → Library (persist) → U
 ## 8. Key flows
 
 1. **Scan → understand → file**
-   Tap **+** → document camera → multi-page corrected images → background OCR + entity extraction → generate thumbnails → if Foundation Models is available, suggest a collection → **review sheet** (title, collection, expiry; all editable; the collection is a required pick when there's no suggestion) → save to Library.
+   Tap **Scan** (bottom of Home, next to Search; also inside a collection, where it pre-selects that collection) → document camera → multi-page corrected images → background OCR + entity extraction → generate thumbnails → if Foundation Models is available, suggest a collection → **review sheet** (title, collection, expiry; all editable; the collection is a required pick when there's no suggestion) → save to Library.
 2. **Browse**
    Home (layout decided in the mocks) → a collection, Recent, All, or Favorites → grid of thumbnails → tap → **detail** (swipe pages, zoom, see the expiry status, copy text, edit title/collection/expiry, favorite, share/export, delete to Trash).
 3. **Self-cleanup**
-   The cleanup engine runs on launch and via background refresh. Scans whose effective expiry has passed move to **Trash** (`trashedAt` set), and one batched local notification says something like "4 scans moved to Trash, restore within 30 days". Trash supports restore, which sets the expiry to Forever, plus delete-now and empty. Items are permanently purged 30 days after entering Trash.
+   A scan is in **Trash** from the moment its effective expiry passes, whether or not the app is running; the engine stamps `trashedAt` (the expiry moment) the next time it runs. Notifications are scheduled in advance, one per day with expiries: "4 scans moved to Trash · restore within 30 days". With notifications off, Home shows a one-time banner and the Trash row shows its count. Trash supports restore, which sets the expiry to Forever, plus delete-now and empty. Items are permanently deleted 30 days after entering Trash; their files are removed the next time the app runs.
 4. **Integrate back out**
    Export a scan as **PDF** or **images** via the share sheet; **Save to Photos** / **Save to Files** when the user explicitly wants it in the camera roll or filesystem.
 

@@ -247,13 +247,13 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <div class="lifecycle">
       <div class="stage"><b>In library</b><small>Shows its expiry status</small></div>
       <div class="arrow">→</div>
-      <div class="stage"><b>Expiry passes</b><small>No warning beforehand; you saw the expiry when you saved</small></div>
+      <div class="stage"><b>Expiry passes</b><small>In Trash from that moment, even if the app isn't open. You saw the expiry when you saved</small></div>
       <div class="arrow">→</div>
       <div class="stage"><b>Trash</b><small>30 days to restore</small></div>
       <div class="arrow">→</div>
-      <div class="stage"><b>Deleted</b><small>Permanently</small></div>
+      <div class="stage"><b>Deleted</b><small>Permanently. Files are removed the next time the app runs</small></div>
     </div>
-    <p class="note">There is no archive in v1.</p>
+    <p class="note">There is no archive in v1. Being in Trash is worked out from dates, not done by a background job: a scan past its expiry <b>is</b> in Trash, and a Trash item past its 30 days is gone from view, whether or not the app has run. iOS background time is unpredictable, so nothing the person sees depends on it. Removing the files themselves happens when the app next opens or gets background time.</p>
   </div>
 </section>
 
@@ -294,10 +294,10 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
 
     <div class="group-label">Self-cleaning</div>
     <div class="stories">
-      <div class="story"><div class="n">11</div><div><h4>Auto-trash</h4><p>Expired scans move to Trash when the app opens and during background refresh. One batched notification covers each run, for example "4 scans moved to Trash, restore within 30 days."</p></div></div>
+      <div class="story"><div class="n">11</div><div><h4>Auto-trash</h4><p>A scan moves to Trash the moment its expiry passes, even when the app isn't open. Notifications are scheduled in advance, one per day that has expiries, for example "4 scans moved to Trash · restore within 30 days", and rescheduled whenever a scan, its expiry or a lifespan changes. iOS caps scheduled notifications at 64, so they cover the next 64 days with expiries and are topped up each time the app opens. With notifications off, Home shows a one-time banner after scans move and the Trash row shows its count.</p></div></div>
       <div class="story"><div class="n">12</div><div><h4>Trash</h4><ul>
         <li>See what's in it, restore a scan, delete one now, or empty it.</li>
-        <li>Items are permanently deleted 30 days after entering Trash.</li>
+        <li>Items are permanently deleted 30 days after entering Trash. For an expired scan that is 30 days after its expiry. Delete now and Empty Trash take effect immediately.</li>
         <li>A restored scan is set to <b>Forever</b>, so it doesn't immediately expire again.</li>
       </ul></div></div>
       <div class="story"><div class="n">13</div><div><h4>Lifespan settings</h4><p>You can edit each collection's default lifespan. Scans still on the default follow the change.</p></div></div>
@@ -357,6 +357,14 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <tbody>
         <tr><td>Who sets lifespan</td><td><span class="chosen">Collection default, overridable per scan</span></td><td class="rejected">Collection rules only · per-scan choice only</td></tr>
         <tr><td>At expiry</td><td><span class="chosen">Straight to Trash, 30-day purge, batched notification</span></td><td class="rejected">Warn first · archive · ask each time</td></tr>
+        <tr><td>When expired scans move</td><td><span class="chosen">At the expiry moment, worked out from dates; notifications scheduled ahead, one per day</span></td><td class="rejected">A cleanup run on app open and background refresh</td></tr>
+        <tr><td>Navigation</td><td><span class="chosen">One Home screen holding Favorites, collections, Recent, All and Trash; Search and Scan at the bottom; Settings in the top menu</span></td><td class="rejected">A tab bar with Scan in the middle (tabs are for places, the scanner is full-screen, and the other tabs are rarely used)</td></tr>
+        <tr><td>After saving a scan</td><td><span class="chosen">Back where you were, with "Saved to Receipts · 90 days"; tapping it opens the scan</span></td><td class="rejected">Open the new scan</td></tr>
+        <tr><td>Notification permission</td><td><span class="chosen">Asked after the first save of a scan that will expire</span></td><td class="rejected">On first launch · never</td></tr>
+        <tr><td>Shortening a lifespan that would trash existing scans</td><td><span class="chosen">Confirm first, with the count</span></td><td class="rejected">Apply silently</td></tr>
+        <tr><td>Scan from inside a collection</td><td><span class="chosen">Allowed; pre-selects that collection over the suggestion</span></td><td class="rejected">Suggestion decides · Home only</td></tr>
+        <tr><td>First launch</td><td><span class="chosen">No intro screens; empty Home explains and offers Scan</span></td><td class="rejected">Intro screens</td></tr>
+        <tr><td>Several documents in one capture</td><td><span class="chosen">One capture is one scan with several pages</span></td><td class="rejected">Splitting pages into scans on Review (future)</td></tr>
         <tr><td>Collections</td><td><span class="chosen">Wallet · Receipts · Notes · Documents · Throwaways</span></td><td class="rejected">IDs and Cards as separate collections · a short-lived "Other" catch-all</td></tr>
         <tr><td>Automatic filing</td><td><span class="chosen">On-device model when Apple Intelligence is available, manual otherwise</span></td><td class="rejected">Hand-written rules in v1</td></tr>
         <tr><td>Editing a collection's default lifespan</td><td><span class="chosen">Applies to existing scans still on the default</span></td><td class="rejected">Fixed defaults · new scans only</td></tr>
@@ -390,7 +398,8 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
         <li>Importing and classifying the existing camera-roll backlog.</li>
         <li>Showing scans in the Files app.</li>
         <li>More cleanup rule types (count-based, size-based).</li>
-        <li>Widgets, Shortcuts, and a share extension.</li>
+        <li><b>Quick ways to start a scan:</b> a Scan shortcut on the app icon, the Action button, Lock Screen and Control Center controls, and widgets. Also Shortcuts actions and a share extension.</li>
+        <li>Splitting a multi-page capture into separate scans on the review sheet.</li>
       </ul></div>
     </div>
 
@@ -414,7 +423,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
   <div class="sheet">
     <h2>Open questions</h2>
     <div class="open">
-      <div class="card"><h4>Home screen layout</h4><p>Collections first or a Recent stream. Settled in the Claude Design mocks, built from a Filing Cabinet design system.</p></div>
+      <div class="card"><h4>Home screen look</h4><p>Navigation is settled (see Decisions). How Home looks is settled in the Claude Design mocks, built from the Filing Cabinet design system.</p></div>
       <div class="card"><h4>Accuracy of automatic filing</h4><p>Settled by the experiment with real scans before the implementation plan.</p></div>
     </div>
   </div>
