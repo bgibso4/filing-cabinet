@@ -1,0 +1,1520 @@
+<title>Filing Cabinet Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,700&display=swap">
+<style>
+/* Layout: the phone on the left, a short guide on the right; on a phone the app fills the screen and the guide sits below. */
+:root {
+  /* The page around the phone */
+  --page: #e9e9ee; --page-ink: #1c1c1e; --page-ink2: #5c5c62; --page-line: #d2d2d8; --page-card: #ffffff; --bezel: #1c1c1e;
+  /* The app: Filing Cabinet design system tokens, light */
+  --bg: #f2f2f7; --bg-clear: rgba(242,242,247,0); --surface: #ffffff; --sheet: #ffffff; --well: #f2f2f7;
+  --tx: #1c1c1e; --tx2: #6e6e73; --tx3: #8a8a8e; --sep: #d8d8dc; --chev: #c4c4c9; --ground: #dcdbd7;
+  --soon: #ad500e; --glass: rgba(255,255,255,0.72); --glass-strong: rgba(255,255,255,0.94); --glass-edge: rgba(0,0,0,0.08);
+  --menu: rgba(255,255,255,0.97); --band: rgba(0,0,0,0.06); --dim: rgba(0,0,0,0.25); --viewer: #f2f2f7;
+  --destructive: #d70015; --badge: #8e8e93;
+  --c-wallet: #3f6fa3; --c-receipts: #c0533a; --c-notes: #7a5aa8; --c-documents: #4b8160; --c-throwaways: #b98a1f;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif;
+  --serif: ui-serif, "New York", "Iowan Old Style", "Source Serif 4", Georgia, serif;
+  --top: 54px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #111113; --page-ink: #f2f2f7; --page-ink2: #a1a1a8; --page-line: #2c2c30; --page-card: #1c1c1e; --bezel: #3a3a3e; color-scheme: dark;
+} }
+:root[data-theme="dark"] { --page: #111113; --page-ink: #f2f2f7; --page-ink2: #a1a1a8; --page-line: #2c2c30; --page-card: #1c1c1e; --bezel: #3a3a3e; color-scheme: dark; }
+
+/* App dark mode follows the toggle in the guide (or the system) */
+.app.dark {
+  --bg: #000000; --bg-clear: rgba(0,0,0,0); --surface: #1c1c1e; --sheet: #1c1c1e; --well: #2c2c2e;
+  --tx: #f2f2f7; --tx2: #98989f; --tx3: #8e8e93; --sep: #38383a; --chev: #5a5a5f; --ground: #2c2c2e;
+  --soon: #f2a65a; --glass: rgba(44,44,46,0.72); --glass-strong: rgba(44,44,46,0.94); --glass-edge: rgba(255,255,255,0.12);
+  --menu: rgba(44,44,46,0.98); --band: rgba(0,0,0,0.35); --dim: rgba(0,0,0,0.45); --viewer: #000000;
+  --destructive: #ff453a; --badge: #636366;
+  --c-wallet: #6f9bd0; --c-receipts: #e07a60; --c-notes: #a88ad6; --c-documents: #79b08f; --c-throwaways: #d9ad4a;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body { background: var(--page); color: var(--page-ink); font-family: var(--sans); }
+.stage { min-height: 100%; display: flex; align-items: center; justify-content: center; gap: 48px; padding-block: 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+.device { position: relative; flex: none; width: 390px; height: 844px; border-radius: 56px; border: 12px solid var(--bezel); overflow: hidden; }
+.app { position: absolute; inset: 0; overflow: hidden; background: var(--bg); color: var(--tx); font-family: var(--sans); font-size: 17px; line-height: 22px; font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.statusbar { position: absolute; left: 0; right: 0; top: 0; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 34px 0 40px; box-sizing: border-box; z-index: 50; pointer-events: none; color: var(--tx); font-weight: 600; font-size: 16px; }
+.statusbar.on-dark { color: #f2f2f7; }
+
+/* Guide */
+.panel { width: 340px; max-width: 100%; display: flex; flex-direction: column; gap: 20px; font-size: 15px; line-height: 22px; }
+.panel h1 { margin: 0; font-family: var(--serif); font-size: 30px; line-height: 36px; font-weight: 700; text-wrap: balance; }
+.panel .eyebrow { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--page-ink2); font-weight: 600; }
+.panel p { margin: 0; color: var(--page-ink2); }
+.panel .group { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 16px; background: var(--page-card); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 3px; border-radius: 10px; background: var(--page); }
+.seg button { min-height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--page-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-card); box-shadow: 0 0 0 0.5px var(--page-line); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+.switch input { width: 20px; height: 20px; accent-color: var(--page-ink); }
+.panel .flows { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.panel .flows li { display: flex; flex-direction: column; gap: 2px; }
+.panel .flows b { font-size: 15px; }
+.panel .flows span { color: var(--page-ink2); font-size: 14px; line-height: 20px; }
+.panel .reset { align-self: flex-start; min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--page-line); background: transparent; color: var(--page-ink); font: inherit; font-weight: 600; cursor: pointer; }
+.tag { display: inline-block; padding: 0 6px; border-radius: 6px; background: var(--page); font-size: 12px; font-weight: 600; color: var(--page-ink2); }
+button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--tx); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+  .stage { flex-direction: column; align-items: stretch; gap: 24px; padding: 0 0 32px; }
+  .device { width: 100%; height: 100svh; height: 100dvh; border: 0; border-radius: 0; }
+  .statusbar { display: none; }
+  .app { --top: 12px; }
+  .panel { width: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { .app * { animation: none !important; transition: none !important; } }
+
+/* ---------- App building blocks ---------- */
+.screen { position: absolute; inset: 0; background: var(--bg); }
+.screen.moving { will-change: transform; contain: layout paint; }
+.screen.moving .glass { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--glass-strong); }
+.shade { position: absolute; inset: 0; z-index: 70; background: #000; opacity: 0; pointer-events: none; }
+.screen.push { animation: push 0.28s cubic-bezier(.2,.8,.2,1); }
+.screen.pop { animation: pop 0.24s cubic-bezier(.2,.8,.2,1); }
+@keyframes push { from { transform: translateX(30%); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes pop { from { transform: translateX(-12%); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.scroll { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: var(--top) 16px 140px; box-sizing: border-box; display: flex; flex-direction: column; }
+.scroll::-webkit-scrollbar { display: none; }
+.glass { background: var(--glass); border: 0.5px solid var(--glass-edge); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: var(--tx); }
+.btn-round { width: 44px; height: 44px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.btn-pill { height: 44px; padding: 0 18px; border-radius: 999px; font: inherit; cursor: pointer; }
+button { font-family: inherit; color: inherit; }
+.title-xl { margin: 0; font-family: var(--serif); font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px; white-space: nowrap; }
+.title-l { margin: 0; font-family: var(--serif); font-size: 28px; line-height: 34px; font-weight: 700; }
+.title-m { margin: 0; font-family: var(--serif); font-size: 22px; line-height: 28px; font-weight: 700; }
+.sub { margin: 2px 0 0; font-size: 15px; line-height: 20px; color: var(--tx2); }
+.card { background: var(--surface); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: var(--tx); text-decoration: none; cursor: pointer; background: transparent; border: 0; font: inherit; text-align: left; width: 100%; box-sizing: border-box; }
+.row .in { flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.row + .row .in { border-top: 0.5px solid var(--sep); }
+.row:active { background: var(--well); }
+.muted { color: var(--tx2); }
+.dot { flex: none; width: 7px; height: 7px; border-radius: 999px; display: inline-block; }
+.scanpill { position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; justify-content: center; z-index: 5; }
+.scanpill button { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 30px; border: 0; border-radius: 999px; background: var(--tx); color: var(--bg); font-size: 17px; font-weight: 600; cursor: pointer; }
+.fade-bottom { position: absolute; left: 0; right: 0; bottom: 0; height: 128px; pointer-events: none; background: linear-gradient(to top, var(--bg) 38%, var(--bg-clear)); z-index: 4; }
+.smallbar { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--top) + 60px); z-index: 6; pointer-events: none; opacity: 0; background: linear-gradient(to bottom, var(--bg) 70%, var(--bg-clear)); }
+.smallbar .t { position: absolute; left: 70px; right: 70px; top: calc(var(--top) + 11px); display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 600; white-space: nowrap; }
+.smallbar .t span { overflow: hidden; text-overflow: ellipsis; }
+.topbar { position: absolute; left: 16px; right: 16px; top: var(--top); height: 44px; display: flex; align-items: center; justify-content: space-between; z-index: 7; pointer-events: none; }
+.topbar > * { pointer-events: auto; }
+
+/* Grid tiles */
+.grid { display: grid; gap: 16px 8px; margin-top: 20px; }
+.tile { position: relative; display: flex; flex-direction: column; gap: 2px; min-width: 0; color: var(--tx); cursor: pointer; touch-action: manipulation; }
+.tile .frame { position: relative; display: block; width: 100%; border-radius: 6px; overflow: hidden; background: var(--ground); }
+.tile .frame img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; pointer-events: none; }
+.tile .frame img.whole { object-fit: contain; object-position: center; }
+.tile .name { display: flex; align-items: center; gap: 5px; min-width: 0; margin-top: 4px; }
+.tile .name span:last-child { min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .left { font-size: 12px; line-height: 16px; color: var(--tx2); }
+.tile .left.soon { color: var(--soon); font-weight: 600; }
+.heart-badge { position: absolute; right: 0; top: 0; width: 44px; height: 44px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 5px; box-sizing: border-box; border: 0; background: transparent; cursor: pointer; }
+.heart-badge span { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(28,28,30,0.55); }
+.tile.slot .frame { background: transparent; outline: 1.5px dashed var(--chev); outline-offset: -1.5px; }
+.tile.slot .frame img, .tile.slot .name, .tile.slot .left, .tile.slot .heart-badge { visibility: hidden; }
+.drag-ghost { position: fixed; z-index: 1000; pointer-events: none; transform: scale(1.08); transform-origin: center; }
+
+/* Menus, sheets, toasts, alerts */
+.scrim { position: absolute; inset: 0; z-index: 30; }
+.scrim.dim { background: var(--dim); z-index: 40; }
+.scrim.over { z-index: 32; }
+.menu { position: absolute; z-index: 33; display: flex; flex-direction: column; padding: 6px 0; border-radius: 24px; background: var(--menu); border: 0.5px solid var(--glass-edge); -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); color: var(--tx); transform-origin: top right; }
+.menu.enter { animation: pop-in 0.18s cubic-bezier(.2,.9,.25,1); }
+.menu.up { transform-origin: bottom right; }
+@keyframes pop-in { from { transform: scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+.menu .mi { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px 0 14px; border: 0; background: transparent; font: inherit; color: var(--tx); text-align: left; cursor: pointer; }
+.menu .mi:active { background: var(--band); }
+.menu .mi[aria-disabled="true"] { color: var(--tx3); cursor: default; }
+.menu .mi .two { flex: 1; display: flex; flex-direction: column; }
+.menu .mi .two small { font-size: 13px; line-height: 17px; color: var(--tx2); }
+.menu .mi[aria-disabled="true"] .two small { color: var(--tx3); }
+.menu .gap { height: 8px; margin: 4px 0; background: var(--band); }
+.menu .check { flex: none; width: 16px; }
+.toast { position: absolute; left: 16px; right: 16px; bottom: 96px; z-index: 20; display: flex; justify-content: center; pointer-events: none; }
+.toast.enter { animation: rise 0.26s cubic-bezier(.2,.9,.25,1); }
+.toast > span { pointer-events: auto; white-space: nowrap; max-width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 6px 0 18px; border-radius: 999px; background: var(--glass-strong); border: 0.5px solid var(--glass-edge); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); font-size: 15px; line-height: 20px; }
+.toast button { min-height: 44px; padding: 0 14px; border: 0; background: transparent; color: var(--tx); font-size: 15px; font-weight: 600; cursor: pointer; }
+.toast .plain { padding-right: 18px; }
+@keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 31; box-sizing: border-box; padding: 8px 16px 18px; border-radius: 34px; background: var(--sheet); border: 0.5px solid var(--glass-edge); display: flex; flex-direction: column; touch-action: none; }
+.sheet.enter { animation: sheet-in 0.36s cubic-bezier(.2,.9,.25,1); }
+.scrim.enter { animation: fade-in 0.2s ease-out; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in { from { transform: translateY(105%); } to { transform: none; } }
+.grab { align-self: center; width: 36px; height: 5px; border-radius: 999px; background: var(--chev); }
+.alert { position: absolute; left: 45px; right: 45px; top: 30%; z-index: 41; box-sizing: border-box; padding: 22px 20px 18px; border-radius: 34px; background: var(--menu); border: 0.5px solid var(--glass-edge); display: flex; flex-direction: column; gap: 6px; text-align: center; }
+.alert.enter { animation: pop-in 0.22s cubic-bezier(.2,.9,.25,1); }
+.alert .two-btn { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.alert button, .confirm button { min-height: 48px; border: 0; border-radius: 999px; background: var(--well); color: var(--tx); font-size: 17px; cursor: pointer; }
+.confirm { position: absolute; right: 16px; bottom: 98px; width: 262px; z-index: 31; box-sizing: border-box; padding: 16px 16px 12px; border-radius: 26px; background: var(--menu); border: 0.5px solid var(--glass-edge); display: flex; flex-direction: column; gap: 12px; text-align: center; transform-origin: bottom right; }
+.confirm.enter { animation: pop-in 0.2s cubic-bezier(.2,.9,.25,1); }
+
+/* Viewer */
+.viewer { background: var(--viewer); }
+.page-area { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; touch-action: none; }
+.page-area img { display: block; max-width: 100%; max-height: 100%; pointer-events: none; }
+.viewer .chrome { transition: opacity 0.22s ease; }
+.viewer.bare .chrome { opacity: 0; pointer-events: none; }
+.vpill { min-width: 0; max-width: 240px; display: flex; flex-direction: column; align-items: center; padding: 5px 20px 6px; border-radius: 999px; cursor: pointer; font: inherit; }
+.vpill b { max-width: 100%; font-size: 16px; line-height: 21px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vpill small { display: flex; align-items: center; gap: 5px; font-size: 13px; line-height: 17px; color: var(--tx2); white-space: nowrap; }
+.vbar { position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; align-items: center; justify-content: space-between; z-index: 8; }
+.vbar .group { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 10px; border-radius: 999px; }
+.vbar .ib { width: 52px; height: 52px; padding: 0; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: transparent; color: var(--tx); cursor: pointer; }
+.vbar .ib[aria-pressed="true"].info { background: var(--well); }
+.vbar .ib.glass { background: var(--glass); border: 0.5px solid var(--glass-edge); }
+.vbar .solo { width: 56px; height: 56px; }
+.strip { position: absolute; left: 0; right: 0; bottom: 110px; display: flex; align-items: center; justify-content: center; gap: 4px; z-index: 8; }
+.strip button { padding: 0; border: 0; background: transparent; cursor: pointer; }
+.strip img { display: block; width: 26px; height: 36px; object-fit: cover; object-position: top; border-radius: 3px; opacity: 0.85; }
+.strip button[aria-current="true"] img { width: 34px; height: 44px; opacity: 1; margin: 0 6px; }
+
+/* Details sheet */
+.dtitle { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 8px 4px 0; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; color: var(--tx); }
+.dtitle b { min-width: 0; font-family: var(--serif); font-size: 24px; line-height: 30px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dfield { display: flex; align-items: center; gap: 8px; height: 50px; margin-top: 6px; padding: 0 8px 0 14px; border-radius: 14px; background: var(--well); border: 1.5px solid var(--tx); }
+.dfield input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--tx); font: 600 20px/26px var(--sans); }
+.drows { display: flex; flex-direction: column; margin-top: 14px; border-radius: 20px; background: var(--well); overflow: hidden; }
+.drow { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; border: 0; background: transparent; color: var(--tx); text-align: left; font: inherit; cursor: pointer; }
+.drow + .drow { border-top: 0.5px solid var(--sep); }
+.drow .two { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.drow .two small { font-size: 13px; line-height: 17px; color: var(--tx2); }
+.note.enter { animation: rise 0.24s ease-out; }
+.note { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 4px 0; font-size: 13px; line-height: 18px; color: var(--tx2); }
+.note button { min-height: 32px; border: 0; background: transparent; color: var(--tx); font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; }
+
+/* Search */
+.sfield { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 44px; box-sizing: border-box; padding: 0 6px 0 16px; border-radius: 999px; background: var(--surface); }
+.sfield input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--tx); font: 17px/22px var(--sans); }
+.sfield input::placeholder { color: var(--tx2); }
+.sfield input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.chips { display: flex; gap: 8px; margin: 10px -16px 0; padding: 4px 16px; overflow-x: auto; scrollbar-width: none; flex: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--surface); color: var(--tx); font-size: 15px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--tx); color: var(--bg); font-weight: 600; }
+.hit { color: var(--tx); font-weight: 600; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 40px 24px; text-align: center; }
+.empty b { font-size: 17px; }
+.empty span { max-width: 290px; font-size: 15px; line-height: 20px; color: var(--tx2); }
+.empty button { margin-top: 10px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--surface); color: var(--tx); font-size: 17px; font-weight: 600; cursor: pointer; }
+
+/* Review: a slim card when the collection is already filled in; the full sheet otherwise */
+.rcard { position: absolute; left: 12px; right: 12px; bottom: 30px; z-index: 9; box-sizing: border-box; padding: 8px 12px 12px 18px; border-radius: 30px; display: flex; flex-direction: column; gap: 4px; background: var(--glass-strong); cursor: pointer; touch-action: none; }
+.rcard .grab { margin-left: 6px; }
+.rrow { display: flex; align-items: center; gap: 12px; }
+.rsum { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rsum button { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 24px; padding: 0; border: 0; background: transparent; color: var(--tx); font: inherit; text-align: left; cursor: pointer; }
+.rsum .rt b { min-width: 0; font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rsum .rl { font-size: 15px; line-height: 20px; color: var(--tx2); }
+.rsave { flex: none; min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: var(--tx); color: var(--bg); font-size: 17px; font-weight: 600; cursor: pointer; }
+.rsheet { z-index: 9; }
+.rbig { margin-top: 14px; min-height: 54px; border: 0; border-radius: 999px; background: var(--tx); color: var(--bg); font-size: 17px; font-weight: 600; cursor: pointer; }
+.rbig[aria-disabled="true"] { background: #e3e3e8; color: var(--tx2); cursor: default; }
+.app.dark .rbig[aria-disabled="true"] { background: #2c2c2e; }
+.drow[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+.fresh { animation: rise 0.3s ease-out; }
+.camrow img { flex: none; width: 36px; height: 48px; object-fit: cover; object-position: top; border-radius: 4px; background: var(--ground); }
+
+/* Settings switch: black and white, colour is only for collections and expiry */
+.tog { flex: none; width: 51px; height: 31px; box-sizing: border-box; padding: 2px; border: 0; border-radius: 999px; display: flex; background: rgba(120,120,128,0.18); cursor: pointer; transition: background 0.2s ease; }
+.app.dark .tog { background: rgba(120,120,128,0.36); }
+.tog span { width: 27px; height: 27px; border-radius: 999px; background: #fff; transition: transform 0.25s cubic-bezier(.2,.9,.25,1); }
+.tog[aria-checked="true"] { background: var(--tx); }
+.tog[aria-checked="true"] span { transform: translateX(20px); background: var(--surface); }
+.app.dark .tog[aria-checked="true"] span { background: #1c1c1e; }
+.tog[aria-disabled="true"] { opacity: 0.45; cursor: default; }
+.srow { display: flex; align-items: center; gap: 12px; min-height: 50px; padding-left: 16px; width: 100%; box-sizing: border-box; border: 0; background: transparent; color: var(--tx); font: inherit; text-align: left; }
+.srow .in { flex: 1; align-self: stretch; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 0; }
+.srow + .srow .in { border-top: 0.5px solid var(--sep); }
+.srow .two { flex: 1; display: flex; flex-direction: column; }
+.srow .two small { font-size: 13px; line-height: 17px; color: var(--tx2); }
+.srow .ic { flex: none; width: 24px; display: flex; justify-content: center; color: var(--tx2); }
+
+/* First launch: a page sheet over Home */
+.pagesheet { position: absolute; left: 0; right: 0; top: calc(var(--top) + 8px); bottom: 0; z-index: 41; box-sizing: border-box; padding: 56px 32px 40px; border-radius: 14px 14px 0 0; background: var(--sheet); color: var(--tx); display: flex; flex-direction: column; }
+.pagesheet.enter { animation: sheet-in 0.42s cubic-bezier(.2,.9,.25,1); }
+.pagesheet .step.enter { animation: rise 0.3s ease-out; }
+.pagesheet h1 { margin: 0; text-align: center; font-family: var(--serif); font-size: 32px; line-height: 38px; font-weight: 700; text-wrap: balance; }
+.pagesheet .feat { display: flex; gap: 16px; align-items: flex-start; }
+.pagesheet .feat b { display: block; font-size: 17px; line-height: 22px; }
+.pagesheet .feat span span { font-size: 15px; line-height: 20px; color: var(--tx2); }
+.pagesheet .go { margin-top: auto; height: 52px; flex: none; border: 0; border-radius: 999px; background: var(--tx); color: var(--bg); font-size: 17px; font-weight: 600; cursor: pointer; }
+.pagesheet .later { align-self: center; margin-top: 8px; height: 44px; padding: 0 20px; border: 0; background: transparent; color: var(--tx); font-size: 17px; cursor: pointer; }
+
+/* Stub screens */
+.stub { flex: 1; display: flex; flex-direction: column; gap: 12px; justify-content: center; padding: 0 8px; }
+.stub .badge { align-self: flex-start; padding: 2px 10px; border-radius: 999px; border: 1px dashed var(--tx3); color: var(--tx2); font-size: 13px; font-weight: 600; }
+.stub ul { margin: 0; padding-left: 20px; color: var(--tx2); font-size: 15px; line-height: 22px; }
+.stub .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.stub .actions button { min-height: 50px; border-radius: 999px; border: 0; font-size: 17px; font-weight: 600; cursor: pointer; }
+.stub .primary { background: var(--tx); color: var(--bg); }
+.stub .secondary { background: var(--surface); color: var(--tx); }
+</style>
+
+<div class="stage">
+  <div class="device" id="device">
+    <div class="app" id="app" aria-live="polite"></div>
+    <div class="statusbar" id="statusbar" aria-hidden="true">
+      <span>9:41</span>
+      <svg width="74" height="13" viewBox="0 0 74 13" fill="currentColor"><rect x="0" y="8" width="3" height="5" rx="1"></rect><rect x="5" y="6" width="3" height="7" rx="1"></rect><rect x="10" y="3" width="3" height="10" rx="1"></rect><rect x="15" y="0" width="3" height="13" rx="1"></rect><path d="M30 4.2a9 9 0 0 1 12 0l-1.4 1.5a7 7 0 0 0-9.2 0zM32.6 7a5.2 5.2 0 0 1 6.8 0L38 8.5a3.2 3.2 0 0 0-4 0zM36 12.2l-1.6-1.7a2.3 2.3 0 0 1 3.2 0z"></path><rect x="48.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity="0.4"></rect><rect x="50.5" y="2.5" width="16" height="8" rx="2"></rect><rect x="71.5" y="4" width="2" height="5" rx="1" opacity="0.4"></rect></svg>
+    </div>
+  </div>
+
+  <aside class="panel" aria-label="About this prototype">
+    <div>
+      <div class="eyebrow">Clickable prototype</div>
+      <h1>Filing Cabinet</h1>
+    </div>
+    <p>Everything decided so far, wired together. Screens that aren't designed yet are plain stand-ins marked <span class="tag">Not designed yet</span>.</p>
+
+    <div class="group">
+      <div class="eyebrow">Appearance</div>
+      <div class="seg" role="group" aria-label="Appearance">
+        <button type="button" id="mode-system" data-mode="system">System</button>
+        <button type="button" id="mode-light" data-mode="light">Light</button>
+        <button type="button" id="mode-dark" data-mode="dark">Dark</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:14px;color:var(--page-ink2)">Camera access</span>
+      <div class="seg" role="group" aria-label="Camera access">
+        <button type="button" id="cam-ask" data-cam="ask">Not asked</button>
+        <button type="button" id="cam-allowed" data-cam="allowed">Allowed</button>
+        <button type="button" id="cam-off" data-cam="off">Off</button>
+      </div></div>
+      <label class="switch" for="opt-ai"><span>Apple Intelligence on <span style="color:var(--page-ink2)">· suggests the collection</span></span><input type="checkbox" id="opt-ai" checked></label>
+      <label class="switch" for="opt-fail"><span>Make the next save fail <span style="color:var(--page-ink2)">· iPhone full</span></span><input type="checkbox" id="opt-fail"></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="reset" id="reset">Start over</button><button type="button" class="reset" id="replay">Show first launch</button></div>
+    </div>
+
+    <div class="group">
+      <div class="eyebrow">Try the flows</div>
+      <ul class="flows">
+        <li><b>1 · Scan and file</b><span>Tap Scan. The first time, iOS asks for the camera; Don’t Allow shows the “camera off” sheet on the next tap (reset with Camera access above). Pick something to pretend-scan. With Apple Intelligence on you get the slim card: Save, or tap it or drag it up for the full sheet; with it off you get the sheet with nothing picked. Try the 3-page letter, or the Rescan arrow top right. Saving flies the page into its folder on Home, or into its tile inside a collection. Tick “Make the next save fail” to see Couldn’t save.</span></li>
+        <li><b>2 · Find a scan</b><span>Open a favorite from Home, browse Wallet or Receipts, or search “renew”, “heat” or “laptop”. Try the filter chips.</span></li>
+        <li><b>3 · View and change</b><span>Open the Corner Market receipt with 5 days left. Tap the title or Info, rename it, change its collection or expiry, heart it, swipe a 3-page lease.</span></li>
+        <li><b>4 · Cleanup and Trash</b><span>Move a scan to Trash and watch it leave. Open Trash from Home: tap a scan to restore or delete it, long-press for a menu, or Select several. Empty Trash asks first.</span></li>
+        <li><b>5 · Settings</b><span>Gear on Home. Flip the two switches, or open Collections and change how long Receipts keeps scans: try 1 month to see the count and confirm.</span></li>
+      </ul>
+    </div>
+    <p>Favorites: long-press a tile to drag it when the sort is Custom order. Elsewhere, long-press a tile to favorite it.</p>
+  </aside>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------------- Data ---------------- */
+var TODAY = new Date(2026, 9, 12);
+var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var COLLS = ['wallet', 'receipts', 'notes', 'documents', 'throwaways'];
+var NAMES = { wallet: 'Wallet', receipts: 'Receipts', notes: 'Notes', documents: 'Documents', throwaways: 'Throwaways' };
+// How long each collection keeps scans (days; 0 = forever). Changeable in Settings, so Start over resets it.
+var LIFE0 = { wallet: 0, receipts: 91, notes: 0, documents: 0, throwaways: 7 };
+var LIFE = Object.assign({}, LIFE0);
+var LIFE_CHOICES = [[7, '1 week'], [30, '1 month'], [91, '3 months'], [365, '1 year'], [0, 'Forever']];
+var DESC = { wallet: 'IDs and cards', receipts: 'Purchase receipts', notes: 'Handwritten notes', documents: 'Forms and letters', throwaways: 'Short-lived scraps' };
+var EMPTY = {
+  wallet: ['No cards yet', 'IDs and cards go here, like your license and insurance card. They’re kept forever.', 'Scan a card'],
+  receipts: ['No receipts yet', 'Purchase receipts go here. Each one is kept 3 months, then moves to Trash.', 'Scan a receipt'],
+  notes: ['No notes yet', 'Handwritten notes go here. They’re kept forever.', 'Scan a note'],
+  documents: ['No documents yet', 'Forms and letters go here. They’re kept forever.', 'Scan a document'],
+  throwaways: ['No throwaways', 'Short-lived scraps go here, like a coat-check tag. Each one is kept a week.', 'Scan a throwaway']
+};
+function img(n) { return 'scans/scan-' + n + '.jpg'; }
+
+function seed() {
+  var S = [
+    ['license', 'Driver’s license', 'wallet', 3, ['license'], { wide: 1 }, ['DRIVER LICENSE · Sample State', 'MORGAN, ALEX JORDAN', '100 SAMPLE STREET APT 4B', 'DL D000 0000 0000 · Class D']],
+    ['insurance', 'Insurance card', 'wallet', 12, ['insurance'], { wide: 1 }, ['Northfield Mutual · Health plan', 'Member name ALEX J MORGAN', 'Member ID XXX 000 000 00 · Group 000000', 'Member services 000 000 0000']],
+    ['coworking', 'Coworking pass', 'wallet', 1, ['badge-tall'], {}, ['RIVERSIDE COWORKING', 'Alex Morgan', 'Member · Desk 00']],
+    ['templicense', 'Temporary license', 'wallet', 2, ['templicense'], {}, ['Temporary Driver License · Sample State', 'Valid for 60 days from issue', 'Keep this paper with you while driving until your card arrives by mail.']],
+    ['workid', 'Work ID', 'wallet', 20, ['workid'], { wide: 1 }, ['NORTHWIND LABS · STAFF', 'Alex Morgan', 'Data Engineering', 'ID 000000']],
+    ['gym', 'Gym membership', 'wallet', 40, ['gym'], { wide: 1 }, ['IRONWORKS FITNESS CLUB', 'Member Alex Morgan', 'Plan · Renews monthly']],
+    ['library', 'Library card', 'wallet', 95, ['library'], { wide: 1 }, ['Anytown Public Library', 'Card holder A. Morgan', 'Renew loans at any branch desk.']],
+    ['passport', 'Passport', 'wallet', 160, ['passport'], { wide: 1 }, ['PASSPORT · REPUBLIC OF SAMPLELAND', 'Surname MORGAN', 'Given names ALEX JORDAN', 'Passport no. X0000000']],
+    ['corner-new', 'Corner Market', 'receipts', 0, ['r-corner'], {}, ['CORNER MARKET · 40 Sample St', 'Muffin · Juice · Cheese', 'Apples · Croissant · Bread loaf', 'TOTAL 00.00']],
+    ['bluebird', 'Bluebird Café', 'receipts', 1, ['r-bluebird'], {}, ['Bluebird Café', 'Latte · Croissant', 'TOTAL 00.00 · Thank you']],
+    ['gas', 'Harbor Gas', 'receipts', 3, ['r-gas'], {}, ['HARBOR GAS #00', 'PUMP 04 REGULAR', 'Batteries AA · Rice 2kg']],
+    ['pharmacy', 'City Pharmacy', 'receipts', 8, ['r-pharmacy'], {}, ['CITY PHARMACY', 'Batteries AA · Sandwich', 'Croissant · Tea']],
+    ['pizza', 'Pizzeria Sole', 'receipts', 12, ['r-pizza'], {}, ['Pizzeria Sole', 'ORDER 000 · TABLE 0', 'Water 6pk · Soap · Tape']],
+    ['books', 'Page & Spine', 'receipts', 19, ['r-books'], {}, ['Page & Spine · BOOKSELLERS', 'Eggs dozen · Tea · Tomatoes']],
+    ['hardware', 'Northside Hardware', 'receipts', 34, ['r-hardware'], {}, ['NORTHSIDE HARDWARE · Since 1952', 'Light bulb · Screws · Glue', 'Notebook · Flowers']],
+    ['laptop', 'Laptop warranty', 'receipts', 84, ['receipt'], {}, ['tallow ELECTRIC · 12 Sample Road', 'Laptop 14in 16GB', 'Care plan 3yr · USB-C cable 2m', 'Returns within 30 days with this receipt.', 'Warranty starts today.']],
+    ['corner', 'Corner Market', 'receipts', 85, ['r-corner'], {}, ['CORNER MARKET · 40 Sample St', 'Muffin · Juice · Cheese', 'Apples · Croissant · Bread loaf', 'TOTAL 00.00']],
+    ['bluebird-old', 'Bluebird Café', 'receipts', 88, ['r-bluebird'], {}, ['Bluebird Café', 'Bananas · Flowers · Glue', 'TOTAL 00.00 · Thank you']],
+    ['bio', 'Bio 210 notes', 'notes', 2, ['note-bio'], {}, ['Bio 210 · Oct 10', 'Glycolysis: glucose to 2 pyruvate', 'net: 2 ATP, 2 NADH', 'happens in the cytoplasm', 'Krebs cycle next week!', 'read ch. 9 before Tues']],
+    ['call', 'Call with landlord', 'notes', 10, ['note-call'], {}, ['Call w/ landlord', 'heating check Nov 3', 'leave key with doorman', 'renewal: sign by Nov 15', 'ask about bike storage', 'super: Dan, ext 12']],
+    ['wifi', 'Wifi password', 'notes', 30, ['wifi'], {}, ['wifi · new place', 'Maple-5G', 'blue-kettle-42', 'guest: Maple-Guest', 'router in hall closet']],
+    ['lease', 'Lease 2026', 'documents', 11, ['lease', 'lease-p2', 'lease-p3'], {}, ['Harlow Property Management', 'Re: Lease renewal · Unit 4B · term beginning January 1, 2027', 'Your current lease for the apartment above ends on December 31, 2026.', 'Return a signed copy to our office by November 15.', 'The building’s heating inspection is scheduled for the first week of November.', 'Terms of renewal', 'Monthly rent is $0,000.00, due on the first day of each month.', 'Heat and water are included.', 'One cat is permitted, as recorded in the original lease.']],
+    ['registration', 'Car registration', 'documents', 14, ['registration'], { wide: 1 }, ['Certificate of Vehicle Registration', 'Plate SMP 0000 · Make NORTHWIND · Model COMPASS LX', 'Renew online before this registration expires.', 'Keep this certificate in the vehicle.']],
+    ['vaccine', 'Vaccine record', 'documents', 60, ['vaccine'], {}, ['Immunization Record · Anytown Community Health', 'Tetanus · Tdap', 'Influenza', 'COVID-19', 'Hepatitis A']],
+    ['coat', 'Coat check', 'throwaways', 1, ['throw-coat'], {}, ['COAT CHECK', '142']],
+    ['park', 'Parking stub', 'throwaways', 4, ['throw-park'], {}, ['PARK & GO · GARAGE · LEVEL 3', 'KEEP THIS TICKET']],
+    ['valet', 'Valet ticket', 'throwaways', 6, ['throw-valet'], {}, ['VALET · 087', 'PLEASE PRESENT TO RETRIEVE CAR']],
+    // Already in Trash: these expired a while ago (30 days in Trash, counted from the expiry)
+    ['tr-park', 'Parking stub', 'throwaways', 35, ['throw-park'], {}, ['PARK & GO']],
+    ['tr-coat', 'Coat check', 'throwaways', 32, ['throw-coat'], {}, ['COAT CHECK', '142']],
+    ['tr-pharmacy', 'City Pharmacy', 'receipts', 109, ['r-pharmacy'], {}, ['CITY PHARMACY']],
+    ['tr-bluebird', 'Bluebird Café', 'receipts', 104, ['r-bluebird'], {}, ['Bluebird Café']],
+    ['tr-corner', 'Corner Market', 'receipts', 93, ['r-corner'], {}, ['CORNER MARKET']],
+    // and this one you moved there yourself, six days ago; it was a favorite
+    ['tr-wifi', 'Old wifi password', 'notes', 300, ['wifi'], { trashedAgo: 6, fav: 1 }, ['wifi · old place']]
+  ];
+  var favs = ['license', 'lease', 'insurance', 'laptop', 'wifi', 'gym', 'vaccine', 'registration', 'library', 'passport'];
+  return {
+    scans: S.map(function (s) {
+      return { id: s[0], title: s[1], from: s[2], age: s[3], pages: s[4].map(img), wide: !!s[5].wide, text: s[6], fav: favs.indexOf(s[0]) >= 0 || !!s[5].fav, custom: null, trashed: s[5].trashedAgo !== undefined, trashedAgo: s[5].trashedAgo || 0 };
+    }),
+    favOrder: favs.slice(),
+    viewed: ['license', 'laptop', 'wifi', 'bio'],
+    searches: ['laptop', 'wifi', 'insurance'],
+    trashOld: [['Corner Market', 'receipts'], ['Bluebird Café', 'receipts'], ['Coat check', 'throwaways'], ['Parking stub', 'throwaways']],
+    homeNotice: true,
+    reminders: true,
+    camera: 'ask',
+    sorts: { favorites: 'custom' },
+    stack: [{ t: 'home' }],
+    newId: 1
+  };
+}
+
+var st = seed();
+var opts = { toast: true, ai: true, mode: 'system', redo: 'text' };
+var overlay = null;     // menus, sheets, alerts that sit over the current screen
+var toast = null, toastTimer = null;
+var motion = null, flipNext = false, failNext = false;
+var EASE = 'cubic-bezier(.2,.9,.25,1)';
+var rm = window.matchMedia('(prefers-reduced-motion: reduce)');
+function motionOK() { return !rm.matches; }
+
+function byId(id) { for (var i = 0; i < st.scans.length; i++) if (st.scans[i].id === id) return st.scans[i]; return null; }
+function top() { return st.stack[st.stack.length - 1]; }
+function scanDate(s) { var d = new Date(TODAY); d.setDate(d.getDate() - s.age); return d; }
+function fmt(d, withYear) { return MONTHS[d.getMonth()] + ' ' + d.getDate() + (withYear || d.getFullYear() !== 2026 ? ', ' + d.getFullYear() : ''); }
+// Expiry is counted from the scan date. 0 means kept forever.
+function lifeOf(s) { return s.custom ? s.custom.days : LIFE[s.from]; }
+function daysLeft(s) { var l = lifeOf(s); return l === 0 ? Infinity : l - s.age; }
+function expDate(s) { var d = scanDate(s); d.setDate(d.getDate() + lifeOf(s)); return d; }
+function isSoon(s) { var l = lifeOf(s), left = daysLeft(s); return l > 0 && (l > 7 ? left <= 7 : left <= 1); }
+function alive(s) { return !s.trashed && daysLeft(s) > 0; }
+function shown(s) { return alive(s) || s.id === st.leaving; }
+// Time left: years past a year, months from 60 days, days under that (orange in the last week).
+function leftSpan(l) { return l >= 365 ? (Math.floor(l / 365) === 1 ? '1 year' : Math.floor(l / 365) + ' years') : l >= 60 ? Math.floor(l / 30) + ' months' : (l === 1 ? '1 day' : l + ' days'); }
+function leftText(s) { var l = daysLeft(s); return l === Infinity ? 'Kept forever' : leftSpan(l) + ' left'; }
+function expShort(s) { var l = daysLeft(s); return l === Infinity ? 'Kept forever' : (l === 1 ? 'Expires tomorrow' : 'Expires in ' + leftSpan(l)); }
+function lifeText(days) { return days === 0 ? 'Kept forever' : ({ 7: '1 week', 30: '1 month', 91: '3 months', 365: '1 year' })[days] || days + ' days'; }
+function keptText(days) { return days === 0 ? 'kept forever' : 'kept ' + lifeText(days); }
+function fromToday(days) { var d = new Date(TODAY); d.setDate(d.getDate() + days); return d; }
+// Trash: scans you moved there, plus scans whose expiry passed. Each stays 30 days, then it's gone.
+function trashLeft(s) { return s.trashed ? 30 - (s.trashedAgo || 0) : 30 + daysLeft(s); }
+function inTrash(s) { return !s.gone && (s.trashed || daysLeft(s) <= 0) && trashLeft(s) > 0; }
+function trashItems() { return st.scans.filter(function (s) { return inTrash(s) || (st.tleaving && st.tleaving[s.id]); }).sort(function (a, b) { return trashLeft(a) - trashLeft(b); }); }
+function trashCount() { return st.scans.filter(inTrash).length; }
+function expiredCount() { return st.scans.filter(function (s) { return inTrash(s) && !s.trashed; }).length; }
+function trashLeftText(s) { var l = trashLeft(s); return l === 1 ? '1 day left' : l + ' days left'; }
+function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function cv(k) { return 'var(--c-' + k + ')'; }
+
+/* ---------------- Icons ---------------- */
+var I = {
+  back: '<svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"/></svg>',
+  chev: '<svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="var(--chev)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"/></svg>',
+  updown: '<svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="var(--tx2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"/></svg>',
+  gear: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  search: function (c) { return '<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="' + (c || 'currentColor') + '" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>'; },
+  folder: function (k, w) { var d = Math.round(w * 1.25), g = Math.round(d * 0.56); return '<span aria-hidden="true" style="flex:none;width:' + d + 'px;height:' + d + 'px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;background:' + (k === 'x' ? 'var(--bg)' : (DEEP[k] || cv(k))) + '"><svg width="' + g + '" height="' + g + '" viewBox="0 0 24 24" fill="none" stroke="' + (k === 'x' ? 'var(--tx)' : '#fff') + '" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="' + (GLYPH[k] || GLYPH.folder) + '"/></svg></span>'; },
+  path: function (d, w, sw, col) { return '<svg width="' + w + '" height="' + w + '" viewBox="0 0 24 24" fill="none" stroke="' + (col || 'currentColor') + '" stroke-width="' + (sw || 1.9) + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="' + d + '"/></svg>'; },
+  heart: function (filled, w, col) { return '<svg width="' + w + '" height="' + w + '" viewBox="0 0 24 24" fill="' + (filled ? (col || 'currentColor') : 'none') + '" stroke="' + (col || 'currentColor') + '" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-7.6-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.7c0 5.7-7.6 10.2-7.6 10.2z"/></svg>'; },
+  check: '<svg class="check" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg>',
+  scan: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"/></svg>',
+  dots: '<svg width="20" height="4" viewBox="0 0 20 4" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="2"/><circle cx="10" cy="2" r="2"/><circle cx="18" cy="2" r="2"/></svg>',
+  close: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg>',
+  clear: '<svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="var(--tx3)"/><path d="M6.8 6.8l6.4 6.4M13.2 6.8l-6.4 6.4" stroke="var(--surface)" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  sort: 'M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4',
+  clock: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  grid: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+  share: 'M12 3v12M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7',
+  hourglass: 'M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9',
+  pencil: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+  photos: 'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM4 16l5-5 4 4 2-2 5 5',
+  files: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  copy: 'M9 9h10v11H9zM5 15V4h10'
+};
+var RESCAN = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M8.4 11.4a3.7 3.7 0 0 1 6.5-1.9M15.6 12.6a3.7 3.7 0 0 1-6.5 1.9"/><path d="M15.1 7.6v2.1H13M8.9 16.4v-2.1H11"/></svg>';
+var REDO_C = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"/><path d="M4.5 4v4.5H9"/></svg>';
+var CAMOFF = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M9.5 5H15l1.5 2H19a2 2 0 0 1 2 2v8.5M17.5 19H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.5"/><path d="M9.9 10.2a3 3 0 0 0 4 4"/></svg>';
+var DASHFOLDER = '<svg width="26" height="21" viewBox="0 0 28 22" fill="none" stroke="var(--tx2)" stroke-width="1.6" stroke-dasharray="3 2.5" aria-hidden="true" style="flex:none"><path d="M1 3.5a2.5 2.5 0 0 1 2.5-2.5h5.8a2.5 2.5 0 0 1 1.9.9l1.4 1.6H24.5A2.5 2.5 0 0 1 27 6V18.5a2.5 2.5 0 0 1-2.5 2.5H3.5A2.5 2.5 0 0 1 1 18.5z"/></svg>';
+// Things to pretend-scan. "ai" is the collection Apple Intelligence would suggest.
+var SAMPLES = [
+  { title: 'City Pharmacy', what: 'A receipt', pages: ['r-pharmacy'], ai: 'receipts', text: ['CITY PHARMACY', 'Batteries AA · Sandwich', 'Croissant · Tea'] },
+  { title: 'Lease renewal', what: 'A 3-page letter', pages: ['lease', 'lease-p2', 'lease-p3'], ai: 'documents', text: ['Harlow Property Management', 'Re: Lease renewal · Unit 4B'] },
+  { title: 'Call with landlord', what: 'A handwritten note', pages: ['note-call'], ai: 'notes', text: ['Call w/ landlord', 'heating check Nov 3'] }
+];
+// Collection icons: one symbol per collection. Stored per collection, not hard-wired, so custom collections can choose later.
+// Badges use the deeper collection colours in both themes, so the white symbol stays readable in dark.
+var DEEP = { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+var GLYPH = {
+  wallet: 'M3 6.5h18v11H3zM3 10h18M6.5 14h4',
+  receipts: 'M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3',
+  notes: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+  documents: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
+  throwaways: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10',
+  folder: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z'
+};
+var INFO = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="0.7" fill="currentColor"/></svg>';
+
+/* ---------------- Navigation ---------------- */
+var app = document.getElementById('app');
+function push(v) { closeOverlay(); toast = null; st.stack.push(v); if (!motion) motion = { type: v.t === 'search' ? 'fade-in' : 'push' }; render(); }
+function pop() {
+  closeOverlay();
+  var v = top(), m = { type: 'pop' };
+  if (v.t === 'scan' || v.t === 'tview') { var pi = app.querySelector('#page img'); if (pi) m = { type: 'zoom-out', id: v.id, src: pi.getAttribute('src'), rect: pi.getBoundingClientRect() }; }
+  if (v.t === 'search') m = { type: 'fade-out' };
+  if (v.t === 'camera' || v.t === 'review') m = { type: 'cover-out' };
+  var left = st.stack.pop();
+  if (left && left.t === 'list' && left.key === 'favorites') { left.keep = null; }
+  if (!st.stack.length) st.stack.push({ t: 'home' });
+  if (!motion) motion = m;
+  render();
+}
+function closeOverlay() { overlay = null; }
+function showToast(t, ms) {
+  toast = t; clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () {
+    var el = app.querySelector('.toast'), done = function () { toast = null; render(); };
+    if (el && motionOK()) el.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(10px)' }], { duration: 200, easing: 'ease-in', fill: 'forwards' }).onfinish = done; else done();
+  }, ms || 4500);
+}
+/* Small motion helpers */
+function out(sel, cb, kf) {
+  var el = app.querySelector(sel);
+  if (!el || !motionOK()) { cb(); return; }
+  el.animate(kf || [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.94)' }], { duration: 140, easing: 'ease-in', fill: 'forwards' }).onfinish = cb;
+}
+function menuOut(cb) { out('.menu', cb); }
+function sheetOut(cb) {
+  var sh = document.getElementById('sheet'); if (!sh || !motionOK()) { cb(); return; }
+  var from = getComputedStyle(sh).transform; from = from === 'none' ? 'translateY(0)' : from;
+  var sc = app.querySelector('.scrim'); if (sc) sc.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' });
+  sh.animate([{ transform: from }, { transform: 'translateY(110%)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.9,.6)', fill: 'forwards' }).onfinish = cb;
+}
+function closeDetails() { sheetOut(function () { closeOverlay(); render(); }); }
+function popEl(el) { if (el && motionOK()) el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.38)' }, { transform: 'scale(0.9)' }, { transform: 'scale(1)' }], { duration: 440, easing: 'ease-out' }); }
+function rectIn(r) { var a = app.getBoundingClientRect(); return { left: r.left - a.left, top: r.top - a.top, width: r.width, height: r.height }; }
+// A copy of the scan image flies between a tile and the full page.
+function fly(src, from, to, r0, r1, dur, done) {
+  var w = document.createElement('div');
+  w.style.cssText = 'position:absolute;z-index:60;overflow:hidden;pointer-events:none;background:var(--ground)';
+  var im = new Image(); im.src = src; im.alt = ''; im.style.cssText = 'display:block;width:100%;height:auto';
+  w.appendChild(im); app.appendChild(w);
+  function k(r, rad) { r = rectIn(r); return { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px', borderRadius: rad + 'px' }; }
+  w.animate([k(from, r0), k(to, r1)], { duration: dur, easing: EASE, fill: 'forwards' }).onfinish = function () { if (done) done(); w.remove(); };
+}
+// Like fly(), with a lift partway (an arc) and a fade at the end, for dropping a scan into a folder.
+function flyTo(src, from, to, r0, r1, dur, lift, endOpacity, done) {
+  var w = document.createElement('div');
+  w.style.cssText = 'position:absolute;z-index:61;overflow:hidden;pointer-events:none;background:var(--ground)';
+  var im = new Image(); im.src = src; im.alt = ''; im.style.cssText = 'display:block;width:100%;height:auto';
+  w.appendChild(im); app.appendChild(w);
+  var A = rectIn(from), B = rectIn(to);
+  function k(x, y, wd, ht, rad, op, off) { var o = { left: x + 'px', top: y + 'px', width: wd + 'px', height: ht + 'px', borderRadius: rad + 'px', opacity: op }; if (off !== undefined) o.offset = off; return o; }
+  var m = 0.55, L = function (p, q) { return p + (q - p) * m; };
+  var frames = [k(A.left, A.top, A.width, A.height, r0, 1)];
+  if (lift) frames.push(k(L(A.left, B.left), L(A.top, B.top) - lift, L(A.width, B.width) , L(A.height, B.height), L(r0, r1), 1, m));
+  frames.push(k(B.left, B.top, B.width, B.height, r1, endOpacity === 0 ? 0.15 : 1));
+  w.animate(frames, { duration: dur, easing: 'cubic-bezier(.35,.1,.25,1)', fill: 'forwards' }).onfinish = function () { if (done) done(); w.remove(); };
+}
+function whenLoaded(img, cb) { if (img.complete && img.naturalWidth) cb(); else { img.addEventListener('load', cb, { once: true }); img.addEventListener('error', cb, { once: true }); } }
+function nav(M, old, neu) {
+  old.removeAttribute('id'); old.style.pointerEvents = 'none';
+  old.querySelectorAll('[id]').forEach(function (e) { e.removeAttribute('id'); });
+  var D = 380, gone = function () { old.remove(); };
+  var shade = function (scr) { var s = document.createElement('div'); s.className = 'shade'; scr.appendChild(s); return s; };
+  // Start one frame late so the new screen's layout and images are ready before anything moves.
+  var T = { duration: D, easing: EASE, delay: 24, fill: 'both' };
+  var settle = function (scr) { return function () { scr.classList.remove('moving'); scr.getAnimations().forEach(function (a) { a.cancel(); }); }; };
+  if (M.type === 'push') {
+    app.insertBefore(old, neu); old.classList.add('moving'); neu.classList.add('moving');
+    neu.animate([{ transform: 'translate3d(100%,0,0)' }, { transform: 'translate3d(0,0,0)' }], T).onfinish = settle(neu);
+    old.animate([{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(-28%,0,0)' }], T).onfinish = gone;
+    shade(old).animate([{ opacity: 0 }, { opacity: 0.06 }], T);
+  } else if (M.type === 'pop') {
+    app.insertBefore(old, neu.nextSibling); old.classList.add('moving'); neu.classList.add('moving');
+    neu.animate([{ transform: 'translate3d(-28%,0,0)' }, { transform: 'translate3d(0,0,0)' }], T).onfinish = settle(neu);
+    var sh = shade(neu); sh.animate([{ opacity: 0.06 }, { opacity: 0 }], T).onfinish = function () { sh.remove(); };
+    old.animate([{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(100%,0,0)' }], T).onfinish = gone;
+  } else if (M.type === 'fade-in') {
+    app.insertBefore(old, neu);
+    neu.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: EASE }).onfinish = gone;
+  } else if (M.type === 'fade-out') {
+    app.insertBefore(old, neu.nextSibling);
+    old.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(16px)' }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).onfinish = gone;
+  } else if (M.type === 'zoom-in') {
+    app.insertBefore(old, neu);
+    var img = neu.querySelector('.page-area img');
+    neu.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: 'ease-out' });
+    neu.querySelectorAll('.chrome').forEach(function (c) { c.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: 480 }); });
+    if (!img) { gone(); return; }
+    img.style.visibility = 'hidden';
+    whenLoaded(img, function () { fly(M.src, M.rect, img.getBoundingClientRect(), 6, 3, 440, function () { img.style.visibility = ''; gone(); }); });
+  } else if (M.type === 'zoom-out') {
+    var t = neu.querySelector('[data-zoom="' + M.id + '"]'), a = app.getBoundingClientRect(), tr = t && t.getBoundingClientRect();
+    if (!t || tr.bottom < a.top + 60 || tr.top > a.bottom - 60) { nav({ type: 'pop' }, old, neu); return; }
+    app.insertBefore(old, neu.nextSibling);
+    var oi = old.querySelector('.page-area img'); if (oi) oi.style.visibility = 'hidden';
+    old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'ease-out', fill: 'forwards' });
+    t.style.visibility = 'hidden';
+    fly(M.src, M.rect, tr, 3, 6, 400, function () { t.style.visibility = ''; gone(); });
+  } else if (M.type === 'save-fly') {
+    var a = app.getBoundingClientRect(), seen = function (r) { return r.width && r.bottom > a.top + 60 && r.top < a.bottom - 120; };
+    var frame = neu.querySelector('.tile[data-tile="' + M.id + '"] .frame');
+    var row = neu.querySelector('.row[data-act="open-list"][data-key="' + M.coll + '"]');
+    if (frame && !seen(frame.getBoundingClientRect())) { frame.scrollIntoView({ block: 'center' }); }
+    var target = frame && seen(frame.getBoundingClientRect()) ? 'tile' : row && seen(row.getBoundingClientRect()) ? 'row' : null;
+    if (!target) { nav({ type: 'cover-out' }, old, neu); return; }
+    // The review fades away around its page; a copy of the page does the travelling.
+    app.insertBefore(old, neu.nextSibling); old.style.zIndex = '60';
+    var oi = old.querySelector('.page-area img'); if (oi) oi.style.visibility = 'hidden';
+    old.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-out', fill: 'forwards' }).onfinish = gone;
+    if (target === 'tile') {
+      var tile = frame.closest('.tile'), words = tile.querySelectorAll('.name, .left');
+      frame.style.visibility = 'hidden'; words.forEach(function (e) { e.style.opacity = '0'; });
+      flyTo(M.src, M.rect, frame.getBoundingClientRect(), 3, 6, 540, 0, 1, function () {
+        frame.style.visibility = '';
+        words.forEach(function (e) { e.style.opacity = ''; e.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'ease-out' }); });
+      });
+    } else {
+      var folder = row.querySelector('svg'), count = row.querySelector('.muted'), n = count ? count.textContent : '';
+      if (count) count.textContent = String(+n - 1);
+      flyTo(M.src, M.rect, folder.getBoundingClientRect(), 3, 4, 640, 60, 0, function () {
+        folder.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.3)', offset: 0.35 }, { transform: 'scale(0.92)', offset: 0.7 }, { transform: 'scale(1)' }], { duration: 440, easing: 'ease-out' });
+        if (count) { count.textContent = n; count.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: EASE }); }
+      });
+    }
+  } else if (M.type === 'cover-in') {
+    app.insertBefore(old, neu); neu.classList.add('moving');
+    neu.animate([{ transform: 'translate3d(0,100%,0)' }, { transform: 'translate3d(0,0,0)' }], { duration: 440, easing: EASE, delay: 24, fill: 'both' }).onfinish = function () { settle(neu)(); gone(); };
+    shade(old).animate([{ opacity: 0 }, { opacity: 0.18 }], T);
+  } else if (M.type === 'cover-out') {
+    app.insertBefore(old, neu.nextSibling); old.classList.add('moving'); old.style.zIndex = '60';
+    old.animate([{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(0,100%,0)' }], { duration: 340, easing: 'cubic-bezier(.4,0,.9,.6)', fill: 'forwards' }).onfinish = gone;
+    var sh2 = shade(neu); sh2.animate([{ opacity: 0.18 }, { opacity: 0 }], { duration: 340, fill: 'forwards' }).onfinish = function () { sh2.remove(); };
+  } else gone();
+}
+// The card grows into the sheet (and back) by clipping the sheet to the card's outline.
+function insetOf(S, C, r) { return 'inset(' + (C.top - S.top) + 'px ' + (S.right - C.right) + 'px ' + (S.bottom - C.bottom) + 'px ' + (C.left - S.left) + 'px round ' + r + 'px)'; }
+function reviewMorph(prev) {
+  var card = app.querySelector('#rcard'), sheet = app.querySelector('#rsheet');
+  if (prev.card && sheet) {
+    var S = sheet.getBoundingClientRect();
+    sheet.animate([{ clipPath: insetOf(S, prev.card, 30) }, { clipPath: 'inset(0px 0px 0px 0px round 34px)' }], { duration: 440, easing: EASE });
+    sheet.querySelectorAll('.rin').forEach(function (e) { e.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 0, transform: 'translateY(14px)', offset: 0.25 }, { opacity: 1, transform: 'none' }], { duration: 440, easing: EASE }); });
+  }
+  if (prev.sheet && card) {
+    var g = prev.sheet; g.removeAttribute('id'); g.style.transform = ''; g.style.pointerEvents = 'none';
+    document.getElementById('screen').appendChild(g);
+    var S2 = g.getBoundingClientRect(), C = card.getBoundingClientRect();
+    g.querySelectorAll('.rin').forEach(function (e) { e.animate([{ opacity: 1 }, { opacity: 0, offset: 0.35 }, { opacity: 0 }], { duration: 380, fill: 'forwards' }); });
+    g.animate([{ clipPath: 'inset(0px 0px 0px 0px round 34px)', opacity: 1 }, { clipPath: insetOf(S2, C, 30), opacity: 1, offset: 0.85 }, { clipPath: insetOf(S2, C, 30), opacity: 0 }], { duration: 400, easing: EASE, fill: 'forwards' }).onfinish = function () { g.remove(); };
+    card.querySelectorAll('.rrow').forEach(function (e) { e.animate([{ opacity: 0 }, { opacity: 0, offset: 0.55 }, { opacity: 1 }], { duration: 400 }); });
+  }
+}
+function captureTiles() { var m = {}; app.querySelectorAll('[data-tile]').forEach(function (e) { m[e.dataset.tile] = e.getBoundingClientRect(); }); return m; }
+function flipTiles(b) {
+  app.querySelectorAll('[data-tile]').forEach(function (e) {
+    var r = b[e.dataset.tile];
+    if (!r) { e.animate([{ opacity: 0, transform: 'scale(0.85)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: EASE }); return; }
+    var a = e.getBoundingClientRect(), dx = r.left - a.left, dy = r.top - a.top;
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) e.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 360, easing: EASE });
+  });
+}
+function pageMotion(prev, v) {
+  var img = app.querySelector('#page img'); if (!img) return;
+  if (String(v.page || 0) !== prev.page) {
+    var dir = (v.page || 0) > +prev.page ? 1 : -1;
+    img.animate([{ transform: 'translateX(' + (dir * 70) + 'px)', opacity: 0.2 }, { transform: 'none', opacity: 1 }], { duration: 300, easing: EASE }); return;
+  }
+  var a = img.getBoundingClientRect(), b = prev.rect; if (!a.width) return;
+  var s = b.width / a.width, dx = b.left - a.left, dy = b.top - a.top;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(s - 1) < 0.01) return;
+  img.animate([{ transformOrigin: '0 0', transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + s + ')' }, { transformOrigin: '0 0', transform: 'none' }], { duration: 380, easing: EASE });
+}
+
+/* ---------------- Screens ---------------- */
+function scanPill(label) { return '<div class="fade-bottom"></div><div class="scanpill"><button type="button" data-act="scan">' + I.scan + '<span>' + esc(label || 'Scan') + '</span></button></div>'; }
+
+function home() {
+  var favs = st.favOrder.map(byId).filter(function (s) { return s && s.fav && alive(s); });
+  var h = '<div class="scroll" data-scroll>';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;flex:none"><h1 class="title-xl">Filing Cabinet</h1><button type="button" class="btn-round glass" aria-label="Settings" data-act="settings">' + I.gear + '</button></div>';
+  if (st.homeNotice && expiredCount() > 0) h += '<button type="button" data-act="trash" style="align-self:flex-start;display:flex;align-items:center;gap:6px;min-height:44px;margin:-8px 0 -6px;padding:0;border:0;background:transparent;font-size:15px;line-height:20px;color:var(--tx2);cursor:pointer"><span>' + expiredCount() + ' scans moved to Trash</span><span>·</span><span style="font-weight:600;color:var(--tx)">View</span></button>';
+  h += '<button type="button" data-act="search" style="flex:none;display:flex;align-items:center;gap:8px;min-height:44px;margin-top:8px;padding:0 16px;border:0;border-radius:999px;background:var(--surface);color:var(--tx2);font-size:17px;cursor:pointer">' + I.search() + '<span>Search</span></button>';
+  if (favs.length) {
+    h += '<h2 class="title-m" style="display:flex;align-items:center;min-height:44px;margin-top:6px;flex:none">';
+    h += favs.length > 2 ? '<button type="button" data-act="open-list" data-key="favorites" aria-label="Favorites, see all" style="display:flex;align-items:center;gap:7px;min-height:44px;padding:0;border:0;background:transparent;color:var(--tx);font:inherit;cursor:pointer"><span>Favorites</span><svg width="9" height="15" viewBox="0 0 8 13" fill="none" stroke="var(--tx2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"/></svg></button>' : 'Favorites';
+    h += '</h2><div style="display:flex;gap:8px;margin:0 -16px;padding:0 16px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;flex:none">';
+    favs.forEach(function (s) {
+      h += '<button type="button" data-act="open" data-id="' + s.id + '" style="flex:none;width:148px;scroll-snap-align:start;scroll-margin-left:16px;display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:transparent;color:var(--tx);text-align:left;cursor:pointer"><img data-zoom="' + s.id + '" src="' + s.pages[0] + '" alt="" style="display:block;width:148px;height:96px;border-radius:6px;object-fit:cover;object-position:top;background:var(--ground)"><span style="width:148px;font-size:15px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(s.title) + '</span></button>';
+    });
+    h += '</div>';
+  }
+  h += '<h2 class="title-m" style="display:flex;align-items:center;min-height:44px;margin-top:6px;flex:none">Collections</h2><div class="card" style="flex:none">';
+  COLLS.forEach(function (k) {
+    var n = st.scans.filter(function (s) { return s.from === k && alive(s); }).length;
+    h += '<button type="button" class="row" style="min-height:60px" data-act="open-list" data-key="' + k + '">' + I.folder(k, 27) + '<span class="in"><span>' + NAMES[k] + '</span><span style="display:flex;align-items:center;gap:10px"><span class="muted">' + n + '</span>' + I.chev + '</span></span></button>';
+  });
+  h += '</div><div class="card" style="flex:none;margin-top:16px">';
+  var all = st.scans.filter(alive).length;
+  [['recent', 'Recent', I.clock, ''], ['all', 'All Scans', I.grid, all], ['trash', 'Trash', I.trash, trashCount()]].forEach(function (v) {
+    h += '<button type="button" class="row" style="min-height:60px" data-act="' + (v[0] === 'trash' ? 'trash' : 'open-list') + '" data-key="' + v[0] + '"><span style="flex:none;width:34px;height:34px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--badge)">' + I.path(v[2], 18, 2.1, '#fff') + '</span><span class="in"><span>' + v[1] + '</span><span style="display:flex;align-items:center;gap:10px"><span class="muted">' + v[3] + '</span>' + I.chev + '</span></span></button>';
+  });
+  h += '</div></div>' + scanPill();
+  return h;
+}
+
+function listItems(v) {
+  var key = v.key, items;
+  if (key === 'favorites') {
+    var keep = v.keep || {};
+    items = st.favOrder.map(byId).filter(function (s) { return s && shown(s) && (s.fav || keep[s.id]); });
+  } else if (key === 'recent') items = st.scans.filter(function (s) { return shown(s) && s.age <= 30; });
+  else if (key === 'all') items = st.scans.filter(shown);
+  else items = st.scans.filter(function (s) { return shown(s) && s.from === key; });
+  var sort = st.sorts[key] || 'newest';
+  if (sort !== 'custom') items = items.slice().sort(function (a, b) { return sort === 'oldest' ? b.age - a.age : a.age - b.age; });
+  return items;
+}
+
+function list(v) {
+  var key = v.key, mixed = key === 'recent' || key === 'all' || key === 'favorites', wallet = key === 'wallet';
+  var items = listItems(v);
+  var title = mixed ? { recent: 'Recent', all: 'All Scans', favorites: 'Favorites' }[key] : NAMES[key];
+  var sub = key === 'recent' ? 'Last 30 days' : (items.length + (items.length === 1 ? ' scan' : ' scans') + (mixed ? '' : ' · ' + (LIFE[key] ? 'Kept ' + lifeText(LIFE[key]) : 'Kept forever')));
+  var icon = mixed ? (key === 'favorites' ? I.heart(false, 26, 'var(--tx2)') : I.path(key === 'recent' ? I.clock : I.grid, 26, 1.9, 'var(--tx2)')) : I.folder(key, 28, 22);
+  var smallIcon = mixed ? (key === 'favorites' ? I.heart(false, 18, 'var(--tx2)') : I.path(key === 'recent' ? I.clock : I.grid, 18, 2, 'var(--tx2)')) : I.folder(key, 20, 16);
+  var h = '<div class="smallbar"><div class="t">' + smallIcon + '<span>' + esc(title) + '</span></div></div>';
+  h += '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button><button type="button" class="btn-round glass" aria-label="Sort" data-act="sort-menu">' + I.path(I.sort, 20, 2) + '</button></div>';
+  h += '<div class="scroll" data-scroll><div style="height:44px;flex:none"></div>';
+  h += '<div id="bigtitle" style="flex:none"><div style="display:flex;align-items:center;gap:10px;margin-top:8px">' + icon + '<h1 class="title-l">' + esc(title) + '</h1></div><p class="sub">' + sub + '</p></div>';
+  if (!items.length) {
+    var e = EMPTY[key] || ['Nothing here', key === 'favorites' ? 'Tap the heart on a scan to keep it one tap from Home.' : 'Scans show up here.', 'Scan'];
+    h += '<div class="empty" style="padding-bottom:90px">' + (mixed ? '' : I.folder(key, 64, 50)) + '<b style="margin-top:8px">' + e[0] + '</b><span>' + e[1] + '</span></div></div>' + scanPill('Scan');
+    return h;
+  }
+  var cols = wallet ? 2 : 3, aspect = wallet ? '1.55' : '3 / 4';
+  h += '<div class="grid" id="grid" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr))">';
+  items.forEach(function (s) {
+    var whole = mixed && s.wide;
+    var soon = isSoon(s);
+    var slot = v.dragging === s.id;
+    h += '<div class="tile' + (slot ? ' slot' : '') + '" role="button" tabindex="0" data-act="open" data-tile="' + s.id + '" data-id="' + s.id + '" aria-label="' + esc(s.title) + ', ' + leftText(s) + '">';
+    h += '<span class="frame" data-zoom="' + s.id + '" style="aspect-ratio:' + aspect + '"><img decoding="async" src="' + s.pages[0] + '" alt="" class="' + (whole ? 'whole' : '') + '"></span>';
+    if (s.fav || (v.keep && v.keep[s.id])) h += '<button type="button" class="heart-badge" data-act="tile-heart" data-id="' + s.id + '" aria-label="' + (s.fav ? 'Remove from Favorites' : 'Add back to Favorites') + '" aria-pressed="' + s.fav + '"><span>' + I.heart(s.fav, 15, '#ffffff') + '</span></button>';
+    h += '<span class="name">' + (mixed ? '<span class="dot" style="background:' + cv(s.from) + '"></span>' : '') + '<span>' + esc(s.title) + '</span></span><span class="left' + (soon ? ' soon' : '') + '">' + leftText(s) + '</span></div>';
+  });
+  h += '</div></div>' + scanPill();
+  return h;
+}
+
+/* Search: Option D. Filters always shown; recently viewed and recent searches before typing. */
+function norm(t) { return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function wordStarts(text, w) { var re = new RegExp('(^|[^a-z0-9])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); var m, out = []; while ((m = re.exec(text))) out.push(m.index + m[1].length); return out; }
+function searchScans(q, scope) {
+  var words = norm(q).split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  var out = [];
+  st.scans.forEach(function (s) {
+    if (!alive(s)) return;
+    if (scope !== 'all' && s.from !== scope) return;
+    var title = norm(s.title), body = s.text.map(norm);
+    var ok = words.every(function (w) { return wordStarts(title, w).length || body.some(function (l) { return wordStarts(l, w).length; }); });
+    if (!ok) return;
+    var score = 0;
+    if (words.every(function (w) { return wordStarts(title, w).length; })) score += 1000;
+    var phrase = norm(q).trim();
+    if (words.length > 1 && body.some(function (l) { return l.indexOf(phrase) >= 0; })) score += 50;
+    var count = 0; body.forEach(function (l) { words.forEach(function (w) { count += wordStarts(l, w).length; }); });
+    score += Math.min(count, 3) * 10;
+    // Line to show: the first line with the first word in it.
+    var li = -1, at = -1;
+    for (var i = 0; i < body.length; i++) { var p = wordStarts(body[i], words[0]); if (p.length) { li = i; at = p[0]; break; } }
+    out.push({ s: s, score: score, line: li, at: at, len: words[0].length });
+  });
+  out.sort(function (a, b) { return b.score - a.score || a.s.age - b.s.age; });
+  return out;
+}
+function searchResultsHtml(v) {
+  var q = v.q || '';
+  if (!q.trim()) {
+    var h = '';
+    var viewed = st.viewed.map(byId).filter(function (s) { return s && alive(s); }).slice(0, 4);
+    if (viewed.length) {
+      h += '<h2 class="title-m" style="display:flex;align-items:center;min-height:44px;margin-top:6px;flex:none">Recently viewed</h2><div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;flex:none">';
+      viewed.forEach(function (s) { h += '<button type="button" data-act="open" data-id="' + s.id + '" style="display:flex;flex-direction:column;gap:4px;min-width:0;padding:0;border:0;background:transparent;color:var(--tx);text-align:left;cursor:pointer"><img data-zoom="' + s.id + '" src="' + s.pages[0] + '" alt="" style="display:block;width:100%;aspect-ratio:3/4;border-radius:6px;object-fit:cover;object-position:top;background:var(--ground)"><span style="display:flex;align-items:center;gap:4px;min-width:0"><span class="dot" style="width:6px;height:6px;background:' + cv(s.from) + '"></span><span style="min-width:0;font-size:12px;line-height:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(s.title) + '</span></span></button>'; });
+      h += '</div>';
+    }
+    if (st.searches.length) {
+      h += '<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-top:8px;flex:none"><h2 class="title-m">Recent searches</h2><button type="button" data-act="clear-searches" style="min-height:44px;padding:0;border:0;background:transparent;font-size:15px;color:var(--tx2);cursor:pointer">Clear</button></div><div class="card" style="flex:none">';
+      st.searches.slice(0, 3).forEach(function (t) { h += '<button type="button" class="row" data-act="use-search" data-q="' + esc(t) + '">' + I.path(I.clock, 18, 2, 'var(--tx2)') + '<span class="in">' + esc(t) + '</span></button>'; });
+      h += '</div>';
+    }
+    return h;
+  }
+  var res = searchScans(q, v.scope);
+  if (!res.length) {
+    if (v.scope !== 'all') {
+      var elsewhere = searchScans(q, 'all');
+      return '<div class="empty">' + I.search('var(--tx2)').replace('width="18" height="18"', 'width="44" height="44"').replace('stroke-width="2"', 'stroke-width="1.3"') + '<b>No results in ' + NAMES[v.scope] + '</b><span>' + (elsewhere.length ? elsewhere.length + (elsewhere.length === 1 ? ' scan' : ' scans') + ' elsewhere mention' + (elsewhere.length === 1 ? 's' : '') + ' “' + esc(q.trim()) + '”.' : 'Nothing else mentions “' + esc(q.trim()) + '” either.') + '</span>' + (elsewhere.length ? '<button type="button" data-act="scope" data-scope="all">Search all scans</button>' : '') + '</div>';
+    }
+    return '<div class="empty">' + I.search('var(--tx2)').replace('width="18" height="18"', 'width="44" height="44"').replace('stroke-width="2"', 'stroke-width="1.3"') + '<b>No results for “' + esc(q.trim()) + '”</b><span>Search reads the words on every scan. Check the spelling or try another word.</span></div>';
+  }
+  var h = '<p style="margin:16px 0 8px;font-size:15px;line-height:20px;color:var(--tx2);flex:none">' + res.length + (res.length === 1 ? ' scan' : ' scans') + (v.scope !== 'all' ? ' in ' + NAMES[v.scope] : '') + '</p><div class="card" style="flex:none">';
+  res.forEach(function (r, i) {
+    var s = r.s, line = r.line >= 0 ? s.text[r.line] : s.text[0];
+    var snippet = r.line >= 0 ? esc(line.slice(0, r.at)) + '<span class="hit">' + esc(line.slice(r.at, r.at + r.len)) + '</span>' + esc(line.slice(r.at + r.len)) : esc(line);
+    h += '<button type="button" class="row" data-act="open" data-id="' + s.id + '" data-saveq="1" style="padding-right:16px"><img data-zoom="' + s.id + '" src="' + s.pages[0] + '" alt="" style="flex:none;width:44px;height:58px;box-sizing:border-box;border-radius:6px;border:0.5px solid var(--sep);object-fit:' + (s.wide ? 'contain' : 'cover') + ';object-position:' + (s.wide ? 'center' : 'top') + ';background:var(--ground)"><span class="in" style="padding:12px 0;' + (i ? '' : 'border-top:0') + '"><span style="flex:1;min-width:0;display:flex;flex-direction:column"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(s.title) + '</span><span style="font-size:15px;line-height:20px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + snippet + '</span><span style="display:flex;align-items:center;gap:5px;font-size:13px;line-height:18px;color:var(--tx2)"><span class="dot" style="background:' + cv(s.from) + '"></span>' + NAMES[s.from] + ' · ' + fmt(scanDate(s)) + '</span></span>' + I.chev + '</span></button>';
+  });
+  return h + '</div>';
+}
+function search(v) {
+  var h = '<div class="scroll" data-scroll style="padding-bottom:40px">';
+  h += '<div style="display:flex;align-items:center;gap:10px;flex:none"><label class="sfield">' + I.search('var(--tx2)') + '<input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="' + (v.scope === 'all' ? 'Search all scans' : 'Search ' + NAMES[v.scope]) + '" value="' + esc(v.q || '') + '" aria-label="Search"><button type="button" data-act="q-clear" aria-label="Clear" style="width:32px;height:32px;padding:0;border:0;background:transparent;display:' + (v.q ? 'flex' : 'none') + ';align-items:center;justify-content:center;cursor:pointer" id="qclear">' + I.clear + '</button></label><button type="button" class="btn-round glass" aria-label="Close search" data-act="back">' + I.close + '</button></div>';
+  h += '<div class="chips" role="group" aria-label="Filter by collection">';
+  ['all'].concat(COLLS).forEach(function (k) { h += '<button type="button" class="chip" data-act="scope" data-scope="' + k + '" aria-pressed="' + (v.scope === k) + '">' + (k === 'all' ? '' : '<span class="dot" style="background:' + cv(k) + '"></span>') + (k === 'all' ? 'All' : NAMES[k]) + '</button>'; });
+  h += '</div><div id="results" style="display:flex;flex-direction:column;flex:1">' + searchResultsHtml(v) + '</div></div>';
+  return h;
+}
+
+/* Viewer: like Photos. Details live in a sheet; every row there edits. */
+function viewer(v) {
+  var s = byId(v.id); if (!s) return stub({ title: 'Scan not found' });
+  var soon = isSoon(s), multi = s.pages.length > 1, details = overlay && overlay.kind === 'details';
+  var pageTop = details ? 'calc(var(--top) + 58px)' : 'calc(var(--top) + 66px)';
+  var pageH = details ? 'calc(100% - var(--top) - 58px - ' + (overlay.renaming ? '380px' : '300px') + ')' : 'calc(100% - var(--top) - 66px - ' + (multi ? '190px' : '140px') + ')';
+  var h = '<div class="page-area" id="page" style="top:' + pageTop + ';height:' + pageH + '"><img data-page="' + (v.page || 0) + '" src="' + s.pages[v.page || 0] + '" alt="' + esc(s.title) + ', page ' + ((v.page || 0) + 1) + ' of ' + s.pages.length + '"></div>';
+  h += '<div class="topbar chrome" style="height:48px"><button type="button" class="btn-round glass" style="width:48px;height:48px" aria-label="Back" data-act="back">' + I.back + '</button>';
+  if (!details) h += '<button type="button" class="vpill glass" data-act="details" aria-label="' + esc(s.title) + ', details"><b>' + esc(s.title) + '</b><small><span class="dot" style="background:' + cv(s.from) + '"></span>' + NAMES[s.from] + ' · <span style="color:' + (soon ? 'var(--soon)' : 'inherit') + ';font-weight:' + (soon ? 600 : 400) + '">' + expShort(s) + '</span></small></button>';
+  h += '<button type="button" class="btn-round glass" style="width:48px;height:48px" aria-label="More" data-act="more-menu">' + I.dots + '</button></div>';
+  if (multi && !details) {
+    h += '<div class="strip chrome" aria-label="Pages">';
+    s.pages.forEach(function (p, i) { h += '<button type="button" data-act="page" data-i="' + i + '" aria-label="Page ' + (i + 1) + '" aria-current="' + ((v.page || 0) === i) + '"><img src="' + p + '" alt=""></button>'; });
+    h += '</div>';
+  }
+  if (!details) {
+    h += '<div class="vbar chrome"><button type="button" class="ib solo glass" aria-label="Share" data-act="ios" data-what="The share sheet">' + I.path(I.share, 23) + '</button>';
+    h += '<span class="group glass"><button type="button" class="ib" aria-label="' + (s.fav ? 'Remove from Favorites' : 'Add to Favorites') + '" aria-pressed="' + s.fav + '" data-act="fav">' + I.heart(s.fav, 24) + '</button><button type="button" class="ib info" aria-label="Details" aria-pressed="false" data-act="details">' + INFO + '</button></span>';
+    h += '<button type="button" class="ib solo glass" aria-label="Move to Trash" data-act="trash-confirm">' + I.path(I.trash, 23) + '</button></div>';
+  }
+  return h;
+}
+
+function detailsSheet(s, o) {
+  var soon = isSoon(s);
+  var h = '<div class="scrim" data-act="close-overlay"></div><div class="sheet" id="sheet" role="dialog" aria-label="Details"><span class="grab" aria-hidden="true"></span>';
+  if (o.renaming) {
+    h += '<label style="display:flex;flex-direction:column;margin-top:10px"><span style="margin:0 4px;font-size:13px;line-height:18px;color:var(--tx2)">Title</span><span class="dfield"><input id="rename" type="text" enterkeyhint="done" value="' + esc(s.title) + '" aria-label="Title"><button type="button" data-act="rename-clear" aria-label="Clear title" style="width:32px;height:32px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">' + I.clear.replace('var(--surface)', 'var(--well)') + '</button></span><span style="margin:6px 4px 0;font-size:13px;line-height:18px;color:var(--tx2)">Suggested from the scan’s text. Search finds it by title and text.</span></label>';
+  } else {
+    h += '<button type="button" class="dtitle" data-act="rename" aria-label="Rename ' + esc(s.title) + '"><b>' + esc(s.title) + '</b>' + I.path(I.pencil, 17, 2, 'var(--tx2)') + '</button>';
+    h += '<p style="margin:0 4px;font-size:13px;line-height:18px;color:var(--tx2)">Scanned ' + fmt(scanDate(s), true) + ' · ' + s.pages.length + (s.pages.length === 1 ? ' page' : ' pages') + '</p>';
+  }
+  h += '<div class="drows">';
+  h += '<button type="button" class="drow" data-act="coll-menu" id="row-coll">' + I.folder(s.from, 26, 21) + '<span class="two"><small>Collection</small><span>' + NAMES[s.from] + '</span></span>' + I.updown + '</button>';
+  h += '<button type="button" class="drow" data-act="exp-menu" id="row-exp">' + I.path(I.hourglass, 24, 1.9, soon ? 'var(--soon)' : 'var(--tx2)') + '<span class="two"><small>Expiry</small><span style="color:' + (soon ? 'var(--soon)' : 'var(--tx)') + ';font-weight:' + (soon ? 600 : 400) + '">' + (daysLeft(s) === Infinity ? 'Kept forever' : fmt(expDate(s)) + ' · ' + leftText(s)) + '</span></span>' + I.updown + '</button>';
+  h += '</div>';
+  if (o.note) h += '<p class="note"><span>' + esc(o.note) + '</span>' + (o.undo ? '<button type="button" data-act="undo-move">Undo</button>' : '') + '</p>';
+  h += '</div>';
+  return h;
+}
+
+function expiryChoices(s) {
+  var base = scanDate(s), out = [];
+  function after(days) { var d = new Date(base); d.setDate(d.getDate() + days); return d; }
+  var def = LIFE[s.from];
+  out.push({ label: NAMES[s.from] + ' default', sub: def ? lifeText(def) + ' · ' + fmt(after(def)) : 'Kept forever', days: null, on: !s.custom, off: def > 0 && def - s.age <= 0 });
+  [[7, '1 week'], [30, '1 month'], [91, '3 months'], [365, '1 year'], [0, 'Forever']].forEach(function (c) {
+    if (c[0] === def && !s.custom) return;
+    var passed = c[0] > 0 && c[0] - s.age <= 0;
+    out.push({ label: c[1], sub: c[0] ? fmt(after(c[0]), after(c[0]).getFullYear() !== 2026) + (passed ? ' · passed' : '') : 'Never expires', days: c[0], on: !!(s.custom && s.custom.days === c[0]), off: passed });
+  });
+  return out;
+}
+
+function menuHtml(o) {
+  var h = '<div class="scrim over" data-act="close-menu"></div>';
+  if (o.menu === 'sort') {
+    var key = top().key, cur = st.sorts[key] || 'newest';
+    var items = (key === 'favorites' ? [['custom', 'Custom order']] : []).concat([['newest', 'Newest first'], ['oldest', 'Oldest first']]);
+    h += '<div class="menu" role="menu" style="right:16px;top:calc(var(--top) + 52px);width:230px">';
+    items.forEach(function (m) { h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + (cur === m[0]) + '" data-act="set-sort" data-sort="' + m[0] + '">' + (cur === m[0] ? I.check : '<span class="check"></span>') + '<span>' + m[1] + '</span></button>'; });
+    return h + '</div>';
+  }
+  if (o.menu === 'more') {
+    h += '<div class="menu" role="menu" style="right:16px;top:calc(var(--top) + 56px);width:240px">';
+    [['Save to Photos', I.photos], ['Save to Files', I.files], ['Copy Text', I.copy]].forEach(function (m) { h += '<button type="button" class="mi" role="menuitem" data-act="ios" data-what="' + m[0] + '" style="justify-content:space-between;padding:0 18px"><span>' + m[0] + '</span>' + I.path(m[1], 20, 1.8) + '</button>'; });
+    return h + '</div>';
+  }
+  if (o.menu === 'rcoll' || o.menu === 'rexp') {
+    var d = top().draft;
+    h += '<div class="menu up" role="menu" style="right:24px;bottom:' + o.bottom + 'px;width:262px">';
+    if (o.menu === 'rcoll') COLLS.forEach(function (k) { h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + (d.coll === k) + '" data-act="r-set-coll" data-key="' + k + '">' + (d.coll === k ? I.check : '<span class="check"></span>') + '<span class="two"><span>' + NAMES[k] + '</span><small>' + lifeText(LIFE[k]) + '</small></span>' + I.folder(k, 20, 16) + '</button>'; });
+    else {
+      var def = LIFE[d.coll], cur = rDays(d), list = [{ label: NAMES[d.coll] + ' default', sub: def ? lifeText(def) + ' · ' + fmt(fromToday(def)) : 'Kept forever', days: 'default', on: !d.custom }];
+      [[7, '1 week'], [30, '1 month'], [91, '3 months'], [365, '1 year'], [0, 'Forever']].forEach(function (c) { if (c[0] === def && !d.custom) return; list.push({ label: c[1], sub: c[0] ? fmt(fromToday(c[0])) : 'Never expires', days: c[0], on: !!d.custom && cur === c[0] }); });
+      list.forEach(function (c, i) { if (i === 1) h += '<div class="gap" role="separator"></div>'; h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + c.on + '" data-act="r-set-exp" data-days="' + c.days + '">' + (c.on ? I.check : '<span class="check"></span>') + '<span class="two"><span>' + c.label + '</span><small>' + c.sub + '</small></span></button>'; });
+      h += '<div class="gap" role="separator"></div><button type="button" class="mi" role="menuitem" data-act="ios" data-what="The iOS date picker"><span class="check"></span><span>Choose a date…</span></button>';
+    }
+    return h + '</div>';
+  }
+  var s = byId(top().id);
+  if (o.menu === 'coll') {
+    h += '<div class="menu up" role="menu" style="right:24px;bottom:150px;width:262px">';
+    COLLS.forEach(function (k) { h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + (s.from === k) + '" data-act="set-coll" data-key="' + k + '">' + (s.from === k ? I.check : '<span class="check"></span>') + '<span class="two"><span>' + NAMES[k] + '</span><small>' + lifeText(LIFE[k]) + '</small></span>' + I.folder(k, 20, 16) + '</button>'; });
+    return h + '</div>';
+  }
+  if (o.menu === 'exp') {
+    h += '<div class="menu up" role="menu" style="right:24px;bottom:92px;width:262px">';
+    expiryChoices(s).forEach(function (c, i) {
+      if (i === 1) h += '<div class="gap" role="separator"></div>';
+      h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + c.on + '" aria-disabled="' + c.off + '" data-act="set-exp" data-days="' + (c.days === null ? 'default' : c.days) + '">' + (c.on ? I.check : '<span class="check"></span>') + '<span class="two"><span>' + c.label + '</span><small>' + c.sub + '</small></span></button>';
+    });
+    h += '<div class="gap" role="separator"></div><button type="button" class="mi" role="menuitem" data-act="ios" data-what="The iOS date picker"><span class="check"></span><span>Choose a date…</span></button>';
+    return h + '</div>';
+  }
+  if (o.menu === 'life') {
+    var lk = top().key;
+    h += '<div class="menu" role="menu" style="right:24px;top:' + o.y + 'px;width:220px">';
+    LIFE_CHOICES.forEach(function (c) { var on = LIFE[lk] === c[0]; h += '<button type="button" class="mi" role="menuitemradio" aria-checked="' + on + '" data-act="s-set-life" data-days="' + c[0] + '">' + (on ? I.check : '<span class="check"></span>') + '<span>' + c[1] + '</span></button>'; });
+    return h + '</div>';
+  }
+  if (o.menu === 'ttile') {
+    var ts = byId(o.id);
+    h = '<div class="scrim over" data-act="close-menu" style="background:var(--dim);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)"></div>';
+    h += '<div class="menu" role="menu" style="left:' + o.x + 'px;top:' + o.y + 'px;width:250px;transform-origin:top left">';
+    h += '<button type="button" class="mi" role="menuitem" data-act="tt-open" data-id="' + ts.id + '" style="padding:0 18px">Open</button>';
+    h += '<button type="button" class="mi" role="menuitem" data-act="tt-restore" data-id="' + ts.id + '" style="justify-content:space-between;padding:0 18px"><span class="two"><span>Restore</span><small>To ' + NAMES[ts.from] + ', kept forever</small></span>' + I.path('M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11', 20, 1.8) + '</button>';
+    h += '<button type="button" class="mi" role="menuitem" data-act="tt-delete" data-id="' + ts.id + '" style="justify-content:space-between;padding:0 18px;color:var(--destructive)"><span>Delete now</span>' + I.path(I.trash, 20, 1.8) + '</button>';
+    return h + '</div>';
+  }
+  if (o.menu === 'tile') {
+    var t = byId(o.id);
+    h += '<div class="menu" role="menu" style="left:' + o.x + 'px;top:' + o.y + 'px;width:240px;transform-origin:top left">';
+    h += '<button type="button" class="mi" role="menuitem" data-act="open" data-id="' + t.id + '" style="justify-content:space-between;padding:0 18px"><span>Open</span></button>';
+    h += '<button type="button" class="mi" role="menuitem" data-act="tile-heart" data-id="' + t.id + '" style="justify-content:space-between;padding:0 18px"><span>' + (t.fav ? 'Remove from Favorites' : 'Add to Favorites') + '</span>' + I.heart(t.fav, 20) + '</button>';
+    return h + '</div>';
+  }
+  return '';
+}
+
+function openCamera() { var v = top(); motion = { type: 'cover-in' }; push({ t: 'camera', coll: v.t === 'list' && LIFE.hasOwnProperty(v.key) ? v.key : null }); }
+function syncGuide() { ['ask', 'allowed', 'off'].forEach(function (m) { var b = document.getElementById('cam-' + m); if (b) b.setAttribute('aria-pressed', String(st.camera === m)); }); }
+function obClose() {
+  var el = app.querySelector('.pagesheet'), done = function () { closeOverlay(); render(); };
+  app.querySelectorAll('.alert, .scrim').forEach(function (e) { e.style.display = 'none'; });
+  if (el && motionOK()) el.animate([{ transform: 'none' }, { transform: 'translateY(105%)' }], { duration: 300, easing: 'cubic-bezier(.4,0,.9,.6)', fill: 'forwards' }).onfinish = done; else done();
+}
+function settingsScreen(v) {
+  var aiAvail = true; // on a real device: whether Apple Intelligence is available
+  var h = '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button></div><div class="scroll" data-scroll><div style="height:44px;flex:none"></div>';
+  h += '<h1 class="title-l" style="flex:none;margin-top:8px;font-size:34px;line-height:41px">Settings</h1>';
+  h += '<div class="card" style="flex:none;margin-top:22px"><button type="button" class="srow" data-act="s-colls" style="cursor:pointer"><span class="ic">' + I.path('M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z', 22, 1.8) + '</span><span class="in"><span class="two">Collections</span><span class="muted">' + COLLS.length + '</span>' + I.chev + '</span></button></div>';
+  h += '<div class="card" style="flex:none;margin-top:22px">';
+  h += '<div class="srow"><span class="ic">' + I.path('M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9zM18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z', 22, 1.8) + '</span><span class="in"><span class="two"><span>Apple Intelligence</span><small>' + (aiAvail ? 'Suggests titles and collections' : 'Turn it on in iPhone Settings first') + '</small></span><button type="button" class="tog" role="switch" aria-label="Apple Intelligence" aria-checked="' + opts.ai + '" data-act="s-ai"><span></span></button></span></div>';
+  h += '<div class="srow"><span class="ic">' + I.path('M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0', 22, 1.8) + '</span><span class="in"><span class="two"><span>Notifications</span><small>A note when scans move to Trash</small></span><button type="button" class="tog" role="switch" aria-label="Notifications" aria-checked="' + st.reminders + '" data-act="s-rem"><span></span></button></span></div>';
+  h += '</div>';
+  h += '<div class="card" style="flex:none;margin-top:22px"><button type="button" class="srow" data-act="ios" data-what="A Mail draft" style="cursor:pointer"><span class="ic">' + I.path('M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7', 22, 1.8) + '</span><span class="in"><span class="two">Send feedback</span>' + I.chev + '</span></button></div>';
+  h += '<p style="margin:28px 0 0;text-align:center;font-size:13px;line-height:18px;color:var(--tx2);flex:none">Filing Cabinet 1.0 · Private by design</p></div>';
+  return h;
+}
+function collsScreen(v) {
+  var h = '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button></div><div class="scroll" data-scroll><div style="height:44px;flex:none"></div>';
+  h += '<div style="flex:none;margin-top:8px"><h1 class="title-l" style="font-size:34px;line-height:41px">Collections</h1><p class="sub">How long each one keeps scans</p></div>';
+  h += '<div class="card" style="flex:none;margin-top:18px">';
+  COLLS.forEach(function (k) {
+    var n = st.scans.filter(function (s) { return alive(s) && s.from === k; }).length;
+    h += '<button type="button" class="srow" data-act="s-coll" data-key="' + k + '" style="min-height:60px;cursor:pointer">' + I.folder(k, 26, 20) + '<span class="in"><span class="two"><span>' + NAMES[k] + '</span><small>' + (LIFE[k] ? 'Kept ' + lifeText(LIFE[k]) : 'Kept forever') + ' · ' + n + (n === 1 ? ' scan' : ' scans') + '</small></span>' + I.chev + '</span></button>';
+  });
+  return h + '</div><p style="margin:8px 16px 0;font-size:13px;line-height:18px;color:var(--tx2);flex:none">Counted from each scan’s date.</p></div>';
+}
+function collScreen(v) {
+  var k = v.key, n = st.scans.filter(function (s) { return alive(s) && s.from === k; }).length;
+  var h = '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button></div><div class="scroll" data-scroll><div style="height:44px;flex:none"></div>';
+  h += '<div style="flex:none;margin-top:8px"><div style="display:flex;align-items:center;gap:10px">' + I.folder(k, 30, 24) + '<h1 class="title-l" style="font-size:34px;line-height:41px">' + NAMES[k] + '</h1></div><p class="sub">' + n + (n === 1 ? ' scan' : ' scans') + '</p></div>';
+  h += '<span style="margin:22px 16px 6px;font-size:13px;line-height:18px;color:var(--tx2);flex:none">Expiry</span>';
+  h += '<div class="card" style="flex:none"><button type="button" class="srow" id="row-life" data-act="s-life-menu" style="cursor:pointer"><span class="in" style="padding-left:0"><span class="two">Keep scans for</span><span class="muted">' + (LIFE[k] ? lifeText(LIFE[k]) : 'Forever') + '</span>' + I.updown + '</span></button></div>';
+  h += '<p style="margin:6px 16px 0;font-size:13px;line-height:18px;color:var(--tx2);flex:none">Applies to ' + plural(k) + ' you already have. Scans you gave their own expiry keep it.</p></div>';
+  return h;
+}
+function plural(k) { return k === 'wallet' ? 'Wallet scans' : NAMES[k].toLowerCase(); }
+
+function trashScreen(v) {
+  var items = trashItems(), sel = v.sel || {}, n = Object.keys(sel).length;
+  var h = '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button>';
+  if (items.length) h += '<button type="button" class="btn-pill glass" style="font-weight:600" data-act="tsel">' + (v.selecting ? 'Cancel' : 'Select') + '</button>';
+  h += '</div><div class="scroll" data-scroll><div style="height:44px;flex:none"></div>';
+  h += '<div style="flex:none;margin-top:8px"><h1 class="title-l" style="font-size:34px;line-height:41px">Trash</h1><p class="sub"' + (v.selecting ? ' style="color:var(--tx);font-weight:600"' : '') + '>' + (!items.length ? '' : v.selecting ? (n ? n + ' selected' : 'Tap scans to select them') : items.length + (items.length === 1 ? ' scan' : ' scans') + ' · each is deleted after 30 days here') + '</p></div>';
+  if (!items.length) return h + '<div class="empty" style="padding-bottom:90px">' + I.path(I.trash, 44, 1.3, 'var(--tx2)') + '<b>Trash is empty</b><span>Scans land here when they expire or you move them here. Each one stays 30 days, then it’s deleted.</span></div></div>';
+  h += '<div class="grid" id="tgrid" style="grid-template-columns:repeat(3,minmax(0,1fr))">';
+  items.forEach(function (s) {
+    var l = trashLeft(s), soon = l <= 7, on = !!sel[s.id];
+    h += '<div class="tile" role="button" tabindex="0" data-act="tt-tap" data-tile="' + s.id + '" data-id="' + s.id + '" aria-label="' + esc(s.title) + ', ' + trashLeftText(s) + '"' + (v.selecting ? ' aria-pressed="' + on + '"' : '') + '>';
+    var chk = !v.selecting ? '' : '<span class="tcheck" style="position:absolute;right:6px;bottom:6px;width:24px;height:24px;box-sizing:border-box;border-radius:999px;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;background:' + (on ? 'var(--tx)' : 'rgba(255,255,255,0.55)') + '">' + (on ? '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--bg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"/></svg>' : '') + '</span>';
+    h += '<span class="frame" data-zoom="' + s.id + '" style="aspect-ratio:3 / 4"><img decoding="async" src="' + s.pages[0] + '" alt="" style="opacity:' + (on ? 0.75 : 1) + '">' + chk + '</span>';
+    if (s.fav) h += '<span class="heart-badge" style="pointer-events:none"><span>' + I.heart(true, 15, '#ffffff') + '</span></span>';
+    h += '<span class="name"><span class="dot" style="background:' + cv(s.from) + '"></span><span>' + esc(s.title) + '</span></span><span class="left' + (soon ? ' soon' : '') + '">' + trashLeftText(s) + '</span></div>';
+  });
+  h += '</div></div><div class="fade-bottom"></div>';
+  if (v.selecting) h += '<div class="vbar" style="gap:10px"><button type="button" class="btn-pill glass" style="flex:1;height:54px;font-weight:600;color:var(--destructive);opacity:' + (n ? 1 : 0.45) + '" data-act="tdel-sel" aria-disabled="' + !n + '">Delete' + (n ? ' ' + n : '') + '</button><button type="button" class="rbig" style="flex:1;margin:0" data-act="tres-sel" aria-disabled="' + !n + '">Restore' + (n ? ' ' + n : '') + '</button></div>';
+  else h += '<div class="scanpill"><button type="button" class="glass" style="background:var(--glass-strong);color:var(--destructive)" data-act="tempty">Empty Trash</button></div>';
+  return h;
+}
+function trashViewer(v) {
+  var s = byId(v.id), l = trashLeft(s);
+  var h = '<div class="page-area" id="page" style="left:16px;right:16px;top:calc(var(--top) + 66px);height:calc(100% - var(--top) - 66px - 150px)"><img data-page="0" src="' + s.pages[0] + '" alt="' + esc(s.title) + '"></div>';
+  h += '<div class="topbar" style="height:48px"><button type="button" class="btn-round glass" style="width:48px;height:48px" aria-label="Close" data-act="back">' + I.close + '</button>';
+  h += '<span class="vpill glass" style="cursor:default"><b>' + esc(s.title) + '</b><small style="color:' + (l <= 7 ? 'var(--soon)' : 'var(--tx2)') + ';font-weight:' + (l <= 7 ? 600 : 400) + '">' + trashLeftText(s) + '</small></span><span style="width:48px"></span></div>';
+  h += '<div class="vbar" style="gap:10px"><button type="button" class="btn-pill glass" style="flex:1;height:54px;font-weight:600;color:var(--destructive);background:var(--glass-strong)" data-act="tv-delete">Delete now</button><button type="button" class="rbig" style="flex:1;margin:0" data-act="tv-restore">Restore</button></div>';
+  return h;
+}
+
+function camera(v) {
+  var h = '<div class="topbar"><button type="button" class="btn-pill glass" style="font-weight:600" data-act="back">Cancel</button></div><div class="scroll"><div style="height:44px;flex:none"></div><div class="stub">';
+  h += '<span class="badge">Not designed here · iOS draws it</span><h1 class="title-l">Document camera</h1>';
+  h += '<p style="margin:0;font-size:15px;line-height:22px;color:var(--tx2)">iOS finds the page edges and takes the shot. Several pages make one scan. Pick something to pretend-scan:</p>';
+  if (v.rescan) h += '<p style="margin:0;font-size:15px;line-height:22px;color:var(--tx2)">Rescanning: the new pages replace the old ones. Cancel keeps what you had.</p>';
+  h += '<div class="card" style="margin-top:4px">' + SAMPLES.map(function (s, i) { return '<button type="button" class="row camrow" style="min-height:64px" data-act="pretend" data-i="' + i + '"><img src="' + img(s.pages[0]) + '" alt=""><span class="in"><span style="display:flex;flex-direction:column"><span>' + s.what + '</span><small style="font-size:13px;line-height:18px;color:var(--tx2)">' + s.pages.length + (s.pages.length === 1 ? ' page' : ' pages') + '</small></span>' + I.chev + '</span></button>'; }).join('') + '</div>';
+  return h + '</div></div>';
+}
+
+function rDays(d) { return d.custom ? d.custom.days : LIFE[d.coll]; }
+function review(v) {
+  var d = v.draft, multi = d.pages.length > 1, open = v.open, pg = v.page || 0;
+  var below = open ? (v.renaming ? '392px' : '316px') : (multi ? '214px' : '150px');
+  var h = '<div class="page-area" id="page" style="left:16px;right:16px;top:calc(var(--top) + 66px);height:calc(100% - var(--top) - 66px - ' + below + ')"><img data-page="' + pg + '" src="' + d.pages[pg] + '" alt="New scan, page ' + (pg + 1) + ' of ' + d.pages.length + '"></div>';
+  h += '<div class="topbar" style="height:48px"><button type="button" class="btn-round glass" style="width:48px;height:48px" aria-label="Cancel" data-act="r-cancel">' + I.close + '</button>';
+  h += '<button type="button" class="vpill glass" data-act="r-open" aria-label="New scan, ' + (multi ? 'page ' + (pg + 1) + ' of ' + d.pages.length : '1 page') + ', details"><b>New scan</b><small>' + (multi ? 'Page ' + (pg + 1) + ' of ' + d.pages.length : '1 page') + '</small></button><button type="button" class="btn-round glass" style="width:48px;height:48px" aria-label="Rescan" data-act="r-rescan">' + REDO_C + '</button></div>';
+  if (multi && !open) {
+    h += '<div class="strip" style="bottom:146px" aria-label="Pages">';
+    d.pages.forEach(function (p, i) { h += '<button type="button" data-act="page" data-i="' + i + '" aria-label="Page ' + (i + 1) + '" aria-current="' + (pg === i) + '"><img src="' + p + '" alt=""></button>'; });
+    h += '</div>';
+  }
+  var days = d.coll ? rDays(d) : null;
+  if (!open) {
+    h += '<div class="rcard glass" id="rcard" data-act="r-open" role="group" aria-label="New scan"><span class="grab" aria-hidden="true"></span><div class="rrow"><div class="rsum">';
+    h += '<button type="button" class="rt" data-act="r-rename" aria-label="Rename ' + esc(d.title) + '"><b>' + esc(d.title) + '</b>' + I.path(I.pencil, 14, 2, 'var(--tx2)') + '</button>';
+    h += '<button type="button" class="rl" data-act="r-open" aria-label="Change collection or expiry"><span class="dot" style="width:8px;height:8px;background:' + cv(d.coll) + '"></span>' + NAMES[d.coll] + ' · ' + keptText(days) + '</button>';
+    h += '</div><button type="button" class="rsave" data-act="r-save">Save</button></div></div>';
+    return h;
+  }
+  h += '<div class="sheet rsheet" id="rsheet" role="group" aria-label="New scan"><span class="grab rin" aria-hidden="true"></span>';
+  if (v.renaming) h += '<label class="rin" style="display:flex;flex-direction:column;margin-top:10px"><span style="margin:0 4px;font-size:13px;line-height:18px;color:var(--tx2)">Title</span><span class="dfield"><input id="rrename" type="text" enterkeyhint="done" value="' + esc(d.title) + '" aria-label="Title"><button type="button" data-act="r-rename-clear" aria-label="Clear title" style="width:32px;height:32px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer">' + I.clear.replace('var(--surface)', 'var(--well)') + '</button></span></label>';
+  else h += '<button type="button" class="dtitle rin" data-act="r-rename" aria-label="Rename ' + esc(d.title) + '"><b>' + esc(d.title) + '</b>' + I.path(I.pencil, 17, 2, 'var(--tx2)') + '</button>';
+  h += '<div class="drows rin">';
+  h += '<button type="button" class="drow" data-act="r-coll-menu" id="r-coll">' + (d.coll ? I.folder(d.coll, 26, 21) : DASHFOLDER) + '<span class="two"><small>' + (d.coll ? (d.suggested ? 'Collection · suggested' : 'Collection') : 'Collection · required') + '</small><span style="font-weight:' + (d.coll ? 400 : 600) + '">' + (d.coll ? NAMES[d.coll] : 'Choose a collection') + '</span></span>' + I.updown + '</button>';
+  h += '<button type="button" class="drow" data-act="r-exp-menu" id="r-exp" aria-disabled="' + !d.coll + '">' + I.path(I.hourglass, 24, 1.9, 'var(--tx2)') + '<span class="two"><small>Expiry</small><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"' + (v.expFresh ? ' class="fresh"' : '') + '>' + (!d.coll ? 'Set by the collection' : days === 0 ? 'Kept forever' : lifeText(days) + ' · until ' + (days > 91 ? fmt(fromToday(days), true) : MONTHS[fromToday(days).getMonth()] + ' ' + fromToday(days).getDate())) + '</span></span>' + I.updown + '</button>';
+  h += '</div>';
+  h += '<button type="button" class="rbig rin" data-act="r-save" aria-disabled="' + !d.coll + '">' + (d.coll ? 'Save to ' + NAMES[d.coll] : 'Save') + '</button></div>';
+  v.expFresh = false;
+  return h;
+}
+
+function stub(v) {
+  var h = '<div class="topbar"><button type="button" class="btn-round glass" aria-label="Back" data-act="back">' + I.back + '</button></div><div class="scroll"><div style="height:44px;flex:none"></div><div class="stub">';
+  h += '<span class="badge">Not designed yet</span><h1 class="title-l">' + esc(v.title) + '</h1>';
+  if (v.lines) h += '<ul>' + v.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
+  if (v.kind === 'trash') {
+    var moved = st.scans.filter(function (s) { return s.trashed; });
+    h += '<div class="card" style="margin-top:8px">' + st.trashOld.map(function (t) { return '<div class="row" style="cursor:default"><span class="dot" style="background:' + cv(t[1]) + '"></span><span class="in">' + esc(t[0]) + '<span class="muted" style="font-size:15px">Expired</span></span></div>'; }).join('') + moved.map(function (s) { return '<div class="row" style="cursor:default"><span class="dot" style="background:' + cv(s.from) + '"></span><span class="in">' + esc(s.title) + '<span class="muted" style="font-size:15px">Moved by you</span></span></div>'; }).join('') + '</div>';
+    if (moved.length) h += '<div class="actions"><button type="button" class="secondary" data-act="restore-all">Restore what you moved here</button></div>';
+  }
+  if (v.kind === 'scan') {
+    h += '<div class="actions"><button type="button" class="primary" data-act="fake-save">Skip ahead: save a sample ' + (v.coll ? NAMES[v.coll].toLowerCase().replace(/s$/, '') : 'receipt') + '</button><button type="button" class="secondary" data-act="back">Cancel</button></div>';
+  }
+  return h + '</div></div>';
+}
+
+/* ---------------- Render ---------------- */
+function render() {
+  var v = top();
+  var key = String(st.stack.length) + v.t + (v.id || v.key || '');
+  var M = motionOK() ? motion : null; motion = null;
+  var oldScreen = M ? app.querySelector('#screen') : null;
+  var prev = app.querySelector('[data-scroll]');
+  if (prev && app.dataset.view === key) v.scroll = prev.scrollTop;
+  var pimg = app.querySelector('#page img'), prevPage = null;
+  if (pimg && !M && app.dataset.view === key && motionOK()) prevPage = { rect: pimg.getBoundingClientRect(), page: pimg.dataset.page };
+  var flipBefore = flipNext && motionOK() ? captureTiles() : null; flipNext = false;
+  var rPrev = null;
+  if (v.t === 'review' && !M && app.dataset.view === key && motionOK()) {
+    var oc = app.querySelector('#rcard'), os = app.querySelector('#rsheet');
+    if (oc && v.open) rPrev = { card: oc.getBoundingClientRect() };
+    if (os && !v.open) rPrev = { sheet: os.cloneNode(true) };
+  }
+  var body = v.t === 'home' ? home() : v.t === 'list' ? list(v) : v.t === 'search' ? search(v) : v.t === 'scan' ? viewer(v) : v.t === 'camera' ? camera(v) : v.t === 'review' ? review(v) : v.t === 'trash' ? trashScreen(v) : v.t === 'settings' ? settingsScreen(v) : v.t === 'colls' ? collsScreen(v) : v.t === 'coll' ? collScreen(v) : v.t === 'tview' ? trashViewer(v) : stub(v);
+  var over = '';
+  if (overlay && overlay.kind === 'details') over += detailsSheet(byId(v.id), overlay);
+  if (overlay && overlay.menu) over += menuHtml(overlay);
+  if (overlay && overlay.kind === 'trash') over += '<div class="scrim" data-act="close-overlay"></div><div class="confirm" role="dialog" aria-label="Move to Trash"><span style="font-size:13px;line-height:18px;color:var(--tx2)">This ' + (byId(v.id).from === 'receipts' ? 'receipt' : 'scan') + ' moves to Trash. You can restore it for 30 days.</span><button type="button" data-act="trash-now" style="font-weight:600;color:var(--destructive)">Move to Trash</button></div>';
+  if (overlay && overlay.kind === 'alert') over += '<div class="scrim dim"></div><div class="alert" role="alertdialog" aria-label="' + esc(overlay.title) + '"><b style="font-size:17px">' + esc(overlay.title) + '</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">' + esc(overlay.body) + '</span><span class="two-btn"><button type="button" data-act="alert-cancel">Cancel</button><button type="button" data-act="alert-ok" style="font-weight:600;color:var(--destructive)">' + esc(overlay.ok) + '</button></span></div>';
+  if (overlay && overlay.kind === 'camprompt') over += '<div class="scrim dim" style="background:rgba(0,0,0,0.22)"></div><div class="alert" role="alertdialog" aria-label="Filing Cabinet would like to access the camera" style="top:34%"><b style="font-size:17px;line-height:22px">“Filing Cabinet” Would Like to Access the Camera</b><span style="font-size:15px;line-height:20px">Filing Cabinet uses the camera to scan documents. Scans stay on your iPhone and in your iCloud backup.</span><span class="two-btn"><button type="button" data-act="cam-deny">Don’t Allow</button><button type="button" data-act="cam-allow" style="font-weight:600">Allow</button></span></div>';
+  if (overlay && overlay.kind === 'camoff') over += '<div class="scrim" style="background:var(--dim)" data-act="close-overlay"></div><div class="sheet" id="sheet" role="dialog" aria-label="Camera access is off" style="align-items:center;text-align:center;padding:8px 20px 20px"><span class="grab" aria-hidden="true"></span><button type="button" data-act="close-overlay" aria-label="Close" style="position:absolute;right:14px;top:14px;width:40px;height:40px;padding:0;border:0;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--well);color:var(--tx2);cursor:pointer">' + I.close + '</button><span style="width:72px;height:72px;margin-top:30px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--well);color:var(--tx2)">' + CAMOFF + '</span><h2 class="title-l" style="margin-top:18px;font-size:26px;line-height:32px">Camera access is off</h2><p style="margin:8px 0 0;max-width:300px;font-size:17px;line-height:23px;color:var(--tx2)">Filing Cabinet needs the camera to scan documents. Tap Open Settings, turn on Camera, then come back.</p><button type="button" class="rbig" data-act="cam-settings" style="align-self:stretch;margin-top:24px">Open Settings</button></div>';
+  if (overlay && overlay.kind === 'onboard') {
+    var ob = overlay, F = function (ic, b, s) { return '<div class="feat"><span style="color:var(--tx);flex:none;margin-top:1px">' + ic + '</span><span><b>' + b + '</b><span>' + s + '</span></span></div>'; };
+    over += '<div class="scrim dim" style="z-index:40"></div><div class="pagesheet" role="dialog" aria-label="Welcome">';
+    if (ob.step === 1) over += '<div class="step" style="display:flex;flex-direction:column;flex:1"><h1>Welcome to Filing Cabinet</h1><div style="display:flex;flex-direction:column;gap:26px;margin-top:40px">' + F(I.scan.replace('width="18" height="18"', 'width="28" height="28"').replace('stroke-width="2.2"', 'stroke-width="1.8"'), 'Scan in one tap', 'Point your camera at any paper. Several pages make one scan.') + F(I.path(I.files, 28, 1.8), 'Sorted into collections', 'Every scan goes into a collection, so it’s easy to find later.') + F(I.path(I.clock, 28, 1.8), 'Cleans up after itself', 'Things you only need for a while expire on their own.') + F(I.path('M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5z', 28, 1.8), 'Private by design', 'No account. Scans stay on your iPhone and in your iCloud backup.') + '</div><button type="button" class="go" data-act="ob-next">Continue</button></div>';
+    else over += '<div class="step" style="display:flex;flex-direction:column;align-items:center;text-align:center;flex:1"><span style="width:72px;height:72px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--well)">' + I.path('M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0', 34, 1.7) + '</span><h1 style="margin-top:22px;font-size:30px;line-height:36px">Know when it cleans up</h1><p style="margin:10px 0 0;max-width:300px;font-size:17px;line-height:23px;color:var(--tx2)">Expired scans move to Trash on their own. Get a short note when that happens.</p><div style="align-self:stretch;display:flex;gap:12px;margin-top:30px;padding:14px 16px;border-radius:22px;background:var(--well);text-align:left"><span style="flex:none;width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--tx)">' + I.folder('x', 20, 16).replace('var(--c-x)', 'var(--bg)') + '</span><span style="display:flex;flex-direction:column"><b style="font-size:15px;line-height:20px">Cleaned up 3 receipts</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">They’re in Trash for 30 days if you need them.</span></span></div><span style="margin-top:10px;font-size:13px;line-height:18px;color:var(--tx2)">At most one a day</span><button type="button" class="go" style="align-self:stretch" data-act="ob-turnon">Turn on notifications</button><button type="button" class="later" data-act="ob-notnow">Not now</button></div>';
+    over += '</div>';
+    if (ob.step === 3) over += '<div class="scrim dim" style="z-index:42;background:rgba(0,0,0,0.22)"></div><div class="alert" role="alertdialog" style="z-index:43" aria-label="Notifications"><b style="font-size:17px;line-height:22px">“Filing Cabinet” Would Like to Send You Notifications</b><span style="font-size:15px;line-height:20px">Notifications may include alerts, sounds and icon badges. These can be configured in Settings.</span><span class="two-btn"><button type="button" data-act="ob-deny">Don’t Allow</button><button type="button" data-act="ob-allow" style="font-weight:600">Allow</button></span></div>';
+  }
+  if (overlay && overlay.kind === 'lifeconfirm') { var lc = overlay; over += '<div class="scrim dim"></div><div class="alert" role="alertdialog" aria-label="' + lc.title + '"><b style="font-size:17px;line-height:22px">' + lc.title + '</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">' + lc.body + '</span><span class="two-btn"><button type="button" data-act="tc-cancel">Cancel</button><button type="button" data-act="s-life-ok" style="font-weight:600;color:var(--destructive)">Change</button></span></div>'; }
+  if (overlay && overlay.kind === 'tconfirm') { var cf = overlay; over += '<div class="scrim dim"></div><div class="alert" role="alertdialog" aria-label="' + cf.title + '"><b style="font-size:17px;line-height:22px">' + cf.title + '</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">' + cf.body + '</span><span class="two-btn"><button type="button" data-act="tc-cancel">Cancel</button><button type="button" data-act="tc-ok" style="font-weight:600;color:var(--destructive)">' + cf.ok + '</button></span></div>'; }
+  if (overlay && overlay.kind === 'savefail') over += '<div class="scrim dim"></div><div class="alert" role="alertdialog" aria-label="Couldn’t save this scan"><b style="font-size:17px;line-height:22px">Couldn’t save this scan</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">Your iPhone is out of space. Free some up, then try again. Your pages are still here.</span><span class="two-btn"><button type="button" data-act="fail-dismiss">Not now</button><button type="button" data-act="fail-retry" style="font-weight:600">Try again</button></span></div>';
+  if (overlay && overlay.kind === 'discard') over += '<div class="scrim dim"></div><div class="alert" role="alertdialog" aria-label="Discard this scan?"><b style="font-size:17px">Discard this scan?</b><span style="font-size:15px;line-height:20px;color:var(--tx2)">The ' + (v.draft.pages.length === 1 ? 'page' : v.draft.pages.length + ' pages') + ' you just scanned won’t be saved.</span><span class="two-btn"><button type="button" data-act="discard-cancel">Keep editing</button><button type="button" data-act="discard-ok" style="font-weight:600;color:var(--destructive)">Discard</button></span></div>';
+  if (toast) over += '<div class="toast" role="status"><span' + (toast.action ? '' : ' class="plain"') + (toast.open ? ' data-act="open" data-id="' + toast.open + '" style="cursor:pointer"' : '') + '><span>' + toast.html + '</span>' + (toast.action ? '<button type="button" data-act="' + toast.action + '">' + toast.actionLabel + '</button>' : '') + '</span></div>';
+  var cls = 'screen' + (v.t === 'tview' ? ' viewer' : '') + (v.t === 'scan' ? ' viewer' + (v.bare && !overlay ? ' bare' : '') : '');
+  app.innerHTML = '<div class="' + cls + '" id="screen">' + body + '</div>' + over;
+  app.dataset.view = key;
+  // Overlays animate in only the first time they appear.
+  if (overlay) {
+    var sh = app.querySelector('.sheet'); if (sh && !overlay.sheetShown) { sh.classList.add('enter'); var s0 = app.querySelector('.scrim'); if (s0) s0.classList.add('enter'); overlay.sheetShown = true; }
+    var mn = app.querySelector('.menu'); if (mn && overlay.menuShown !== overlay.menu) { mn.classList.add('enter'); overlay.menuShown = overlay.menu; }
+    if (!overlay.menu) overlay.menuShown = null;
+    var ps = app.querySelector('.pagesheet'); if (ps && !overlay.psShown) { ps.classList.add('enter'); overlay.psShown = true; } else if (ps && overlay.stepFresh) { var se = ps.querySelector('.step'); if (se) se.classList.add('enter'); overlay.stepFresh = false; }
+    ['.confirm', '.alert'].forEach(function (sel) { var e = app.querySelector(sel); if (e && !overlay.boxShown) { e.classList.add('enter'); overlay.boxShown = true; } });
+    var nt = app.querySelector('.note'); if (nt && overlay.noteFresh) { nt.classList.add('enter'); overlay.noteFresh = false; }
+  }
+  if (toast) { var te = app.querySelector('.toast'); if (te && !toast.shown) { te.classList.add('enter'); toast.shown = true; } }
+  var sc = app.querySelector('[data-scroll]');
+  if (sc) {
+    sc.scrollTop = v.scroll || 0;
+    var big = app.querySelector('#bigtitle'), sb = app.querySelector('.smallbar');
+    var onScroll = function () {
+      v.scroll = sc.scrollTop;
+      if (big && sb) { var pr = Math.max(0, Math.min(1, (sc.scrollTop - 24) / 40)); big.style.opacity = String(1 - pr); sb.style.opacity = String(pr); }
+    };
+    sc.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  }
+  var dark = app.classList.contains('dark');
+  document.getElementById('statusbar').classList.toggle('on-dark', dark || (v.t === 'scan' && false));
+  if (v.t === 'search') bindSearch(v);
+  if (overlay && overlay.renaming) bindRename();
+  if (v.t === 'scan') bindViewer(v);
+  if (v.t === 'list') bindTiles(v);
+  if (v.t === 'review') bindReview(v);
+  if (v.t === 'trash') bindTrash(v);
+  var neu = document.getElementById('screen');
+  if (M && oldScreen) nav(M, oldScreen, neu);
+  if (prevPage) pageMotion(prevPage, v);
+  if (flipBefore) flipTiles(flipBefore);
+  if (rPrev) reviewMorph(rPrev);
+  syncGuide();
+}
+
+function bindSearch(v) {
+  var q = document.getElementById('q');
+  if (!v.focused) { v.focused = true; setTimeout(function () { try { q.focus({ preventScroll: true }); } catch (e) {} }, 60); }
+  q.addEventListener('input', function () {
+    v.q = q.value;
+    document.getElementById('results').innerHTML = searchResultsHtml(v);
+    document.getElementById('qclear').style.display = v.q ? 'flex' : 'none';
+  });
+  q.addEventListener('keydown', function (e) { if (e.key === 'Enter') { saveSearch(v.q); q.blur(); } });
+}
+function saveSearch(t) {
+  t = (t || '').trim(); if (!t) return;
+  st.searches = [t].concat(st.searches.filter(function (x) { return x.toLowerCase() !== t.toLowerCase(); })).slice(0, 3);
+}
+
+function bindRename() {
+  var inp = document.getElementById('rename');
+  setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) {} }, 40);
+  var done = function () { if (!overlay || !overlay.renaming) return; var s = byId(top().id); var t = inp.value.trim(); if (t) s.title = t; overlay.renaming = false; render(); };
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); done(); } if (e.key === 'Escape') { overlay.renaming = false; render(); } });
+  inp.addEventListener('blur', function () { setTimeout(done, 120); });
+  var clr = app.querySelector('[data-act="rename-clear"]'); if (clr) clr.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+}
+
+/* Viewer gestures: tap the page to hide the buttons, swipe sideways for pages, swipe up for details. */
+function bindViewer(v) {
+  var page = document.getElementById('page'), s = byId(v.id);
+  if (!page) return;
+  var x0, y0, t0;
+  page.addEventListener('pointerdown', function (e) { x0 = e.clientX; y0 = e.clientY; t0 = Date.now(); });
+  page.addEventListener('pointerup', function (e) {
+    if (x0 === undefined) return;
+    var dx = e.clientX - x0, dy = e.clientY - y0; x0 = undefined;
+    if (overlay && overlay.kind === 'details') { if (dy > 40 || (Math.abs(dx) < 8 && Math.abs(dy) < 8)) closeDetails(); return; }
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && s.pages.length > 1) { v.page = Math.max(0, Math.min(s.pages.length - 1, (v.page || 0) + (dx < 0 ? 1 : -1))); render(); return; }
+    if (dy < -60 && Math.abs(dy) > Math.abs(dx)) { openDetails(); return; }
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8 && Date.now() - t0 < 400) { v.bare = !v.bare; document.getElementById('screen').classList.toggle('bare', v.bare); }
+  });
+  var sheet = document.getElementById('sheet');
+  if (sheet) {
+    var sy;
+    sheet.addEventListener('pointerdown', function (e) { if (e.target.closest('button,input') || overlay.menu) return; sy = e.clientY; try { sheet.setPointerCapture(e.pointerId); } catch (x) {} });
+    sheet.addEventListener('pointermove', function (e) { if (sy === undefined) return; var d = e.clientY - sy; sheet.style.transform = 'translateY(' + (d > 0 ? d : d / 4) + 'px)'; });
+    var end = function (e) {
+      if (sy === undefined) return; var d = e.clientY - sy; sy = undefined;
+      if (d > 70) { closeDetails(); return; }
+      var from = sheet.style.transform || 'none'; sheet.style.transform = '';
+      if (motionOK()) sheet.animate([{ transform: from }, { transform: 'none' }], { duration: 300, easing: EASE });
+    };
+    sheet.addEventListener('pointerup', end); sheet.addEventListener('pointercancel', end);
+  }
+}
+function bindReview(v) {
+  var page = document.getElementById('page'), d = v.draft, x0, y0, t0;
+  page.addEventListener('pointerdown', function (e) { x0 = e.clientX; y0 = e.clientY; t0 = Date.now(); });
+  page.addEventListener('pointerup', function (e) {
+    if (x0 === undefined) return;
+    var dx = e.clientX - x0, dy = e.clientY - y0; x0 = undefined;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) && d.pages.length > 1) { v.page = Math.max(0, Math.min(d.pages.length - 1, (v.page || 0) + (dx < 0 ? 1 : -1))); render(); return; }
+    if (!v.open && dy < -60) { A['r-open'](); return; }
+    if (v.open && (dy > 40 || (Math.abs(dx) < 8 && Math.abs(dy) < 8))) A['r-collapse']();
+  });
+  var card = document.getElementById('rcard');
+  if (card) {
+    var cy;
+    card.addEventListener('pointerdown', function (e) { if (e.target.closest('.rsave')) return; cy = e.clientY; });
+    card.addEventListener('pointermove', function (e) { if (cy === undefined) return; var m = e.clientY - cy; if (Math.abs(m) > 6 && !card.hasPointerCapture(e.pointerId)) { try { card.setPointerCapture(e.pointerId); } catch (x) {} } card.style.transform = 'translateY(' + (m < 0 ? m / 3 : m / 6) + 'px)'; });
+    var cend = function (e) { if (cy === undefined) return; var m = e.clientY - cy; cy = undefined; card.style.transform = ''; if (m < -24) A['r-open'](); };
+    card.addEventListener('pointerup', cend); card.addEventListener('pointercancel', cend);
+  }
+  var sheet = document.getElementById('rsheet');
+  if (sheet) {
+    var sy;
+    sheet.addEventListener('pointerdown', function (e) { if (e.target.closest('button,input') || overlay) return; sy = e.clientY; try { sheet.setPointerCapture(e.pointerId); } catch (x) {} });
+    sheet.addEventListener('pointermove', function (e) { if (sy === undefined) return; var m = e.clientY - sy; sheet.style.transform = 'translateY(' + (m > 0 && d.coll ? m : m / 4) + 'px)'; });
+    var send = function (e) {
+      if (sy === undefined) return; var m = e.clientY - sy; sy = undefined;
+      var from = sheet.style.transform || 'none'; sheet.style.transform = '';
+      if (m > 70 && d.coll) { A['r-collapse'](); return; }
+      if (motionOK()) sheet.animate([{ transform: from }, { transform: 'none' }], { duration: 300, easing: EASE });
+    };
+    sheet.addEventListener('pointerup', send); sheet.addEventListener('pointercancel', send);
+  }
+  var inp = document.getElementById('rrename');
+  if (inp) {
+    setTimeout(function () { try { inp.focus(); inp.select(); } catch (e) {} }, 60);
+    var done = function () { if (!v.renaming) return; var t = inp.value.trim(); if (t && t !== d.title) { d.title = t; d.titled = true; } v.renaming = false; render(); };
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); done(); } if (e.key === 'Escape') { v.renaming = false; render(); } });
+    inp.addEventListener('blur', function () { setTimeout(done, 120); });
+    var clr = app.querySelector('[data-act="r-rename-clear"]'); if (clr) clr.addEventListener('pointerdown', function (e) { e.preventDefault(); });
+  }
+}
+function openDetails() { var v = top(); v.bare = false; overlay = { kind: 'details' }; render(); }
+
+/* Tiles: long-press. In Favorites with Custom order it drags; elsewhere it opens a small menu. */
+var press = null, drag = null;
+function bindTiles(v) {
+  var grid = document.getElementById('grid'); if (!grid) return;
+  grid.addEventListener('pointerdown', function (e) {
+    var tile = e.target.closest('.tile'); if (!tile || e.target.closest('.heart-badge')) return;
+    var id = tile.dataset.tile, x = e.clientX, y = e.clientY;
+    press = { id: id, x: x, y: y, timer: setTimeout(function () {
+      press.fired = true;
+      if (v.key === 'favorites' && (st.sorts.favorites || 'custom') === 'custom') startDrag(v, id, tile, x, y);
+      else { var r = app.getBoundingClientRect(), tr = tile.getBoundingClientRect(); overlay = { menu: 'tile', id: id, x: Math.min(Math.max(12, tr.left - r.left), r.width - 252), y: Math.min(tr.bottom - r.top + 6, r.height - 130) }; render(); }
+    }, 420) };
+  });
+  grid.addEventListener('pointermove', function (e) { if (press && !press.fired && (Math.abs(e.clientX - press.x) > 8 || Math.abs(e.clientY - press.y) > 8)) { clearTimeout(press.timer); press = null; } });
+  grid.addEventListener('pointerup', function () { if (press && !press.fired) { clearTimeout(press.timer); } });
+  grid.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+}
+function bindTrash(v) {
+  var grid = document.getElementById('tgrid'); if (!grid) return;
+  grid.addEventListener('pointerdown', function (e) {
+    var tile = e.target.closest('.tile'); press = null; if (!tile || v.selecting) return;
+    var id = tile.dataset.tile, x = e.clientX, y = e.clientY;
+    press = { id: id, x: x, y: y, timer: setTimeout(function () {
+      press.fired = true;
+      var r = app.getBoundingClientRect(), tr = tile.getBoundingClientRect();
+      overlay = { menu: 'ttile', id: id, x: Math.min(Math.max(12, tr.left - r.left), r.width - 262), y: Math.min(tr.bottom - r.top + 8, r.height - 190) };
+      render();
+      var lift = app.querySelector('.tile[data-tile="' + id + '"]'); if (lift) { lift.style.position = 'relative'; lift.style.zIndex = '33'; if (motionOK()) lift.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.05)' }], { duration: 180, fill: 'forwards', easing: EASE }); }
+    }, 420) };
+  });
+  grid.addEventListener('pointermove', function (e) { if (press && !press.fired && (Math.abs(e.clientX - press.x) > 8 || Math.abs(e.clientY - press.y) > 8)) { clearTimeout(press.timer); press = null; } });
+  grid.addEventListener('pointerup', function () { if (press && !press.fired) clearTimeout(press.timer); });
+  grid.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+}
+// Tiles shrink away, then the grid closes the gap. fn changes the data first.
+function tilesLeave(ids, fn) {
+  st.tleaving = {}; ids.forEach(function (id) { st.tleaving[id] = true; });
+  fn(); render();
+  var els = ids.map(function (id) { return app.querySelector('.tile[data-tile="' + id + '"]'); }).filter(Boolean);
+  var fin = function () { st.tleaving = null; flipNext = true; render(); };
+  if (!els.length || !motionOK()) { fin(); return; }
+  var left = els.length;
+  els.forEach(function (el) { el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.6)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).onfinish = function () { if (!--left) fin(); }; });
+}
+function restoreScans(ids) { ids.forEach(function (id) { var s = byId(id); s.trashed = false; s.trashedAgo = 0; s.custom = { days: 0 }; }); }
+function deleteScans(ids) { ids.forEach(function (id) { byId(id).gone = true; }); }
+function startDrag(v, id, tile, x, y) {
+  var r = tile.getBoundingClientRect();
+  var ghost = tile.cloneNode(true); ghost.classList.add('drag-ghost'); ghost.style.width = r.width + 'px'; ghost.style.left = r.left + 'px'; ghost.style.top = r.top + 'px';
+  document.body.appendChild(ghost);
+  drag = { v: v, id: id, ghost: ghost, dx: x - r.left, dy: y - r.top };
+  v.dragging = id; render();
+}
+window.addEventListener('pointermove', function (e) {
+  if (!drag) return;
+  drag.ghost.style.left = (e.clientX - drag.dx) + 'px'; drag.ghost.style.top = (e.clientY - drag.dy) + 'px';
+  var el = document.elementFromPoint(e.clientX, e.clientY), t = el && el.closest && el.closest('.tile');
+  if (t && t.dataset.tile !== drag.id) {
+    var order = st.favOrder.filter(function (x) { return x !== drag.id; }), at = order.indexOf(t.dataset.tile);
+    var from = st.favOrder.indexOf(drag.id);
+    if (at >= 0) { if (st.favOrder.indexOf(t.dataset.tile) > from) at += 1; order.splice(at, 0, drag.id); st.favOrder = order; flipNext = true; render(); }
+  }
+});
+window.addEventListener('pointerup', function () { if (!drag) return; drag.ghost.remove(); drag.v.dragging = null; drag = null; press = null; render(); });
+document.addEventListener('touchmove', function (e) { if (drag) e.preventDefault(); }, { passive: false });
+
+/* ---------------- Actions ---------------- */
+var A = {
+  back: function () { pop(); },
+  settings: function () { push({ t: 'settings' }); },
+  'ob-next': function () { overlay.step = 2; overlay.stepFresh = true; render(); },
+  'ob-turnon': function () { overlay.step = 3; overlay.boxShown = false; render(); },
+  'ob-allow': function () { st.reminders = true; obClose(); },
+  'ob-deny': function () { st.reminders = false; obClose(); },
+  'ob-notnow': function () { st.reminders = false; obClose(); },
+  's-colls': function () { push({ t: 'colls' }); },
+  's-coll': function (d) { push({ t: 'coll', key: d.key }); },
+  's-ai': function (d, el) { opts.ai = !opts.ai; document.getElementById('opt-ai').checked = opts.ai; save(); el.setAttribute('aria-checked', String(opts.ai)); },
+  's-rem': function (d, el) { st.reminders = !st.reminders; el.setAttribute('aria-checked', String(st.reminders)); },
+  's-life-menu': function (d, el) { var a = app.getBoundingClientRect(), r = el.getBoundingClientRect(); overlay = { menu: 'life', y: Math.round(r.bottom - a.top + 6) }; render(); },
+  's-set-life': function (d) {
+    var k = top().key, days = +d.days;
+    menuOut(function () {
+      closeOverlay();
+      if (days === LIFE[k]) { render(); return; }
+      // D3: would this send scans to Trash right now? Then confirm with the count.
+      var hit = days === 0 ? [] : st.scans.filter(function (s) { return alive(s) && s.from === k && !s.custom && s.age >= days; });
+      if (hit.length) {
+        var label = LIFE_CHOICES.filter(function (c) { return c[0] === days; })[0][1];
+        overlay = { kind: 'lifeconfirm', key: k, days: days, ids: hit.map(function (s) { return s.id; }), title: 'Keep ' + plural(k) + ' ' + label + '?', body: hit.length + ' ' + (hit.length === 1 ? (k === 'wallet' ? 'scan is' : NAMES[k].toLowerCase().replace(/s$/, '') + ' is') : plural(k).replace('Wallet scans', 'scans') + ' are') + ' older than ' + (label === '1 week' ? 'a week' : label === '1 month' ? 'a month' : label) + ' and will go to Trash now. You can restore ' + (hit.length === 1 ? 'it' : 'them') + ' for 30 days.' };
+        render(); return;
+      }
+      LIFE[k] = days; render();
+    });
+  },
+  's-life-ok': function () {
+    var lc = overlay;
+    out('.alert', function () {
+      closeOverlay(); LIFE[lc.key] = lc.days;
+      // They go to Trash now, with the full 30 days to restore.
+      lc.ids.forEach(function (id) { var s = byId(id); s.trashed = true; s.trashedAgo = 0; });
+      render();
+    });
+  },
+  trash: function () { st.homeNotice = false; push({ t: 'trash', sel: {} }); },
+  tsel: function () { var v = top(); v.selecting = !v.selecting; v.sel = {}; render(); },
+  'tt-tap': function (d, el) {
+    if (press && press.fired) { press = null; return; }
+    var v = top();
+    if (v.selecting) { if (v.sel[d.id]) delete v.sel[d.id]; else v.sel[d.id] = true; render(); return; }
+    A['tt-open'](d, el);
+  },
+  'tt-open': function (d, el) {
+    var s = byId(d.id), z = app.querySelector('.tile[data-tile="' + d.id + '"] [data-zoom]');
+    var go = function () { if (z && motionOK()) motion = { type: 'zoom-in', src: s.pages[0], rect: z.getBoundingClientRect() }; push({ t: 'tview', id: s.id }); };
+    if (overlay && overlay.menu) menuOut(function () { closeOverlay(); go(); }); else go();
+  },
+  'tt-restore': function (d) { menuOut(function () { closeOverlay(); tilesLeave([d.id], function () { restoreScans([d.id]); }); }); },
+  'tt-delete': function (d) { menuOut(function () { var s = byId(d.id); overlay = { kind: 'tconfirm', ids: [d.id], title: 'Delete permanently?', body: esc(s.title) + ' will be deleted. This can’t be undone.', ok: 'Delete' }; render(); }); },
+  'tres-sel': function (d, el) { var v = top(), ids = Object.keys(v.sel); if (!ids.length) return; v.selecting = false; v.sel = {}; tilesLeave(ids, function () { restoreScans(ids); }); },
+  'tdel-sel': function () { var v = top(), ids = Object.keys(v.sel); if (!ids.length) return; overlay = { kind: 'tconfirm', ids: ids, sel: true, title: ids.length === 1 ? 'Delete permanently?' : 'Delete ' + ids.length + ' scans permanently?', body: ids.length === 1 ? esc(byId(ids[0]).title) + ' will be deleted. This can’t be undone.' : 'They’ll be deleted. This can’t be undone.', ok: 'Delete' }; render(); },
+  tempty: function () { var n = trashCount(); overlay = { kind: 'tconfirm', ids: st.scans.filter(inTrash).map(function (s) { return s.id; }), title: 'Empty Trash?', body: 'Deletes ' + n + (n === 1 ? ' scan' : ' scans') + ' permanently. This can’t be undone.', ok: 'Empty Trash' }; render(); },
+  'tv-restore': function () { var id = top().id; st.tleaving = {}; st.tleaving[id] = true; restoreScans([id]); pop(); setTimeout(function () { tilesLeave([id], function () {}); }, motionOK() ? 440 : 0); },
+  'tv-delete': function () { var s = byId(top().id); overlay = { kind: 'tconfirm', ids: [s.id], viewer: true, title: 'Delete permanently?', body: esc(s.title) + ' will be deleted. This can’t be undone.', ok: 'Delete' }; render(); },
+  'tc-cancel': function () { out('.alert', function () { closeOverlay(); render(); }); },
+  'tc-ok': function () {
+    var cf = overlay;
+    out('.alert', function () {
+      closeOverlay();
+      if (cf.viewer) { var id = cf.ids[0]; st.tleaving = {}; st.tleaving[id] = true; deleteScans(cf.ids); pop(); setTimeout(function () { tilesLeave([id], function () {}); }, motionOK() ? 440 : 0); return; }
+      var v = top(); if (cf.sel) { v.selecting = false; v.sel = {}; }
+      tilesLeave(cf.ids, function () { deleteScans(cf.ids); });
+    });
+  },
+  search: function () { push({ t: 'search', q: '', scope: 'all' }); },
+  'open-list': function (d) { push({ t: 'list', key: d.key, keep: d.key === 'favorites' ? {} : null }); },
+  open: function (d, el) {
+    if (press && press.fired) { press = null; return; }
+    if (el && el.dataset.saveq) saveSearch(top().q);
+    var s = byId(d.id); if (!s) return;
+    st.viewed = [s.id].concat(st.viewed.filter(function (x) { return x !== s.id; })).slice(0, 8);
+    var z = el && (el.matches('[data-zoom]') ? el : el.querySelector('[data-zoom]'));
+    if (z && motionOK()) motion = { type: 'zoom-in', src: s.pages[0], rect: z.getBoundingClientRect() };
+    toast = null; push({ t: 'scan', id: s.id, page: 0 });
+  },
+  scan: function () {
+    if (st.camera === 'ask') { overlay = { kind: 'camprompt' }; render(); return; }
+    if (st.camera === 'off') { overlay = { kind: 'camoff' }; render(); return; }
+    openCamera();
+  },
+  'cam-allow': function () { st.camera = 'allowed'; out('.alert', function () { closeOverlay(); openCamera(); }); },
+  'cam-deny': function () { st.camera = 'off'; out('.alert', function () { closeOverlay(); render(); }); },
+  'cam-settings': function () { sheetOut(function () { closeOverlay(); showToast({ html: '<span style="color:var(--tx2)">iOS Settings opens · not in the prototype</span>' }, 2600); render(); }); },
+  'r-rescan': function () { motion = { type: 'cover-in' }; push({ t: 'camera', rescan: true }); },
+  // Scanning inside a collection files it there. Otherwise Apple Intelligence suggests one, or you pick.
+  pretend: function (d) {
+    var s = SAMPLES[+d.i], cam = top();
+    if (cam.rescan) {
+      st.stack.pop(); var rv = top(), dr = rv.draft;
+      dr.pages = s.pages.map(img); dr.text = s.text; rv.page = 0;
+      if (!dr.titled) dr.title = s.title;
+      if (dr.suggested && opts.ai) dr.coll = s.ai;
+      motion = { type: 'cover-out' }; render(); return;
+    }
+    var coll = cam.coll || (opts.ai ? s.ai : null);
+    var draft = { title: s.title, pages: s.pages.map(img), text: s.text, coll: coll, suggested: !cam.coll && !!coll, custom: null };
+    st.stack.pop(); motion = { type: 'fade-in' };
+    push({ t: 'review', draft: draft, open: !coll, page: 0 });
+  },
+  'r-open': function () { var v = top(); if (v.open) return; v.open = true; render(); },
+  'r-collapse': function () { var v = top(); if (!v.open || !v.draft.coll || v.renaming) return; v.open = false; render(); },
+  'r-rename': function () { var v = top(); v.open = true; v.renaming = true; render(); },
+  'r-rename-clear': function () { var i = document.getElementById('rrename'); i.value = ''; i.focus(); },
+  'r-coll-menu': function (d, el) { var a = app.getBoundingClientRect(), r = el.getBoundingClientRect(); overlay = { menu: 'rcoll', bottom: Math.round(a.bottom - r.top + 6) }; render(); },
+  'r-exp-menu': function (d, el) { if (el.getAttribute('aria-disabled') === 'true') return; var a = app.getBoundingClientRect(), r = el.getBoundingClientRect(); overlay = { menu: 'rexp', bottom: Math.round(a.bottom - r.top + 6) }; render(); },
+  'r-set-coll': function (d) { var v = top(), was = v.draft.coll; menuOut(function () { v.draft.coll = d.key; v.draft.suggested = false; if (was !== d.key && !v.draft.custom) v.expFresh = true; closeOverlay(); render(); }); },
+  'r-set-exp': function (d) { var v = top(); menuOut(function () { v.draft.custom = d.days === 'default' ? null : { days: +d.days }; v.expFresh = true; closeOverlay(); render(); }); },
+  'r-save': function (d, el) {
+    if (el && el.getAttribute('aria-disabled') === 'true') return;
+    // Rare: the save fails (usually a full iPhone). Nothing is lost; the review stays.
+    if (failNext) { failNext = false; document.getElementById('opt-fail').checked = false; overlay = { kind: 'savefail' }; render(); return; }
+    var v = top(), r = v.draft, id = 'new' + (st.newId++);
+    st.scans.push({ id: id, title: r.title, from: r.coll, age: 0, pages: r.pages.slice(), wide: false, text: r.text.concat([r.title]), fav: false, custom: r.custom, trashed: false });
+    var pi = app.querySelector('#page img');
+    closeOverlay(); st.stack.pop();
+    // No note: the page you just reviewed flies to where it was filed.
+    motion = pi ? { type: 'save-fly', src: pi.getAttribute('src'), rect: pi.getBoundingClientRect(), id: id, coll: r.coll } : { type: 'cover-out' };
+    render();
+  },
+  'fail-dismiss': function () { out('.alert', function () { closeOverlay(); render(); }); },
+  'fail-retry': function () { out('.alert', function () { closeOverlay(); render(); A['r-save'](); }); },
+  'r-cancel': function () { overlay = { kind: 'discard' }; render(); },
+  'discard-cancel': function () { out('.alert', function () { closeOverlay(); render(); }); },
+  'discard-ok': function () { closeOverlay(); st.stack.pop(); motion = { type: 'cover-out' }; render(); },
+  'fake-save': function () {
+    var v = top(), coll = v.coll || 'receipts';
+    var sample = { wallet: ['Membership card', 'gym', 1], receipts: ['Bluebird Café', 'r-bluebird', 0], notes: ['Meeting notes', 'note-bio', 0], documents: ['Letter', 'lease', 0], throwaways: ['Coat check', 'throw-coat', 0] }[coll];
+    var id = 'new' + (st.newId++);
+    st.scans.push({ id: id, title: sample[0], from: coll, age: 0, pages: [img(sample[1])], wide: !!sample[2], text: [sample[0]], fav: false, custom: null, trashed: false });
+    st.stack.pop(); motion = { type: 'pop' };
+    showToast({ html: '<span style="font-weight:600">Saved to ' + NAMES[coll] + '</span><span style="color:var(--tx2)"> · ' + lifeText(LIFE[coll]) + '</span>', open: id }, 5000);
+    render();
+  },
+  'sort-menu': function () { overlay = { menu: 'sort' }; render(); },
+  'set-sort': function (d) { menuOut(function () { st.sorts[top().key] = d.sort; closeOverlay(); flipNext = true; render(); }); },
+  'close-menu': function () { menuOut(function () { if (overlay && overlay.kind === 'details') { overlay.menu = null; } else closeOverlay(); render(); }); },
+  'close-overlay': function () { if (overlay && (overlay.kind === 'details' || overlay.kind === 'camoff')) { closeDetails(); return; } out('.confirm', function () { closeOverlay(); render(); }); },
+  'tile-heart': function (d) {
+    if (press && press.fired && !overlay) { press = null; return; }
+    var s = byId(d.id), v = top();
+    if (v.t === 'list' && v.key === 'favorites' && s.fav) { v.keep[s.id] = true; } // stays until you leave
+    var fromMenu = overlay && overlay.menu === 'tile';
+    var go = function () {
+      s.fav = !s.fav;
+      if (s.fav && st.favOrder.indexOf(s.id) < 0) st.favOrder.unshift(s.id);
+      closeOverlay(); render();
+      popEl(app.querySelector('.heart-badge[data-id="' + s.id + '"] span'));
+    };
+    if (fromMenu) menuOut(go); else go();
+  },
+  'q-clear': function () { var v = top(); v.q = ''; render(); document.getElementById('q').focus(); },
+  scope: function (d) { var v = top(); v.scope = d.scope; render(); },
+  'use-search': function (d) { var v = top(); v.q = d.q; render(); },
+  'clear-searches': function () { st.searches = []; render(); },
+  details: function () { openDetails(); },
+  fav: function () { var s = byId(top().id); s.fav = !s.fav; if (s.fav && st.favOrder.indexOf(s.id) < 0) st.favOrder.unshift(s.id); render(); popEl(app.querySelector('[data-act="fav"] svg')); },
+  page: function (d) { top().page = +d.i; render(); },
+  'more-menu': function () { overlay = { menu: 'more' }; render(); },
+  ios: function (d) { var keep = overlay && overlay.kind === 'details' ? overlay : null; if (keep) keep.menu = null; else closeOverlay(); showToast({ html: '<span style="color:var(--tx2)">' + esc(d.what) + ' is drawn by iOS · not in the prototype</span>' }, 2600); render(); },
+  rename: function () { overlay.renaming = true; overlay.note = null; render(); },
+  'rename-clear': function () { var i = document.getElementById('rename'); i.value = ''; i.focus(); },
+  'coll-menu': function () { overlay.menu = 'coll'; render(); },
+  'exp-menu': function () { overlay.menu = 'exp'; render(); },
+  'set-coll': function (d) {
+    var s = byId(top().id), was = { from: s.from, custom: s.custom };
+    overlay.menu = null;
+    if (d.key === s.from) { render(); return; }
+    s.from = d.key;
+    if (daysLeft(s) <= 0) {
+      s.from = was.from;
+      overlay = { kind: 'alert', title: 'Move to ' + NAMES[d.key] + '?', body: NAMES[d.key] + ' are kept ' + lifeText(LIFE[d.key]) + ' from the scan date. This scan is from ' + fmt(scanDate(s)) + ', so it goes to Trash now. You can restore it for 30 days.', ok: 'Move', key: d.key, back: overlay };
+      render(); return;
+    }
+    overlay.note = s.custom ? 'Your own expiry is kept.' : 'Expiry now follows ' + NAMES[s.from] + '.';
+    overlay.undo = was; overlay.noteFresh = true; render();
+  },
+  'undo-move': function () { var s = byId(top().id); s.from = overlay.undo.from; s.custom = overlay.undo.custom; overlay.note = null; overlay.undo = null; render(); },
+  'set-exp': function (d, el) {
+    if (el.getAttribute('aria-disabled') === 'true') return;
+    var s = byId(top().id);
+    s.custom = d.days === 'default' ? null : { days: +d.days };
+    overlay.menu = null; overlay.note = null; render();
+  },
+  'alert-cancel': function () { overlay = overlay.back; overlay.menu = null; render(); },
+  'alert-ok': function () { var s = byId(top().id); s.from = overlay.key; s.trashed = true; leaveAfterTrash(); },
+  'trash-confirm': function () { overlay = { kind: 'trash' }; render(); },
+  'trash-now': function () { byId(top().id).trashed = true; leaveAfterTrash(); },
+  'undo-trash': function () { var s = byId(toast.id); if (s) { s.trashed = false; if (daysLeft(s) <= 0) s.custom = { days: 0 }; } toast = null; flipNext = true; render(); },
+  'restore-all': function () { st.scans.forEach(function (s) { if (s.trashed) { s.trashed = false; if (daysLeft(s) <= 0) s.custom = { days: 0 }; } }); render(); }
+};
+function leaveAfterTrash() {
+  var id = top().id; closeOverlay(); st.stack.pop(); motion = { type: 'pop' }; st.leaving = id; byId(id).trashedAgo = 0;
+  render();
+  // Once back in the collection, the tile shrinks away and the grid closes the gap.
+  setTimeout(function () {
+    var gone = byId(id); if (!gone || !gone.trashed) { st.leaving = null; return; }
+    var el = app.querySelector('.tile[data-tile="' + id + '"]');
+    var fin = function () { st.leaving = null; flipNext = true; render(); };
+    if (el && motionOK()) el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(0.6)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).onfinish = fin; else fin();
+  }, motionOK() ? 420 : 0);
+}
+
+app.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-act]'); if (!el || !app.contains(el)) return;
+  var f = A[el.dataset.act]; if (!f) return;
+  e.preventDefault(); e.stopPropagation();
+  if (drag) return;
+  f(el.dataset, el);
+});
+app.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('tile')) { e.preventDefault(); e.target.click(); } });
+
+/* ---------------- Guide controls ---------------- */
+var mq = window.matchMedia('(prefers-color-scheme: dark)');
+function applyMode() {
+  var dark = opts.mode === 'dark' || (opts.mode === 'system' && mq.matches);
+  app.classList.toggle('dark', dark);
+  ['system', 'light', 'dark'].forEach(function (m) { document.getElementById('mode-' + m).setAttribute('aria-pressed', String(opts.mode === m)); });
+  document.getElementById('statusbar').classList.toggle('on-dark', dark);
+}
+document.querySelectorAll('[data-mode]').forEach(function (b) { b.addEventListener('click', function () { opts.mode = b.dataset.mode; save(); applyMode(); }); });
+if (mq.addEventListener) mq.addEventListener('change', applyMode);
+document.querySelectorAll('[data-cam]').forEach(function (b) { b.addEventListener('click', function () { st.camera = b.dataset.cam; syncGuide(); }); });
+
+document.getElementById('opt-fail').addEventListener('change', function (e) { failNext = e.target.checked; });
+var aiBox = document.getElementById('opt-ai');
+aiBox.addEventListener('change', function () { opts.ai = aiBox.checked; save(); });
+
+document.getElementById('replay').addEventListener('click', function () { st.stack = [{ t: 'home' }]; overlay = { kind: 'onboard', step: 1 }; render(); });
+document.getElementById('reset').addEventListener('click', function () { Object.assign(LIFE, LIFE0); st = seed(); overlay = null; toast = null; failNext = false; document.getElementById('opt-fail').checked = false; render(); });
+function save() { try { localStorage.setItem('fc-proto-opts', JSON.stringify(opts)); } catch (e) {} }
+try { var saved = JSON.parse(localStorage.getItem('fc-proto-opts') || 'null'); if (saved) { opts.mode = saved.mode || 'system'; opts.toast = saved.toast !== false; opts.ai = saved.ai !== false; } } catch (e) {}
+aiBox.checked = opts.ai;
+applyMode();
+render();
+})();
+</script>

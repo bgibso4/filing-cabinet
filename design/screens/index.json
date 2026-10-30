@@ -1,0 +1,1242 @@
+[
+ {
+  "row": 1,
+  "col": 1,
+  "title": "Launch screen",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Launch",
+  "props": {
+   "theme": "light",
+   "style": "plain"
+  },
+  "png": "01-01-launch-screen.png"
+ },
+ {
+  "row": 1,
+  "col": 2,
+  "title": "Launch screen · dark",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Launch",
+  "props": {
+   "theme": "dark",
+   "style": "plain"
+  },
+  "png": "01-02-launch-screen-dark.png"
+ },
+ {
+  "row": 1,
+  "col": 3,
+  "title": "Welcome",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "welcome",
+   "favorites": 0
+  },
+  "png": "01-03-welcome.png"
+ },
+ {
+  "row": 1,
+  "col": 4,
+  "title": "Notifications ask",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "onboard2",
+   "favorites": 0
+  },
+  "png": "01-04-notifications-ask.png"
+ },
+ {
+  "row": 1,
+  "col": 5,
+  "title": "Then iOS asks",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "onboard2prompt",
+   "favorites": 0
+  },
+  "png": "01-05-then-ios-asks.png"
+ },
+ {
+  "row": 1,
+  "col": 6,
+  "title": "Empty Home",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "first",
+   "favorites": 0
+  },
+  "png": "01-06-empty-home.png"
+ },
+ {
+  "row": 1,
+  "col": 7,
+  "title": "Welcome · dark",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "state": "welcome",
+   "favorites": 0
+  },
+  "png": "01-07-welcome-dark.png"
+ },
+ {
+  "row": 1,
+  "col": 8,
+  "title": "Notifications ask · dark",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "state": "onboard2",
+   "favorites": 0
+  },
+  "png": "01-08-notifications-ask-dark.png"
+ },
+ {
+  "row": 1,
+  "col": 9,
+  "title": "Empty Home · dark",
+  "section": "First launch · plain launch screen, a two-screen welcome, then an empty Home; the camera is asked on the first Scan",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "state": "first",
+   "favorites": 0
+  },
+  "png": "01-09-empty-home-dark.png"
+ },
+ {
+  "row": 2,
+  "col": 1,
+  "title": "Home",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "light"
+  },
+  "png": "02-01-home.png"
+ },
+ {
+  "row": 2,
+  "col": 2,
+  "title": "No favourites",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "favorites": 0
+  },
+  "png": "02-02-no-favourites.png"
+ },
+ {
+  "row": 2,
+  "col": 3,
+  "title": "Ten favourites",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "favorites": 10
+  },
+  "png": "02-03-ten-favourites.png"
+ },
+ {
+  "row": 2,
+  "col": 4,
+  "title": "After a cleanup",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "banner"
+  },
+  "png": "02-04-after-a-cleanup.png"
+ },
+ {
+  "row": 2,
+  "col": 5,
+  "title": "Home · dark",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "dark"
+  },
+  "png": "02-05-home-dark.png"
+ },
+ {
+  "row": 2,
+  "col": 6,
+  "title": "Ten favourites · dark",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "favorites": 10
+  },
+  "png": "02-06-ten-favourites-dark.png"
+ },
+ {
+  "row": 2,
+  "col": 7,
+  "title": "After a cleanup · dark",
+  "section": "Home · favourites, then collections as 60pt rows with a badge and symbol each",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "state": "banner"
+  },
+  "png": "02-07-after-a-cleanup-dark.png"
+ },
+ {
+  "row": 3,
+  "col": 1,
+  "title": "First Scan · iOS asks for the camera",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "camprompt",
+   "favorites": 0
+  },
+  "png": "03-01-first-scan-ios-asks-for-the-camera.png"
+ },
+ {
+  "row": 3,
+  "col": 2,
+  "title": "Review · the card",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "yes",
+   "state": "card",
+   "pages": "1"
+  },
+  "png": "03-02-review-the-card.png"
+ },
+ {
+  "row": 3,
+  "col": 3,
+  "title": "Review · three pages",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "yes",
+   "state": "card",
+   "pages": "3"
+  },
+  "png": "03-03-review-three-pages.png"
+ },
+ {
+  "row": 3,
+  "col": 4,
+  "title": "Card tapped · the sheet",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "yes",
+   "state": "sheet",
+   "pages": "1"
+  },
+  "png": "03-04-card-tapped-the-sheet.png"
+ },
+ {
+  "row": 3,
+  "col": 5,
+  "title": "Without Apple Intelligence",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "no",
+   "state": "sheet",
+   "pages": "1"
+  },
+  "png": "03-05-without-apple-intelligence.png"
+ },
+ {
+  "row": 3,
+  "col": 6,
+  "title": "Choosing a collection",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "no",
+   "state": "menu",
+   "pages": "1"
+  },
+  "png": "03-06-choosing-a-collection.png"
+ },
+ {
+  "row": 3,
+  "col": 7,
+  "title": "Collection picked, expiry filled in",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "no",
+   "state": "picked",
+   "pages": "1"
+  },
+  "png": "03-07-collection-picked-expiry-filled-in.png"
+ },
+ {
+  "row": 3,
+  "col": 8,
+  "title": "Review · the card · dark",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "dark",
+   "option": "g",
+   "ai": "yes",
+   "state": "card",
+   "pages": "1"
+  },
+  "png": "03-08-review-the-card-dark.png"
+ },
+ {
+  "row": 3,
+  "col": 9,
+  "title": "Without Apple Intelligence · dark",
+  "section": "Scan and review · a slim card when Apple Intelligence suggests, the full sheet when it doesn’t; Rescan top right",
+  "comp": "Review",
+  "props": {
+   "theme": "dark",
+   "option": "g",
+   "ai": "no",
+   "state": "sheet",
+   "pages": "1"
+  },
+  "png": "03-09-without-apple-intelligence-dark.png"
+ },
+ {
+  "row": 4,
+  "col": 1,
+  "title": "Camera access off",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "state": "camoff",
+   "favorites": 0
+  },
+  "png": "04-01-camera-access-off.png"
+ },
+ {
+  "row": 4,
+  "col": 2,
+  "title": "Couldn’t save",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "yes",
+   "state": "failed",
+   "fail": "alert"
+  },
+  "png": "04-02-couldn-t-save.png"
+ },
+ {
+  "row": 4,
+  "col": 3,
+  "title": "Cancel · discard this scan?",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Review",
+  "props": {
+   "theme": "light",
+   "option": "g",
+   "ai": "yes",
+   "state": "discard"
+  },
+  "png": "04-03-cancel-discard-this-scan.png"
+ },
+ {
+  "row": 4,
+  "col": 4,
+  "title": "Camera access off · dark",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Home",
+  "props": {
+   "theme": "dark",
+   "state": "camoff",
+   "favorites": 0
+  },
+  "png": "04-04-camera-access-off-dark.png"
+ },
+ {
+  "row": 4,
+  "col": 5,
+  "title": "Couldn’t save · dark",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Review",
+  "props": {
+   "theme": "dark",
+   "option": "g",
+   "ai": "yes",
+   "state": "failed",
+   "fail": "alert"
+  },
+  "png": "04-05-couldn-t-save-dark.png"
+ },
+ {
+  "row": 4,
+  "col": 6,
+  "title": "Discard · dark",
+  "section": "When something stops a scan · camera off, a failed save, cancelling",
+  "comp": "Review",
+  "props": {
+   "theme": "dark",
+   "option": "g",
+   "ai": "yes",
+   "state": "discard"
+  },
+  "png": "04-06-discard-dark.png"
+ },
+ {
+  "row": 5,
+  "col": 1,
+  "title": "Receipts",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "receipts"
+  },
+  "png": "05-01-receipts.png"
+ },
+ {
+  "row": 5,
+  "col": 2,
+  "title": "Wallet",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "wallet"
+  },
+  "png": "05-02-wallet.png"
+ },
+ {
+  "row": 5,
+  "col": 3,
+  "title": "Throwaways",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "throwaways"
+  },
+  "png": "05-03-throwaways.png"
+ },
+ {
+  "row": 5,
+  "col": 4,
+  "title": "Recent",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "recent"
+  },
+  "png": "05-04-recent.png"
+ },
+ {
+  "row": 5,
+  "col": 5,
+  "title": "All Scans",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "all"
+  },
+  "png": "05-05-all-scans.png"
+ },
+ {
+  "row": 5,
+  "col": 6,
+  "title": "Empty collection",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "receipts",
+   "empty": true
+  },
+  "png": "05-06-empty-collection.png"
+ },
+ {
+  "row": 5,
+  "col": 7,
+  "title": "Favourites",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "favorites"
+  },
+  "png": "05-07-favourites.png"
+ },
+ {
+  "row": 5,
+  "col": 8,
+  "title": "Favourites · sort menu",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "favorites",
+   "menu": true
+  },
+  "png": "05-08-favourites-sort-menu.png"
+ },
+ {
+  "row": 5,
+  "col": 9,
+  "title": "Favourites · custom order",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "light",
+   "collection": "favorites",
+   "drag": true
+  },
+  "png": "05-09-favourites-custom-order.png"
+ },
+ {
+  "row": 5,
+  "col": 10,
+  "title": "Receipts · dark",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "dark",
+   "collection": "receipts"
+  },
+  "png": "05-10-receipts-dark.png"
+ },
+ {
+  "row": 5,
+  "col": 11,
+  "title": "Wallet · dark",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "dark",
+   "collection": "wallet"
+  },
+  "png": "05-11-wallet-dark.png"
+ },
+ {
+  "row": 5,
+  "col": 12,
+  "title": "Favourites · dark",
+  "section": "Collections · a grid with time left under each scan; Favourites is the same screen",
+  "comp": "Collection",
+  "props": {
+   "theme": "dark",
+   "collection": "favorites"
+  },
+  "png": "05-12-favourites-dark.png"
+ },
+ {
+  "row": 6,
+  "col": 1,
+  "title": "A 3-page lease",
+  "section": "Viewing a scan · like Photos; Move to Trash asks first, with no note afterwards",
+  "comp": "ScanView",
+  "props": {
+   "theme": "light",
+   "option": "f",
+   "scan": "lease"
+  },
+  "png": "06-01-a-3-page-lease.png"
+ },
+ {
+  "row": 6,
+  "col": 2,
+  "title": "A receipt, days left in orange",
+  "section": "Viewing a scan · like Photos; Move to Trash asks first, with no note afterwards",
+  "comp": "ScanView",
+  "props": {
+   "theme": "light",
+   "option": "f",
+   "scan": "receipt"
+  },
+  "png": "06-02-a-receipt-days-left-in-orange.png"
+ },
+ {
+  "row": 6,
+  "col": 3,
+  "title": "More menu",
+  "section": "Viewing a scan · like Photos; Move to Trash asks first, with no note afterwards",
+  "comp": "ScanView",
+  "props": {
+   "theme": "light",
+   "option": "f",
+   "scan": "lease",
+   "state": "menu"
+  },
+  "png": "06-03-more-menu.png"
+ },
+ {
+  "row": 6,
+  "col": 4,
+  "title": "Move to Trash?",
+  "section": "Viewing a scan · like Photos; Move to Trash asks first, with no note afterwards",
+  "comp": "ScanView",
+  "props": {
+   "theme": "light",
+   "option": "f",
+   "scan": "receipt",
+   "state": "trash"
+  },
+  "png": "06-04-move-to-trash.png"
+ },
+ {
+  "row": 6,
+  "col": 5,
+  "title": "A lease · dark",
+  "section": "Viewing a scan · like Photos; Move to Trash asks first, with no note afterwards",
+  "comp": "ScanView",
+  "props": {
+   "theme": "dark",
+   "option": "f",
+   "scan": "lease"
+  },
+  "png": "06-05-a-lease-dark.png"
+ },
+ {
+  "row": 7,
+  "col": 1,
+  "title": "Details",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "lease",
+   "state": "details"
+  },
+  "png": "07-01-details.png"
+ },
+ {
+  "row": 7,
+  "col": 2,
+  "title": "Details · receipt",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "receipt",
+   "state": "details"
+  },
+  "png": "07-02-details-receipt.png"
+ },
+ {
+  "row": 7,
+  "col": 3,
+  "title": "Rename",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "lease",
+   "state": "rename"
+  },
+  "png": "07-03-rename.png"
+ },
+ {
+  "row": 7,
+  "col": 4,
+  "title": "Collection",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "receipt",
+   "state": "collection"
+  },
+  "png": "07-04-collection.png"
+ },
+ {
+  "row": 7,
+  "col": 5,
+  "title": "Moved, expiry follows",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "receipt",
+   "state": "moved"
+  },
+  "png": "07-05-moved-expiry-follows.png"
+ },
+ {
+  "row": 7,
+  "col": 6,
+  "title": "Expiry",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "lease",
+   "state": "expiry"
+  },
+  "png": "07-06-expiry.png"
+ },
+ {
+  "row": 7,
+  "col": 7,
+  "title": "Moving would send it to Trash",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "light",
+   "scan": "receipt",
+   "state": "alert"
+  },
+  "png": "07-07-moving-would-send-it-to-trash.png"
+ },
+ {
+  "row": 7,
+  "col": 8,
+  "title": "Details · dark",
+  "section": "Scan details · a sheet where every row is editable, no Edit button",
+  "comp": "ScanDetails",
+  "props": {
+   "theme": "dark",
+   "scan": "receipt",
+   "state": "details"
+  },
+  "png": "07-08-details-dark.png"
+ },
+ {
+  "row": 8,
+  "col": 1,
+  "title": "First use",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "first",
+   "scope": "all"
+  },
+  "png": "08-01-first-use.png"
+ },
+ {
+  "row": 8,
+  "col": 2,
+  "title": "Before typing",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "before",
+   "scope": "all"
+  },
+  "png": "08-02-before-typing.png"
+ },
+ {
+  "row": 8,
+  "col": 3,
+  "title": "Results",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "results",
+   "scope": "all"
+  },
+  "png": "08-03-results.png"
+ },
+ {
+  "row": 8,
+  "col": 4,
+  "title": "Filtered to Wallet",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "results",
+   "scope": "wallet"
+  },
+  "png": "08-04-filtered-to-wallet.png"
+ },
+ {
+  "row": 8,
+  "col": 5,
+  "title": "Nothing in Wallet",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "none",
+   "scope": "wallet"
+  },
+  "png": "08-05-nothing-in-wallet.png"
+ },
+ {
+  "row": 8,
+  "col": 6,
+  "title": "Nothing anywhere",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "chips": "always",
+   "state": "none",
+   "scope": "all"
+  },
+  "png": "08-06-nothing-anywhere.png"
+ },
+ {
+  "row": 8,
+  "col": 7,
+  "title": "Before typing · dark",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "dark",
+   "option": "d",
+   "chips": "always",
+   "state": "before",
+   "scope": "all"
+  },
+  "png": "08-07-before-typing-dark.png"
+ },
+ {
+  "row": 8,
+  "col": 8,
+  "title": "Results · dark",
+  "section": "Search · recently viewed and collection filters; title matches first",
+  "comp": "Search",
+  "props": {
+   "theme": "dark",
+   "option": "d",
+   "chips": "always",
+   "state": "results",
+   "scope": "all"
+  },
+  "png": "08-08-results-dark.png"
+ },
+ {
+  "row": 9,
+  "col": 1,
+  "title": "Trash",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "list"
+  },
+  "png": "09-01-trash.png"
+ },
+ {
+  "row": 9,
+  "col": 2,
+  "title": "Select",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "select"
+  },
+  "png": "09-02-select.png"
+ },
+ {
+  "row": 9,
+  "col": 3,
+  "title": "Long-press",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "menu"
+  },
+  "png": "09-03-long-press.png"
+ },
+ {
+  "row": 9,
+  "col": 4,
+  "title": "A scan opened",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "open"
+  },
+  "png": "09-04-a-scan-opened.png"
+ },
+ {
+  "row": 9,
+  "col": 5,
+  "title": "A favourite opened",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "open",
+   "pick": 6
+  },
+  "png": "09-05-a-favourite-opened.png"
+ },
+ {
+  "row": 9,
+  "col": 6,
+  "title": "Delete now?",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "open",
+   "confirm": "one"
+  },
+  "png": "09-06-delete-now.png"
+ },
+ {
+  "row": 9,
+  "col": 7,
+  "title": "Delete 2?",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "select",
+   "confirm": "some"
+  },
+  "png": "09-07-delete-2.png"
+ },
+ {
+  "row": 9,
+  "col": 8,
+  "title": "Empty Trash?",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "list",
+   "confirm": "empty"
+  },
+  "png": "09-08-empty-trash.png"
+ },
+ {
+  "row": 9,
+  "col": 9,
+  "title": "Trash is empty",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "light",
+   "option": "d",
+   "state": "empty"
+  },
+  "png": "09-09-trash-is-empty.png"
+ },
+ {
+  "row": 9,
+  "col": 10,
+  "title": "Trash · dark",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "dark",
+   "option": "d",
+   "state": "list"
+  },
+  "png": "09-10-trash-dark.png"
+ },
+ {
+  "row": 9,
+  "col": 11,
+  "title": "Select · dark",
+  "section": "Trash · a grid with days left; Select for several, long-press for one; deleting asks, restoring doesn’t",
+  "comp": "Trash",
+  "props": {
+   "theme": "dark",
+   "option": "d",
+   "state": "select"
+  },
+  "png": "09-11-select-dark.png"
+ },
+ {
+  "row": 10,
+  "col": 1,
+  "title": "Settings",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "settings"
+  },
+  "png": "10-01-settings.png"
+ },
+ {
+  "row": 10,
+  "col": 2,
+  "title": "Collections",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "manage"
+  },
+  "png": "10-02-collections.png"
+ },
+ {
+  "row": 10,
+  "col": 3,
+  "title": "A collection",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "coll"
+  },
+  "png": "10-03-a-collection.png"
+ },
+ {
+  "row": 10,
+  "col": 4,
+  "title": "Keep scans for",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "menu"
+  },
+  "png": "10-04-keep-scans-for.png"
+ },
+ {
+  "row": 10,
+  "col": 5,
+  "title": "Shortening asks first",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "confirm"
+  },
+  "png": "10-05-shortening-asks-first.png"
+ },
+ {
+  "row": 10,
+  "col": 6,
+  "title": "Apple Intelligence off, notifications blocked",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "light",
+   "future": "no",
+   "screen": "settings",
+   "ai": "off",
+   "notif": "blocked"
+  },
+  "png": "10-06-apple-intelligence-off-notifications-blocked.png"
+ },
+ {
+  "row": 10,
+  "col": 7,
+  "title": "Settings · dark",
+  "section": "Settings · a standard list; each collection sets how long it keeps scans",
+  "comp": "Settings2",
+  "props": {
+   "theme": "dark",
+   "future": "no",
+   "screen": "settings"
+  },
+  "png": "10-07-settings-dark.png"
+ },
+ {
+  "row": 11,
+  "col": 1,
+  "title": "Notification · one scan",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Notify",
+  "props": {
+   "kind": "after",
+   "count": "one"
+  },
+  "png": "11-01-notification-one-scan.png"
+ },
+ {
+  "row": 11,
+  "col": 2,
+  "title": "Up to 3, one collection",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Notify",
+  "props": {
+   "kind": "after",
+   "count": "few"
+  },
+  "png": "11-02-up-to-3-one-collection.png"
+ },
+ {
+  "row": 11,
+  "col": 3,
+  "title": "Up to 3, mixed",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Notify",
+  "props": {
+   "kind": "after",
+   "count": "mixed"
+  },
+  "png": "11-03-up-to-3-mixed.png"
+ },
+ {
+  "row": 11,
+  "col": 4,
+  "title": "4 or more",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Notify",
+  "props": {
+   "kind": "after",
+   "count": "many"
+  },
+  "png": "11-04-4-or-more.png"
+ },
+ {
+  "row": 11,
+  "col": 5,
+  "title": "Scan control · Control Center",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Extras",
+  "props": {
+   "screen": "cc"
+  },
+  "png": "11-05-scan-control-control-center.png"
+ },
+ {
+  "row": 11,
+  "col": 6,
+  "title": "Scan control · Lock Screen",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Extras",
+  "props": {
+   "screen": "lock"
+  },
+  "png": "11-06-scan-control-lock-screen.png"
+ },
+ {
+  "row": 11,
+  "col": 7,
+  "title": "Shortcuts and Siri",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Extras",
+  "props": {
+   "screen": "shortcuts"
+  },
+  "png": "11-07-shortcuts-and-siri.png"
+ },
+ {
+  "row": 11,
+  "col": 8,
+  "title": "Spotlight",
+  "section": "Outside the app · a note after each cleanup, the Scan control, Shortcuts and Spotlight",
+  "comp": "Extras",
+  "props": {
+   "screen": "spotlight"
+  },
+  "png": "11-08-spotlight.png"
+ },
+ {
+  "row": 12,
+  "col": 1,
+  "title": "Home",
+  "section": "Largest text · text wraps instead of cutting off; side-by-side things stack",
+  "comp": "Home",
+  "props": {
+   "theme": "light",
+   "size": "large"
+  },
+  "png": "12-01-home.png"
+ },
+ {
+  "row": 12,
+  "col": 2,
+  "title": "A collection, two columns",
+  "section": "Largest text · text wraps instead of cutting off; side-by-side things stack",
+  "comp": "LargeText",
+  "props": {
+   "screen": "collection"
+  },
+  "png": "12-02-a-collection-two-columns.png"
+ },
+ {
+  "row": 12,
+  "col": 3,
+  "title": "Review card",
+  "section": "Largest text · text wraps instead of cutting off; side-by-side things stack",
+  "comp": "LargeText",
+  "props": {
+   "screen": "review"
+  },
+  "png": "12-03-review-card.png"
+ },
+ {
+  "row": 12,
+  "col": 4,
+  "title": "Details",
+  "section": "Largest text · text wraps instead of cutting off; side-by-side things stack",
+  "comp": "LargeText",
+  "props": {
+   "screen": "details"
+  },
+  "png": "12-04-details.png"
+ },
+ {
+  "row": 12,
+  "col": 5,
+  "title": "Settings",
+  "section": "Largest text · text wraps instead of cutting off; side-by-side things stack",
+  "comp": "LargeText",
+  "props": {
+   "screen": "settings"
+  },
+  "png": "12-05-settings.png"
+ }
+]

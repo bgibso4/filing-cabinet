@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings and collections</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; font-size: 17px; line-height: 22px; -webkit-font-smoothing: antialiased;">
+
+  <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: space-between; z-index: 5;">
+    <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}};"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+    <sc-if value="{{showEdit}}" hint-placeholder-val="{{ false }}">
+      <button type="button" style="height: 44px; padding: 0 18px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; font-weight: 600;">Edit</button>
+    </sc-if>
+  </div>
+
+  <!-- ========== Settings ========== -->
+  <sc-if value="{{isSettings}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 110px; display: flex; flex-direction: column;">
+      <h1 style="margin: 0 0 6px; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px;">Settings</h1>
+
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+        <div style="margin-top: 22px; border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+          <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="1">
+            <div style="display: flex; align-items: center; gap: 12px; min-height: 50px; padding-left: 16px;">
+              <span style="flex: none; width: 24px; display: flex; justify-content: center; color: {{c.tx2}};"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{r.icon}}"></path></svg></span>
+              <span style="flex: 1; align-self: stretch; display: flex; align-items: center; gap: 8px; padding: 6px 14px 6px 0; border-top: {{r.line}};">
+                <span style="flex: 1; display: flex; flex-direction: column;"><span>{{r.name}}</span><small style="display: {{r.noteShow}}; font-size: 13px; line-height: 17px; color: {{c.tx2}};">{{r.note}}</small></span>
+                <span style="display: {{r.valShow}}; align-items: center; gap: 8px;"><span style="color: {{c.tx2}};">{{r.value}}</span><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{r.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg></span>
+                <span role="switch" aria-checked="{{r.on}}" style="display: {{r.swShow}}; flex: none; width: 51px; height: 31px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: {{r.track}}; justify-content: {{r.side}}; opacity: {{r.swOp}};"><span style="width: 27px; height: 27px; border-radius: 999px; background: {{r.knob}};"></span></span>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <p style="margin: 28px 0 0; text-align: center; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Filing Cabinet 1.0 · Private by design</p>
+    </div>
+  </sc-if>
+
+  <!-- ========== Manage collections ========== -->
+  <sc-if value="{{isManage}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 110px; display: flex; flex-direction: column;">
+      <h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px;">Collections</h1>
+      <p style="margin: 2px 0 18px; font-size: 15px; line-height: 20px; color: {{c.tx2}};">How long each one keeps scans</p>
+      <div style="border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+        <sc-for list="{{colls}}" as="k" hint-placeholder-count="5">
+          <div style="display: flex; align-items: center; gap: 12px; height: 60px; padding-left: 16px;">
+            <span aria-hidden="true" style="flex: none; width: 31px; height: 31px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{k.badge}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{k.glyph}}"></path></svg></span>
+            <span style="flex: 1; align-self: stretch; display: flex; align-items: center; gap: 8px; padding-right: 14px; border-top: {{k.line}};">
+              <span style="flex: 1; display: flex; flex-direction: column;"><span>{{k.name}}</span><small style="font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{k.sub}}</small></span>
+              <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 8px 16px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Counted from each scan’s date.</p>
+    </div>
+    <sc-if value="{{future}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; justify-content: center;">
+        <button type="button" style="display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 28px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 2v12M2 8h12"></path></svg>New collection</button>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <!-- ========== One collection ========== -->
+  <sc-if value="{{isColl}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 110px; display: flex; flex-direction: column;">
+      <span style="display: flex; align-items: center; gap: 10px;"><span aria-hidden="true" style=" width: 36px; height: 36px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{one.badge}};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{one.glyph}}"></path></svg></span><h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px;">{{one.name}}</h1></span>
+      <p style="margin: 2px 0 6px; font-size: 15px; line-height: 20px; color: {{c.tx2}};">23 scans</p>
+
+      <!-- Later: name, colour and icon -->
+      <sc-if value="{{future}}" hint-placeholder-val="{{ false }}">
+        <span style="margin: 18px 16px 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Look</span>
+        <div style="border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+          <div style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px;"><span style="width: 64px; color: {{c.tx2}};">Name</span><span style="flex: 1;">Receipts</span></div>
+          <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 16px; border-top: 0.5px solid {{c.sep}};"><span style="width: 64px; color: {{c.tx2}};">Colour</span>
+            <span style="flex: 1; display: flex; justify-content: space-between;">
+              <sc-for list="{{swatches}}" as="w" hint-placeholder-count="7"><span style="width: 26px; height: 26px; border-radius: 999px; background: {{w.bg}}; box-shadow: {{w.ring}};"></span></sc-for>
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 16px; border-top: 0.5px solid {{c.sep}};"><span style="width: 64px; color: {{c.tx2}};">Icon</span><span style="flex: 1; display: flex; align-items: center; gap: 8px;"><span aria-hidden="true" style=" width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{one.badge}};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{one.glyph}}"></path></svg></span>Folder</span><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg></div>
+        </div>
+      </sc-if>
+
+      <span style="margin: 18px 16px 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Expiry</span>
+      <div style="border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+        <div style="display: flex; align-items: center; gap: 12px; height: 50px; padding: 0 16px; background: {{rowBg}};">
+          <span style="flex: 1;">Keep scans for</span>
+          <span style="color: {{c.tx2}};">3 months</span>
+          <svg width="11" height="16" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+        </div>
+      </div>
+      <p style="margin: 6px 16px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Applies to receipts you already have. Scans you gave their own expiry keep it.</p>
+
+      <!-- Later: delete -->
+      <sc-if value="{{future}}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top: 26px; border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+          <div style="display: flex; align-items: center; justify-content: center; height: 50px; color: {{c.red}};">Delete collection</div>
+        </div>
+        <p style="margin: 6px 16px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Its scans go to Trash, where you can restore them for 30 days.</p>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{showMenu}}" hint-placeholder-val="{{ false }}">
+      <div role="menu" style="position: absolute; z-index: 9; right: 24px; top: {{menuTop}}; width: 220px; display: flex; flex-direction: column; padding: 6px 0; border-radius: 24px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}};">
+        <sc-for list="{{choices}}" as="o" hint-placeholder-count="5">
+          <span style="display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 18px 0 14px;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="{{o.check}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"></path></svg><span>{{o.l}}</span></span>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{showConfirm}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; z-index: 20; background: {{c.dim}};"></div>
+      <div role="alertdialog" aria-label="Keep receipts 1 month?" style="position: absolute; z-index: 21; left: 38px; right: 38px; top: 300px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+        <b style="font-size: 17px; line-height: 22px;">Keep receipts 1 month?</b>
+        <span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">18 receipts are older than a month and will go to Trash now. You can restore them for 30 days.</span>
+        <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px;">Cancel</button>
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600;">Change</button>
+        </span>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"screen":{"editor":"enum","options":["settings","manage","coll","menu","confirm"],"default":"settings"},"future":{"editor":"enum","options":["no","yes"],"default":"no"},"ai":{"editor":"enum","options":["on","off"],"default":"on"},"notif":{"editor":"enum","options":["on","blocked"],"default":"on"},"$preview":{"width":390,"height":844}}'>
+
+// Collection icons are round badges with a symbol per collection (see the build note on custom collections).
+var __GLYPH = { wallet: 'M3 6.5h18v11H3zM3 10h18M6.5 14h4', receipts: 'M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3', notes: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4', documents: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6', throwaways: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10' };
+var __DEEP = { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+var __BYCOLOR = { '#3f6fa3': 'wallet', '#6f9bd0': 'wallet', '#c0533a': 'receipts', '#e07a60': 'receipts', '#7a5aa8': 'notes', '#a88ad6': 'notes', '#4b8160': 'documents', '#79b08f': 'documents', '#b98a1f': 'throwaways', '#d9ad4a': 'throwaways' };
+function __glyphs(v) {
+  if (Array.isArray(v)) return v.map(__glyphs);
+  if (!v || typeof v !== 'object') return v;
+  var out = {};
+  Object.keys(v).forEach(function (k) {
+    out[k] = __glyphs(v[k]);
+    var m = /^(.*?)(dot|Dot|color|Color)$/.exec(k);
+    if (m && typeof v[k] === 'string') {
+      var g = __GLYPH[__BYCOLOR[String(v[k]).toLowerCase()]] || 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z';
+      var cap = m[2][0] === m[2][0].toUpperCase();
+      out[m[1] + (m[1] ? 'Glyph' : 'glyph')] = g;
+      out[m[1] + (m[1] ? 'Badge' : 'badge')] = __DEEP[__BYCOLOR[String(v[k]).toLowerCase()]] || v[k];
+    }
+  });
+  return out;
+}
+class Component extends DCLogic {
+  renderVals() { return __glyphs(this.__rv()); }
+  __rv() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var scr = this.props.screen ?? 'settings';
+    var future = (this.props.future ?? 'no') === 'yes';
+    var c = dark
+      ? { bg: '#000000', surface: '#1c1c1e', well: '#2c2c2e', tx: '#f2f2f7', tx2: '#98989f', sep: '#38383a', chev: '#5a5a5f', red: '#ff453a', glass: 'rgba(44,44,46,0.72)', glassEdge: 'rgba(255,255,255,0.12)', dim: 'rgba(0,0,0,0.45)', menu: 'rgba(44,44,46,0.98)', alertBtn: 'rgba(120,120,128,0.36)', pressed: '#2c2c2e' }
+      : { bg: '#f2f2f7', surface: '#ffffff', well: '#f2f2f7', tx: '#1c1c1e', tx2: '#6e6e73', sep: '#d8d8dc', chev: '#c4c4c9', red: '#d70015', glass: 'rgba(255,255,255,0.72)', glassEdge: 'rgba(0,0,0,0.08)', dim: 'rgba(0,0,0,0.25)', menu: 'rgba(255,255,255,0.98)', alertBtn: 'rgba(120,120,128,0.16)', pressed: '#e5e5ea' };
+    var coll = dark
+      ? { wallet: '#6f9bd0', receipts: '#e07a60', notes: '#a88ad6', documents: '#79b08f', throwaways: '#d9ad4a' }
+      : { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+    var line = function (i) { return i === 0 ? '0' : '0.5px solid ' + c.sep; };
+    var ICON = {
+      folders: 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z',
+      spark: 'M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9zM18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z',
+      bell: 'M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0',
+      lock: 'M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5z',
+      info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v6M12 7.5v.01',
+      mail: 'M3.5 6.5h17v11h-17zM3.5 7l8.5 6.5L20.5 7'
+    };
+    var aiOff = (this.props.ai ?? 'on') === 'off';
+    var notifOff = (this.props.notif ?? 'on') === 'blocked';
+    // Switches stay black and white: colour is only for collections and expiry.
+    var sw = function (on, enabled) { return { value: '', chev: 'transparent', swShow: 'flex', valShow: 'none', on: on ? 'true' : 'false', track: on ? c.tx : (dark ? 'rgba(120,120,128,0.36)' : 'rgba(120,120,128,0.18)'), knob: on ? c.bg === '#000000' ? '#1c1c1e' : '#ffffff' : (dark ? '#f2f2f7' : '#ffffff'), side: on ? 'flex-end' : 'flex-start', swOp: enabled ? 1 : 0.45 }; };
+    var groups = [
+      { rows: [Object.assign({}, sw(false, true), { icon: ICON.folders, name: 'Collections', value: '5', chev: c.chev, note: '', swShow: 'none', valShow: 'flex' })] },
+      { rows: [
+        Object.assign({ icon: ICON.spark, name: 'Apple Intelligence', note: aiOff ? 'Turn it on in iPhone Settings first' : 'Suggests titles and collections' }, sw(!aiOff, !aiOff)),
+        Object.assign({ icon: ICON.bell, name: 'Notifications', note: notifOff ? 'Turned off in iPhone Settings' : 'A note when scans move to Trash' }, sw(!notifOff, true))
+      ] },
+      { rows: [Object.assign({}, sw(false, true), { icon: ICON.mail, name: 'Send feedback', value: '', chev: c.chev, note: '', swShow: 'none', valShow: 'flex' })] }
+].map(function (g) { g.rows = g.rows.map(function (r, i) { r.line = line(i); r.noteShow = r.note ? 'block' : 'none'; return r; }); return g; });
+    var colls = [['Wallet', 'wallet', 'Kept forever · 8 scans'], ['Receipts', 'receipts', 'Kept 3 months · 23 scans'], ['Notes', 'notes', 'Kept forever · 4 scans'], ['Documents', 'documents', 'Kept forever · 3 scans'], ['Throwaways', 'throwaways', 'Kept 1 week · 3 scans']]
+      .map(function (x, i) { return { name: x[0], dot: coll[x[1]], sub: x[2], line: line(i) }; });
+    var choices = ['1 week', '1 month', '3 months', '1 year', 'Forever'].map(function (l, j) { return { l: l, check: j === 2 ? c.tx : 'transparent' }; });
+    var sw = [coll.wallet, coll.receipts, coll.notes, coll.documents, coll.throwaways, dark ? '#e08ab0' : '#b5527e', dark ? '#8e8e93' : '#6e6e73'];
+    var swatches = sw.map(function (s, i) { return { bg: s, ring: i === 1 ? '0 0 0 2px ' + c.surface + ', 0 0 0 4px ' + c.tx : 'none' }; });
+    var isColl = scr === 'coll' || scr === 'menu' || scr === 'confirm';
+    return {
+      c: c, future: future,
+      isSettings: scr === 'settings', isManage: scr === 'manage', isColl: isColl,
+      showEdit: scr === 'manage' && future,
+      showMenu: scr === 'menu', showConfirm: scr === 'confirm',
+      rowBg: scr === 'menu' ? c.pressed : c.surface,
+      menuTop: future ? '520px' : '290px',
+      groups: groups, colls: colls, choices: choices, swatches: swatches,
+      one: { name: 'Receipts', dot: coll.receipts }
+    };
+  }
+}
+</script>
+</body>
+</html>

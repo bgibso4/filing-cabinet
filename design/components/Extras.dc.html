@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Extras</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<!-- iOS draws all of these. What's ours: the words, the Scan symbol, and what happens next. -->
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{bg}}; color: {{fg}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <!-- Control Center -->
+  <sc-if value="{{isCC}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 24px; right: 24px; top: 90px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+      <sc-for list="{{ccTiles}}" as="k" hint-placeholder-count="8">
+        <span style="grid-column: span {{k.span}}; height: 72px; border-radius: {{k.r}}; display: flex; align-items: center; justify-content: {{k.just}}; gap: 10px; padding: 0 14px; background: {{k.bg}}; color: #ffffff;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{k.icon}}"></path></svg>
+          <span style="display: {{k.labelShow}}; flex-direction: column;"><b style="font-size: 15px; line-height: 19px;">{{k.label}}</b><span style="font-size: 13px; line-height: 17px; opacity: 0.75;">{{k.sub}}</span></span>
+        </span>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- Lock Screen: the Scan control in the bottom-left slot -->
+  <sc-if value="{{isLock}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 70px; display: flex; flex-direction: column; align-items: center;">
+      <span style="font-size: 20px; line-height: 26px; font-weight: 600; opacity: 0.9;">Saturday, October 24</span>
+      <span style="font-size: 92px; line-height: 96px; font-weight: 700; letter-spacing: -2px;">9:41</span>
+    </div>
+    <div style="position: absolute; left: 46px; right: 46px; bottom: 54px; display: flex; justify-content: space-between;">
+      <span style="width: 50px; height: 50px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{scanIcon}}"></path></svg></span>
+      <span style="width: 50px; height: 50px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.18);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.4L9 4.5h6l1.6 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.6"></circle></svg></span>
+    </div>
+    <div style="position: absolute; left: 50%; bottom: 10px; width: 134px; height: 5px; margin-left: -67px; border-radius: 999px; background: rgba(255,255,255,0.8);"></div>
+  </sc-if>
+
+  <!-- Shortcuts: our two actions -->
+  <sc-if value="{{isShortcuts}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 70px; display: flex; flex-direction: column;">
+      <span style="display: flex; align-items: center; gap: 12px;"><span style="width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: #1c1c1e;"><svg width="24" height="19" viewBox="0 0 28 22" fill="#f2f2f7" aria-hidden="true"><path d="M0 3a3 3 0 0 1 3-3h6.3a3 3 0 0 1 2.2 1l1.3 1.5H25a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z"></path></svg></span><b style="font-size: 28px; line-height: 34px;">Filing Cabinet</b></span>
+      <span style="margin: 22px 4px 8px; font-size: 13px; line-height: 18px; color: #6e6e73;">Actions</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="height: 110px; box-sizing: border-box; padding: 14px; border-radius: 22px; background: #2c2c2e; color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{scanIcon}}"></path></svg><b style="font-size: 16px; line-height: 20px;">Scan a document</b></div>
+        <div style="height: 110px; box-sizing: border-box; padding: 14px; border-radius: 22px; background: #2c2c2e; color: #ffffff; display: flex; flex-direction: column; justify-content: space-between;"><svg width="28" height="28" viewBox="0 0 16 16" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3.5 3.5"></path></svg><b style="font-size: 16px; line-height: 20px;">Find a scan</b></div>
+      </div>
+      <span style="margin: 26px 4px 8px; font-size: 13px; line-height: 18px; color: #6e6e73;">In a shortcut</span>
+      <div style="padding: 16px; border-radius: 18px; background: #ffffff; font-size: 17px; line-height: 24px; color: #1c1c1e;">Find scans matching <span style="padding: 2px 8px; border-radius: 8px; background: #e5e5ea; color: #6e6e73;">Text</span></div>
+      <span style="margin: 26px 4px 8px; font-size: 13px; line-height: 18px; color: #6e6e73;">Say to Siri</span>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <span style="padding: 12px 16px; border-radius: 18px; background: #ffffff; color: #1c1c1e;">“Scan with Filing Cabinet”</span>
+        <span style="padding: 12px 16px; border-radius: 18px; background: #ffffff; color: #1c1c1e;">“Find my lease in Filing Cabinet”</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Spotlight: scan titles show up in iPhone search -->
+  <sc-if value="{{isSpotlight}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 66px; display: flex; flex-direction: column;">
+      <span style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 999px; background: rgba(255,255,255,0.16); color: #ffffff; font-size: 17px;"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3.5 3.5"></path></svg>lease</span>
+      <span style="margin: 22px 6px 8px; font-size: 15px; line-height: 20px; font-weight: 600; color: rgba(255,255,255,0.7);">Filing Cabinet</span>
+      <div style="border-radius: 22px; overflow: hidden; background: rgba(255,255,255,0.14);">
+        <sc-for list="{{hits}}" as="h" hint-placeholder-count="2">
+          <div style="display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 14px; border-top: {{h.line}};">
+            <span style="flex: none; width: 40px; height: 52px; border-radius: 5px; overflow: hidden; background: #2c2c2e;"><img src="{{h.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></span>
+            <span style="display: flex; flex-direction: column;"><b style="font-size: 17px; line-height: 22px; color: #ffffff;">{{h.title}}</b><span style="font-size: 14px; line-height: 19px; color: rgba(255,255,255,0.65);">{{h.sub}}</span></span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="margin: 14px 6px 0; font-size: 13px; line-height: 18px; color: rgba(255,255,255,0.6);">Titles only. Tapping opens the scan in Filing Cabinet.</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["cc","lock","shortcuts","spotlight"],"default":"cc"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var s = this.props.screen ?? 'cc';
+    var SCAN = 'M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M9 9.5h6M9 12.5h6M9 15.5h3.5';
+    var t = function (icon, span, label, sub, bg) { return { icon: icon, span: span, label: label || '', sub: sub || '', labelShow: label ? 'flex' : 'none', just: label ? 'flex-start' : 'center', r: span === 1 ? '999px' : '24px', bg: bg || 'rgba(255,255,255,0.16)' }; };
+    var ccTiles = [
+      t('M5 12.5l4 4 10-10', 2, 'Focus', 'Off'), t('M12 3v9M7 6a7 7 0 1 0 10 0', 1), t('M12 3v3M12 18v3M3 12h3M18 12h3', 1),
+      t(SCAN, 2, 'Scan', 'Filing Cabinet', 'rgba(255,255,255,0.28)'), t('M9 18V5l12-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM21 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z', 1), t('M3 8.5a2 2 0 0 1 2-2h2.4L9 4.5h6l1.6 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 1),
+      t('M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2zM9 21h6', 1), t('M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', 1)
+    ];
+    var B = function (id) { return '/_blob/' + id; };
+    return {
+      bg: s === 'shortcuts' ? '#f2f2f7' : (s === 'cc' ? 'linear-gradient(160deg, #2b3340 0%, #14181f 100%)' : 'linear-gradient(160deg, #3d4a5c 0%, #1f2733 55%, #12161d 100%)'),
+      fg: s === 'shortcuts' ? '#1c1c1e' : '#ffffff',
+      isCC: s === 'cc', isLock: s === 'lock', isShortcuts: s === 'shortcuts', isSpotlight: s === 'spotlight',
+      ccTiles: ccTiles, scanIcon: SCAN,
+      hits: [
+        { title: 'Lease 2026', sub: 'Documents · 3 pages', src: B('1db32063f80e622a14aec8813b573090'), line: '0' },
+        { title: 'Lease renewal letter', sub: 'Documents', src: B('1831593aaa00f3a08763d867e5f3ffe2'), line: '0.5px solid rgba(255,255,255,0.12)' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

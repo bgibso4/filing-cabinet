@@ -101,7 +101,7 @@ Flow: **Capture → Understanding → Classification → Library (persist) → U
 ## 8. Key flows
 
 1. **Scan → understand → file**
-   Tap **Scan** (bottom of Home, next to Search; also inside a collection, where it pre-selects that collection) → document camera → multi-page corrected images → background OCR + entity extraction → generate thumbnails → if Foundation Models is available, suggest a collection → **review sheet** (title, collection, expiry; all editable; the collection is a required pick when there's no suggestion) → save to Library.
+   Tap **Scan** (on Home; also inside a collection, where it pre-selects that collection) → document camera → multi-page corrected images → background OCR + entity extraction → generate thumbnails → if Foundation Models is available, suggest a collection → **review sheet** (title, collection, expiry; all editable; the collection is a required pick when there's no suggestion) → save to Library.
 2. **Browse**
    Home (layout decided in the mocks) → a collection, Recent, All, or Favorites → grid of thumbnails → tap → **detail** (swipe pages, zoom, see the expiry status, copy text, edit title/collection/expiry, favorite, share/export, delete to Trash).
 3. **Self-cleanup**

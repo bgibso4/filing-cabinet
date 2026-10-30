@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <div style="height: 844px; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; padding: 58px 16px 130px;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; flex: none;">
+      <h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: {{t.large}}; line-height: {{t.largeLH}}; font-weight: 700; letter-spacing: -0.4px; white-space: nowrap;">Filing Cabinet</h1>
+      <button type="button" aria-label="Settings" style="width: 44px; height: 44px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+
+    <sc-if value="{{bannerSub}}" hint-placeholder-val="{{ false }}">
+      <a href="#" style="flex: none; align-self: flex-start; display: flex; align-items: center; gap: 6px; min-height: 44px; margin: -8px 0 -6px; font-size: {{t.sub}}; line-height: {{t.subLH}}; color: {{c.tx2}}; text-decoration: none;"><span>4 scans moved to Trash</span><span>·</span><span style="font-weight: 600; color: {{c.tx}};">View</span></a>
+    </sc-if>
+
+    <a href="#" style="flex: none; display: flex; align-items: center; gap: 8px; min-height: {{t.field}}; box-sizing: border-box; margin-top: 8px; padding: 0 16px; border-radius: 999px; background: {{c.surface}}; color: {{c.tx2}}; font-size: {{t.body}}; line-height: {{t.bodyLH}}; text-decoration: none;">
+        <svg width="{{t.glyph}}" height="{{t.glyph}}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><path d="M11 11l3.5 3.5"></path></svg>
+        <span>Search</span>
+      </a>
+
+    <sc-if value="{{bannerButtons}}" hint-placeholder-val="{{ false }}">
+      <div style="flex: none; display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; padding: 14px 16px 2px; border-radius: 14px; background: {{c.surface}};">
+        <span style="flex: none; display: flex; padding-top: 1px; color: {{c.tx2}};"><svg width="{{t.icon}}" height="{{t.icon}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+          <span style="font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600;">4 scans moved to Trash</span>
+          <span style="font-size: {{t.sub}}; line-height: {{t.subLH}}; color: {{c.tx2}};">Restore within 30 days</span>
+          <span style="display: flex; gap: 24px;">
+            <a href="#" style="display: flex; align-items: center; min-height: 44px; font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600; color: {{c.tx}}; text-decoration: none;">View Trash</a>
+            <button type="button" style="display: flex; align-items: center; min-height: 44px; padding: 0; border: 0; background: transparent; font-family: inherit; font-size: {{t.body}}; line-height: {{t.bodyLH}}; color: {{c.tx2}}; cursor: pointer;">Dismiss</button>
+          </span>
+        </span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{bannerTip}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; flex: none; display: flex; align-items: flex-start; gap: 12px; margin-top: 12px; padding: 14px 44px 4px 16px; border-radius: 14px; background: {{c.surface}};">
+        <span style="flex: none; display: flex; padding-top: 1px; color: {{c.tx2}};"><svg width="{{t.icon}}" height="{{t.icon}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+          <span style="font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600;">4 scans moved to Trash</span>
+          <span style="font-size: {{t.sub}}; line-height: {{t.subLH}}; color: {{c.tx2}};">Restore within 30 days</span>
+          <a href="#" style="align-self: flex-start; display: flex; align-items: center; min-height: 44px; font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600; color: {{c.tx}}; text-decoration: none;">View Trash</a>
+        </span>
+        <button type="button" aria-label="Dismiss" style="position: absolute; right: 2px; top: 2px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; color: {{c.tx2}}; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"></path></svg>
+        </button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{bannerCorner}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; flex: none; display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 10px 10px 16px; border-radius: 14px; background: {{c.surface}};">
+        <button type="button" aria-label="Dismiss" style="position: absolute; left: -18px; top: -18px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+          <span style="width: 24px; height: 24px; box-sizing: border-box; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.sep}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx2}};"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M1.5 1.5l7 7M8.5 1.5l-7 7"></path></svg></span>
+        </button>
+        <span style="flex: none; display: flex; color: {{c.tx2}};"><svg width="{{t.icon}}" height="{{t.icon}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+          <span style="font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600;">4 scans moved to Trash</span>
+          <span style="font-size: {{t.sub}}; line-height: {{t.subLH}}; color: {{c.tx2}};">Restore within 30 days</span>
+        </span>
+        <a href="#" style="flex: none; display: flex; align-items: center; min-height: 44px; padding: 0 6px; font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600; color: {{c.tx}}; text-decoration: none;">View</a>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{hasFavs}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; flex: none;">
+        <sc-if value="{{favLink}}" hint-placeholder-val="{{ true }}">
+          <h2 style="display: flex; margin: 6px 0 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: {{t.title2}}; line-height: {{t.title2LH}}; font-weight: 700;">
+            <a href="#" aria-label="Favorites, see all" style="display: flex; align-items: center; gap: 7px; min-height: 44px; color: {{c.tx}}; text-decoration: none;"><span>Favorites</span><svg width="9" height="15" viewBox="0 0 8 13" fill="none" stroke="{{c.tx2}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg></a>
+          </h2>
+        </sc-if>
+        <sc-if value="{{favPlain}}" hint-placeholder-val="{{ false }}">
+          <h2 style="display: flex; align-items: center; min-height: 44px; margin: 6px 0 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: {{t.title2}}; line-height: {{t.title2LH}}; font-weight: 700;">Favorites</h2>
+        </sc-if>
+
+        <div style="display: flex; gap: 8px; margin: 0 -16px; padding: 0 16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;">
+          <sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/876d48abbdeaf8ee381ebc16c5dad345" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Driver’s license</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s2}}" hint-placeholder-val="{{ true }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/1db32063f80e622a14aec8813b573090" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Lease 2026</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s3}}" hint-placeholder-val="{{ true }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/59034cc570c1fb190543b1c1180f82ed" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Insurance card</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s4}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/6987208a1655d2ae0858991337c5f875" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Laptop warranty</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s5}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/86a632b7df5fd0f5b89b0230d8116e1d" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Wifi password</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s6}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/b6c8b4cd1e3356f6b8ce999ea271e4ba" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Gym membership</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s7}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/30c031a6446fe31dd0db86fff0b054ea" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Vaccine record</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s8}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/12bd6e42f9d36b4c75da7a1675aaedb4" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Car registration</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s9}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/ddc09234aa01b6231c81c573c965c2ce" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Library card</span>
+            </a>
+          </sc-if>
+          <sc-if value="{{s10}}" hint-placeholder-val="{{ false }}">
+            <a href="#" style="flex: none; width: {{t.cardW}}; scroll-snap-align: start; scroll-margin-left: 16px; display: flex; flex-direction: column; gap: 6px; color: {{c.tx}}; text-decoration: none;">
+              <img src="/_blob/f1e7b74ca68f61506d81cb2f4c962257" alt="" style="display: block; width: {{t.cardW}}; height: {{t.cardH}}; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="font-size: {{t.cardT}}; line-height: {{t.cardTLH}}; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Passport</span>
+            </a>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <h2 style="display: flex; align-items: center; min-height: 44px; flex: none; margin: {{collMargin}}; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: {{t.title2}}; line-height: {{t.title2LH}}; font-weight: 700;">Collections</h2>
+
+    <div style="display: flex; flex-direction: column; flex: none; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+      <sc-for list="{{collections}}" as="col" hint-placeholder-count="5">
+        <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: {{t.row}}; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+          <sc-if value="{{folderIcons}}" hint-placeholder-val="{{ true }}"><svg width="{{t.fw}}" height="{{t.fh}}" viewBox="0 0 28 22" fill="{{col.color}}" aria-hidden="true" style="flex: none;"><path d="M0 3a3 3 0 0 1 3-3h6.3a3 3 0 0 1 2.2 1l1.3 1.5H25a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z"></path></svg></sc-if>
+          <sc-if value="{{badgeIcons}}" hint-placeholder-val="{{ false }}"><span style="flex: none; width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{col.badge}};"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{col.glyph}}"></path></svg></span></sc-if>
+          <span style="flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: {{rowPad}}; border-top: {{col.line}};">
+            <span style="display: flex; flex-direction: column; min-width: 0;">
+              <span style="font-size: {{t.body}}; line-height: {{t.bodyLH}};">{{col.name}}</span>
+              <sc-if value="{{isFirst}}" hint-placeholder-val="{{ false }}"><span style="font-size: {{t.sub}}; line-height: {{t.subLH}}; color: {{c.tx2}};">{{col.desc}}</span></sc-if>
+            </span>
+            <span style="display: flex; align-items: center; gap: 10px; flex: none;">
+              <sc-if value="{{hasScans}}" hint-placeholder-val="{{ true }}"><span style="font-size: {{t.body}}; line-height: {{t.bodyLH}}; color: {{c.tx2}};">{{col.count}}</span></sc-if>
+              <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+            </span>
+          </span>
+        </a>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{hasScans}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; flex: none; margin-top: 16px; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+        <sc-for list="{{views}}" as="v" hint-placeholder-count="3">
+          <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: {{t.row}}; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+            <sc-if value="{{folderIcons}}" hint-placeholder-val="{{ true }}"><span style="width: {{t.fwPx}}; flex: none; display: flex; justify-content: center; color: {{c.tx2}};"><svg width="{{t.icon}}" height="{{t.icon}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{v.icon}}"></path></svg></span></sc-if>
+            <sc-if value="{{badgeIcons}}" hint-placeholder-val="{{ false }}"><span style="flex: none; width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.badge}};"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{v.icon}}"></path></svg></span></sc-if>
+            <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{v.line}}; font-size: {{t.body}}; line-height: {{t.bodyLH}};">
+              <span>{{v.name}}</span>
+              <span style="display: flex; align-items: center; gap: 10px;"><span style="color: {{c.tx2}};">{{v.count}}</span><svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l5 5-5 5"></path></svg></span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 128px; pointer-events: none; background: linear-gradient(to top, {{c.bg}} 38%, {{c.bgClear}});"></div>
+
+  <sc-if value="{{bannerToast}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 94px; display: flex; justify-content: center;">
+      <a href="#" style="display: flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 18px 0 14px; border-radius: 999px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; font-size: {{t.sub}}; line-height: {{t.subLH}}; text-decoration: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; color: {{c.tx2}};"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+        <span style="font-weight: 600;">4 scans moved to Trash</span>
+        <span style="color: {{c.tx2}};">·</span>
+        <span style="font-weight: 600;">View</span>
+      </a>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; justify-content: center;">
+    <button type="button" style="display: flex; align-items: center; gap: 8px; min-height: {{t.pill}}; max-width: 100%; box-sizing: border-box; padding: 0 30px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: {{t.body}}; line-height: {{t.bodyLH}}; font-weight: 600; cursor: pointer;">
+      <svg width="{{t.glyph}}" height="{{t.glyph}}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"></path></svg>
+      <span>Scan</span>
+    </button>
+  </div>
+
+  <sc-if value="{{isWelcome}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.35);">
+      <div role="dialog" aria-label="Welcome to Filing Cabinet" style="position: absolute; left: 0; right: 0; top: 62px; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; padding: 56px 32px 40px; border-radius: 14px 14px 0 0; background: {{c.sheet}}; color: {{c.tx}};">
+        <h1 style="margin: 0; text-align: center; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px; text-wrap: balance;">Welcome to Filing Cabinet</h1>
+        <div style="display: flex; flex-direction: column; gap: 28px; margin-top: 44px;">
+          <div style="display: flex; gap: 16px; align-items: flex-start;">
+            <span style="flex: none; width: 36px; display: flex; justify-content: center; padding-top: 2px; color: {{c.tx}};"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; line-height: 22px; font-weight: 600;">Scan in one tap</span><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">Point your camera at any paper. Several pages make one scan.</span></span>
+          </div>
+          <div style="display: flex; gap: 16px; align-items: flex-start;">
+            <span style="flex: none; width: 36px; display: flex; justify-content: center; padding-top: 2px; color: {{c.tx}};"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; line-height: 22px; font-weight: 600;">Sorted into collections</span><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">Every scan goes into a collection, so it’s easy to find later.</span></span>
+          </div>
+          <div style="display: flex; gap: 16px; align-items: flex-start;">
+            <span style="flex: none; width: 36px; display: flex; justify-content: center; padding-top: 2px; color: {{c.tx}};"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; line-height: 22px; font-weight: 600;">Cleans up after itself</span><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">Things you only need for a while expire on their own.</span></span>
+          </div>
+          <div style="display: flex; gap: 16px; align-items: flex-start;">
+            <span style="flex: none; width: 36px; display: flex; justify-content: center; padding-top: 2px; color: {{c.tx}};"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 17px; line-height: 22px; font-weight: 600;">Private by design</span><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">No account. Scans stay on your iPhone and in your iCloud backup.</span></span>
+          </div>
+        </div>
+        <button type="button" style="margin-top: auto; height: 52px; flex: none; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Continue</button>
+      </div>
+    </div>
+  </sc-if>
+
+
+  <!-- Onboarding, step 2: ask for notifications (D2), with a preview of what they look like -->
+  <sc-if value="{{isOnboard2}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.35);">
+      <div role="dialog" aria-label="Notifications" style="position: absolute; left: 0; right: 0; top: 62px; bottom: 0; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; padding: 56px 32px 40px; border-radius: 14px 14px 0 0; background: {{c.sheet}}; color: {{c.tx}}; text-align: center;">
+        <span style="width: 72px; height: 72px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.well}}; color: {{c.tx}};"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"></path><path d="M10 20.5a2 2 0 0 0 4 0"></path></svg></span>
+        <h1 style="margin: 22px 0 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 30px; line-height: 36px; font-weight: 700; text-wrap: balance;">Know when it cleans up</h1>
+        <p style="margin: 10px 0 0; max-width: 300px; font-size: 17px; line-height: 23px; color: {{c.tx2}};">Expired scans move to Trash on their own. Get a short note when that happens.</p>
+        <div style="align-self: stretch; display: flex; gap: 12px; margin-top: 30px; padding: 14px 16px; border-radius: 22px; background: {{c.well}}; text-align: left;">
+          <span style="flex: none; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: {{c.tx}};"><svg width="20" height="16" viewBox="0 0 28 22" fill="{{c.bg}}" aria-hidden="true"><path d="M0 3a3 3 0 0 1 3-3h6.3a3 3 0 0 1 2.2 1l1.3 1.5H25a3 3 0 0 1 3 3V19a3 3 0 0 1-3 3H3a3 3 0 0 1-3-3z"></path></svg></span>
+          <span style="display: flex; flex-direction: column;"><b style="font-size: 15px; line-height: 20px;">Cleaned up 3 receipts</b><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">They’re in Trash for 30 days if you need them.</span></span>
+        </div>
+        <span style="margin-top: 10px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">At most one a day</span>
+        <button type="button" style="align-self: stretch; margin-top: auto; height: 52px; flex: none; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600;">Turn on notifications</button>
+        <button type="button" style="margin-top: 8px; height: 44px; padding: 0 20px; border: 0; background: transparent; color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px;">Not now</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ...then iOS asks. Its notification prompt has no room for our own words, hence the screen before it. -->
+  <sc-if value="{{isOnboard2Prompt}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.22);">
+      <div role="alertdialog" aria-label="Filing Cabinet would like to send you notifications" style="position: absolute; left: 38px; right: 38px; top: 300px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.alert}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+        <b style="font-size: 17px; line-height: 22px;">“Filing Cabinet” Would Like to Send You Notifications</b>
+        <span style="font-size: 15px; line-height: 20px;">Notifications may include alerts, sounds and icon badges. These can be configured in Settings.</span>
+        <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px;">Don’t Allow</button>
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; font-weight: 600;">Allow</button>
+        </span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- First tap of Scan: iOS asks. The alert is drawn by iOS; the sentence under the title is ours. -->
+  <sc-if value="{{isCamPrompt}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.22);">
+      <div role="alertdialog" aria-label="Filing Cabinet would like to access the camera" style="position: absolute; left: 38px; right: 38px; top: 290px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.alert}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+        <b style="font-size: 17px; line-height: 22px;">“Filing Cabinet” Would Like to Access the Camera</b>
+        <span style="font-size: 15px; line-height: 20px; color: {{c.tx}};">Filing Cabinet uses the camera to scan documents. Scans stay on your iPhone and in your iCloud backup.</span>
+        <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; cursor: pointer;">Don’t Allow</button>
+          <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">Allow</button>
+        </span>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Every tap of Scan after "Don't Allow": iOS won't ask again, so we point to Settings. -->
+  <sc-if value="{{isCamOff}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.25);">
+      <div role="dialog" aria-label="Camera access is off" style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 8px 20px 20px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <span aria-hidden="true" style="width: 36px; height: 5px; border-radius: 999px; background: {{c.chev}};"></span>
+        <button type="button" aria-label="Close" style="position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.well}}; color: {{c.tx2}}; cursor: pointer;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+        <span style="width: 72px; height: 72px; margin-top: 30px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.well}}; color: {{c.tx2}};"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"></path><path d="M9.5 5H15l1.5 2H19a2 2 0 0 1 2 2v8.5M17.5 19H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.5"></path><path d="M9.9 10.2a3 3 0 0 0 4 4"></path></svg></span>
+        <h2 style="margin: 18px 0 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 700;">Camera access is off</h2>
+        <p style="margin: 8px 0 0; max-width: 300px; font-size: 17px; line-height: 23px; color: {{c.tx2}};">Filing Cabinet needs the camera to scan documents. Tap Open Settings, turn on Camera, then come back.</p>
+        <button type="button" style="align-self: stretch; margin-top: 24px; min-height: 54px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Open Settings</button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"state":{"editor":"enum","options":["normal","first","welcome","banner","camprompt","camoff","onboard2","onboard2prompt"],"default":"normal"},"favorites":{"editor":"int","min":0,"max":10,"default":4},"size":{"editor":"enum","options":["default","large"],"default":"default"},"bannerstyle":{"editor":"enum","options":["subtitle","corner","tip","buttons","toast"],"default":"subtitle"},"rows":{"editor":"enum","options":["compact","tall","badge","badgefolder"],"default":"badge"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var state = this.props.state ?? 'normal';
+    var large = (this.props.size ?? 'default') === 'large';
+    var welcome = state === 'welcome';
+    var first = state === 'first' || welcome || state === 'camprompt' || state === 'onboard2' || state === 'onboard2prompt';
+    var c = dark
+      ? { bg: '#000000', bgClear: 'rgba(0,0,0,0)', sheet: '#1c1c1e', surface: '#1c1c1e', tx: '#f2f2f7', tx2: '#98989f', sep: '#38383a', chev: '#5a5a5f', ground: '#2c2c2e', glass: 'rgba(44,44,46,0.72)', glassStrong: 'rgba(44,44,46,0.92)', glassEdge: 'rgba(255,255,255,0.12)', badge: '#636366', well: '#2c2c2e', alert: 'rgba(44,44,46,0.9)', alertBtn: 'rgba(120,120,128,0.36)' }
+      : { bg: '#f2f2f7', bgClear: 'rgba(242,242,247,0)', sheet: '#ffffff', surface: '#ffffff', tx: '#1c1c1e', tx2: '#6e6e73', sep: '#d8d8dc', chev: '#c4c4c9', ground: '#dcdbd7', glass: 'rgba(255,255,255,0.72)', glassStrong: 'rgba(255,255,255,0.92)', glassEdge: 'rgba(0,0,0,0.08)', badge: '#8e8e93', well: '#f2f2f7', alert: 'rgba(250,250,252,0.9)', alertBtn: 'rgba(120,120,128,0.16)' };
+    // Type and sizes at the default text size, and at an accessibility text size (about AX1).
+    var t = large
+      ? { large: '40px', largeLH: '48px', title2: '30px', title2LH: '36px', body: '28px', bodyLH: '34px', sub: '24px', subLH: '30px', row: '64px', field: '60px', pill: '64px', glyph: 26, icon: 28, fw: 34, fh: 27, fwPx: '34px', cardW: '240px', cardH: '155px', cardT: '28px', cardTLH: '34px' }
+      : { large: '34px', largeLH: '41px', title2: '22px', title2LH: '28px', body: '17px', bodyLH: '22px', sub: '15px', subLH: '20px', row: '44px', field: '44px', pill: '52px', glyph: 18, icon: 21, fw: 26, fh: 20, fwPx: '26px', cardW: '148px', cardH: '96px', cardT: '15px', cardTLH: '20px' };
+    var coll = dark
+      ? { wallet: '#6f9bd0', receipts: '#e07a60', notes: '#a88ad6', documents: '#79b08f', throwaways: '#d9ad4a' }
+      : { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+    var line = '0.5px solid ' + c.sep;
+    var n = first ? 0 : Number(this.props.favorites ?? 4);
+    if (!(n >= 0)) n = 4;
+
+    var rowsMode = this.props.rows ?? 'badge';
+    if (rowsMode !== 'compact' && !large) t = Object.assign({}, t, { row: '60px' });
+    var GLYPH = {
+      wallet: 'M3 6.5h18v11H3zM3 10h18M6.5 14h4',
+      receipts: 'M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3',
+      notes: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+      documents: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
+      throwaways: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10'
+    };
+    var collections = [
+      ['Wallet', 'wallet', 6, 'IDs and cards · Kept forever'],
+      ['Receipts', 'receipts', 23, 'Purchase receipts · 3 months'],
+      ['Notes', 'notes', 41, 'Handwritten notes · Kept forever'],
+      ['Documents', 'documents', 18, 'Forms and letters · Kept forever'],
+      ['Throwaways', 'throwaways', 3, 'Short-lived scraps · 1 week']
+    ].map(function (x, i) { return { name: x[0], color: coll[x[1]], badge: ({ wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' })[x[1]], glyph: rowsMode === 'badgefolder' ? 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z' : GLYPH[x[1]], count: x[2], desc: x[3], line: i === 0 ? '0' : line }; });
+    var icons = {
+      recent: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+      all: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+      trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3'
+    };
+    var views = [['Recent', 'recent', ''], ['All Scans', 'all', 91], ['Trash', 'trash', 4]]
+      .map(function (x, i) { return { name: x[0], icon: icons[x[1]], count: x[2], line: i === 0 ? '0' : line }; });
+
+    return {
+      c: c,
+      t: t,
+      isFirst: first,
+      isWelcome: welcome,
+      isCamPrompt: state === 'camprompt',
+      isOnboard2: state === 'onboard2' || state === 'onboard2prompt', isOnboard2Prompt: state === 'onboard2prompt',
+      isCamOff: state === 'camoff',
+      hasScans: !first,
+      bannerCorner: state === 'banner' && this.props.bannerstyle === 'corner',
+      bannerTip: state === 'banner' && this.props.bannerstyle === 'tip',
+      bannerButtons: state === 'banner' && this.props.bannerstyle === 'buttons',
+      bannerToast: state === 'banner' && this.props.bannerstyle === 'toast',
+      bannerSub: state === 'banner' && (this.props.bannerstyle ?? 'subtitle') === 'subtitle',
+      hasFavs: n > 0,
+      favLink: n > 2,
+      favPlain: n <= 2,
+      s1: n >= 1, s2: n >= 2, s3: n >= 3, s4: n >= 4, s5: n >= 5,
+      s6: n >= 6, s7: n >= 7, s8: n >= 8, s9: n >= 9, s10: n >= 10,
+      collMargin: first ? '18px 0 0' : '6px 0 0',
+      rowPad: first ? '10px 0' : '0',
+      collections: collections,
+      folderIcons: rowsMode !== 'badge' && rowsMode !== 'badgefolder', badgeIcons: rowsMode === 'badge' || rowsMode === 'badgefolder',
+      views: views
+    };
+  }
+}
+</script>
+</body>
+</html>

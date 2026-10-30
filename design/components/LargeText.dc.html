@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Large text</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<!-- Accessibility text size (about AX2: body 28pt). Rules: text wraps instead of truncating; side-by-side things stack. -->
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #f2f2f7; color: #1c1c1e; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased;">
+
+  <div style="position: absolute; left: 16px; top: 54px; width: 52px; height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.72); border: 0.5px solid rgba(0,0,0,0.08);"><svg width="13" height="22" viewBox="0 0 11 18" fill="none" stroke="#1c1c1e" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{backIcon}}"></path></svg></div>
+
+  <!-- A collection: two columns, names wrap to two lines -->
+  <sc-if value="{{isCollection}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 118px; display: flex; flex-direction: column;">
+      <span style="display: flex; align-items: center; gap: 12px;"><span style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #c0533a;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3"></path></svg></span><b style="font-family: ui-serif, 'New York', Georgia, serif; font-size: 40px; line-height: 48px;">Receipts</b></span>
+      <span style="margin-top: 2px; font-size: 24px; line-height: 30px; color: #6e6e73;">23 scans · Kept 3 months</span>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 12px; margin-top: 20px;">
+        <sc-for list="{{tiles}}" as="s" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <div style="height: 200px; border-radius: 8px; overflow: hidden; background: #dcdbd7;"><img src="{{s.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></div>
+            <b style="margin-top: 6px; font-size: 24px; line-height: 29px;">{{s.title}}</b>
+            <span style="font-size: 22px; line-height: 27px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- The review card: Save moves under the text -->
+  <sc-if value="{{isReview}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 56px; right: 56px; top: 130px; height: 390px; display: flex; justify-content: center;"><img src="{{reviewSrc}}" alt="" style="display: block; max-height: 390px; max-width: 100%;"></div>
+    <div style="position: absolute; left: 12px; right: 12px; bottom: 30px; box-sizing: border-box; padding: 10px 18px 16px; border-radius: 30px; background: rgba(255,255,255,0.94); border: 0.5px solid rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 4px;">
+      <span style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: #c4c4c9;"></span>
+      <b style="margin-top: 6px; font-size: 28px; line-height: 34px;">City Pharmacy <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg></b>
+      <span style="font-size: 24px; line-height: 30px; color: #6e6e73;"><span style="display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 999px; background: #c0533a;"></span>Receipts · kept 3 months</span>
+      <span style="margin-top: 12px; height: 64px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #1c1c1e; color: #f2f2f7; font-size: 28px; font-weight: 600;">Save</span>
+    </div>
+  </sc-if>
+
+  <!-- The details sheet: labels above values, everything wraps -->
+  <sc-if value="{{isDetails}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 8px 18px 22px; border-radius: 34px; background: #ffffff; border: 0.5px solid rgba(0,0,0,0.08); display: flex; flex-direction: column;">
+      <span style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: #c4c4c9;"></span>
+      <b style="margin-top: 14px; font-family: ui-serif, 'New York', Georgia, serif; font-size: 34px; line-height: 41px;">Corner Market <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6e6e73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg></b>
+      <span style="margin-top: 4px; font-size: 22px; line-height: 28px; color: #6e6e73;">Scanned Jul 19, 2026 · 1 page</span>
+      <div style="margin-top: 16px; border-radius: 22px; overflow: hidden; background: #f2f2f7;">
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px;"><span style="flex: none; width: 40px; height: 40px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: #c0533a;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3"></path></svg></span><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 22px; line-height: 28px; color: #6e6e73;">Collection</span><span style="font-size: 28px; line-height: 34px;">Receipts</span></span></div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-top: 0.5px solid #d8d8dc;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ad500e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"></path></svg><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 22px; line-height: 28px; color: #6e6e73;">Expiry</span><span style="font-size: 28px; line-height: 34px; color: #ad500e; font-weight: 600;">Oct 18 · 6 days left</span></span></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Settings: descriptions wrap under the name; switches sit at the top -->
+  <sc-if value="{{isSettings}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 118px; display: flex; flex-direction: column;">
+      <b style="font-family: ui-serif, 'New York', Georgia, serif; font-size: 40px; line-height: 48px;">Settings</b>
+      <div style="margin-top: 22px; padding: 16px; border-radius: 16px; background: #ffffff; display: flex; align-items: center; justify-content: space-between; font-size: 28px; line-height: 34px;">Collections<span style="color: #6e6e73;">5 ›</span></div>
+      <div style="margin-top: 22px; border-radius: 16px; overflow: hidden; background: #ffffff;">
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 16px;"><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 28px; line-height: 34px;">Apple Intelligence</span><span style="font-size: 22px; line-height: 28px; color: #6e6e73;">Suggests titles and collections</span></span><span style="flex: none; width: 51px; height: 31px; margin-top: 2px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #1c1c1e; display: flex; justify-content: flex-end;"><span style="width: 27px; height: 27px; border-radius: 999px; background: #fff;"></span></span></div>
+        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 16px; border-top: 0.5px solid #d8d8dc;"><span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 28px; line-height: 34px;">Notifications</span><span style="font-size: 22px; line-height: 28px; color: #6e6e73;">A note when scans move to Trash</span></span><span style="flex: none; width: 51px; height: 31px; margin-top: 2px; box-sizing: border-box; padding: 2px; border-radius: 999px; background: #1c1c1e; display: flex; justify-content: flex-end;"><span style="width: 27px; height: 27px; border-radius: 999px; background: #fff;"></span></span></div>
+      </div>
+      <div style="margin-top: 22px; padding: 16px; border-radius: 16px; background: #ffffff; font-size: 28px; line-height: 34px;">Send feedback</div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"screen":{"editor":"enum","options":["collection","review","details","settings"],"default":"collection"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var s = this.props.screen ?? 'collection';
+    var B = function (id) { return '/_blob/' + id; };
+    var tile = function (title, id, left, soon) { return { title: title, src: B(id), left: left, leftColor: soon ? '#ad500e' : '#6e6e73', leftWeight: soon ? 600 : 400 }; };
+    return {
+      isCollection: s === 'collection', isReview: s === 'review', isDetails: s === 'details', isSettings: s === 'settings',
+      backIcon: s === 'review' ? 'M2 2l7 7M9 2L2 9' : 'M9 2L2 9l7 7',
+      reviewSrc: B('9db12bd7b0ee3af063f2fd9ebc0a8cb3'),
+      tiles: [tile('Bluebird Café', 'c81acb7633f9687fbb7860f864d68417', '2 days left', true), tile('Laptop warranty', '6987208a1655d2ae0858991337c5f875', '6 days left', true), tile('Northside Hardware', 'ddc4330c18c02199c867436a6b9752ee', '56 days left', false), tile('Page & Spine', 'dc4e5ee8ca9aba958b42ebd8c0b3d277', '2 months left', false)]
+    };
+  }
+}
+</script>
+</body>
+</html>

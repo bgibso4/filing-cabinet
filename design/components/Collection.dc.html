@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Collection</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <div style="height: 844px; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; justify-content: {{justify}}; padding: {{pad}};">
+
+    <sc-if value="{{atTop}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; flex: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; height: 44px;">
+          <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+          <button type="button" aria-label="Sort" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"></path></svg></button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+          <sc-if value="{{isFolder}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="flex: none; width: 34px; height: 34px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{collBadge}};"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{collGlyph}}"></path></svg></span></sc-if>
+          <sc-if value="{{isView}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="{{viewIcon}}"></path></svg></sc-if>
+          <h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700;">{{title}}</h1>
+        </div>
+        <p style="margin: 2px 0 0; font-size: 15px; line-height: 20px; color: {{c.tx2}};">{{subtitle}}</p>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 24px 90px; text-align: center;">
+        <span aria-hidden="true" style=" width: 77px; height: 77px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{collBadge}};"><svg width="43" height="43" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{collGlyph}}"></path></svg></span>
+        <span style="font-size: 17px; line-height: 22px; font-weight: 600;">{{emptyTitle}}</span>
+        <span style="max-width: 280px; font-size: 15px; line-height: 20px; color: {{c.tx2}}; text-wrap: pretty;">{{emptyBody}}</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isSoon}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; flex: none;">
+        <h2 style="display: flex; align-items: center; min-height: 44px; margin: 10px 0 2px; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700;">Leaving this week</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 8px;">
+          <sc-for list="{{soon}}" as="s" hint-placeholder-count="3">
+            <a href="#" style="display: flex; flex-direction: column; gap: 2px; min-width: 0; color: {{c.tx}}; text-decoration: none;">
+              <img src="{{s.img}}" alt="" style="display: block; width: 100%; aspect-ratio: 3 / 4; border-radius: 6px; object-fit: cover; object-position: top; background: {{c.ground}};">
+              <span style="margin-top: 4px; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span>
+              <span style="font-size: 12px; line-height: 16px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span>
+            </a>
+          </sc-for>
+        </div>
+        <h2 style="display: flex; align-items: center; min-height: 44px; margin: 18px 0 2px; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700;">All receipts</h2>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{isGrid}}" hint-placeholder-val="{{ true }}">
+      <div style="display: grid; grid-template-columns: {{cols}}; gap: 16px 8px; flex: none; margin-top: {{gridTop}};">
+        <sc-for list="{{scans}}" as="s" hint-placeholder-count="9">
+          <a href="#" style="display: flex; flex-direction: column; gap: 2px; min-width: 0; color: {{c.tx}}; text-decoration: none;">
+            <span style="position: relative; display: block; width: 100%; aspect-ratio: {{aspect}}; box-sizing: border-box; border-radius: 6px; overflow: hidden; border: {{s.slot}}; background: {{s.ground}};">
+              <img src="{{s.img}}" alt="" style="display: {{s.imgDisplay}}; width: 100%; height: 100%; object-fit: {{s.fit}}; object-position: {{s.pos}};">
+              <span role="img" aria-label="{{s.markLabel}}" style="position: absolute; right: 5px; top: 5px; width: 26px; height: 26px; border-radius: 999px; display: {{s.markDisplay}}; align-items: center; justify-content: center; background: rgba(28,28,30,0.55);"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{s.markFill}}" stroke="{{markColor}}" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="{{markPath}}"></path></svg></span>
+            </span>
+            <span style="display: {{s.textDisplay}}; align-items: center; gap: 5px; min-width: 0; margin-top: 4px;">
+              <span style="display: {{s.dotDisplay}}; flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{s.dot}};"></span>
+              <span style="min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span>
+            </span>
+            <span style="display: {{s.textDisplay}}; font-size: 12px; line-height: 16px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Custom order: the tile being dragged, lifted over an empty slot -->
+    <sc-if value="{{dragging}}" hint-placeholder-val="{{ false }}">
+      <span style="position: absolute; left: 150px; top: 196px; width: 114px; display: flex; flex-direction: column; gap: 2px; transform: scale(1.08); pointer-events: none;">
+        <span style="position: relative; display: block; width: 114px; height: 152px; border-radius: 6px; overflow: hidden; border: 0.5px solid {{c.glassEdge}}; background: {{c.ground}};">
+          <img src="{{drag.img}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: {{drag.fit}}; object-position: {{drag.pos}};">
+          <span style="position: absolute; right: 5px; top: 5px; width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: rgba(28,28,30,0.55);"><svg width="15" height="15" viewBox="0 0 24 24" fill="{{markColor}}" stroke="{{markColor}}" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="{{markPath}}"></path></svg></span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 5px; margin-top: 4px;"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{drag.dot}};"></span><span style="font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap;">{{drag.title}}</span></span>
+      </span>
+    </sc-if>
+
+    <sc-if value="{{isList}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; flex: none; margin-top: {{listTop}}; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+        <sc-for list="{{scans}}" as="s" hint-placeholder-count="8">
+          <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 76px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+            <img src="{{s.img}}" alt="" style="flex: none; width: 44px; height: 58px; box-sizing: border-box; border-radius: 6px; border: 0.5px solid {{c.sep}}; object-fit: {{s.fit}}; object-position: {{s.pos}}; background: {{c.ground}};">
+            <span style="flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 12px; border-top: {{s.line}};">
+              <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                <span style="font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span>
+                <span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">{{s.date}} · <span style="color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span></span>
+              </span>
+              <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{atEnd}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 0; height: 150px; pointer-events: none; background: linear-gradient(to bottom, {{c.bg}} 68%, {{c.bgClear}});"></div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: center;">
+      <button type="button" aria-label="Back" style="position: absolute; left: 0; top: 0; width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+      <span style="font-size: 17px; line-height: 22px; font-weight: 600;">{{title}}</span>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{menu}}" hint-placeholder-val="{{ false }}">
+    <div role="menu" style="position: absolute; right: 16px; top: 106px; width: 230px; display: flex; flex-direction: column; border-radius: 22px; overflow: hidden; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); color: {{c.tx}}; font-size: 17px; line-height: 22px;">
+      <sc-for list="{{sorts}}" as="m" hint-placeholder-count="3">
+        <span role="menuitemradio" style="display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px; border-top: {{m.line}};">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; visibility: {{m.check}};"><path d="M2.5 8.5l3.5 3.5 7.5-8"></path></svg>
+          <span>{{m.label}}</span>
+        </span>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 128px; pointer-events: none; background: linear-gradient(to top, {{c.bg}} 38%, {{c.bgClear}});"></div>
+
+  <!-- After moving a scan to Trash: a short-lived note with Undo -->
+  <sc-if value="{{toast}}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 96px; display: flex; justify-content: center;">
+      <span style="display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 6px 0 18px; border-radius: 999px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); font-size: 15px; line-height: 20px; white-space: nowrap;">
+        <span><span style="font-weight: 600;">Moved to Trash</span><span style="color: {{c.tx2}};"> · restore within 30 days</span></span>
+        <button type="button" style="min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: {{c.tx}}; font-family: inherit; font-size: 15px; line-height: 20px; font-weight: 600; cursor: pointer;">Undo</button>
+      </span>
+    </div>
+  </sc-if>
+
+  <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; justify-content: center;">
+    <button type="button" style="display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 30px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"></path></svg>
+      <span>{{scanLabel}}</span>
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"collection":{"editor":"enum","options":["receipts","wallet","throwaways","recent","all","favorites"],"default":"receipts"},"empty":{"editor":"boolean","default":false},"layout":{"editor":"enum","options":["grid","list","soon"],"default":"grid"},"scroll":{"editor":"enum","options":["top","end"],"default":"top"},"tone":{"editor":"enum","options":["secondary","tertiary"],"default":"secondary"},"tall":{"editor":"enum","options":["none","fill","whole"],"default":"none"},"mark":{"editor":"enum","options":["heart","star"],"default":"heart"},"markColor":{"editor":"enum","options":["neutral","color"],"default":"neutral"},"menu":{"editor":"boolean","default":false},"unfav":{"editor":"boolean","default":false},"drag":{"editor":"boolean","default":false},"toast":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+
+// Collection icons are round badges with a symbol per collection (see the build note on custom collections).
+var __GLYPH = { wallet: 'M3 6.5h18v11H3zM3 10h18M6.5 14h4', receipts: 'M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3', notes: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4', documents: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6', throwaways: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10' };
+var __DEEP = { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+var __BYCOLOR = { '#3f6fa3': 'wallet', '#6f9bd0': 'wallet', '#c0533a': 'receipts', '#e07a60': 'receipts', '#7a5aa8': 'notes', '#a88ad6': 'notes', '#4b8160': 'documents', '#79b08f': 'documents', '#b98a1f': 'throwaways', '#d9ad4a': 'throwaways' };
+function __glyphs(v) {
+  if (Array.isArray(v)) return v.map(__glyphs);
+  if (!v || typeof v !== 'object') return v;
+  var out = {};
+  Object.keys(v).forEach(function (k) {
+    out[k] = __glyphs(v[k]);
+    var m = /^(.*?)(dot|Dot|color|Color)$/.exec(k);
+    if (m && typeof v[k] === 'string') {
+      var g = __GLYPH[__BYCOLOR[String(v[k]).toLowerCase()]] || 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z';
+      var cap = m[2][0] === m[2][0].toUpperCase();
+      out[m[1] + (m[1] ? 'Glyph' : 'glyph')] = g;
+      out[m[1] + (m[1] ? 'Badge' : 'badge')] = __DEEP[__BYCOLOR[String(v[k]).toLowerCase()]] || v[k];
+    }
+  });
+  return out;
+}
+// Time left: years past a year, months from 60 days, days under that.
+function __left(l) { return l >= 365 ? (Math.floor(l / 365) === 1 ? '1 year left' : Math.floor(l / 365) + ' years left') : l >= 60 ? Math.floor(l / 30) + ' months left' : (l === 1 ? '1 day left' : l + ' days left'); }
+class Component extends DCLogic {
+  renderVals() { return __glyphs(this.__rv()); }
+  __rv() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var key = this.props.collection ?? 'receipts';
+    var empty = String(this.props.empty ?? false) === 'true';
+    var layout = this.props.layout ?? 'grid';
+    var end = (this.props.scroll ?? 'top') === 'end' && layout !== 'soon' && !empty;
+    var c = dark
+      ? { glassStrong: 'rgba(44,44,46,0.94)', menu: 'rgba(44,44,46,0.92)', bg: '#000000', bgClear: 'rgba(0,0,0,0)', surface: '#1c1c1e', tx: '#f2f2f7', tx2: '#98989f', tx3: '#8e8e93', soon: '#f2a65a', sep: '#38383a', chev: '#5a5a5f', ground: '#2c2c2e', glass: 'rgba(44,44,46,0.72)', glassEdge: 'rgba(255,255,255,0.12)' }
+      : { glassStrong: 'rgba(255,255,255,0.94)', menu: 'rgba(255,255,255,0.92)', bg: '#f2f2f7', bgClear: 'rgba(242,242,247,0)', surface: '#ffffff', tx: '#1c1c1e', tx2: '#6e6e73', tx3: '#8a8a8e', soon: '#ad500e', sep: '#d8d8dc', chev: '#c4c4c9', ground: '#dcdbd7', glass: 'rgba(255,255,255,0.72)', glassEdge: 'rgba(0,0,0,0.08)' };
+    // Days left use text-secondary (proposed); "tertiary" shows the design system's current rule for comparison.
+    var daysColor = (this.props.tone ?? 'secondary') === 'tertiary' ? c.tx3 : c.tx2;
+    var coll = dark
+      ? { wallet: '#6f9bd0', receipts: '#e07a60', notes: '#a88ad6', documents: '#79b08f', throwaways: '#d9ad4a' }
+      : { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+    var life = { wallet: 0, receipts: 90, notes: 0, documents: 0, throwaways: 7 };
+    var B = {
+      license: '/_blob/876d48abbdeaf8ee381ebc16c5dad345', insurance: '/_blob/59034cc570c1fb190543b1c1180f82ed', gym: '/_blob/b6c8b4cd1e3356f6b8ce999ea271e4ba',
+      library: '/_blob/ddc09234aa01b6231c81c573c965c2ce', passport: '/_blob/f1e7b74ca68f61506d81cb2f4c962257', workid: '/_blob/ee4416e6758ad80acea0d50862a4d592',
+      lease: '/_blob/1db32063f80e622a14aec8813b573090', registration: '/_blob/12bd6e42f9d36b4c75da7a1675aaedb4',
+      bio: '/_blob/82d3b37345b09c4c7b3f5b282bbd012a', call: '/_blob/9adf7ec666c7321c9e3c62ee00e08361',
+      coat: '/_blob/d68f912198b871ad398482e3cc1cbe69', park: '/_blob/121dca37c2036d2e12cc700489b4ba2c', valet: '/_blob/e68a072b0a1df0635d2521efa50327b9',
+      corner: '/_blob/64d92a29af43d0b573c8a18f4278fe2e', bluebird: '/_blob/c81acb7633f9687fbb7860f864d68417', pharmacy: '/_blob/9db12bd7b0ee3af063f2fd9ebc0a8cb3',
+      gas: '/_blob/5363f5d413bfde720d69c82e8a25fb1d', books: '/_blob/dc4e5ee8ca9aba958b42ebd8c0b3d277', hardware: '/_blob/ddc4330c18c02199c867436a6b9752ee',
+      pizza: '/_blob/eaa9d98ad848a8e83cd9817da29f20db', tallow: '/_blob/6987208a1655d2ae0858991337c5f875',
+      badge: '/_blob/a454710e3d07d3747a426ff860614392', templicense: '/_blob/fccec9cf4d87fd574e75306e3c5fccd1'
+    };
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var mixed = key === 'recent' || key === 'all' || key === 'favorites';
+    var wallet = key === 'wallet' && layout === 'grid';
+    // Tall scans in Wallet's card-shaped tiles: "fill" crops from the top, "whole" shows the full scan on the grey backing.
+    var tallMode = this.props.tall ?? 'none';
+    function scan(title, img, from, age, wide, tall) {
+      var d = new Date(2026, 9, 12 - age);
+      var span = life[from];
+      var left = span - age;
+      // Orange in the last 7 days, or only on the last day when the whole lifespan is a week or less.
+      var soon = span > 0 && (span > 7 ? left <= 7 : left <= 1);
+      var whole = (mixed && wide) || (tall && tallMode === 'whole');
+      return {
+        title: title, img: img, from: from,
+        date: months[d.getMonth()] + ' ' + d.getDate(),
+        left: span === 0 ? 'Kept forever' : __left(left),
+        leftColor: soon ? c.soon : daysColor, leftWeight: soon ? 600 : 400, soon: soon,
+        fit: whole ? 'contain' : 'cover', pos: whole ? 'center' : 'top',
+        dot: coll[from], dotDisplay: mixed ? 'block' : 'none'
+      };
+    }
+    var stores = [['Corner Market', B.corner], ['Bluebird Café', B.bluebird], ['City Pharmacy', B.pharmacy], ['Harbor Gas', B.gas],
+      ['Page & Spine', B.books], ['Northside Hardware', B.hardware], ['Pizzeria Sole', B.pizza], ['Tallow Electric', B.tallow]];
+    var ages = [0, 1, 3, 5, 8, 12, 15, 19, 22, 26, 30, 34, 40, 45, 51, 55, 60, 66, 71, 77, 84, 86, 88];
+    var which = [0, 1, 3, 0, 2, 6, 1, 4, 0, 3, 5, 1, 7, 0, 2, 6, 3, 1, 0, 4, 5, 0, 2];
+    var receipts = ages.map(function (age, i) { return scan(stores[which[i]][0], stores[which[i]][1], 'receipts', age, false); });
+    var recent = [
+      scan('Corner Market', B.corner, 'receipts', 0), scan('Coat check', B.coat, 'throwaways', 1), scan('Bluebird Café', B.bluebird, 'receipts', 1),
+      scan('Bio 210 notes', B.bio, 'notes', 2), scan('Harbor Gas', B.gas, 'receipts', 3), scan('Driver’s license', B.license, 'wallet', 3, true),
+      scan('Parking stub', B.park, 'throwaways', 4), scan('Corner Market', B.corner, 'receipts', 5), scan('Valet ticket', B.valet, 'throwaways', 6),
+      scan('Lease 2026', B.lease, 'documents', 7), scan('City Pharmacy', B.pharmacy, 'receipts', 8), scan('Call with landlord', B.call, 'notes', 10),
+      scan('Insurance card', B.insurance, 'wallet', 12, true), scan('Pizzeria Sole', B.pizza, 'receipts', 12), scan('Car registration', B.registration, 'documents', 14, true),
+      scan('Bluebird Café', B.bluebird, 'receipts', 15), scan('Page & Spine', B.books, 'receipts', 19), scan('Work ID', B.workid, 'wallet', 20, true)
+    ];
+    var walletItems = (tallMode === 'none' ? [] : [
+      scan('Coworking pass', B.badge, 'wallet', 1, false, true), scan('Temporary license', B.templicense, 'wallet', 2, false, true)
+    ]).concat([
+      scan('Driver’s license', B.license, 'wallet', 3), scan('Insurance card', B.insurance, 'wallet', 12), scan('Work ID', B.workid, 'wallet', 20),
+      scan('Gym membership', B.gym, 'wallet', 40), scan('Library card', B.library, 'wallet', 95), scan('Passport', B.passport, 'wallet', 160)
+    ]);
+    var sets = {
+      receipts: { title: 'Receipts', sub: '23 scans · Kept 3 months', items: receipts, emptyTitle: 'No receipts yet', emptyBody: 'Purchase receipts go here. Each one is kept 3 months, then moves to Trash.', scan: 'Scan a receipt' },
+      wallet: { title: 'Wallet', sub: walletItems.length + ' scans · Kept forever', items: walletItems,
+        emptyTitle: 'No cards yet', emptyBody: 'IDs and cards go here, like your license and insurance card. They’re kept forever.', scan: 'Scan a card' },
+      throwaways: { title: 'Throwaways', sub: '3 scans · Kept 1 week', items: [
+        scan('Coat check', B.coat, 'throwaways', 1), scan('Parking stub', B.park, 'throwaways', 4), scan('Valet ticket', B.valet, 'throwaways', 6)],
+        emptyTitle: 'No throwaways', emptyBody: 'Short-lived scraps go here, like a coat-check tag. Each one is kept a week.', scan: 'Scan a throwaway' },
+      recent: { title: 'Recent', sub: 'Last 30 days', items: recent, emptyTitle: 'Nothing recent', emptyBody: 'Scans from the last 30 days show up here.', scan: 'Scan' },
+      all: { title: 'All Scans', sub: '91 scans', items: recent, emptyTitle: 'No scans yet', emptyBody: 'Every scan shows up here, newest first.', scan: 'Scan' }
+    };
+    // Favorites: the same screen, with a mark on every favorite and a Custom order.
+    var favNames = { 'Driver’s license': 1, 'Insurance card': 1, 'Lease 2026': 1, 'Laptop warranty': 1, 'Wifi password': 1, 'Gym membership': 1, 'Vaccine record': 1, 'Car registration': 1, 'Library card': 1, 'Passport': 1 };
+    var favorites = [
+      scan('Driver’s license', B.license, 'wallet', 3, true), scan('Lease 2026', B.lease, 'documents', 11),
+      scan('Insurance card', B.insurance, 'wallet', 12, true), scan('Laptop warranty', B.tallow, 'receipts', 84),
+      scan('Wifi password', '/_blob/86a632b7df5fd0f5b89b0230d8116e1d', 'notes', 30, true), scan('Gym membership', B.gym, 'wallet', 40, true),
+      scan('Vaccine record', '/_blob/30c031a6446fe31dd0db86fff0b054ea', 'documents', 60), scan('Car registration', B.registration, 'documents', 14, true),
+      scan('Library card', B.library, 'wallet', 95, true), scan('Passport', B.passport, 'wallet', 160, true)
+    ];
+    sets.favorites = { title: 'Favorites', sub: '10 scans', items: favorites, emptyTitle: 'No favorites yet', emptyBody: 'Tap the heart on a scan to keep it one tap from Home.', scan: 'Scan' };
+    var set = sets[key] || sets.receipts;
+    var items = set.items;
+    var cols = wallet ? 2 : 3;
+    var n = items.length;
+    var start = layout === 'list' ? Math.max(0, n - 9) : Math.max(0, n - ((n % cols) || cols) - cols * 3);
+    var heart = 'M12 20.3s-7.6-4.5-7.6-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.7c0 5.7-7.6 10.2-7.6 10.2z';
+    var star = 'M12 3.2l2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83-5.38 2.83 1.03-6L3.3 9.6l6-.9z';
+    var isStar = (this.props.mark ?? 'heart') === 'star';
+    var colored = (this.props.markColor ?? 'neutral') === 'color';
+    var markColor = colored ? (isStar ? '#f5c242' : '#ff5a5f') : '#ffffff';
+    var dragging = String(this.props.drag ?? false) === 'true' && key === 'favorites';
+    var unfav = String(this.props.unfav ?? false) === 'true' && key === 'favorites';
+    var drag = items[3];
+    // Dragging Laptop warranty (4th) toward the front: an empty slot opens in 2nd place.
+    var ordered = dragging ? [items[0], { slotItem: true }, items[1], items[2]].concat(items.slice(4)) : items;
+    var scans = (end ? ordered.slice(start) : ordered).map(function (s, i) {
+      var slot = !!s.slotItem;
+      var o = Object.assign({ title: '', img: '', dot: 'transparent', dotDisplay: 'none', left: '', leftColor: c.tx2, leftWeight: 400, fit: 'cover', pos: 'top', date: '' }, s);
+      o.line = i === 0 ? '0' : '0.5px solid ' + c.sep;
+      var isFav = !slot && (key === 'favorites' || (o.from === 'wallet' && (o.title === 'Driver’s license' || o.title === 'Insurance card')));
+      var emptied = unfav && i === 1;
+      o.markDisplay = isFav ? 'flex' : 'none';
+      o.markFill = emptied ? 'none' : markColor;
+      o.markLabel = emptied ? 'Not a favorite' : 'Favorite';
+      o.slot = slot ? '1.5px dashed ' + c.chev : '0';
+      o.ground = slot ? 'transparent' : c.ground;
+      o.imgDisplay = slot ? 'none' : 'block';
+      o.textDisplay = slot ? 'none' : 'flex';
+      return o;
+    });
+    var icons = { favorites: isStar ? star : heart, recent: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z', all: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z' };
+    return {
+      c: c,
+      markPath: isStar ? star : heart,
+      markColor: markColor,
+      dragging: dragging,
+      toast: String(this.props.toast ?? false) === 'true',
+      drag: drag,
+      menu: String(this.props.menu ?? false) === 'true',
+      sorts: (key === 'favorites' ? ['Custom order', 'Newest first', 'Oldest first'] : ['Newest first', 'Oldest first'])
+        .map(function (l, i) { return { label: l, check: i === 0 ? 'visible' : 'hidden', line: i === 0 ? '0' : '0.5px solid ' + c.sep }; }),
+      title: set.title,
+      subtitle: empty ? 'No scans · ' + set.sub.split(' · ').slice(1).join(' · ') : set.sub,
+      isFolder: !mixed,
+      isView: mixed,
+      viewIcon: icons[key] || icons.all,
+      collColor: coll[key] || c.tx2,
+      emptyTitle: set.emptyTitle,
+      emptyBody: set.emptyBody,
+      scanLabel: 'Scan',
+      isEmpty: empty,
+      atTop: !end,
+      atEnd: end,
+      isGrid: layout !== 'list' && !empty,
+      isList: layout === 'list' && !empty,
+      isSoon: layout === 'soon' && !empty,
+      soon: receipts.filter(function (s) { return s.soon; }),
+      scans: scans,
+      cols: 'repeat(' + cols + ', minmax(0, 1fr))',
+      aspect: wallet ? '1.55' : '3 / 4',
+      // "end" shows the bottom of the list, as if scrolled all the way down.
+      justify: end ? 'flex-end' : 'flex-start',
+      pad: end ? '104px 16px 104px' : '54px 16px 130px',
+      gridTop: layout === 'soon' ? '0' : (end ? '0' : '20px'),
+      listTop: end ? '0' : '20px'
+    };
+  }
+}
+</script>
+</body>
+</html>

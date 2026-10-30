@@ -10,10 +10,12 @@ Personal tool first; possible App Store release later.
 
 ## Where we are
 
-**Phase: design.** There is no app code yet.
+**Phase: design finished (2026-10-29); next is the implementation plan.** There is no app code yet.
 
-- Design spec: `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` (draft; open questions in §15).
-- We work **mock-driven**: flow diagrams → high-fidelity mocks → interactive mocks (Claude Design), *then* code. Product questions such as the collection set, the cleanup flow, and the home screen are settled in the mocks, not guessed in code.
+- Requirements (source of truth): `docs/superpowers/specs/2026-10-10-filing-cabinet-requirements.html`. Section 06 lists everything decided while designing the screens. Where it conflicts with the design spec or this file, the requirements win (for example, iOS 27 minimum).
+- Design handoff: `design/` (start with `design/README.md`): all 95 chosen screens in light and dark, a clickable prototype, the screen sources with exact sizes and copy, design tokens, and the app icon layers.
+- Design spec: `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` (older; architecture notes still useful).
+- We worked **mock-driven**: product questions (collections, cleanup, Home, every screen) were settled in Claude Design mocks. Build what the screens show; raise anything they don't cover rather than guessing in code.
 - Process is Superpowers: brainstorming → spec → plan → TDD → verification. Don't write app code until there's an approved implementation plan.
 
 ---

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review after scanning</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <!-- ============ A · the details sheet, with Save ============ -->
+  <sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 0; right: 0; top: 112px; height: 400px; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="The new scan" style="display: block; max-width: 390px; max-height: 400px;">
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 48px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Cancel" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+      <span style="padding: 4px 14px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; font-size: 15px; line-height: 20px; font-weight: 600;">New scan · 1 page</span>
+      <span style="width: 48px;"></span>
+    </div>
+    <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 18px 16px 16px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column;">
+      <a href="#" aria-label="Rename" style="display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0 4px; color: {{c.tx}}; text-decoration: none;">
+        <span style="min-width: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+      </a>
+      <p style="margin: 0 4px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Title from the scan’s text · tap to change</p>
+      <div style="display: flex; flex-direction: column; margin-top: 14px; border-radius: 20px; background: {{c.well}}; overflow: hidden;">
+        <a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+          <sc-if value="{{picked}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="flex: none; width: 31px; height: 31px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{badge}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{glyph}}"></path></svg></span></sc-if>
+          <sc-if value="{{notPicked}}" hint-placeholder-val="{{ false }}"><svg width="26" height="21" viewBox="0 0 28 22" fill="none" stroke="{{c.tx2}}" stroke-width="1.6" stroke-dasharray="3 2.5" aria-hidden="true" style="flex: none;"><path d="M1 3.5a2.5 2.5 0 0 1 2.5-2.5h5.8a2.5 2.5 0 0 1 1.9.9l1.4 1.6H24.5A2.5 2.5 0 0 1 27 6V18.5a2.5 2.5 0 0 1-2.5 2.5H3.5A2.5 2.5 0 0 1 1 18.5z"></path></svg></sc-if>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+            <span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">{{collLabel}}</span>
+            <span style="font-size: 17px; line-height: 22px; font-weight: {{collWeight}};">{{collValue}}</span>
+          </span>
+          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+        </a>
+        <a href="#" aria-disabled="{{expDisabled}}" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; border-top: 0.5px solid {{c.sep}}; color: {{c.tx}}; text-decoration: none; opacity: {{expOpacity}};">
+          <svg width="26" height="24" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"></path></svg>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+            <span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">Expiry</span>
+            <span style="font-size: 17px; line-height: 22px;">{{expValue}}</span>
+          </span>
+          <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+        </a>
+      </div>
+      <button type="button" aria-disabled="{{saveDisabled}}" style="margin-top: 14px; min-height: 54px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{saveLabel}}</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ B · an iOS form sheet ============ -->
+  <sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 60px; background: {{c.behind}};"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 60px; bottom: 0; border-radius: 34px 34px 0 0; background: {{c.bg}}; display: flex; flex-direction: column; overflow: hidden;">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; flex: none;">
+        <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px; cursor: pointer;">Cancel</button>
+        <span style="font-size: 17px; line-height: 22px; font-weight: 600;">New Scan</span>
+        <button type="button" aria-disabled="{{saveDisabled}}" style="min-height: 44px; padding: 0 18px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Save</button>
+      </div>
+      <div style="flex: 1; overflow: hidden; padding: 4px 16px 0; display: flex; flex-direction: column;">
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <img src="{{page}}" alt="Page 1" style="display: block; width: 92px; height: 122px; border-radius: 6px; object-fit: cover; object-position: top; border: 0.5px solid {{c.sep}};">
+          <span style="font-size: 13px; line-height: 18px; color: {{c.tx2}};">1 page · scanned today</span>
+        </div>
+        <p style="margin: 20px 16px 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">TITLE</p>
+        <div style="display: flex; align-items: center; min-height: 48px; padding: 0 16px; border-radius: 14px; background: {{c.surface}}; font-size: 17px; line-height: 22px;">{{title}}</div>
+        <p style="margin: 6px 16px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">From the scan’s text.</p>
+        <p style="margin: 18px 16px 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">COLLECTION</p>
+        <div style="display: flex; flex-direction: column; border-radius: 14px; background: {{c.surface}}; overflow: hidden;">
+          <sc-for list="{{colls}}" as="o" hint-placeholder-count="5">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+              <span aria-hidden="true" style="flex: none; width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{o.badge}};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{o.glyph}}"></path></svg></span>
+              <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: {{o.line}};">
+                <span style="font-size: 17px; line-height: 22px;">{{o.name}}</span>
+                <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span>{{o.note}}</span><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="{{c.tx}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="visibility: {{o.check}};"><path d="M2.5 8.5l3.5 3.5 7.5-8"></path></svg></span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+        <p style="margin: 6px 16px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{collFooter}}</p>
+        <p style="margin: 18px 16px 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">EXPIRY</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; border-radius: 14px; background: {{c.surface}}; font-size: 17px; line-height: 22px; opacity: {{expOpacity}};"><span>{{expValueB}}</span><svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ C · one tap to file it ============ -->
+  <sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 48px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Cancel" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+    </div>
+    <div style="position: absolute; left: 0; right: 0; top: 110px; height: 270px; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="The new scan" style="display: block; max-width: 390px; max-height: 270px;">
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 394px; bottom: 30px; display: flex; flex-direction: column;">
+      <a href="#" aria-label="Rename" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; color: {{c.tx}}; text-decoration: none;">
+        <span style="font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px; font-weight: 700;">{{title}}</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+      </a>
+      <p style="margin: 10px 0 8px; text-align: center; font-size: 15px; line-height: 20px; color: {{c.tx2}};">{{cPrompt}}</p>
+      <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+        <sc-for list="{{colls}}" as="o" hint-placeholder-count="5">
+          <a href="#" style="grid-column: {{o.span}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 72px; border-radius: 16px; background: {{o.bgC}}; outline: {{o.ring}}; outline-offset: -2px; color: {{c.tx}}; text-decoration: none;">
+            <span aria-hidden="true" style=" width: 31px; height: 31px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{o.badge}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{o.glyph}}"></path></svg></span>
+            <span style="font-size: 15px; line-height: 20px; font-weight: {{o.weight}};">{{o.name}}</span>
+          </a>
+        </sc-for>
+      </div>
+      <p style="display: flex; align-items: center; justify-content: center; gap: 6px; margin: 12px 0 0; font-size: 15px; line-height: 20px; color: {{c.tx2}}; visibility: {{cExpVis}};"><span>{{expValue}}</span><span>·</span><a href="#" style="color: {{c.tx}}; font-weight: 600; text-decoration: none;">Change</a></p>
+      <span style="flex: 1;"></span>
+      <button type="button" aria-disabled="{{saveDisabled}}" style="min-height: 54px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{saveLabel}}</button>
+    </div>
+  </sc-if>
+
+  <!-- Shared top for D, E, F: Cancel and the scan -->
+  <sc-if value="{{isDEF}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 112px; height: {{defPageH}}; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="The new scan" style="display: block; max-width: 390px; max-height: {{defPageH}};">
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 48px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Cancel" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+      <span style="padding: 4px 14px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; font-size: 15px; line-height: 20px; font-weight: 600;">New scan · 1 page</span>
+      <span style="width: 48px;"></span>
+    </div>
+  </sc-if>
+
+  <!-- ============ D · A, with the collections as a row of folders ============ -->
+  <sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 18px 16px 16px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column;">
+      <a href="#" aria-label="Rename" style="display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0 4px; color: {{c.tx}}; text-decoration: none;">
+        <span style="min-width: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+      </a>
+      <p style="margin: 0 4px; font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{dHint}}</p>
+      <div role="radiogroup" aria-label="Collection" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 14px;">
+        <sc-for list="{{colls}}" as="o" hint-placeholder-count="5">
+          <a href="#" role="radio" aria-checked="{{o.checked}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 66px; border-radius: 16px; background: {{c.well}}; outline: {{o.ring}}; outline-offset: -2px; color: {{c.tx}}; text-decoration: none;">
+            <span aria-hidden="true" style=" width: 29px; height: 29px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{o.badge}};"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{o.glyph}}"></path></svg></span>
+            <span style="max-width: 100%; font-size: 11px; line-height: 14px; font-weight: {{o.weight}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.name}}</span>
+          </a>
+        </sc-for>
+      </div>
+      <a href="#" aria-disabled="{{expDisabled}}" style="display: flex; align-items: center; gap: 14px; min-height: 56px; margin-top: 8px; padding: 0 16px; border-radius: 16px; background: {{c.well}}; color: {{c.tx}}; text-decoration: none; opacity: {{expOpacity}};">
+        <svg width="24" height="22" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"></path></svg>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+          <span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">Expiry</span>
+          <span style="font-size: 17px; line-height: 22px;">{{expValue}}</span>
+        </span>
+        <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+      </a>
+      <button type="button" aria-disabled="{{saveDisabled}}" style="margin-top: 14px; min-height: 54px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{saveLabel}}</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ E · one sentence, each part a menu ============ -->
+  <sc-if value="{{isE}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 18px 16px 16px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column;">
+      <a href="#" aria-label="Rename" style="display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0 4px; color: {{c.tx}}; text-decoration: none;">
+        <span style="min-width: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+      </a>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 4px 0; font-size: 20px; line-height: 28px;">
+        <span>Save to</span>
+        <a href="#" style="display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; background: {{c.well}}; outline: {{eCollRing}}; outline-offset: -1.5px; color: {{c.tx}}; text-decoration: none; font-weight: 600;">
+          <span style="display: {{eDot}}; width: 9px; height: 9px; border-radius: 999px; background: {{dot}};"></span><span>{{eColl}}</span>
+          <svg width="10" height="7" viewBox="0 0 10 7" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l3.5 3.5 3.5-3.5"></path></svg>
+        </a>
+        <sc-if value="{{picked}}" hint-placeholder-val="{{ true }}">
+          <span>for</span>
+          <a href="#" style="display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; border-radius: 999px; background: {{c.well}}; color: {{c.tx}}; text-decoration: none; font-weight: 600;">
+            <span>3 months</span>
+            <svg width="10" height="7" viewBox="0 0 10 7" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 1.5l3.5 3.5 3.5-3.5"></path></svg>
+          </a>
+        </sc-if>
+      </div>
+      <p style="margin: 10px 4px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{eNote}}</p>
+      <button type="button" aria-disabled="{{saveDisabled}}" style="margin-top: 16px; min-height: 54px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Save</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ F · a slim card: check it, Save ============ -->
+  <sc-if value="{{isF}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 12px; right: 12px; bottom: 30px; box-sizing: border-box; padding: 12px 12px 12px 18px; border-radius: 30px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="#" aria-label="Edit details" style="flex: 1; min-width: 0; display: flex; flex-direction: column; color: {{c.tx}}; text-decoration: none;">
+          <span style="display: flex; align-items: center; gap: 6px;"><span style="min-width: 0; font-size: 17px; line-height: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg></span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="display: {{eDot}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>{{fLine}}</span>
+        </a>
+        <button type="button" aria-disabled="{{saveDisabled}}" style="flex: none; min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: {{saveBg}}; color: {{saveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Save</button>
+      </div>
+      <sc-if value="{{notPicked}}" hint-placeholder-val="{{ false }}">
+        <div role="radiogroup" aria-label="Collection" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-left: -6px;">
+          <sc-for list="{{colls}}" as="o" hint-placeholder-count="5">
+            <a href="#" role="radio" aria-checked="false" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 62px; border-radius: 16px; background: {{c.well}}; color: {{c.tx}}; text-decoration: none;">
+              <span aria-hidden="true" style=" width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{o.badge}};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{o.glyph}}"></path></svg></span>
+              <span style="max-width: 100%; font-size: 11px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{o.name}}</span>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- ============ G · F's card when the suggestion is in; A's sheet otherwise ============ -->
+  <sc-if value="{{isG}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: 118px; height: {{gPageH}}; display: flex; align-items: center; justify-content: center;">
+      <img src="{{gPage}}" alt="Page 1 of the new scan" style="display: block; max-width: 358px; max-height: {{gPageH}};">
+    </div>
+    <div style="position: absolute; left: 16px; top: 54px;">
+      <button type="button" aria-label="Cancel" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+    </div>
+    <div style="position: absolute; left: 0; right: 0; top: 54px; display: flex; justify-content: center; pointer-events: none;">
+      <span style="display: flex; flex-direction: column; align-items: center; padding: 5px 20px 6px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}};">
+        <b style="font-size: 16px; line-height: 21px;">New scan</b>
+        <small style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">{{gCount}}</small>
+      </span>
+    </div>
+    <div style="position: absolute; right: 16px; top: 54px;">
+      <sc-if value="{{gRedo_camrot}}" hint-placeholder-val="{{ true }}"><button type="button" aria-label="Rescan" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.4L9 4.5h6l1.6 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><path d="M8.6 12.6a3.5 3.5 0 0 1 6.2-1.8M15.4 14a3.5 3.5 0 0 1-6.2 1.8"></path><path d="M15 9.2v1.8h-1.8M9 17.4v-1.8h1.8"></path></svg></button></sc-if><sc-if value="{{gRedo_scan}}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Rescan" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"></path></svg></button></sc-if><sc-if value="{{gRedo_scanagain}}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Rescan" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"></path><path d="M8.4 11.4a3.7 3.7 0 0 1 6.5-1.9M15.6 12.6a3.7 3.7 0 0 1-6.5 1.9"></path><path d="M15.1 7.6v2.1H13M8.9 16.4v-2.1H11"></path></svg></button></sc-if><sc-if value="{{gRedo_ccw}}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Rescan" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.4-5.5"></path><path d="M4.5 4v4.5H9"></path></svg></button></sc-if><sc-if value="{{gRedo_camera}}" hint-placeholder-val="{{ false }}"><button type="button" aria-label="Rescan" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5a2 2 0 0 1 2-2h2.4L9 4.5h6l1.6 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><circle cx="12" cy="13" r="3.6"></circle></svg></button></sc-if><sc-if value="{{gRedoText}}" hint-placeholder-val="{{ false }}"><button type="button" style="height: 48px; padding: 0 18px; border-radius: 999px; display: flex; align-items: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{gRedoLabel}}</button></sc-if>
+    </div>
+    <sc-if value="{{gStrip}}" hint-placeholder-val="{{ false }}">
+      <div aria-label="Pages" style="position: absolute; left: 0; right: 0; bottom: {{gStripBottom}}; display: flex; align-items: center; justify-content: center; gap: 4px;">
+        <sc-for list="{{gPages}}" as="p" hint-placeholder-count="3">
+          <img src="{{p.src}}" alt="{{p.label}}" style="display: block; width: {{p.w}}; height: {{p.h}}; margin: 0 {{p.m}}; object-fit: cover; object-position: top; border-radius: 3px;">
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- The card: check it, Save. Tap it or drag it up for the full sheet. -->
+    <sc-if value="{{gCard}}" hint-placeholder-val="{{ true }}">
+      <div style="position: absolute; left: 12px; right: 12px; bottom: 30px; box-sizing: border-box; padding: 8px 12px 12px 18px; border-radius: 30px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); display: flex; flex-direction: column; gap: 4px;">
+        <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; margin-left: 6px; border-radius: 999px; background: {{c.grab}};"></span>
+        <sc-if value="{{gFailInline}}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 8px; padding: 0 4px 12px 0; border-bottom: 0.5px solid {{c.sep}}; color: {{c.tx}};">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px;"><path d="M12 3.5l9.5 16.5h-19z"></path><path d="M12 10v4.5M12 17.4v.1"></path></svg>
+            <span style="display: flex; flex-direction: column;"><b style="font-size: 15px; line-height: 20px;">Couldn’t save</b><span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">Your iPhone is out of space. Free some up, then try again.</span></span>
+          </div>
+        </sc-if>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="#" aria-label="Change title, collection or expiry" style="flex: 1; min-width: 0; display: flex; flex-direction: column; color: {{c.tx}}; text-decoration: none;">
+            <span style="display: flex; align-items: center; gap: 6px;"><span style="min-width: 0; font-size: 17px; line-height: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{gTitle}}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg></span>
+            <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{gDot}};"></span>{{gLine}}</span>
+          </a>
+          <button type="button" style="flex: none; min-height: 52px; padding: 0 26px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{gCardSave}}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Saving failed, as an alert over the review -->
+    <sc-if value="{{gFailAlert}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.25);">
+        <div role="alertdialog" aria-label="Couldn't save this scan" style="position: absolute; left: 38px; right: 38px; top: 300px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+          <b style="font-size: 17px; line-height: 22px;">Couldn’t save this scan</b>
+          <span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">Your iPhone is out of space. Free some up, then try again. Your pages are still here.</span>
+          <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+            <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; cursor: pointer;">Not now</button>
+            <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">Try again</button>
+          </span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Cancel: discard what you just scanned? -->
+    <sc-if value="{{gDiscard}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.25);">
+        <div role="alertdialog" aria-label="Discard this scan?" style="position: absolute; left: 38px; right: 38px; top: 300px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.8); backdrop-filter: blur(30px) saturate(1.8); color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+          <b style="font-size: 17px; line-height: 22px;">Discard this scan?</b>
+          <span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">The {{gPagesWord}} you just scanned won’t be saved.</span>
+          <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+            <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; cursor: pointer;">Keep editing</button>
+            <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; font-family: inherit; font-size: 17px; font-weight: 600; color: {{c.red}}; cursor: pointer;">Discard</button>
+          </span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- The sheet: A, without the hint line -->
+    <sc-if value="{{gSheet}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 8px 16px 16px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column;">
+        <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{c.grab}};"></span>
+        <a href="#" aria-label="Rename {{gTitle}}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 6px 4px 0; color: {{c.tx}}; text-decoration: none;">
+          <span style="min-width: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{gTitle}}</span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"></path></svg>
+        </a>
+        <div style="display: flex; flex-direction: column; margin-top: 10px; border-radius: 20px; background: {{c.well}}; overflow: hidden;">
+          <a href="#" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+            <sc-if value="{{gHasColl}}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="flex: none; width: 31px; height: 31px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{gBadge}};"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{gGlyph}}"></path></svg></span></sc-if>
+            <sc-if value="{{gNoColl}}" hint-placeholder-val="{{ false }}"><svg width="26" height="21" viewBox="0 0 28 22" fill="none" stroke="{{c.tx2}}" stroke-width="1.6" stroke-dasharray="3 2.5" aria-hidden="true" style="flex: none;"><path d="M1 3.5a2.5 2.5 0 0 1 2.5-2.5h5.8a2.5 2.5 0 0 1 1.9.9l1.4 1.6H24.5A2.5 2.5 0 0 1 27 6V18.5a2.5 2.5 0 0 1-2.5 2.5H3.5A2.5 2.5 0 0 1 1 18.5z"></path></svg></sc-if>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+              <span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">{{gCollLabel}}</span>
+              <span style="font-size: 17px; line-height: 22px; font-weight: {{gCollWeight}};">{{gCollValue}}</span>
+            </span>
+            <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+          </a>
+          <a href="#" aria-disabled="{{gExpDisabled}}" style="display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 0 16px; border-top: 0.5px solid {{c.sep}}; color: {{c.tx}}; text-decoration: none; opacity: {{gExpOpacity}};">
+            <svg width="26" height="24" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"></path></svg>
+            <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+              <span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">Expiry</span>
+              <span style="font-size: 17px; line-height: 22px;">{{gExpValue}}</span>
+            </span>
+            <svg width="12" height="18" viewBox="0 0 12 18" fill="none" stroke="{{c.tx2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M2 6.5l4-4 4 4M2 11.5l4 4 4-4"></path></svg>
+          </a>
+        </div>
+        <button type="button" aria-disabled="{{gSaveDisabled}}" style="margin-top: 14px; min-height: 54px; border: 0; border-radius: 999px; background: {{gSaveBg}}; color: {{gSaveFg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">{{gSaveLabel}}</button>
+      </div>
+    </sc-if>
+
+    <!-- Collection menu, native -->
+    <sc-if value="{{gMenu}}" hint-placeholder-val="{{ false }}">
+      <div role="menu" style="position: absolute; right: 24px; bottom: 150px; width: 262px; display: flex; flex-direction: column; padding: 6px 0; border-radius: 24px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); color: {{c.tx}};">
+        <sc-for list="{{colls}}" as="o" hint-placeholder-count="5">
+          <span role="menuitemradio" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 18px 0 14px;">
+            <span style="width: 16px;"></span>
+            <span style="flex: 1; display: flex; flex-direction: column;"><span style="font-size: 17px; line-height: 22px;">{{o.name}}</span><span style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">{{o.life}}</span></span>
+            <span aria-hidden="true" style=" width: 24px; height: 24px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; background: {{o.badge}};"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="{{o.glyph}}"></path></svg></span>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"option":{"editor":"enum","options":["a","b","c","d","e","f","g"],"default":"a"},"pages":{"editor":"enum","options":["1","3"],"default":"1"},"state":{"editor":"enum","options":["card","sheet","picked","menu","failed","discard"],"default":"card"},"fail":{"editor":"enum","options":["alert","inline"],"default":"alert"},"redo":{"editor":"enum","options":["icon","scan","scanagain","ccw","camera","Rescan","Retry","Redo"],"default":"ccw"},"ai":{"editor":"enum","options":["yes","no"],"default":"yes"},"$preview":{"width":390,"height":844}}'>
+
+// Collection icons are round badges with a symbol per collection (see the build note on custom collections).
+var __GLYPH = { wallet: 'M3 6.5h18v11H3zM3 10h18M6.5 14h4', receipts: 'M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21zM9 8h6M9 12h6M9 16h3', notes: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4', documents: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6', throwaways: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4zM14 7v10' };
+var __DEEP = { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+var __BYCOLOR = { '#3f6fa3': 'wallet', '#6f9bd0': 'wallet', '#c0533a': 'receipts', '#e07a60': 'receipts', '#7a5aa8': 'notes', '#a88ad6': 'notes', '#4b8160': 'documents', '#79b08f': 'documents', '#b98a1f': 'throwaways', '#d9ad4a': 'throwaways' };
+function __glyphs(v) {
+  if (Array.isArray(v)) return v.map(__glyphs);
+  if (!v || typeof v !== 'object') return v;
+  var out = {};
+  Object.keys(v).forEach(function (k) {
+    out[k] = __glyphs(v[k]);
+    var m = /^(.*?)(dot|Dot|color|Color)$/.exec(k);
+    if (m && typeof v[k] === 'string') {
+      var g = __GLYPH[__BYCOLOR[String(v[k]).toLowerCase()]] || 'M3 7.5A2.5 2.5 0 0 1 5.5 5h3.6a2 2 0 0 1 1.5.7l1 1.3h6.9A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z';
+      var cap = m[2][0] === m[2][0].toUpperCase();
+      out[m[1] + (m[1] ? 'Glyph' : 'glyph')] = g;
+      out[m[1] + (m[1] ? 'Badge' : 'badge')] = __DEEP[__BYCOLOR[String(v[k]).toLowerCase()]] || v[k];
+    }
+  });
+  return out;
+}
+class Component extends DCLogic {
+  renderVals() { return __glyphs(this.__rv()); }
+  __rv() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var opt = this.props.option ?? 'a';
+    var ai = (this.props.ai ?? 'yes') === 'yes';
+    var c = dark
+      ? { red: '#ff453a', alertBtn: 'rgba(120,120,128,0.36)', grab: '#5a5a5f', menu: 'rgba(44,44,46,0.98)', glassStrong: 'rgba(44,44,46,0.94)', bg: '#000000', behind: '#1c1c1e', surface: '#1c1c1e', sheet: '#1c1c1e', well: '#2c2c2e', tx: '#f2f2f7', tx2: '#98989f', sep: '#38383a', glass: 'rgba(44,44,46,0.72)', glassEdge: 'rgba(255,255,255,0.12)' }
+      : { red: '#d70015', alertBtn: 'rgba(120,120,128,0.16)', grab: '#c4c4c9', menu: 'rgba(255,255,255,0.98)', glassStrong: 'rgba(255,255,255,0.94)', bg: '#f2f2f7', behind: '#c8c8cc', surface: '#ffffff', sheet: '#ffffff', well: '#f2f2f7', tx: '#1c1c1e', tx2: '#6e6e73', sep: '#d8d8dc', glass: 'rgba(255,255,255,0.72)', glassEdge: 'rgba(0,0,0,0.08)' };
+    var coll = dark
+      ? { wallet: '#6f9bd0', receipts: '#e07a60', notes: '#a88ad6', documents: '#79b08f', throwaways: '#d9ad4a' }
+      : { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+    var names = { wallet: 'Wallet', receipts: 'Receipts', notes: 'Notes', documents: 'Documents', throwaways: 'Throwaways' };
+    var life = { wallet: 'Kept forever', receipts: '3 months', notes: 'Kept forever', documents: 'Kept forever', throwaways: '1 week' };
+    // A receipt scanned today (Oct 12). With Apple Intelligence, Receipts is suggested; without it, nothing is picked yet.
+    var pick = ai ? 'receipts' : null;
+    var keys = ['wallet', 'receipts', 'notes', 'documents', 'throwaways'];
+    var colls = keys.map(function (k, n) {
+      var on = k === pick;
+      return { name: names[k], dot: coll[k], life: life[k], check: on ? 'visible' : 'hidden', note: on ? 'Suggested' : life[k],
+        line: n === 0 ? '0' : '0.5px solid ' + c.sep,
+        span: n < 3 ? 'span 2' : 'span 3',
+        bgC: on ? c.surface : c.surface, ring: on ? '2px solid ' + c.tx : 'none', weight: on ? 600 : 400, checked: on ? 'true' : 'false' };
+    });
+    var off = !pick;
+    // G: three pages of a lease, or the one-page receipt. "picked" is after choosing Receipts without a suggestion.
+    var gState = this.props.state ?? 'card';
+    var multi = (this.props.pages ?? '1') === '3';
+    var gPagesSrc = multi ? ['/_blob/1db32063f80e622a14aec8813b573090', '/_blob/1831593aaa00f3a08763d867e5f3ffe2', '/_blob/85da54d51d9aada56b7daa9699fa662a'] : ['/_blob/9db12bd7b0ee3af063f2fd9ebc0a8cb3'];
+    var gKey = multi ? 'documents' : 'receipts';
+    var gChosen = ai || gState === 'picked';
+    var gFailed = gState === 'failed', gFailStyle = this.props.fail ?? 'alert';
+    var gShowCard = ai && (gState === 'card' || gFailed || gState === 'discard');
+    return {
+      c: c,
+      isA: opt === 'a', isB: opt === 'b', isC: opt === 'c',
+      isG: opt === 'g',
+      gCard: gShowCard, gSheet: !gShowCard, gMenu: gState === 'menu',
+      gStrip: multi && gShowCard,
+      gCount: multi ? 'Page 1 of 3' : '1 page',
+      gDiscard: gState === 'discard', gPagesWord: multi ? '3 pages' : 'page',
+      gFailAlert: gFailed && gFailStyle === 'alert', gFailInline: gFailed && gFailStyle === 'inline',
+      gCardSave: gFailed && gFailStyle === 'inline' ? 'Try again' : 'Save',
+      gRedo_camrot: this.props.redo === 'icon', gRedo_scan: this.props.redo === 'scan', gRedo_scanagain: this.props.redo === 'scanagain', gRedo_ccw: (this.props.redo ?? 'ccw') === 'ccw', gRedo_camera: this.props.redo === 'camera',
+      gRedoText: ['Rescan', 'Retry', 'Redo'].indexOf(this.props.redo) >= 0, gRedoLabel: this.props.redo || '',
+      gStripBottom: '128px',
+      gPageH: gShowCard ? (gFailed && gFailStyle === 'inline' ? '510px' : multi ? '552px' : '598px') : '332px',
+      gPage: gPagesSrc[0],
+      gPages: gPagesSrc.map(function (s, n) { return { src: s, label: 'Page ' + (n + 1), w: n === 0 ? '34px' : '26px', h: n === 0 ? '44px' : '36px', m: n === 0 ? '6px' : '0' }; }),
+      gTitle: multi ? 'Lease renewal' : 'City Pharmacy',
+      gDot: gChosen ? coll[gKey] : c.tx2,
+      gLine: multi ? 'Documents · kept forever' : 'Receipts · kept 3 months',
+      gHasColl: gChosen, gNoColl: !gChosen,
+      gCollLabel: gChosen ? (ai ? 'Collection · suggested' : 'Collection') : 'Collection · required',
+      gCollValue: gChosen ? names[gKey] : 'Choose a collection',
+      gCollWeight: gChosen ? 400 : 600,
+      gExpValue: gChosen ? (multi ? 'Kept forever' : '3 months · until Jan 10') : 'Set by the collection',
+      gExpDisabled: gChosen ? 'false' : 'true', gExpOpacity: gChosen ? 1 : 0.45,
+      gSaveDisabled: gChosen ? 'false' : 'true',
+      gSaveBg: gChosen ? c.tx : (dark ? '#2c2c2e' : '#e3e3e8'), gSaveFg: gChosen ? c.bg : c.tx2,
+      gSaveLabel: gChosen ? 'Save to ' + names[gKey] : 'Save',
+      isD: opt === 'd', isE: opt === 'e', isF: opt === 'f', isDEF: opt === 'd' || opt === 'e' || opt === 'f',
+      defPageH: opt === 'f' ? (off ? '520px' : '600px') : (opt === 'd' ? '340px' : '420px'),
+      dHint: off ? 'Pick a collection · its expiry comes with it' : 'Suggested from the scan · tap another folder to change',
+      eColl: off ? 'Choose a collection' : names[pick],
+      eDot: off ? 'none' : 'inline-block',
+      eCollRing: off ? '1.5px dashed ' + c.tx2 : 'none',
+      eNote: off ? 'Its expiry comes from the collection you pick.' : 'Suggested from the scan · until Jan 10, 2027',
+      fLine: off ? 'Choose a collection' : 'Receipts · kept 3 months',
+      page: '/_blob/9db12bd7b0ee3af063f2fd9ebc0a8cb3',
+      title: 'City Pharmacy',
+      colls: colls,
+      picked: !off, notPicked: off,
+      dot: pick ? coll[pick] : c.tx2,
+      collLabel: off ? 'Collection · required' : 'Collection · suggested',
+      collValue: off ? 'Choose a collection' : names[pick],
+      collWeight: off ? 600 : 400,
+      expValue: off ? 'Set by the collection' : 'Kept 3 months · until Jan 10',
+      expValueB: off ? 'Pick a collection first' : '3 months · until Jan 10, 2027',
+      expDisabled: off ? 'true' : 'false',
+      expOpacity: off ? 0.45 : 1,
+      collFooter: off ? 'Pick where this scan goes. Its expiry comes from the collection.' : 'Suggested from what’s on the scan. Tap another to change it.',
+      cPrompt: off ? 'Where does it go?' : 'Filed in Receipts · tap another to change',
+      cExpVis: off ? 'hidden' : 'visible',
+      saveDisabled: off ? 'true' : 'false',
+      saveBg: off ? (dark ? '#2c2c2e' : '#e3e3e8') : c.tx,
+      saveFg: off ? c.tx2 : c.bg,
+      saveLabel: off ? 'Save' : 'Save to Receipts'
+    };
+  }
+}
+</script>
+</body>
+</html>

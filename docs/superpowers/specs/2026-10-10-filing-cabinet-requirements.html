@@ -168,6 +168,8 @@ td:first-child { font-weight: 600; width: 26%; }
 .open { display: grid; gap: 10px; }
 .open .card { border-left: 4px solid var(--manila-deep); }
 
+.changed { display: inline-block; margin-left: 6px; font: 500 11px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 3px 6px; border-radius: 4px; vertical-align: middle; }
+
 footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-size: 13px; }
 </style>
 </head>
@@ -179,10 +181,10 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
   <h1>Keeps what matters. <span>Shreds the rest.</span></h1>
   <p class="lede">A private, Photos-style library just for personal documents. It files each scan itself and cleans up after itself. This document defines <em>what</em> v1 does. The design spec defines <em>how</em>.</p>
   <div class="meta">
-    <span class="chip"><b>Status</b> Draft for review</span>
-    <span class="chip"><b>Date</b> 2026-10-10</span>
+    <span class="chip"><b>Status</b> Screens designed</span>
+    <span class="chip"><b>Date</b> 2026-10-10 · updated 2026-10-29</span>
     <span class="chip"><b>Platform</b> iPhone · iOS 27+</span>
-    <span class="chip"><b>Next</b> Mocks in Claude Design</span>
+    <span class="chip"><b>Next</b> Build in SwiftUI</span>
   </div>
   <nav class="toc" aria-label="Contents">
     <a href="#intent"><span>01</span>Intent</a>
@@ -190,8 +192,9 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <a href="#stories"><span>03</span>User stories</a>
     <a href="#nfr"><span>04</span>Non-functional</a>
     <a href="#decisions"><span>05</span>Decisions</a>
-    <a href="#future"><span>06</span>Future</a>
-    <a href="#open"><span>07</span>Open questions</a>
+    <a href="#design"><span>06</span>Design changes</a>
+    <a href="#future"><span>07</span>Future</a>
+    <a href="#open"><span>08</span>Open questions</a>
   </nav>
 </header>
 
@@ -207,6 +210,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <div class="job"><p>Grab a throwaway doc (a coat-check tag) that deletes itself in a week.</p></div>
     </div>
     <p class="note">These four jobs were confirmed on 2026-10-10 as the complete set. No others are in scope.</p>
+    <p class="note">Updated 2026-10-25 after the screens were designed, and 2026-10-29 with the app icon. Lines that changed are corrected in place, and everything decided during design is listed in <a href="#design">06 · Design changes</a>. The decisions board on the Mocks canvas stays as the record of 2026-10-10.</p>
     <p class="note">Where this document and the design spec (<code>2026-07-12-filing-cabinet-design.md</code>) conflict, this document wins.</p>
   </div>
 </section>
@@ -219,7 +223,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
 
     <div class="collections">
       <div class="coll" style="--c: var(--c-wallet)"><div class="tab"></div><div class="body"><h4>Wallet</h4><p>IDs and cards: license, insurance, membership</p><span class="life">Forever</span></div></div>
-      <div class="coll" style="--c: var(--c-receipts)"><div class="tab"></div><div class="body"><h4>Receipts</h4><p>Purchase receipts</p><span class="life">90 days</span></div></div>
+      <div class="coll" style="--c: var(--c-receipts)"><div class="tab"></div><div class="body"><h4>Receipts</h4><p>Purchase receipts</p><span class="life">3 months</span></div></div>
       <div class="coll" style="--c: var(--c-notes)"><div class="tab"></div><div class="body"><h4>Notes</h4><p>Handwritten and class notes</p><span class="life">Forever</span></div></div>
       <div class="coll" style="--c: var(--c-documents)"><div class="tab"></div><div class="body"><h4>Documents</h4><p>Forms, letters, anything else</p><span class="life">Forever</span></div></div>
       <div class="coll" style="--c: var(--c-throwaways)"><div class="tab"></div><div class="body"><h4>Throwaways</h4><p>Short-lived scraps: coat-check tag, parking stub</p><span class="life">1 week</span></div></div>
@@ -237,9 +241,10 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <h3>Expiry</h3>
     <ul class="rules">
       <li>A scan's expiry is its <b>collection's default lifespan</b> unless you've set a <b>custom expiry</b> for it.</li>
-      <li>Expiry is counted from <b>when the scan was taken</b>.</li>
+      <li>Expiry is counted from <b>when the scan was taken</b>. Time left is shown in years when a year or more remains, in whole months from 60 days, and in days under 60 days; the last week is orange.</li>
       <li><b>Forever</b> means the scan is never cleaned up. This replaces the design spec's separate "cleanup exemption" toggle.</li>
       <li>Changing a scan's collection moves its expiry to the new collection's default. A custom expiry is kept.</li>
+      <li>The new expiry is still counted from the scan date, never from the day of the move. If that date has already passed, the app asks first ("Move to Throwaways?" · Cancel / Move); Move sends the scan to Trash, where it can be restored for 30 days.</li>
       <li>Changing a collection's default lifespan in Settings applies to <b>every scan still on that default</b>, existing scans included. Scans with a custom expiry aren't affected.</li>
     </ul>
 
@@ -268,8 +273,9 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <div class="story"><div class="n">1</div><div><h4>Scan</h4><p>One tap from home opens the document camera. A scan can have multiple pages. Cancelling saves nothing.</p></div></div>
       <div class="story"><div class="n">2</div><div><h4>Review &amp; save</h4><p>After capture, a review sheet shows these, and then you save:</p><ul>
         <li>a <b>title</b> taken from the scan's text, which you can edit;</li>
-        <li>the <b>collection</b>, pre-filled when automatic filing is available and a required pick otherwise;</li>
+        <li>the <b>collection</b>, pre-filled when automatic filing is available and a required pick otherwise (a slim card with a suggestion, the full sheet without one);</li>
         <li>the <b>expiry</b>, defaulting to the collection's lifespan. Quick choices are 1 week, 1 month, 3 months, 1 year and Forever, plus a custom date.</li>
+        <li>A <b>Rescan</b> button reopens the camera; cancelling it keeps the pages you had.</li>
       </ul></div></div>
       <div class="story"><div class="n">3</div><div><h4>Out of the camera roll</h4><p>Scans are never written to Photos unless you explicitly export them.</p></div></div>
     </div>
@@ -285,27 +291,28 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <div class="stories">
       <div class="story"><div class="n">7</div><div><h4>Detail view</h4><ul>
         <li>Swipe between pages and pinch to zoom at full resolution.</li>
-        <li>See the collection and the expiry status ("Expires in 23 days" / "Kept forever").</li>
+        <li>See the collection and the expiry status ("23 days left" / "Kept forever").</li>
       </ul></div></div>
       <div class="story"><div class="n">8</div><div><h4>Edit anytime</h4><p>The title, collection, expiry and favorite can be changed whenever you like, following the <a href="#model">expiry rules</a>.</p></div></div>
       <div class="story"><div class="n">9</div><div><h4>Export</h4><p>Share as PDF or images, or save to Photos or Files.</p></div></div>
-      <div class="story"><div class="n">10</div><div><h4>Delete</h4><p>Deleting a scan by hand moves it to Trash.</p></div></div>
+      <div class="story"><div class="n">10</div><div><h4>Delete</h4><p>Move to Trash asks first, then moves the scan with no note or Undo afterwards.</p></div></div>
     </div>
 
     <div class="group-label">Self-cleaning</div>
     <div class="stories">
-      <div class="story"><div class="n">11</div><div><h4>Auto-trash</h4><p>A scan moves to Trash the moment its expiry passes, even when the app isn't open. Notifications are scheduled in advance, one per day that has expiries, for example "4 scans moved to Trash · restore within 30 days", and rescheduled whenever a scan, its expiry or a lifespan changes. iOS caps scheduled notifications at 64, so they cover the next 64 days with expiries and are topped up each time the app opens. With notifications off, Home shows a one-time banner after scans move and the Trash row shows its count.</p></div></div>
+      <div class="story"><div class="n">11</div><div><h4>Auto-trash</h4><p>A scan moves to Trash the moment its expiry passes, even when the app isn't open. Notifications are scheduled in advance, at most one a day in the morning, worded as a favour, for example "Cleaned up 3 receipts" (up to 3 scans are named; 4 or more show only the count), and rescheduled whenever a scan, its expiry or a lifespan changes. iOS caps scheduled notifications at 64, so they cover the next 64 days with expiries and are topped up each time the app opens. With notifications off, Home shows a one-time banner after scans move and the Trash row shows its count.</p></div></div>
       <div class="story"><div class="n">12</div><div><h4>Trash</h4><ul>
         <li>See what's in it, restore a scan, delete one now, or empty it.</li>
         <li>Items are permanently deleted 30 days after entering Trash. For an expired scan that is 30 days after its expiry. Delete now and Empty Trash take effect immediately.</li>
         <li>A restored scan is set to <b>Forever</b>, so it doesn't immediately expire again.</li>
+        <li>Favorites keep their heart in Trash and come back as favorites; they expire like any other scan.</li>
       </ul></div></div>
-      <div class="story"><div class="n">13</div><div><h4>Lifespan settings</h4><p>You can edit each collection's default lifespan. Scans still on the default follow the change.</p></div></div>
+      <div class="story"><div class="n">13</div><div><h4>Lifespan settings</h4><p>In Settings › Collections you can edit each collection's default lifespan ("Keep scans for"). Scans still on the default follow the change.</p></div></div>
     </div>
 
     <div class="group-label">Privacy</div>
     <div class="stories">
-      <div class="story"><div class="n">14</div><div><h4>On-device only</h4><p>Everything stays on the device. There's no account and no network calls, and automatic filing runs on-device.</p></div></div>
+      <div class="story"><div class="n">14</div><div><h4>On-device only</h4><p>Scans stay on your iPhone and in your iCloud backup. There's no account and no network calls, and automatic filing runs on-device.</p></div></div>
     </div>
   </div>
 </section>
@@ -317,7 +324,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <p class="sub">The parts you don't see: where things live, how fast they are, and what can never go wrong.</p>
     <div class="nfr">
       <div class="card"><h4>Platform</h4><ul>
-        <li>iPhone only, SwiftUI.</li>
+        <li>iPhone only (iPad maybe later), portrait only, English only, SwiftUI.</li>
         <li><b>iOS 27 minimum.</b> Apple Intelligence doesn't require it, since Foundation Models arrived in iOS 26. iOS 27 was chosen so there are no availability branches, the newest APIs are available, and most active iPhones will be on 27 by an App Store release.</li>
       </ul></div>
       <div class="card"><h4>Backup</h4><p>The library is covered by the normal iCloud device backup. There's no iCloud sync in v1, but the data model is kept sync-ready.</p></div>
@@ -332,7 +339,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       </ul></div>
       <div class="card"><h4>Graceful fallback</h4><p>Without Apple Intelligence, every feature works, and the collection is picked by hand.</p></div>
       <div class="card"><h4>Appearance</h4><p>Light and dark mode both ship in v1 and follow the system setting. Every screen is designed for both.</p></div>
-      <div class="card"><h4>Accessibility</h4><p>Supports Dynamic Type and VoiceOver.</p></div>
+      <div class="card"><h4>Accessibility</h4><p>Supports Dynamic Type up to the largest sizes, VoiceOver and Reduce Motion, and meets WCAG AA contrast. Details in <a href="#design">06</a>.</p></div>
     </div>
 
     <h3>Storage</h3>
@@ -350,7 +357,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
   <div class="folder-tab">05 · Decisions</div>
   <div class="sheet">
     <h2>Decisions log</h2>
-    <p class="sub">Settled on 2026-10-10.</p>
+    <p class="sub">Settled on 2026-10-10. Rows marked <span class="changed">Changed</span> were revised while designing the screens.</p>
     <div class="table-wrap">
     <table>
       <thead><tr><th>Decision</th><th>Chosen</th><th>Rejected</th></tr></thead>
@@ -358,12 +365,12 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
         <tr><td>Who sets lifespan</td><td><span class="chosen">Collection default, overridable per scan</span></td><td class="rejected">Collection rules only · per-scan choice only</td></tr>
         <tr><td>At expiry</td><td><span class="chosen">Straight to Trash, 30-day purge, batched notification</span></td><td class="rejected">Warn first · archive · ask each time</td></tr>
         <tr><td>When expired scans move</td><td><span class="chosen">At the expiry moment, worked out from dates; notifications scheduled ahead, one per day</span></td><td class="rejected">A cleanup run on app open and background refresh</td></tr>
-        <tr><td>Navigation</td><td><span class="chosen">One Home screen holding Favorites, collections, Recent, All and Trash; Search and Scan at the bottom; Settings in the top menu</span></td><td class="rejected">A tab bar with Scan in the middle (tabs are for places, the scanner is full-screen, and the other tabs are rarely used)</td></tr>
-        <tr><td>After saving a scan</td><td><span class="chosen">Back where you were, with "Saved to Receipts · 90 days"; tapping it opens the scan</span></td><td class="rejected">Open the new scan</td></tr>
-        <tr><td>Notification permission</td><td><span class="chosen">Asked after the first save of a scan that will expire</span></td><td class="rejected">On first launch · never</td></tr>
+        <tr><td>Navigation</td><td><span class="chosen">One Home screen: Search, Favorites, collection rows, Recent, All and Trash; Settings top right; one Scan button at the bottom</span></td><td class="rejected">A tab bar with Scan in the middle (tabs are for places, the scanner is full-screen, and the other tabs are rarely used)</td></tr>
+        <tr><td>After saving a scan <span class="changed">Changed</span></td><td><span class="chosen">Back where you were; the page flies into its collection on Home, or into its tile when you scanned inside the collection. No note</span></td><td class="rejected">"Saved to Receipts · 90 days" note · open the new scan</td></tr>
+        <tr><td>Notification permission <span class="changed">Changed</span></td><td><span class="chosen">Asked on the second first-launch screen ("Know when it cleans up"), then iOS asks</span></td><td class="rejected">After the first save of a scan that will expire · never</td></tr>
         <tr><td>Shortening a lifespan that would trash existing scans</td><td><span class="chosen">Confirm first, with the count</span></td><td class="rejected">Apply silently</td></tr>
         <tr><td>Scan from inside a collection</td><td><span class="chosen">Allowed; pre-selects that collection over the suggestion</span></td><td class="rejected">Suggestion decides · Home only</td></tr>
-        <tr><td>First launch</td><td><span class="chosen">No intro screens; empty Home explains and offers Scan</span></td><td class="rejected">Intro screens</td></tr>
+        <tr><td>First launch <span class="changed">Changed</span></td><td><span class="chosen">Two screens: a short welcome, then the notifications ask; the camera is asked on the first Scan</span></td><td class="rejected">No intro screens · longer tours</td></tr>
         <tr><td>Several documents in one capture</td><td><span class="chosen">One capture is one scan with several pages</span></td><td class="rejected">Splitting pages into scans on Review (future)</td></tr>
         <tr><td>Collections</td><td><span class="chosen">Wallet · Receipts · Notes · Documents · Throwaways</span></td><td class="rejected">IDs and Cards as separate collections · a short-lived "Other" catch-all</td></tr>
         <tr><td>Automatic filing</td><td><span class="chosen">On-device model when Apple Intelligence is available, manual otherwise</span></td><td class="rejected">Hand-written rules in v1</td></tr>
@@ -372,6 +379,8 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
         <tr><td>Pinning</td><td><span class="chosen">Becomes Favorites; exemption is "Forever"</span></td><td class="rejected">A separate exemption toggle</td></tr>
         <tr><td>Restore from Trash</td><td><span class="chosen">Sets expiry to Forever</span></td><td class="rejected">Restore with the original expiry</td></tr>
         <tr><td>iCloud</td><td><span class="chosen">Device backup only; sync-ready model</span></td><td class="rejected">Sync in v1</td></tr>
+        <tr><td>Moving a scan to a shorter collection</td><td><span class="chosen">Expiry stays counted from the scan date; asks first if that sends it to Trash</span></td><td class="rejected">Restart the clock on each move</td></tr>
+        <tr><td>Business model</td><td><span class="chosen">Fully free: no purchases, no paywall, no ads</span></td><td class="rejected">Paid · subscription</td></tr>
         <tr><td>Minimum OS</td><td><span class="chosen">iOS 27</span></td><td class="rejected">Supporting iOS 26</td></tr>
       </tbody>
     </table>
@@ -379,8 +388,136 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
   </div>
 </section>
 
+<section id="design">
+  <div class="folder-tab">06 · Design changes</div>
+  <div class="sheet">
+    <h2>Decided while designing the screens</h2>
+    <p class="sub">Settled 2026-10-11 to 2026-10-29 in Claude Design. Every chosen screen, the prototype, the screen sources, the design tokens and the app icon are in <code>design/</code> in this repo (start with <code>design/README.md</code>).</p>
+
+    <h3>First launch</h3>
+    <ul class="rules">
+      <li>Launch screen is plain: Home's background colour (#f2f2f7 light, #000000 dark) with the status bar. No logo, no words. Set through the launch screen colour setting.</li>
+      <li>Two screens: a welcome with four plain points (scan in one tap, sorted into collections, cleans up after itself, private by design), then "Know when it cleans up", followed by iOS's notification prompt.</li>
+      <li>The camera is asked on the first Scan, with our line: "Filing Cabinet uses the camera to scan documents. Scans stay on this iPhone." If denied, every Scan shows "Camera access is off" with Open Settings.</li>
+      <li>The Scan button always reads "Scan", including on an empty Home.</li>
+    </ul>
+
+    <h3>Home</h3>
+    <ul class="rules">
+      <li>Collection rows are 60pt, each with a round badge in the collection's colour and its own symbol (Wallet a card, Receipts a receipt, Notes a pencil, Documents a page, Throwaways a ticket).</li>
+      <li>After a cleanup, "4 scans moved to Trash · View" sits under the title.</li>
+    </ul>
+
+    <h3>Scanning and review</h3>
+    <ul class="rules">
+      <li>With an Apple Intelligence suggestion: a slim card (title, collection and expiry, Save) that opens into the full sheet. Without one: the full sheet with "Choose a collection".</li>
+      <li>Choosing a collection fills in its expiry, which can still be changed.</li>
+      <li>A page pill shows "1 page" or "Page 2 of 3"; multi-page scans swipe and show a page strip.</li>
+      <li>Rescan (circular-arrow button, top right) reopens the camera; finishing replaces the pages, cancelling keeps them.</li>
+      <li>The review closes with an X. Cancel asks "Discard this scan?".</li>
+      <li>A failed save (usually a full iPhone) shows an alert with Not now and Try again; nothing is lost.</li>
+      <li>After saving there is no note: the page flies into its collection's badge on Home (the count ticks up), or into its own tile when you scanned inside the collection.</li>
+    </ul>
+
+    <h3>Viewing and changing a scan</h3>
+    <ul class="rules">
+      <li>Viewing works like Photos. Details open as a sheet where every row is editable straight away (Undo for a collection move); there is no Edit button.</li>
+      <li>Expiry is always counted from the scan date. Moving a scan into a collection whose time has already passed asks first; Move sends it to Trash.</li>
+      <li>Move to Trash asks first. No "Moved to Trash" note and no Undo afterwards.</li>
+    </ul>
+
+    <h3>Trash</h3>
+    <ul class="rules">
+      <li>A grid like a collection. Each tile shows its days left (orange in the last week). No reason is shown or stored.</li>
+      <li>Tap opens the scan with Delete now and Restore. Long-press gives Open, Restore and Delete now. Select picks several; Cancel leaves select mode.</li>
+      <li>Delete now, deleting several, and Empty Trash all confirm. Restoring never does.</li>
+      <li>A restored scan is kept forever. Favorites keep their heart, come back as favorites, and expire like any other scan.</li>
+    </ul>
+
+    <h3>Collections and settings</h3>
+    <ul class="rules">
+      <li>Receipts are kept 3 months, shown that way everywhere.</li>
+      <li>Settings: Collections, an Apple Intelligence switch ("Suggests titles and collections"), a Notifications switch ("A note when scans move to Trash"), Send feedback, and the footer "Filing Cabinet 1.0 · Private by design".</li>
+      <li>Collections opens a list; each collection has "Keep scans for" (1 week, 1 month, 3 months, 1 year, Forever) with the shortening confirmation and count.</li>
+    </ul>
+
+    <h3>Notifications</h3>
+    <ul class="rules">
+      <li>Sent after cleanup, worded as a favour: "Cleaned up 3 receipts".</li>
+      <li>Up to 3 scans are named; 4 or more show only the count. Mixed collections are called "scans".</li>
+      <li>Every collection counts, Throwaways included. At most one a day, in the morning.</li>
+    </ul>
+
+    <h3>Search</h3>
+    <ul class="rules">
+      <li>One ranked list with recently viewed scans, recent searches and collection filters; title matches first, the match in bold.</li>
+      <li>First use (nothing viewed or searched yet) shows only the filters. A search is saved when you press Search or open a result.</li>
+    </ul>
+
+    <h3>Time left</h3>
+    <ul class="rules">
+      <li>A collection's lifespan uses its friendly unit: "Kept 3 months", "Kept 1 week", "Kept forever".</li>
+      <li>A scan's countdown: a year or more shows years ("1 year left"); 60 days to a year shows whole months, rounded down ("2 months left"); under 60 days shows days ("45 days left"); the last week is orange. Trash always shows days.</li>
+    </ul>
+
+    <h3>Extras in v1</h3>
+    <p>Drawn by iOS; ours are the words, the Scan symbol and what happens next.</p>
+    <ul class="rules">
+      <li><b>Scan control</b> for Control Center, the Lock Screen and the Action button. It unlocks if needed and opens straight into the camera; saving or cancelling lands on Home. Before first launch has run it shows the two welcome screens first; with camera access off it shows the usual sheet; with a review already open it brings that back.</li>
+      <li><b>Shortcuts and Siri:</b> "Scan a document" (same flow as the control) and "Find a scan", which takes text and opens Search with those results.</li>
+      <li><b>Spotlight:</b> scan titles appear in iPhone search; tapping one opens that scan. Titles only.</li>
+    </ul>
+
+    <h3>Scope and business</h3>
+    <ul class="rules">
+      <li>iPhone only (iPad maybe later), portrait only, English only for v1.</li>
+      <li>Fully free: no purchases, no paywall, no ads.</li>
+      <li>Scans are included in iCloud Backup. Privacy wording: "Private by design · No account. Scans stay on your iPhone and in your iCloud backup."</li>
+    </ul>
+
+    <h3>App icon</h3>
+    <ul class="rules">
+      <li>Scan corners around a folder, in the app's own colours: ink corners (#1c1c1e) on the app background (#f2f2f7) in light, reversed in dark; the folder is terracotta (#c0533a) in both. iOS makes the tinted and clear versions.</li>
+      <li>Layers for Icon Composer and previews are in <code>design/app-icon/</code>.</li>
+    </ul>
+
+    <h3>Accessibility</h3>
+    <ul class="rules">
+      <li><b>Contrast</b> meets WCAG AA (4.5:1 text, 3:1 symbols). Light "soon" orange is #ad500e; light destructive text uses #d70015 (dark keeps #ff453a); collection badges use the deeper colours in both themes (wallet #3f6fa3, receipts #c0533a, notes #7a5aa8, documents #4b8160, throwaways #b98a1f).</li>
+      <li><b>Large text:</b> everything follows Dynamic Type up to the largest sizes and wraps rather than cutting off. Collection grids drop to two columns (Wallet to one); the review card stacks with a full-width Save; detail rows put the label above the value; Settings descriptions wrap under the name.</li>
+      <li><b>VoiceOver:</b> a tile reads as one item ("Corner Market, Receipts, 2 days left, favorite") with actions for Open, Favorite and Move to Trash (Restore and Delete now in Trash). Icon-only buttons are named. The page pill reads "Page 2 of 3". Save, Restore, Delete and moves announce the result. Colour is never the only signal.</li>
+      <li><b>Reduce Motion:</b> zooms, flights and the card-to-sheet growth become quick cross-fades.</li>
+    </ul>
+
+    <h3>Haptics</h3>
+    <ul class="rules">
+      <li>Light tap: favoriting, choosing from a menu, a switch. Success: a scan saved or restored. Warning, just before the confirmation: Move to Trash, Delete now, Empty Trash. The standard lift on long-press. Nothing for plain navigation.</li>
+    </ul>
+
+    <h3>Rating prompt</h3>
+    <ul class="rules">
+      <li>Apple's standard prompt, asked only right after a successful save, once someone has saved 10 scans on at least 3 different days. Never during a review, a confirmation or onboarding.</li>
+    </ul>
+
+    <h3>Build for what's coming</h3>
+    <ul class="rules">
+      <li><b>Collections are data</b> (name, colour, symbol, lifespan), not a fixed list of five, so custom collections only need new screens.</li>
+      <li><b>One review screen, many ways in:</b> camera, Rescan, the Scan control, Shortcuts, and later the share extension.</li>
+      <li><b>Words in one place:</b> every user-facing string in a string catalogue from day one.</li>
+      <li><b>Layouts that stretch:</b> adaptive layouts and design tokens, so iPad needs no redesign.</li>
+      <li><b>App Intents as the backbone</b> for the Scan control, Shortcuts, Siri and Spotlight, so widgets and AI search plug in later.</li>
+      <li><b>Apple Intelligence behind one switch:</b> suggestions today, search by meaning later.</li>
+    </ul>
+
+    <h3>Later (after v1)</h3>
+    <ul class="rules">
+      <li>Apple Intelligence search · custom collections · share extension, then widgets · locked scans with Face ID · export all scans.</li>
+    </ul>
+  </div>
+</section>
+
 <section id="future">
-  <div class="folder-tab">06 · Future</div>
+  <div class="folder-tab">07 · Future</div>
   <div class="sheet">
     <h2>Future (not v1)</h2>
     <p class="sub">Each item becomes a GitHub issue once the repo has a remote.</p>
@@ -392,13 +529,14 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <div class="card"><h4>Someday</h4><ul>
         <li><b>Field search:</b> find a field such as "policy number" across all scans and copy its value.</li>
         <li>Tags.</li>
-        <li>Custom collections.</li>
+        <li><b>Custom collections</b> (add, delete, rename, colour, icon). Build v1 so this needs new screens, not a new model.</li>
+        <li><b>Apple Intelligence search</b> (matching by meaning), behind the same switch as suggestions.</li>
+        <li>A <b>share extension</b> ("Save to Filing Cabinet" for PDFs and photos) next, then widgets.</li>
         <li>An <b>Expiring</b> view: everything with an expiry, soonest first.</li>
         <li>iCloud sync across iPhone, iPad and Mac.</li>
         <li>Importing and classifying the existing camera-roll backlog.</li>
         <li>Showing scans in the Files app.</li>
         <li>More cleanup rule types (count-based, size-based).</li>
-        <li><b>Quick ways to start a scan:</b> a Scan shortcut on the app icon, the Action button, Lock Screen and Control Center controls, and widgets. Also Shortcuts actions and a share extension.</li>
         <li>Splitting a multi-page capture into separate scans on the review sheet.</li>
       </ul></div>
     </div>
@@ -419,17 +557,17 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
 </section>
 
 <section id="open">
-  <div class="folder-tab">07 · Open questions</div>
+  <div class="folder-tab">08 · Open questions</div>
   <div class="sheet">
     <h2>Open questions</h2>
     <div class="open">
-      <div class="card"><h4>Home screen look</h4><p>Navigation is settled (see Decisions). How Home looks is settled in the Claude Design mocks, built from the Filing Cabinet design system.</p></div>
+      <div class="card"><h4>Home screen look</h4><p>Settled in the Claude Design mocks: see the Final page of the canvas.</p></div>
       <div class="card"><h4>Accuracy of automatic filing</h4><p>Settled by the experiment with real scans before the implementation plan.</p></div>
     </div>
   </div>
 </section>
 
-<footer>Filing Cabinet · Requirements &amp; user stories · 2026-10-10</footer>
+<footer>Filing Cabinet · Requirements &amp; user stories · 2026-10-10 · updated 2026-10-29</footer>
 </div>
 </body>
 </html>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Trash</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, system-ui, sans-serif; font-size: 17px; line-height: 22px; -webkit-font-smoothing: antialiased;">
+
+  <!-- ========== The Trash screen (all three options share the header and Empty Trash) ========== -->
+  <sc-if value="{{showList}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: space-between; z-index: 5;">
+      <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+      <sc-if value="{{hasSelect}}" hint-placeholder-val="{{ false }}">
+        <button type="button" style="height: 44px; padding: 0 18px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">{{selectLabel}}</button>
+      </sc-if>
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 110px;">
+      <h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: -0.4px;">Trash</h1>
+      <p style="margin: 2px 0 0; font-size: 15px; line-height: 20px; color: {{subColor}}; font-weight: {{subWeight}};">{{sub}}</p>
+    </div>
+
+    <!-- A · a grid, like a collection. Tap a scan to open it with Restore and Delete now. -->
+    <sc-if value="{{isA}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 190px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 8px;">
+        <sc-for list="{{items}}" as="s" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <div style="height: {{s.tileH}}; border-radius: 6px; overflow: hidden; background: {{c.ground}};"><img src="{{s.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></div>
+            <span style="display: flex; align-items: center; gap: 5px; margin-top: 4px; min-width: 0;"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{s.dot}};"></span><span style="min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span></span>
+            <span style="font-size: 12px; line-height: 16px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- D · A's grid, with Select for several at once and a long-press menu for one -->
+    <sc-if value="{{isDGrid}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 190px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 8px;">
+        <sc-for list="{{items}}" as="s" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <div style="position: relative; height: {{s.tileH}}; border-radius: 6px; overflow: hidden; background: {{c.ground}}; box-shadow: {{s.ring}};">
+              <img src="{{s.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: {{s.fade}};">
+                <span aria-label="Favorite" style="position: absolute; right: 5px; top: 5px; width: 26px; height: 26px; border-radius: 999px; display: {{s.favShow}}; align-items: center; justify-content: center; background: rgba(28,28,30,0.55);"><svg width="15" height="15" viewBox="0 0 24 24" fill="#ffffff" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.3s-7.6-4.5-7.6-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.7c0 5.7-7.6 10.2-7.6 10.2z"></path></svg></span>
+              
+              <sc-if value="{{selecting}}" hint-placeholder-val="{{ false }}">
+                <span style="position: absolute; right: 6px; bottom: 6px; width: 24px; height: 24px; box-sizing: border-box; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{s.chkBg}}; border: 1.5px solid #ffffff;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="{{s.chkFg}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8.5l3.5 3.5 7.5-8"></path></svg></span>
+              </sc-if>
+            </div>
+            <span style="display: flex; align-items: center; gap: 5px; margin-top: 4px; min-width: 0;"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{s.dot}};"></span><span style="min-width: 0; font-size: 13px; line-height: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span></span>
+            <span style="font-size: 12px; line-height: 16px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- D · Trash is empty -->
+    <sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 32px; right: 32px; top: 300px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="{{c.tx2}}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>
+        <b style="font-size: 17px; line-height: 22px;">Trash is empty</b>
+        <span style="max-width: 290px; font-size: 15px; line-height: 20px; color: {{c.tx2}};">Scans land here when they expire or you move them here. Each one stays 30 days, then it’s deleted.</span>
+      </div>
+    </sc-if>
+
+    <!-- B · a list with Restore on every row. Swipe left for Delete now. -->
+    <sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 190px; border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+        <sc-for list="{{items}}" as="s" hint-placeholder-count="7">
+          <div style="position: relative; height: 72px; overflow: hidden; background: {{c.red}};">
+            <span style="position: absolute; right: 0; top: 0; bottom: 0; width: 96px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 15px; font-weight: 600;">Delete now</span>
+            <div style="position: absolute; inset: 0; transform: translateX({{s.swipe}}); display: flex; align-items: center; gap: 12px; padding-left: 12px; background: {{c.surface}};">
+              <span style="flex: none; width: 40px; height: 52px; border-radius: 4px; overflow: hidden; background: {{c.ground}};"><img src="{{s.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></span>
+              <span style="flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 10px; padding-right: 12px; border-top: {{s.line}};">
+                <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                  <span style="font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span>
+                  <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{s.dot}};"></span>{{s.coll}} · <span style="color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.left}}</span></span>
+                </span>
+                <button type="button" style="flex: none; height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: {{c.well}}; color: {{c.tx}}; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;">Restore</button>
+              </span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- C · grouped by when they're deleted. Tap a row for a small sheet. -->
+    <sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 176px; display: flex; flex-direction: column;">
+        <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+          <h2 style="margin: 18px 4px 8px; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 20px; line-height: 26px; font-weight: 700;">{{g.name}}</h2>
+          <div style="border-radius: 14px; overflow: hidden; background: {{c.surface}};">
+            <sc-for list="{{g.rows}}" as="s" hint-placeholder-count="3">
+              <div style="display: flex; align-items: center; gap: 12px; height: 64px; padding-left: 12px; background: {{s.rowBg}};">
+                <span style="flex: none; width: 36px; height: 46px; border-radius: 4px; overflow: hidden; background: {{c.ground}};"><img src="{{s.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></span>
+                <span style="flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: center; gap: 10px; padding-right: 14px; border-top: {{s.line}};">
+                  <span style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+                    <span style="font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.title}}</span>
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 18px; color: {{c.tx2}};"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{s.dot}};"></span>{{s.coll}} · {{s.why}}</span>
+                  </span>
+                  <span style="flex: none; font-size: 15px; line-height: 20px; color: {{s.leftColor}}; font-weight: {{s.leftWeight}};">{{s.leftShort}}</span>
+                  <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Empty Trash, bottom centre, like the Scan button elsewhere -->
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 128px; background: linear-gradient(to top, {{c.bg}} 38%, {{c.bgClear}}); pointer-events: none;"></div>
+    <sc-if value="{{selecting}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; gap: 10px;">
+        <button type="button" style="flex: 1; min-height: 54px; border-radius: 999px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600;">Delete 2</button>
+        <button type="button" style="flex: 1; min-height: 54px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; font-weight: 600;">Restore 2</button>
+      </div>
+    </sc-if>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: {{emptyBtn}}; justify-content: center;">
+      <button type="button" style="min-height: 52px; padding: 0 28px; border-radius: 999px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600; cursor: pointer;">Empty Trash</button>
+    </div>
+  </sc-if>
+
+  <!-- A, tapped: the scan opens like the viewer, with Restore and Delete now -->
+  <sc-if value="{{showViewer}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 128px; height: 520px; display: flex; align-items: center; justify-content: center;"><img src="{{one.src}}" alt="{{one.title}}" style="display: block; max-width: 100%; max-height: 520px; opacity: 0.92;"></div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 48px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Close" style="width: 48px; height: 48px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}};"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"></path></svg></button>
+      <span style="display: flex; flex-direction: column; align-items: center; max-width: 250px; padding: 5px 20px 6px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}};"><b style="font-size: 16px; line-height: 21px;">{{one.title}}</b><small style="font-size: 13px; line-height: 17px; white-space: nowrap; color: {{one.leftColor}}; font-weight: {{one.leftWeight}};">{{one.left}}</small></span>
+      <span style="width: 48px;"></span>
+    </div>
+    
+    <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; gap: 10px;">
+      <button type="button" style="flex: 1; min-height: 54px; border-radius: 999px; background: {{c.glassStrong}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600;">Delete now</button>
+      <button type="button" style="flex: 1; min-height: 54px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; font-weight: 600;">Restore</button>
+    </div>
+  </sc-if>
+
+  <!-- D, long-press: the tile lifts, with a short menu -->
+  <sc-if value="{{showMenu}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; z-index: 10; background: {{c.dim}}; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);"></div>
+    <div style="position: absolute; z-index: 11; left: 136px; top: 186px; width: 118px; display: flex; flex-direction: column; gap: 2px;">
+      <div style="height: 140px; border-radius: 8px; overflow: hidden; background: {{c.ground}};"><img src="{{one.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></div>
+    </div>
+    <div role="menu" style="position: absolute; z-index: 11; left: 124px; top: 338px; width: 250px; display: flex; flex-direction: column; padding: 6px 0; border-radius: 24px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}};">
+      <span style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 18px;"><span>Open</span></span>
+      <span style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 18px; border-top: 0.5px solid {{c.sep}};"><span style="display: flex; flex-direction: column;"><span>Restore</span><small style="font-size: 13px; line-height: 17px; color: {{c.tx2}};">To {{one.coll}}, kept forever</small></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></span>
+      <span style="display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 18px; border-top: 0.5px solid {{c.sep}}; color: {{c.red}};"><span>Delete now</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg></span>
+    </div>
+  </sc-if>
+
+  <!-- Confirmations: Delete now, Delete for several, Empty Trash -->
+  <sc-if value="{{hasConfirm}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; z-index: 20; background: {{c.dim}};"></div>
+    <div role="alertdialog" aria-label="{{confirmTitle}}" style="position: absolute; z-index: 21; left: 38px; right: 38px; top: 300px; box-sizing: border-box; padding: 22px 18px 16px; border-radius: 34px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; color: {{c.tx}}; display: flex; flex-direction: column; gap: 6px; text-align: center;">
+      <b style="font-size: 17px; line-height: 22px;">{{confirmTitle}}</b>
+      <span style="font-size: 15px; line-height: 20px; color: {{c.tx2}};">{{confirmBody}}</span>
+      <span style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px;">
+        <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.tx}}; font-family: inherit; font-size: 17px;">Cancel</button>
+        <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.alertBtn}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600;">{{confirmOk}}</button>
+      </span>
+    </div>
+  </sc-if>
+
+  <!-- C, tapped: a small sheet over the list -->
+  <sc-if value="{{showSheet}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: {{c.dim}};"></div>
+    <div role="dialog" style="position: absolute; left: 8px; right: 8px; bottom: 8px; box-sizing: border-box; padding: 8px 16px 18px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column;">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{c.chev}};"></span>
+      <div style="display: flex; align-items: center; gap: 14px; margin: 14px 4px 0;">
+        <span style="flex: none; width: 56px; height: 72px; border-radius: 6px; overflow: hidden; background: {{c.ground}};"><img src="{{one.src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; object-position: top;"></span>
+        <span style="display: flex; flex-direction: column; min-width: 0;">
+          <b style="font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 24px; line-height: 30px;">{{one.title}}</b>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{one.dot}};"></span>{{one.coll}} · <span style="color: {{one.leftColor}}; font-weight: {{one.leftWeight}};">{{one.leftLong}}</span></span>
+        </span>
+      </div>
+      <button type="button" style="margin-top: 20px; min-height: 54px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; font-weight: 600;">Restore to {{one.coll}}</button>
+      <p style="margin: 8px 0 0; text-align: center; font-size: 13px; line-height: 18px; color: {{c.tx2}};">It goes back kept forever, so it won't expire again.</p>
+      <button type="button" style="margin-top: 12px; min-height: 54px; border: 0; border-radius: 999px; background: {{c.well}}; color: {{c.red}}; font-family: inherit; font-size: 17px; font-weight: 600;">Delete now</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"option":{"editor":"enum","options":["a","b","c","d"],"default":"a"},"state":{"editor":"enum","options":["list","open","select","menu","empty"],"default":"list"},"pick":{"editor":"int","min":0,"max":6,"default":1},"confirm":{"editor":"enum","options":["none","one","some","empty"],"default":"none"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var opt = this.props.option ?? 'a';
+    var st = this.props.state ?? 'list';
+    var open = st === 'open';
+    var isD = opt === 'd', selecting = isD && st === 'select', empty = isD && st === 'empty';
+    var c = dark
+      ? { bg: '#000000', bgClear: 'rgba(0,0,0,0)', surface: '#1c1c1e', sheet: '#1c1c1e', well: '#2c2c2e', tx: '#f2f2f7', tx2: '#98989f', sep: '#38383a', chev: '#5a5a5f', ground: '#2c2c2e', soon: '#f2a65a', red: '#ff453a', glass: 'rgba(44,44,46,0.72)', glassStrong: 'rgba(44,44,46,0.94)', glassEdge: 'rgba(255,255,255,0.12)', dim: 'rgba(0,0,0,0.45)', pressed: '#2c2c2e', menu: 'rgba(44,44,46,0.98)', alertBtn: 'rgba(120,120,128,0.36)' }
+      : { bg: '#f2f2f7', bgClear: 'rgba(242,242,247,0)', surface: '#ffffff', sheet: '#ffffff', well: '#f2f2f7', tx: '#1c1c1e', tx2: '#6e6e73', sep: '#d8d8dc', chev: '#c4c4c9', ground: '#dcdbd7', soon: '#ad500e', red: '#d70015', glass: 'rgba(255,255,255,0.72)', glassStrong: 'rgba(255,255,255,0.94)', glassEdge: 'rgba(0,0,0,0.08)', dim: 'rgba(0,0,0,0.25)', pressed: '#e5e5ea', menu: 'rgba(255,255,255,0.98)', alertBtn: 'rgba(120,120,128,0.16)' };
+    var coll = dark
+      ? { wallet: '#6f9bd0', receipts: '#e07a60', notes: '#a88ad6', documents: '#79b08f', throwaways: '#d9ad4a' }
+      : { wallet: '#3f6fa3', receipts: '#c0533a', notes: '#7a5aa8', documents: '#4b8160', throwaways: '#b98a1f' };
+    var names = { wallet: 'Wallet', receipts: 'Receipts', notes: 'Notes', documents: 'Documents', throwaways: 'Throwaways' };
+    var B = function (id) { return '/_blob/' + id; };
+    // Soonest first. "why": expired on its own, or you moved it.
+    var raw = [
+      ['Parking stub', 'throwaways', 2, B('121dca37c2036d2e12cc700489b4ba2c'), 'Expired'],
+      ['Coat check', 'throwaways', 5, B('d68f912198b871ad398482e3cc1cbe69'), 'Expired'],
+      ['City Pharmacy', 'receipts', 11, B('9db12bd7b0ee3af063f2fd9ebc0a8cb3'), 'Expired early', 0, 'You changed Receipts to keep scans 30 days, so this one ran out early.'],
+      ['Bluebird Café', 'receipts', 16, B('c81acb7633f9687fbb7860f864d68417'), 'Expired'],
+      ['Old wifi password', 'notes', 24, B('86a632b7df5fd0f5b89b0230d8116e1d'), 'Moved by you', 1],
+      ['Corner Market', 'throwaways', 27, B('64d92a29af43d0b573c8a18f4278fe2e'), 'Expired early', 0, 'You moved it to Throwaways, which keeps scans 1 week.'],
+      ['Gym membership', 'wallet', 29, B('b6c8b4cd1e3356f6b8ce999ea271e4ba'), 'Moved by you', 1]
+    ];
+    var items = raw.map(function (r, i) {
+      var soon = r[2] <= 7;
+      return {
+        title: r[0], coll: names[r[1]], dot: coll[r[1]], src: r[3], why: r[4], favShow: r[5] && opt === 'd' ? 'flex' : 'none',
+        detail: r[6] || '', detailShow: r[6] ? 'block' : 'none',
+        restoreLine: 'Restoring puts it back in ' + names[r[1]] + (r[5] ? ' and Favorites' : '') + ', kept forever.',
+        left: r[2] === 1 ? '1 day left' : r[2] + ' days left',
+        leftShort: r[2] === 1 ? '1 day' : r[2] + ' days',
+        leftLong: 'deleted in ' + (r[2] === 1 ? '1 day' : r[2] + ' days'),
+        leftColor: soon ? c.soon : c.tx2, leftWeight: soon ? 600 : 400,
+        tileH: '136px', line: i === 0 ? '0' : '0.5px solid ' + c.sep,
+        swipe: opt === 'b' && open && i === 1 ? '-96px' : '0',
+        rowBg: opt === 'c' && open && i === 1 ? c.pressed : c.surface,
+        chkBg: selecting && (i === 0 || i === 1) ? c.tx : 'rgba(255,255,255,0.55)', chkFg: selecting && (i === 0 || i === 1) ? c.bg : 'transparent',
+        fade: selecting && (i === 0 || i === 1) ? 0.75 : 1, ring: 'none'
+      };
+    });
+    var soonRows = items.filter(function (s, i) { return raw[i][2] <= 7; });
+    var laterRows = items.filter(function (s, i) { return raw[i][2] > 7; });
+    var relines = function (rows) { return rows.map(function (s, i) { return Object.assign({}, s, { line: i === 0 ? '0' : '0.5px solid ' + c.sep }); }); };
+    return {
+      c: c,
+      isA: opt === 'a', isB: opt === 'b', isC: opt === 'c',
+      showList: !((opt === 'a' || isD) && open),
+      showViewer: (opt === 'a' || isD) && open,
+      isDGrid: isD && !empty, isEmpty: empty, selecting: selecting,
+      showMenu: isD && st === 'menu',
+      hasSelect: opt === 'a' || (isD && !empty), selectLabel: selecting ? 'Cancel' : 'Select',
+      sub: empty ? '' : selecting ? '2 selected' : '7 scans · each is deleted after 30 days here',
+      subColor: selecting ? c.tx : c.tx2, subWeight: selecting ? 600 : 400,
+      emptyBtn: selecting || empty ? 'none' : 'flex',
+      pillLine: isD ? items[1].why + ' · ' + items[1].left : 'In Trash · ' + items[1].left,
+      showSheet: opt === 'c' && open,
+      items: items,
+      groups: [{ name: 'Deleted this week', rows: relines(soonRows) }, { name: 'Deleted later', rows: relines(laterRows) }],
+      one: items[Number(this.props.pick ?? 1)],
+      hasConfirm: (this.props.confirm ?? 'none') !== 'none',
+      confirmTitle: ({ one: 'Delete permanently?', some: 'Delete 2 scans permanently?', empty: 'Empty Trash?' })[this.props.confirm] || '',
+      confirmBody: ({ one: items[Number(this.props.pick ?? 1)].title + ' will be deleted. This can’t be undone.', some: 'They’ll be deleted. This can’t be undone.', empty: 'Deletes 7 scans permanently. This can’t be undone.' })[this.props.confirm] || '',
+      confirmOk: ({ one: 'Delete', some: 'Delete', empty: 'Empty Trash' })[this.props.confirm] || ''
+    };
+  }
+}
+</script>
+</body>
+</html>

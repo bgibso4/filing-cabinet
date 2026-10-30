@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Viewing a scan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: {{c.bg}}; color: {{c.tx}}; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif; font-variant-numeric: tabular-nums;">
+
+  <!-- ============ A · full screen, like Photos ============ -->
+  <sc-if value="{{isA}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 112px; height: 610px; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="{{title}}, page 1" style="display: block; max-width: 358px; max-height: 600px; border-radius: 3px;">
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <button type="button" aria-label="Back" style="width: 44px; height: 44px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center;">
+        <span style="max-width: 100%; font-size: 17px; line-height: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; line-height: 18px; color: {{c.tx2}};"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></span>
+      </span>
+      <button type="button" style="height: 44px; flex: none; padding: 0 18px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px; cursor: pointer;">Edit</button>
+    </div>
+    <sc-if value="{{multi}}" hint-placeholder-val="{{ true }}">
+      <span style="position: absolute; left: 50%; top: 726px; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; font-size: 13px; line-height: 18px; color: {{c.tx2}};">1 of {{pageCount}}</span>
+    </sc-if>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 34px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Share" style="width: 52px; height: 52px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.share}}"></path></svg></button>
+      <button type="button" aria-label="{{favLabel}}" aria-pressed="{{favPressed}}" style="width: 52px; height: 52px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="23" height="23" viewBox="0 0 24 24" fill="{{favFill}}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="{{i.heart}}"></path></svg></button>
+      <button type="button" aria-label="Move to Trash" style="width: 52px; height: 52px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.trash}}"></path></svg></button>
+    </div>
+  </sc-if>
+
+  <!-- ============ B · a page with details underneath ============ -->
+  <sc-if value="{{isB}}" hint-placeholder-val="{{ false }}">
+    <div style="height: 844px; box-sizing: border-box; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; padding: 54px 16px 130px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; flex: none;">
+        <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+        <button type="button" aria-label="{{favLabel}}" aria-pressed="{{favPressed}}" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="21" height="21" viewBox="0 0 24 24" fill="{{favFill}}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="{{i.heart}}"></path></svg></button>
+      </div>
+      <h1 style="margin: 8px 0 0; flex: none; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700;">{{title}}</h1>
+      <p style="display: flex; align-items: center; gap: 6px; margin: 2px 0 0; flex: none; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></p>
+      <div style="flex: none; display: flex; justify-content: {{carouselJustify}}; gap: 10px; height: 388px; margin: 18px -16px 0 0; overflow: hidden;">
+        <sc-for list="{{pages}}" as="p" hint-placeholder-count="3">
+          <img src="{{p.src}}" alt="" style="flex: none; display: block; height: 388px; width: auto; border-radius: 3px;">
+        </sc-for>
+      </div>
+      <p style="margin: 8px 0 0; flex: none; text-align: center; font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{pageLabel}}</p>
+      <div style="flex: none; display: flex; flex-direction: column; margin-top: 16px; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+          <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+            <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{r.line}}; font-size: 17px; line-height: 22px;">
+              <span>{{r.label}}</span>
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: {{r.dotDisplay}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>
+                <span style="color: {{r.color}}; font-weight: {{r.weight}};">{{r.value}}</span>
+                <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{r.chev}};"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+              </span>
+            </span>
+          </a>
+        </sc-for>
+      </div>
+      <a href="#" style="flex: none; display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 16px; padding: 0 16px; border-radius: 14px; background: {{c.surface}}; color: {{c.tx}}; text-decoration: none; font-size: 17px; line-height: 22px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.trash}}"></path></svg>Move to Trash</a>
+    </div>
+    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 128px; pointer-events: none; background: linear-gradient(to top, {{c.bg}} 38%, {{c.bgClear}});"></div>
+    <div style="position: absolute; left: 16px; right: 16px; bottom: 28px; display: flex; justify-content: center;">
+      <button type="button" style="display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 30px; border: 0; border-radius: 999px; background: {{c.tx}}; color: {{c.bg}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.share}}"></path></svg><span>Share</span></button>
+    </div>
+  </sc-if>
+
+  <!-- ============ C · the page, with a sheet you pull up ============ -->
+  <sc-if value="{{isC}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 108px; height: {{cPageH}}; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="{{title}}, page 1" style="display: block; max-width: 358px; max-height: {{cPageH}}; border-radius: 3px;">
+    </div>
+    <div style="position: absolute; left: 16px; top: 54px;">
+      <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+    </div>
+    <sc-if value="{{cDim}}" hint-placeholder-val="{{ false }}"><div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(0,0,0,0.25);"></div></sc-if>
+    <sc-if value="{{cMulti}}" hint-placeholder-val="{{ true }}">
+      <span style="position: absolute; left: 50%; top: {{cIndicatorTop}}; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; font-size: 13px; line-height: 18px; color: {{c.tx2}};">1 of {{pageCount}}</span>
+    </sc-if>
+    <div style="position: absolute; left: 8px; right: 8px; bottom: 8px; top: {{sheetTop}}; box-sizing: border-box; padding: 8px 20px 20px; border-radius: 34px; background: {{c.sheet}}; border: 0.5px solid {{c.glassEdge}}; display: flex; flex-direction: column; overflow: hidden;">
+      <span aria-hidden="true" style="align-self: center; width: 36px; height: 5px; border-radius: 999px; background: {{c.chev}};"></span>
+      <h1 style="margin: 12px 0 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700;">{{title}}</h1>
+      <p style="display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></p>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 14px;">
+        <sc-for list="{{actions}}" as="a" hint-placeholder-count="4">
+          <button type="button" aria-label="{{a.label}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 60px; padding: 0; border: 0; border-radius: 14px; background: {{c.well}}; color: {{c.tx}}; font-family: inherit; font-size: 13px; line-height: 18px; cursor: pointer;">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="{{a.fill}}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.icon}}"></path></svg>
+            <span>{{a.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{cExpanded}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; margin-top: 20px; background: {{c.well}}; border-radius: 14px; overflow: hidden;">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+              <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{r.line}}; font-size: 17px; line-height: 22px;">
+                <span>{{r.label}}</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display: {{r.dotDisplay}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>
+                  <span style="color: {{r.color}}; font-weight: {{r.weight}};">{{r.value}}</span>
+                  <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{r.chev}};"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+                </span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+        <p style="margin: 14px 4px 0; font-size: 13px; line-height: 18px; color: {{c.tx2}};">Tap a row to change it. Pages are saved at full resolution on this iPhone.</p>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- Shared pieces for D and E: a glass toolbar with labelled actions -->
+
+  <!-- ============ D · full screen page, swipe up for details ============ -->
+  <sc-if value="{{isD}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: {{dPageTop}}; height: {{dPageH}}; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="{{title}}, page 1" style="display: block; max-width: 358px; max-height: {{dPageH}}; border-radius: 3px;">
+    </div>
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <button type="button" aria-label="Back" style="width: 44px; height: 44px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; visibility: {{dTopTitle}};">
+        <span style="max-width: 100%; font-size: 17px; line-height: 22px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; line-height: 18px; color: {{c.tx2}};"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></span>
+      </span>
+      <span style="width: 44px; flex: none;"></span>
+    </div>
+    <sc-if value="{{dIndicator}}" hint-placeholder-val="{{ true }}">
+      <span style="position: absolute; left: 50%; top: 718px; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; font-size: 13px; line-height: 18px; color: {{c.tx2}};">1 of {{pageCount}}</span>
+    </sc-if>
+    <sc-if value="{{dDetails}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 420px; display: flex; flex-direction: column;">
+        <h1 style="margin: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700;">{{title}}</h1>
+        <p style="display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></p>
+        <div style="display: flex; flex-direction: column; margin-top: 14px; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+              <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{r.line}}; font-size: 17px; line-height: 22px;">
+                <span>{{r.label}}</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display: {{r.dotDisplay}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>
+                  <span style="color: {{r.color}}; font-weight: {{r.weight}};">{{r.value}}</span>
+                  <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{r.chev}};"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+                </span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{dHint}}" hint-placeholder-val="{{ true }}">
+      <span aria-hidden="true" style="position: absolute; left: 50%; top: 104px; transform: translateX(-50%); width: 0; height: 0;"></span>
+    </sc-if>
+  </sc-if>
+
+  <!-- ============ E · document header, big pager, details as you scroll ============ -->
+  <sc-if value="{{isE}}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{eFull}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; inset: 0; background: #000000; display: flex; align-items: center; justify-content: center;">
+        <img src="{{page}}" alt="{{title}}, page 1" style="display: block; max-width: 390px; max-height: 760px;">
+      </div>
+      <span style="position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; background: rgba(44,44,46,0.72); font-size: 13px; line-height: 18px; color: #c7c7cc;">1 of {{pageCount}}</span>
+    </sc-if>
+    <sc-if value="{{eNotFull}}" hint-placeholder-val="{{ true }}">
+      <div style="height: 844px; overflow: hidden;">
+        <div style="display: flex; flex-direction: column; padding: 54px 16px 130px; transform: translateY({{eShift}});">
+          <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; flex: none;">
+            <button type="button" aria-label="Back" style="width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+          </div>
+          <h1 style="margin: 8px 0 0; flex: none; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700;">{{title}}</h1>
+          <p style="display: flex; align-items: center; gap: 6px; margin: 2px 0 0; flex: none; font-size: 15px; line-height: 20px; color: {{c.tx2}};"><span style="flex: none; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></p>
+          <div style="flex: none; display: flex; justify-content: {{carouselJustify}}; gap: 10px; height: 427px; margin: 16px -16px 0 0; overflow: hidden;">
+            <sc-for list="{{pages}}" as="p" hint-placeholder-count="3">
+              <img src="{{p.src}}" alt="" style="flex: none; display: block; height: 427px; width: auto; border-radius: 3px;">
+            </sc-for>
+          </div>
+          <p style="margin: 8px 0 0; flex: none; text-align: center; font-size: 13px; line-height: 18px; color: {{c.tx2}};">{{pageLabel}} · Tap to view full screen</p>
+          <div style="flex: none; display: flex; flex-direction: column; margin-top: 16px; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+              <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+                <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{r.line}}; font-size: 17px; line-height: 22px;">
+                  <span>{{r.label}}</span>
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: {{r.dotDisplay}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>
+                    <span style="color: {{r.color}}; font-weight: {{r.weight}};">{{r.value}}</span>
+                    <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{r.chev}};"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+                  </span>
+                </span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <sc-if value="{{eScrolled}}" hint-placeholder-val="{{ false }}">
+        <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 150px; pointer-events: none; background: linear-gradient(to bottom, {{c.bg}} 68%, {{c.bgClear}});"></div>
+        <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 44px; display: flex; align-items: center; justify-content: center;">
+          <button type="button" aria-label="Back" style="position: absolute; left: 0; top: 0; width: 44px; height: 44px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+          <span style="font-size: 17px; line-height: 22px; font-weight: 600;">{{title}}</span>
+        </div>
+      </sc-if>
+    </sc-if>
+  </sc-if>
+
+  <!-- ============ F · like Photos ============ -->
+  <sc-if value="{{isF}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 0; right: 0; top: {{fPageTop}}; height: {{fPageH}}; display: flex; align-items: center; justify-content: center;">
+      <img src="{{page}}" alt="{{title}}, page 1" style="display: block; max-width: 390px; max-height: {{fPageH}};">
+    </div>
+
+    <!-- Top: back, a title pill you can tap for details, and a menu -->
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+      <button type="button" aria-label="Back" style="width: 48px; height: 48px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2L2 9l7 7"></path></svg></button>
+      <button type="button" aria-label="{{title}}, details" style="min-width: 0; max-width: 240px; display: flex; flex-direction: column; align-items: center; padding: 5px 20px 6px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; font-family: inherit; cursor: pointer;">
+        <span style="max-width: 100%; font-size: 16px; line-height: 21px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</span>
+        <span style="display: flex; align-items: center; gap: 5px; font-size: 13px; line-height: 17px; color: {{c.tx2}}; white-space: nowrap;"><span style="flex: none; width: 7px; height: 7px; border-radius: 999px; background: {{dot}};"></span>{{collName}} · <span style="color: {{expColor}}; font-weight: {{expWeight}};">{{expShort}}</span></span>
+      </button>
+      <button type="button" aria-label="More" style="width: 48px; height: 48px; flex: none; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="20" height="4" viewBox="0 0 20 4" fill="currentColor" aria-hidden="true"><circle cx="2" cy="2" r="2"></circle><circle cx="10" cy="2" r="2"></circle><circle cx="18" cy="2" r="2"></circle></svg></button>
+    </div>
+
+    <!-- Details: the page moves up and the details come in underneath -->
+    <sc-if value="{{fDetails}}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; left: 16px; right: 16px; top: 432px; display: flex; flex-direction: column;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px;">
+          <h1 style="margin: 0; min-width: 0; font-family: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{title}}</h1>
+          <button type="button" style="flex: none; min-height: 44px; padding: 0 2px 0 12px; border: 0; background: transparent; color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Edit</button>
+        </div>
+        <div style="display: flex; flex-direction: column; margin-top: 8px; background: {{c.surface}}; border-radius: 14px; overflow: hidden;">
+          <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+            <a href="#" style="display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 16px; color: {{c.tx}}; text-decoration: none;">
+              <span style="flex: 1; align-self: stretch; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: {{r.line}}; font-size: 17px; line-height: 22px;">
+                <span>{{r.label}}</span>
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display: {{r.dotDisplay}}; width: 8px; height: 8px; border-radius: 999px; background: {{dot}};"></span>
+                  <span style="color: {{r.color}}; font-weight: {{r.weight}};">{{r.value}}</span>
+                  <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="{{c.chev}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: {{r.chev}};"><path d="M1.5 1.5l5 5-5 5"></path></svg>
+                </span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- Page strip, like the Photos filmstrip -->
+    <sc-if value="{{fStrip}}" hint-placeholder-val="{{ true }}">
+      <div aria-label="Pages" style="position: absolute; left: 0; right: 0; top: 692px; display: flex; align-items: center; justify-content: center; gap: 3px;">
+        <sc-for list="{{strip}}" as="t" hint-placeholder-count="3">
+          <img src="{{t.src}}" alt="{{t.label}}" style="display: block; width: {{t.w}}; height: {{t.h}}; margin: 0 {{t.gap}}; object-fit: cover; object-position: top; border-radius: 3px;">
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Bottom: Share · Favorite, Info · Trash. Editing lives in Details. -->
+    <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; align-items: center; justify-content: space-between;">
+      <button type="button" aria-label="Share" style="width: 56px; height: 56px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.share}}"></path></svg></button>
+      <span style="display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 10px; border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);">
+        <button type="button" aria-label="{{favLabel}}" aria-pressed="{{favPressed}}" style="width: 52px; height: 52px; padding: 0; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: transparent; color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="{{favFill}}" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="{{i.heart}}"></path></svg></button>
+        <button type="button" aria-label="Details" aria-pressed="{{fInfoPressed}}" style="width: 52px; height: 52px; padding: 0; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{fInfoBg}}; color: {{c.tx}}; cursor: pointer;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"></circle><path d="M12 11v6"></path><circle cx="12" cy="7.6" r="0.6" fill="currentColor"></circle></svg></button>
+      </span>
+      <button type="button" aria-label="Move to Trash" style="width: 56px; height: 56px; padding: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); color: {{c.tx}}; cursor: pointer;"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{i.trash}}"></path></svg></button>
+    </div>
+
+    <!-- Trash tapped: a small confirm that comes up from the button, like Photos -->
+    <sc-if value="{{fTrash}}" hint-placeholder-val="{{ false }}">
+      <div role="dialog" aria-label="Move to Trash" style="position: absolute; right: 16px; bottom: 98px; width: 262px; box-sizing: border-box; padding: 16px 16px 12px; border-radius: 26px; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); display: flex; flex-direction: column; gap: 12px; text-align: center;">
+        <span style="font-size: 13px; line-height: 18px; color: {{c.tx2}}; text-wrap: pretty;">{{trashMsg}}</span>
+        <button type="button" style="min-height: 48px; border: 0; border-radius: 999px; background: {{c.well}}; color: {{c.tx}}; font-family: inherit; font-size: 17px; line-height: 22px; font-weight: 600; cursor: pointer;">Move to Trash</button>
+      </div>
+    </sc-if>
+
+    <!-- The ··· menu -->
+    <sc-if value="{{fMenu}}" hint-placeholder-val="{{ false }}">
+      <div role="menu" style="position: absolute; right: 16px; top: 114px; width: 240px; display: flex; flex-direction: column; border-radius: 22px; overflow: hidden; background: {{c.menu}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(30px) saturate(1.6); backdrop-filter: blur(30px) saturate(1.6); color: {{c.tx}}; font-size: 17px; line-height: 22px;">
+        <sc-for list="{{fMenuItems}}" as="m" hint-placeholder-count="3">
+          <span role="menuitem" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 0 18px; border-top: {{m.line}};">
+            <span>{{m.label}}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none;"><path d="{{m.icon}}"></path></svg>
+          </span>
+        </sc-for>
+      </div>
+    </sc-if>
+  </sc-if>
+
+  <!-- D and E: labelled actions in a glass bar -->
+  <sc-if value="{{labelBar}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 140px; pointer-events: none; background: linear-gradient(to top, {{c.bg}} 40%, {{c.bgClear}});"></div>
+    <div role="toolbar" style="position: absolute; left: 16px; right: 16px; bottom: 30px; height: 62px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-radius: 999px; background: {{c.glass}}; border: 0.5px solid {{c.glassEdge}}; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);">
+      <sc-for list="{{actions}}" as="a" hint-placeholder-count="4">
+        <button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0; border: 0; background: transparent; color: {{c.tx}}; font-family: inherit; font-size: 12px; line-height: 16px; cursor: pointer;">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="{{a.fill}}" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.icon}}"></path></svg>
+          <span>{{a.label}}</span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"option":{"editor":"enum","options":["a","b","c","d","e","f"],"default":"a"},"state":{"editor":"enum","options":["normal","details","full","menu","trash"],"default":"normal"},"scan":{"editor":"enum","options":["lease","receipt"],"default":"lease"},"sheet":{"editor":"enum","options":["small","large"],"default":"small"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    var opt = this.props.option ?? 'a';
+    var receipt = (this.props.scan ?? 'lease') === 'receipt';
+    var large = (this.props.sheet ?? 'small') === 'large';
+    // D: swipe up on the page for details. E: scroll for details, tap the page for full screen.
+    var vstate = this.props.state ?? 'normal';
+    var c = dark
+      ? { menu: 'rgba(44,44,46,0.92)', bg: '#000000', bgClear: 'rgba(0,0,0,0)', surface: '#1c1c1e', sheet: '#1c1c1e', well: '#2c2c2e', tx: '#f2f2f7', tx2: '#98989f', soon: '#f2a65a', sep: '#38383a', chev: '#5a5a5f', glass: 'rgba(44,44,46,0.72)', glassEdge: 'rgba(255,255,255,0.12)' }
+      : { menu: 'rgba(255,255,255,0.92)', bg: '#f2f2f7', bgClear: 'rgba(242,242,247,0)', surface: '#ffffff', sheet: '#ffffff', well: '#f2f2f7', tx: '#1c1c1e', tx2: '#6e6e73', soon: '#ad500e', sep: '#d8d8dc', chev: '#c4c4c9', glass: 'rgba(255,255,255,0.72)', glassEdge: 'rgba(0,0,0,0.08)' };
+    var coll = dark
+      ? { receipts: '#e07a60', documents: '#79b08f' }
+      : { receipts: '#c0533a', documents: '#4b8160' };
+    var i = {
+      share: 'M12 3v12M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7',
+      heart: 'M12 20.3s-7.6-4.5-7.6-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.6 2.7c0 5.7-7.6 10.2-7.6 10.2z',
+      edit: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+      trash: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3'
+    };
+    // Lease: three pages, a favorite, kept forever. Corner Market: one page, not a favorite, 5 days left.
+    var s = receipt
+      ? { title: 'Corner Market', from: 'receipts', collName: 'Receipts', pages: ['/_blob/64d92a29af43d0b573c8a18f4278fe2e'], fav: false,
+          expShort: 'Expires in 5 days', expRow: 'Oct 17 · in 5 days', soon: true, added: 'Jul 19, 2026' }
+      : { title: 'Lease 2026', from: 'documents', collName: 'Documents', fav: true,
+          pages: ['/_blob/1db32063f80e622a14aec8813b573090', '/_blob/1831593aaa00f3a08763d867e5f3ffe2', '/_blob/85da54d51d9aada56b7daa9699fa662a'],
+          expShort: 'Kept forever', expRow: 'Kept forever', soon: false, added: 'Oct 1, 2026' };
+    var expColor = s.soon ? c.soon : c.tx2;
+    var rows = [
+      { label: 'Collection', value: s.collName, dotDisplay: 'block', chev: 'block', color: c.tx2, weight: 400 },
+      { label: 'Expiry', value: s.expRow, dotDisplay: 'none', chev: 'block', color: expColor, weight: s.soon ? 600 : 400 },
+      { label: 'Added', value: s.added, dotDisplay: 'none', chev: 'none', color: c.tx2, weight: 400 },
+      { label: 'Pages', value: String(s.pages.length), dotDisplay: 'none', chev: 'none', color: c.tx2, weight: 400 }
+    ].map(function (r, n) { r.line = n === 0 ? '0' : '0.5px solid ' + c.sep; return r; });
+    var multi = s.pages.length > 1;
+    return {
+      c: c, i: i,
+      isA: opt === 'a', isB: opt === 'b', isC: opt === 'c',
+      title: s.title, collName: s.collName, dot: coll[s.from],
+      expShort: s.expShort, expColor: expColor, expWeight: s.soon ? 600 : 400,
+      page: s.pages[0], pages: s.pages.map(function (p) { return { src: p }; }), pageCount: String(s.pages.length),
+      multi: multi,
+      pageLabel: multi ? 'Page 1 of ' + s.pages.length : '1 page',
+      carouselJustify: multi ? 'flex-start' : 'center',
+      favFill: s.fav ? 'currentColor' : 'none',
+      favLabel: s.fav ? 'Remove from Favorites' : 'Add to Favorites',
+      favPressed: s.fav ? 'true' : 'false',
+      rows: rows,
+      actions: [
+        { label: 'Share', icon: i.share, fill: 'none' },
+        { label: s.fav ? 'Favorite' : 'Favorite', icon: i.heart, fill: s.fav ? 'currentColor' : 'none' },
+        { label: 'Edit', icon: i.edit, fill: 'none' },
+        { label: 'Delete', icon: i.trash, fill: 'none' }
+      ],
+      isD: opt === 'd', isE: opt === 'e', isF: opt === 'f',
+      fDetails: vstate === 'details',
+      fMenu: vstate === 'menu',
+      fTrash: vstate === 'trash',
+      trashMsg: 'This ' + (receipt ? 'receipt' : 'scan') + ' moves to Trash. You can restore it for 30 days.',
+      fPageTop: vstate === 'details' ? '116px' : '120px',
+      fPageH: vstate === 'details' ? '300px' : '560px',
+      fStrip: multi && vstate !== 'details',
+      fInfoBg: vstate === 'details' ? c.well : 'transparent',
+      fInfoPressed: vstate === 'details' ? 'true' : 'false',
+      strip: s.pages.map(function (src, n) { return { src: src, label: 'Page ' + (n + 1), w: n === 0 ? '34px' : '26px', h: n === 0 ? '44px' : '36px', gap: n === 0 ? '6px' : '0' }; }),
+      fMenuItems: [
+        { label: 'Save to Photos', icon: 'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM4 16l5-5 4 4 2-2 5 5M15 9.5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1' },
+        { label: 'Save to Files', icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+        { label: 'Copy Text', icon: 'M9 9h10v11H9zM5 15V4h10' }
+      ].map(function (m, n) { m.line = n === 0 ? '0' : '0.5px solid ' + c.sep; return m; }),
+      labelBar: (opt === 'd') || (opt === 'e' && vstate !== 'full'),
+      dDetails: opt === 'd' && vstate === 'details',
+      dTopTitle: vstate === 'details' ? 'hidden' : 'visible',
+      dIndicator: multi && vstate !== 'details',
+      dHint: false,
+      dPageTop: vstate === 'details' ? '104px' : '112px',
+      dPageH: vstate === 'details' ? '300px' : '590px',
+      eFull: vstate === 'full',
+      eNotFull: vstate !== 'full',
+      eScrolled: opt === 'e' && vstate === 'details',
+      eShift: vstate === 'details' ? '-330px' : '0',
+      cExpanded: large,
+      cDim: large,
+      cMulti: multi && !large,
+      sheetTop: large ? '330px' : '628px',
+      cPageH: '470px',
+      cIndicatorTop: '590px'
+    };
+  }
+}
+</script>
+</body>
+</html>

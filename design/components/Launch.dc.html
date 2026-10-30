@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Launch screen</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<!-- Shown for a split second while the app opens. Apple's rule: look like the first screen, without content or words. -->
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{bg}};">
+  <div style="position: absolute; left: 0; right: 0; top: 0; height: 50px; display: flex; align-items: center; justify-content: space-between; padding: 6px 34px 0 40px; box-sizing: border-box; color: {{fg}}; font-family: -apple-system, Inter, sans-serif; font-weight: 600; font-size: 16px;"><span>9:41</span><svg width="74" height="13" viewBox="0 0 74 13" fill="currentColor"><rect x="0" y="8" width="3" height="5" rx="1"></rect><rect x="5" y="6" width="3" height="7" rx="1"></rect><rect x="10" y="3" width="3" height="10" rx="1"></rect><rect x="15" y="0" width="3" height="13" rx="1"></rect><rect x="48.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="currentColor" opacity="0.4"></rect><rect x="50.5" y="2.5" width="16" height="8" rx="2"></rect></svg></div>
+
+  <!-- B: empty shapes where Home's parts will appear -->
+  <sc-if value="{{skeleton}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; left: 16px; right: 16px; top: 54px; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: flex-end; height: 44px;"><span style="width: 44px; height: 44px; border-radius: 999px; background: {{shape}};"></span></div>
+      <span style="width: 230px; height: 30px; margin-top: 2px; border-radius: 8px; background: {{shape}};"></span>
+      <span style="height: 44px; margin-top: 18px; border-radius: 999px; background: {{card}};"></span>
+      <span style="width: 120px; height: 22px; margin-top: 22px; border-radius: 6px; background: {{shape}};"></span>
+      <div style="display: flex; gap: 10px; margin-top: 12px;"><span style="width: 148px; height: 96px; border-radius: 8px; background: {{shape}};"></span><span style="width: 148px; height: 96px; border-radius: 8px; background: {{shape}};"></span><span style="flex: 1; height: 96px; border-radius: 8px 0 0 8px; background: {{shape}};"></span></div>
+      <span style="width: 140px; height: 22px; margin-top: 28px; border-radius: 6px; background: {{shape}};"></span>
+      <span style="height: 300px; margin-top: 12px; border-radius: 14px; background: {{card}};"></span>
+    </div>
+    <div style="position: absolute; left: 50%; bottom: 28px; width: 120px; height: 52px; margin-left: -60px; border-radius: 999px; background: {{shape}};"></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"style":{"editor":"enum","options":["plain","skeleton"],"default":"plain"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var dark = (this.props.theme ?? 'light') === 'dark';
+    return {
+      bg: dark ? '#000000' : '#f2f2f7', fg: dark ? '#f2f2f7' : '#1c1c1e',
+      card: dark ? '#1c1c1e' : '#ffffff', shape: dark ? '#1c1c1e' : '#e5e5ea',
+      skeleton: (this.props.style ?? 'plain') === 'skeleton'
+    };
+  }
+}
+</script>
+</body>
+</html>
