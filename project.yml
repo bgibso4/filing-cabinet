@@ -81,6 +81,26 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
 
+  # Runs out of process against the installed app. Core is linked only for AccessibilityID (no resources, no host).
+  FilingCabinetUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: FilingCabinet
+      - package: FilingCabinetKit
+        product: Core
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).uitests
+        TEST_TARGET_NAME: FilingCabinet
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
 # Empty aggregate: a scheme needs one build target from this project, and Fast must not
 # build the app. The package tests it runs come from the scheme's test targets.
 aggregateTargets:
@@ -103,6 +123,7 @@ schemes:
         - package: FilingCabinetKit/ScreenModelsTests
         - package: FilingCabinetKit/ScreensTests
         - name: FilingCabinetSnapshotTests
+        - name: FilingCabinetUITests
 
   # Mac-only loop: no app target, no simulator.
   Fast:

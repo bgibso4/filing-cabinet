@@ -38,7 +38,7 @@ fast: generate
 	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
-SWIFT_DIRS := App Packages SnapshotTests
+SWIFT_DIRS := App Packages SnapshotTests UITests
 
 # swift-format owns formatting; SwiftLint owns everything else. Both are strict.
 lint:
