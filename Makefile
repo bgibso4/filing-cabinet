@@ -35,8 +35,9 @@ build: generate
 
 # The Mac-only loop: no simulator.
 fast: generate
-	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
-		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+	fp="$$(scripts/hooks/swift-fingerprint.sh)"; set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
+		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
 SWIFT_DIRS := App Packages SnapshotTests UITests
 

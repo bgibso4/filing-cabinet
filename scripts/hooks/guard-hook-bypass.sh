@@ -7,7 +7,9 @@ command="$(jq -r '.tool_input.command // empty')"
 stripped="$(perl -0pe 's/(^|\s)(--message[= ]|-[A-Za-z]*m\s*)("(?:[^"\\]|\\.)*"|\x27[^\x27]*\x27)/$1$2/g' <<<"$command")"
 lower="$(tr '[:upper:]' '[:lower:]' <<<"$stripped")"
 # `git ... commit ... -n` (also inside short-flag clusters such as -nm or -anm) is the same bypass.
-short_n='(^|[^[:alnum:]_])git[[:space:]]+(.*[[:space:]])?commit[[:space:]]+(.*[[:space:]])?-[a-mo-zA-Z]*n[a-zA-Z]*([[:space:]]|$)'
+# Matching stays inside one command: it never spans ; & | or a newline.
+seg='[^;&|'$'\n'']*'
+short_n='(^|[^[:alnum:]_])git[[:space:]]+('"$seg"'[[:space:]])?commit[[:space:]]+('"$seg"'[[:space:]])?-[a-mo-zA-Z]*n[a-zA-Z]*([[:space:]]|$)'
 if [[ "$lower" == *--no-verify* || "$lower" == *core.hookspath* || "$stripped" =~ $short_n ]]; then
 	echo "Blocked: bypassing git hooks (--no-verify, commit -n, core.hooksPath) is not allowed. Fix what the hook reports instead." >&2
 	exit 2
