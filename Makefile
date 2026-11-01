@@ -14,7 +14,7 @@ setup:
 	@missing=0; for tool in xcodegen swiftlint xcbeautify jq bats periphery; do \
 		command -v $$tool >/dev/null || { echo "missing: brew install $$tool"; missing=1; }; \
 	done; [ $$missing -eq 0 ] || exit 1
-	@ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+	@hooks="$$(git rev-parse --path-format=absolute --git-path hooks)"; mkdir -p "$$hooks" && ln -sf "$(CURDIR)/scripts/pre-commit" "$$hooks/pre-commit"
 	@$(MAKE) --no-print-directory generate
 
 generate:
