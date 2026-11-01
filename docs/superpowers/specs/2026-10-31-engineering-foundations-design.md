@@ -209,7 +209,7 @@ A Makefile is the single entry point. Agents and humans use the same commands:
 Output is trimmed (xcsift or xcbeautify) so agents see errors, not walls of log.
 
 ### Agent hooks
-These come from arsenal's `ios` profile and are never committed here. Arsenal can't install hooks today, so **building them is a separate small arsenal plan that comes before the foundation plan** (installer plus bats tests, following arsenal's README). Every hook is **opt-in per project**: it does nothing unless the repo provides the matching Makefile target, so Baseline, Beacon and Apex are unaffected until they choose to adopt it.
+These are **project-specific and committed** (Ben's decision, 2026-10-31): `.claude/settings.json` registers them and the scripts live in `scripts/hooks/`, so they version with the Makefile targets they call and work in every clone and worktree. They move to arsenal only if a second project adopts the same pattern. Personal tooling (MCP servers, plugins, skills, `ios-verifier`, the reviewer agent) stays in arsenal.
 
 - **Format on edit:** `swift format` runs on every edited Swift file.
 - **Generated-file guard:** edits to the `.xcodeproj` are blocked.
@@ -280,9 +280,8 @@ Format check and strict lint, plus the list of changed snapshot references. Test
 
 ## 10. What comes next
 
-1. **Arsenal hooks plan** (small): the opt-in hook installer, the hooks in §7, and bats tests. Built in arsenal.
-2. **Foundation plan:** package and modules, XcodeGen project, signing, Makefile, lint, pre-commit, CI, `AGENTS.md`/`CLAUDE.md`, the token generator, the analytics types, and one tiny end-to-end feature that exercises every test layer, proving the loop works before real features start. **(My call for the feature: the empty Home screen, with its screen model, snapshot, UI test, accessibility audit and an `appOpened` event.)**
-3. **Rework Plan 1** (`docs/superpowers/plans/2026-10-31-01-scan-to-library.md`, on hold) to follow this document, including replacing its "No network calls" constraint.
+1. **Foundation plan:** package and modules, XcodeGen project, signing, Makefile, lint, pre-commit, agent hooks, CI, `AGENTS.md`/`CLAUDE.md`, the token generator, the analytics types, and one tiny end-to-end feature that exercises every test layer, proving the loop works before real features start. **(My call for the feature: the empty Home screen, with its screen model, snapshot, UI test, accessibility audit and an `appOpened` event.)**
+2. **Rework Plan 1** (`docs/superpowers/plans/2026-10-31-01-scan-to-library.md`, on hold) to follow this document, including replacing its "No network calls" constraint.
 
 ### Left to the builder
 - The exact SwiftLint rule set beyond the custom rules named here.
