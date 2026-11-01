@@ -9,12 +9,15 @@ final class HomeJourneyTests: XCTestCase {
 
     func testHomeShowsCollectionsAndScan() throws {
         let app = launchApp()
-        for collection in BuiltInCollection.allCases {
-            let row = app.descendants(matching: .any)[AccessibilityID.collectionRow(collection)]
-            XCTAssertTrue(row.waitForExistence(timeout: 5), collection.rawValue)
+        // Literal identifiers on purpose: a drifted scheme in AccessibilityID must fail here.
+        for collection in ["wallet", "receipts", "notes", "documents", "throwaways"] {
+            let row = app.descendants(matching: .any)["home.collection.\(collection)"]
+            XCTAssertTrue(row.waitForExistence(timeout: 5), collection)
         }
-        XCTAssertTrue(app.buttons[AccessibilityID.scanButton].isHittable)
-        XCTAssertEqual(app.buttons[AccessibilityID.scanButton].label, "Scan")
+        let scan = app.buttons["home.scan"]
+        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.isHittable)
+        XCTAssertEqual(scan.label, "Scan")
         try audit(app)
     }
 
