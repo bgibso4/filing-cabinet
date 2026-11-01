@@ -13,7 +13,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device
+.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -81,3 +81,7 @@ device: generate
 		-destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates | $(BEAUTIFY)
 	xcrun devicectl device install app --device "$(DEVICE)" '$(DEVICE_PRODUCT)'
 	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID)
+
+# Unit tests for the Claude Code hook scripts.
+test-hooks:
+	bats scripts/hooks/tests
