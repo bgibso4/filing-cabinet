@@ -135,6 +135,20 @@ nojq_path() {
   done
 }
 
+@test "guard ignores flags mentioned inside a commit message" {
+  for c in 'git commit -m "mention --no-verify here"' 'git commit -m "catch commit -n"' "git commit -m 'core.hookspath -n'" 'git commit -am "git commit -n"'; do
+    run "$HOOKS/guard-hook-bypass.sh" <<<"$(bash_json "$c")"
+    [ "$status" -eq 0 ]
+  done
+}
+
+@test "guard still blocks a bypass flag alongside a commit message" {
+  for c in 'git commit -m "msg" --no-verify' 'git commit -nm "msg"' 'git commit -m "x" -n'; do
+    run "$HOOKS/guard-hook-bypass.sh" <<<"$(bash_json "$c")"
+    [ "$status" -eq 2 ]
+  done
+}
+
 @test "a subagent that never edited Swift passes SubagentStop while the parent is dirty" {
   touch "$TMPDIR/fc-dirty-s1"
   export FC_FAST_CMD="exit 1"
