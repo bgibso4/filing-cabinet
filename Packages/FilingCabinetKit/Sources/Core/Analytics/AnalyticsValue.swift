@@ -1,3 +1,4 @@
+// periphery:ignore:all - the payload vocabulary is the Analytics API; events using it land with the first screens.
 /// A payload value. The rule: no free text, ever. Text enters a payload only as a case of one of
 /// our own enums conforming to `AnalyticsToken`; new payload values are added the same way.
 public enum AnalyticsValue: Sendable, Equatable {

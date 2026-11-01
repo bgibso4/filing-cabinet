@@ -13,7 +13,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks
+.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks unused ci
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -24,19 +24,26 @@ setup:
 		printf '#!/bin/sh\nexec "$$(git rev-parse --show-toplevel)/scripts/pre-commit" "$$@"\n' > "$$hooks/pre-commit" && chmod +x "$$hooks/pre-commit"
 	@$(MAKE) --no-print-directory generate
 
+# The generated project is gitignored, so the pins for the app's packages (swift-snapshot-testing and its
+# dependencies) live in the tracked ./Package.resolved. XcodeGen cannot carry that file, so generate copies it to
+# where Xcode reads it; builds then refuse to resolve to anything else (PKG_FLAGS).
+RESOLVED_DEST := $(PROJECT)/project.xcworkspace/xcshareddata/swiftpm
+PKG_FLAGS     := -onlyUsePackageVersionsFromResolvedFile
+
 generate:
 	@command -v xcodegen >/dev/null || { echo "error: xcodegen is missing. Install it: brew install xcodegen" >&2; exit 1; }
 	swift scripts/generate-tokens.swift
 	xcodegen generate --quiet
+	mkdir -p $(RESOLVED_DEST) && cp Package.resolved $(RESOLVED_DEST)/Package.resolved
 
 build: generate
 	set -o pipefail; xcodebuild build -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
 
 # The Mac-only loop: no simulator.
 fast: generate
 	fp="$$(scripts/hooks/swift-fingerprint.sh)"; set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
-		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY) && \
 		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
 SWIFT_DIRS := App Packages SnapshotTests UITests
@@ -57,7 +64,7 @@ snapshots-record: generate
 # Everything on the simulator: Core, ScreenModels, Screens and the snapshot tests.
 full: generate
 	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
 
 # Side by side: SCREEN=<design/screens stem> REF=<snapshot png> -> build/compare/<stem>.png
 compare:
@@ -86,3 +93,22 @@ device: generate
 # Unit tests for the Claude Code hook scripts.
 test-hooks:
 	bats scripts/hooks/tests
+
+# Dead-code scan (.periphery.yml, strict). Builds with its own derived data, on the pinned simulator.
+unused: generate
+	periphery scan
+
+# Snapshot references to compare against: origin/main when the remote exists, else the local main.
+BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && echo origin/main || echo main)
+
+# Everything CI runs, in order. CI invokes exactly this.
+# The macOS slice step is build-for-testing: the Fast scheme's only build target is an empty aggregate, so a plain
+# `build` has no macOS destination to build for. build-for-testing compiles Core, ScreenModels and their tests.
+# Periphery 3.8.0 supports Xcode 27 / this project (verified locally); if a future Xcode breaks it, drop
+# `unused` from this list, record it as deferred in AGENTS.md and keep the target.
+ci: generate lint test-hooks
+	set -o pipefail; xcodebuild build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
+		-derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
+	$(MAKE) --no-print-directory full unused
+	@echo "Snapshot references changed vs $(BASE_REF):"
+	scripts/changed-snapshots.sh $(BASE_REF)

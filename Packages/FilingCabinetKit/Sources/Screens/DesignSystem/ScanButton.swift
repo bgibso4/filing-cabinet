@@ -2,7 +2,7 @@ import Core
 import SwiftUI
 
 /// The Scan pill: graphite in light, near-white in dark, always labelled "Scan".
-public struct ScanButton: View {
+struct ScanButton: View {
     private let action: () -> Void
 
     // Home.dc.html: the pill is 52 pt tall, 64 pt at the large-text variant, and never grows past that.
@@ -13,11 +13,11 @@ public struct ScanButton: View {
 
     @ScaledMetric(relativeTo: .body) private var scaledHeight = baseHeight
 
-    public init(action: @escaping () -> Void) {
+    init(action: @escaping () -> Void) {
         self.action = action
     }
 
-    public var body: some View {
+    var body: some View {
         Button(action: action) {
             HStack(spacing: Tokens.Spacing.s2) {
                 Image(systemName: "text.viewfinder")

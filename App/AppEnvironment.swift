@@ -5,6 +5,7 @@ import UIKit
 /// The app's collaborators, built once at launch.
 @MainActor
 final class AppEnvironment {
+    // periphery:ignore - held for the screens that log events; only the lifecycle model uses it so far.
     let analytics: any Analytics
     let home: HomeModel
     let lifecycle: AppLifecycleModel

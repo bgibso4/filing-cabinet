@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      CODE_SIGNING_ALLOWED: "NO"
+      # swift-snapshot-testing writes failed/diff images here (xcodebuild forwards TEST_RUNNER_ vars to the tests).
+      TEST_RUNNER_SNAPSHOT_ARTIFACTS: ${{ github.workspace }}/.build/snapshot-artifacts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # changed-snapshots.sh diffs against origin/main.
+          fetch-depth: 0
+
+      - name: Install tools
+        run: brew install xcodegen swiftlint xcbeautify jq bats-core periphery
+
+      - name: Cache DerivedData and SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build/DerivedData
+            ~/Library/Developer/Xcode/DerivedData
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/Caches/com.github.peripheryapp
+          key: ${{ runner.os }}-xcode27-${{ hashFiles('Package.resolved', 'project.yml', '**/*.swift') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode27-${{ hashFiles('Package.resolved', 'project.yml') }}-
+            ${{ runner.os }}-xcode27-
+
+      - name: make ci
+        run: make ci
+
+      - name: Upload snapshot failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-failures
+          if-no-files-found: ignore
+          path: |
+            .build/snapshot-artifacts
+            .build/DerivedData/Logs/Test/*.xcresult
