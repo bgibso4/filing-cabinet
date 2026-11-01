@@ -96,15 +96,62 @@ stop_json() { echo '{"session_id":"s1","hook_event_name":"Stop"}'; }
   [ ! -e "$TMPDIR/fc-stop-s1" ]
 }
 
-@test "hooks fail closed with a message when jq is missing" {
+nojq_path() {
   local bin="$BATS_TEST_TMPDIR/nojq"
   mkdir -p "$bin"
   for tool in bash cat tr mktemp dirname; do ln -sf "$(command -v $tool)" "$bin/$tool"; done
-  for script in format-on-edit guard-generated guard-hook-bypass mark-dirty stop-gate; do
+  echo "$bin"
+}
+
+@test "stop gate fails open with a message when jq is missing" {
+  local bin
+  bin="$(nojq_path)"
+  run env PATH="$bin" "$bin/bash" "$HOOKS/stop-gate.sh" <<<"$(stop_json)"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"jq missing: Fast gate skipped — brew install jq"* ]]
+}
+
+@test "guards still fail closed with a message when jq is missing" {
+  local bin
+  bin="$(nojq_path)"
+  for script in format-on-edit guard-generated guard-hook-bypass mark-dirty; do
     run env PATH="$bin" "$bin/bash" "$HOOKS/$script.sh" <<<"$(stop_json)"
     [ "$status" -eq 2 ]
     [[ "$output" == *"jq missing: brew install jq"* ]]
   done
+}
+
+@test "guard blocks commit -n, short-flag clusters and case variants" {
+  for c in 'git commit -n -m x' 'git commit -anm x' 'git commit -nm "msg"' 'git -c core.hookspath=/dev/null commit' 'git commit --NO-VERIFY'; do
+    run "$HOOKS/guard-hook-bypass.sh" <<<"$(bash_json "$c")"
+    [ "$status" -eq 2 ]
+  done
+}
+
+@test "guard allows commit -m and git log -n" {
+  for c in 'git commit -m "fix"' 'git log -n 3' 'git commit --amend -m x' 'git commit -am "fix"'; do
+    run "$HOOKS/guard-hook-bypass.sh" <<<"$(bash_json "$c")"
+    [ "$status" -eq 0 ]
+  done
+}
+
+@test "a subagent that never edited Swift passes SubagentStop while the parent is dirty" {
+  touch "$TMPDIR/fc-dirty-s1"
+  export FC_FAST_CMD="exit 1"
+  run "$HOOKS/stop-gate.sh" <<<'{"session_id":"s1","agent_id":"a1","hook_event_name":"SubagentStop"}'
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "a subagent that edited Swift is gated on its own marker" {
+  "$HOOKS/mark-dirty.sh" <<<'{"session_id":"s1","agent_id":"a1","tool_input":{"file_path":"/r/A.swift"}}'
+  [ -e "$TMPDIR/fc-dirty-a1" ]
+  [ ! -e "$TMPDIR/fc-dirty-s1" ]
+  export FC_FAST_CMD="echo nope; exit 1"
+  run "$HOOKS/stop-gate.sh" <<<'{"session_id":"s1","agent_id":"a1","hook_event_name":"SubagentStop"}'
+  [ "$(jq -r .decision <<<"$output")" = "block" ]
+  [ -e "$TMPDIR/fc-stop-a1" ]
+  [ ! -e "$TMPDIR/fc-stop-s1" ]
 }
 
 @test "concurrent stop gates serialize on the lock" {

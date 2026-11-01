@@ -3,10 +3,15 @@
 # FC_FAST_CMD overrides the command (tests). Serialized across sessions with a portable mkdir lock,
 # because macOS has no flock.
 set -euo pipefail
-command -v jq >/dev/null || { echo "jq missing: brew install jq" >&2; exit 2; }
+# Fail open: a missing jq must not trap every session behind an unfinishable gate.
+command -v jq >/dev/null || {
+	printf '{"systemMessage":"jq missing: Fast gate skipped — brew install jq"}\n'
+	exit 0
+}
 
 tmp="${TMPDIR:-/tmp}"
-session="$(jq -r '.session_id // empty' | tr -c 'A-Za-z0-9_-\n' '_')"
+# Keyed by agent_id when present (SubagentStop), else session_id, matching mark-dirty.sh.
+session="$(jq -r '.agent_id // .session_id // empty' | tr -c 'A-Za-z0-9_-\n' '_')"
 dirty="$tmp/fc-dirty-$session"
 counter="$tmp/fc-stop-$session"
 lock="$tmp/fc-fast.lock.d"
