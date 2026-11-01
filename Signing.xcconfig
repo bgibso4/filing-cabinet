@@ -11,7 +11,7 @@
 // DEVELOPMENT_TEAM and APP_BUNDLE_ID must NOT be set in project.yml `settings`: target
 // settings outrank an xcconfig and would silently defeat the override.
 
-DEVELOPMENT_TEAM = TD7DDZ2T78
+DEVELOPMENT_TEAM = W6S6K84XVM
 APP_BUNDLE_ID = com.cadre.filingcabinet
 
 // Optional per-developer override; `?` means no error if absent.
