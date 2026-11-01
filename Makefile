@@ -26,9 +26,10 @@ setup:
 
 # The generated project is gitignored, so the pins for the app's packages (swift-snapshot-testing and its
 # dependencies) live in the tracked ./Package.resolved. XcodeGen cannot carry that file, so generate copies it to
-# where Xcode reads it; builds then refuse to resolve to anything else (PKG_FLAGS).
+# where Xcode reads it; builds then refuse to resolve to anything else (XCB_FLAGS).
 RESOLVED_DEST := $(PROJECT)/project.xcworkspace/xcshareddata/swiftpm
-PKG_FLAGS     := -onlyUsePackageVersionsFromResolvedFile
+# Flags for every xcodebuild call (and Periphery's build).
+XCB_FLAGS     := -onlyUsePackageVersionsFromResolvedFile
 
 generate:
 	@command -v xcodegen >/dev/null || { echo "error: xcodegen is missing. Install it: brew install xcodegen" >&2; exit 1; }
@@ -37,13 +38,13 @@ generate:
 	mkdir -p $(RESOLVED_DEST) && cp Package.resolved $(RESOLVED_DEST)/Package.resolved
 
 build: generate
-	set -o pipefail; xcodebuild build -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
+	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
 # The Mac-only loop: no simulator.
 fast: generate
-	fp="$$(scripts/hooks/swift-fingerprint.sh)"; set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
-		-destination 'platform=macOS' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY) && \
+	fp="$$(scripts/hooks/swift-fingerprint.sh)"; set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme Fast \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
 		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
 SWIFT_DIRS := App Packages SnapshotTests UITests
@@ -58,13 +59,13 @@ format:
 
 # Record snapshot references on the pinned simulator. Review the diff before committing.
 snapshots-record: generate
-	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=all xcodebuild test -project $(PROJECT) -scheme FilingCabinet \
+	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=all xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) -only-testing:FilingCabinetSnapshotTests | $(BEAUTIFY)
 
 # Everything on the simulator: Core, ScreenModels, Screens and the snapshot tests.
 full: generate
-	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
+	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
 # Side by side: SCREEN=<design/screens stem> REF=<snapshot png> -> build/compare/<stem>.png
 compare:
@@ -85,7 +86,7 @@ run-fake: build
 
 # Build for a connected iPhone and install it. Needs the phone plugged in, unlocked and trusted.
 device: generate
-	set -o pipefail; xcodebuild build -project $(PROJECT) -scheme FilingCabinet \
+	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates | $(BEAUTIFY)
 	xcrun devicectl device install app --device "$(DEVICE)" '$(DEVICE_PRODUCT)'
 	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID)
@@ -96,7 +97,7 @@ test-hooks:
 
 # Dead-code scan (.periphery.yml, strict). Builds with its own derived data, on the pinned simulator.
 unused: generate
-	periphery scan
+	periphery scan -- -destination '$(SIM_DEST)' $(XCB_FLAGS)
 
 # Snapshot references to compare against: origin/main when the remote exists, else the local main.
 BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && echo origin/main || echo main)
@@ -107,8 +108,10 @@ BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && ech
 # Periphery 3.8.0 supports Xcode 27 / this project (verified locally); if a future Xcode breaks it, drop
 # `unused` from this list, record it as deferred in AGENTS.md and keep the target.
 ci: generate lint test-hooks
-	set -o pipefail; xcodebuild build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
-		-derivedDataPath $(DERIVED) $(PKG_FLAGS) | $(BEAUTIFY)
+	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
+		-derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory full unused
 	@echo "Snapshot references changed vs $(BASE_REF):"
 	scripts/changed-snapshots.sh $(BASE_REF)
+	@diff -q Package.resolved $(RESOLVED_DEST)/Package.resolved >/dev/null || { \
+		echo "error: Xcode changed the resolved packages. Copy $(RESOLVED_DEST)/Package.resolved back to ./Package.resolved and commit it." >&2; exit 1; }

@@ -1,10 +1,7 @@
 project: FilingCabinet.xcodeproj
 schemes:
   - FilingCabinet
-# Build for the pinned simulator, the same destination `make full` uses.
-build_arguments:
-  - -destination
-  - platform=iOS Simulator,name=iPhone 17,OS=27.0
+# Build arguments (destination, package flags) come from the Makefile's `unused` target.
 # The package is public API for the app target, so cross-module uses count.
 retain_public: false
 # Test targets count as users, so test-only symbols are not reported.
