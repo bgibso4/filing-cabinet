@@ -9,6 +9,9 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   ci:
     # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
@@ -24,8 +27,23 @@ jobs:
           # changed-snapshots.sh diffs against origin/main.
           fetch-depth: 0
 
+      # The xcode-27 runner image ships Xcode 27.x; pick it explicitly (newest 27.x app) so a second Xcode on the
+      # image can never be used by accident, and log what we got.
+      - name: Select Xcode 27
+        run: |
+          app="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$app" ] || { echo "error: no Xcode 27 on this image" >&2; exit 1; }
+          sudo xcode-select -s "$app/Contents/Developer"
+          xcodebuild -version
+          xcrun simctl list runtimes
+
       - name: Install tools
         run: brew install xcodegen swiftlint xcbeautify jq bats-core periphery
+
+      # Local lint results must match CI: fail loudly if Homebrew's SwiftLint is not the version we develop with.
+      - name: Check SwiftLint version
+        run: |
+          [ "$(swiftlint version)" = "0.65.1" ] || { echo "error: SwiftLint $(swiftlint version), expected 0.65.1 (update ci.yml and local together)" >&2; exit 1; }
 
       - name: Cache DerivedData and SwiftPM
         uses: actions/cache@v4

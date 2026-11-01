@@ -2,7 +2,7 @@
 # disabled here so they never fight.
 excluded:
   - "**/Generated/**"
-  - .build
+  - "**/.build"
   - scripts/lint-fixtures
   - scripts/lint-negatives
 
@@ -91,4 +91,11 @@ custom_rules:
       - identifier
       - typeidentifier
     message: "AnalyticsToken keeps free text out of analytics payloads: declare the conformance on the enum itself, never on a struct, class, actor or extension."
+    severity: error
+
+  no_ui_imports_in_mac_modules:
+    name: "No UI imports in Mac-buildable modules"
+    regex: '^import (SwiftUI|UIKit|VisionKit)\b'
+    included: 'Packages/FilingCabinetKit/(Sources/(Core|ScreenModels|TestSupport)|Tests/(Core|ScreenModels)Tests)/'
+    message: "Core, ScreenModels and TestSupport build for macOS (Fast tests): only Screens may import SwiftUI, UIKit or VisionKit."
     severity: error
