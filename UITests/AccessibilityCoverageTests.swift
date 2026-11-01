@@ -9,4 +9,12 @@ final class AccessibilityCoverageTests: XCTestCase {
             XCTAssertTrue(app.descendants(matching: .any)[id].waitForExistence(timeout: 5), id)
         }
     }
+
+    func testEveryHomeButtonHasAnIdentifier() {
+        let app = launchApp()
+        XCTAssertTrue(app.buttons[AccessibilityID.scanButton].waitForExistence(timeout: 5))
+        for button in app.buttons.allElementsBoundByIndex {
+            XCTAssertFalse(button.identifier.isEmpty, button.label)
+        }
+    }
 }

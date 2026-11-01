@@ -1,6 +1,6 @@
 import XCTest
 
-/// Launches the app with the `-UITest` flag (fake services, logged analytics, no animations) plus any extra flags.
+/// Launches the app with the `-UITest` flag (disables animations; no fake services yet) plus any extra flags.
 @MainActor
 func launchApp(_ flags: [String] = []) -> XCUIApplication {
     let app = XCUIApplication()

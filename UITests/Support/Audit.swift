@@ -7,6 +7,7 @@ private let ignoredIssues: [(XCUIAccessibilityAuditIssue) -> Bool] = []
 /// The only call site of `performAccessibilityAudit`. Audit types are listed explicitly, not left to the default.
 @MainActor
 func audit(_ app: XCUIApplication) throws {
+    // .action and .parentChild are left out: they flag SwiftUI's own container/action semantics, not our elements.
     let types: XCUIAccessibilityAuditType = [
         .contrast, .elementDetection, .hitRegion, .sufficientElementDescription,
         .dynamicType, .textClipped, .trait,

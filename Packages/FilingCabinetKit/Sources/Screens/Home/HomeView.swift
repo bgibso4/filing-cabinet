@@ -7,6 +7,8 @@ public struct HomeView: View {
     private let model: HomeModel
     private let onScan: () -> Void
 
+    // Home.dc.html: the large-title and section-header rows are at least this tall.
+    private static let headerMinHeight: CGFloat = 44
     // Home.dc.html: gap above "Collections" on first launch.
     private static let collectionsTopGap: CGFloat = 18
     // Home.dc.html: the fade behind the pill is solid from 38% of its height.
@@ -24,12 +26,12 @@ public struct HomeView: View {
                     .font(Tokens.Typography.largeTitle)
                     .tracking(Tokens.Typography.largeTitleTracking)
                     .foregroundStyle(Tokens.Color.textPrimary)
-                    .frame(minHeight: Tokens.Spacing.tapMin)
+                    .frame(minHeight: Self.headerMinHeight)
                     .accessibilityAddTraits(.isHeader)
                 Text("Collections", bundle: #bundle)
                     .font(Tokens.Typography.title2)
                     .foregroundStyle(Tokens.Color.textPrimary)
-                    .frame(minHeight: Tokens.Spacing.tapMin)
+                    .frame(minHeight: Self.headerMinHeight)
                     .padding(.top, Self.collectionsTopGap)
                     .accessibilityAddTraits(.isHeader)
                 collections

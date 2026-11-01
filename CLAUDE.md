@@ -17,6 +17,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 - **Stop / SubagentStop gate** (`stop-gate.sh`): runs `make fast` only when the Swift content fingerprint differs from `.build/fc-fast-green` (any edit method; survives commits). Failing tests and compiler errors lead the block message. After 3 failed attempts it hands back with a message. Internal errors block loudly. If `jq` is missing it fails open with a message.
 - **Format on edit** (`format-on-edit.sh`): formats edited Swift files.
 - **Guards** (PreToolUse): `guard-generated.sh` blocks edits to the generated `.xcodeproj` and `Generated/`; `guard-hook-bypass.sh` blocks the git hook-bypass flags named in AGENTS.md's hard rules.
+- A green Stop gate means the Fast (macOS) tests pass. It does not compile the Screens, App or UI test targets: run `make build` / `make full` per the definition of done.
 - Hook behaviour is covered by `make test-hooks`. Changing hook config needs Ben's OK.
 
 ## Verification

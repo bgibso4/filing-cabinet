@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Content fingerprint of every non-ignored Swift source in this worktree.
+# Content fingerprint of every non-ignored Swift source, string catalog (tests read them) and design/tokens.json.
 #   swift-fingerprint.sh            print the current fingerprint
 #   swift-fingerprint.sh current    exit 0 when it equals the recorded green fingerprint
 #   swift-fingerprint.sh record FP  record FP as verified green (.build/fc-fast-green)
@@ -10,7 +10,7 @@ green=".build/fc-fast-green"
 
 fingerprint() {
 	# Hash each file (path + content), then hash the sorted list. Deleted-but-tracked files are skipped.
-	git ls-files -co --exclude-standard -z -- '*.swift' | sort -z |
+	git ls-files -co --exclude-standard -z -- '*.swift' '*.xcstrings' design/tokens.json | sort -z |
 		while IFS= read -r -d '' file; do
 			if [ -f "$file" ]; then
 				printf '%s  %s\n' "$(shasum -a 256 <"$file" | cut -d' ' -f1)" "$file"

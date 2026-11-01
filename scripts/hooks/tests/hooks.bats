@@ -243,3 +243,15 @@ nojq_path() {
   # Serialized means the log reads start, end, start, end.
   [ "$(awk '{print $1}' "$TMPDIR/log" | paste -sd' ' -)" = "start end start end" ]
 }
+
+@test "the fingerprint changes when a string catalog or design/tokens.json changes" {
+  mkdir -p "$CLAUDE_PROJECT_DIR/design"
+  printf '{}\n' >"$CLAUDE_PROJECT_DIR/design/tokens.json"
+  printf '{}\n' >"$CLAUDE_PROJECT_DIR/Localizable.xcstrings"
+  before="$("$HOOKS/swift-fingerprint.sh")"
+  printf '{"a":1}\n' >"$CLAUDE_PROJECT_DIR/design/tokens.json"
+  tokens="$("$HOOKS/swift-fingerprint.sh")"
+  [ "$before" != "$tokens" ]
+  printf '{"b":1}\n' >"$CLAUDE_PROJECT_DIR/Localizable.xcstrings"
+  [ "$tokens" != "$("$HOOKS/swift-fingerprint.sh")" ]
+}
