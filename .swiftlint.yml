@@ -4,6 +4,7 @@ excluded:
   - "**/Generated/**"
   - .build
   - scripts/lint-fixtures
+  - scripts/lint-negatives
 
 opt_in_rules:
   - array_init
@@ -84,6 +85,10 @@ custom_rules:
 
   analytics_token_enum_only:
     name: "Only enums may conform to AnalyticsToken"
-    regex: '\b(struct|class|actor|extension)\b[^{\n]*\bAnalyticsToken\b'
-    message: "AnalyticsToken keeps free text out of analytics payloads; only enums with fixed raw values may conform."
+    regex: '\b(struct|class|actor|extension)\b[^{]*?\bAnalyticsToken\b'
+    match_kinds:
+      - keyword
+      - identifier
+      - typeidentifier
+    message: "AnalyticsToken keeps free text out of analytics payloads: declare the conformance on the enum itself, never on a struct, class, actor or extension."
     severity: error

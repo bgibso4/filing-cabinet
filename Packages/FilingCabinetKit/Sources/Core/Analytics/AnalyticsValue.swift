@@ -10,7 +10,8 @@ public enum AnalyticsValue: Sendable, Equatable {
 ///
 /// Only the package can mint tokens: the protocol and `AnalyticsTokenValue.init(_:)` are
 /// `package`, so the app target cannot create one. Inside the package, the SwiftLint rule
-/// `analytics_token_enum_only` rejects any non-enum conformance (a type with a stored string
+/// `analytics_token_enum_only` requires the conformance on the enum's own declaration: a
+/// struct, class, actor or extension conformance is rejected (a type with a stored string
 /// could otherwise smuggle free text in).
 package protocol AnalyticsToken: RawRepresentable, Sendable where RawValue == String {}
 
