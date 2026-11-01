@@ -7,7 +7,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 fail=0
-for rule in no_print try_optional_needs_reason no_shared_in_package localized_needs_bundle disable_needs_reason; do
+for rule in no_print try_optional_needs_reason no_shared_in_package localized_needs_bundle disable_needs_reason analytics_token_enum_only; do
     dir="$tmp/$rule/Packages/Fixture/Sources"
     mkdir -p "$dir"
     cp "$root/scripts/lint-fixtures/$rule.swift" "$dir/"

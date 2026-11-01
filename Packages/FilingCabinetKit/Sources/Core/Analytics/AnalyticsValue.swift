@@ -7,13 +7,18 @@ public enum AnalyticsValue: Sendable, Equatable {
 }
 
 /// An enum whose raw values are fixed, app-defined strings.
-public protocol AnalyticsToken: RawRepresentable, Sendable where RawValue == String {}
+///
+/// Only the package can mint tokens: the protocol and `AnalyticsTokenValue.init(_:)` are
+/// `package`, so the app target cannot create one. Inside the package, the SwiftLint rule
+/// `analytics_token_enum_only` rejects any non-enum conformance (a type with a stored string
+/// could otherwise smuggle free text in).
+package protocol AnalyticsToken: RawRepresentable, Sendable where RawValue == String {}
 
 /// The erased form of a token. It has no string initializer, so arbitrary text cannot get in.
 public struct AnalyticsTokenValue: Sendable, Equatable {
     private let raw: String
 
-    public init(_ token: some AnalyticsToken) {
+    package init(_ token: some AnalyticsToken) {
         raw = token.rawValue
     }
 }

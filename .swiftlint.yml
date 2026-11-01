@@ -81,3 +81,9 @@ custom_rules:
     regex: 'swiftlint:disable[:a-z]*[ \t]+(?:(?![ \t]-[ \t])[^\n])+$'
     message: "Add a reason after ' - ', e.g. // swiftlint:disable:next force_cast - reason."
     severity: error
+
+  analytics_token_enum_only:
+    name: "Only enums may conform to AnalyticsToken"
+    regex: '\b(struct|class|actor|extension)\b[^{\n]*\bAnalyticsToken\b'
+    message: "AnalyticsToken keeps free text out of analytics payloads; only enums with fixed raw values may conform."
+    severity: error
