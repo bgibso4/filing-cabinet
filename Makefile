@@ -26,8 +26,7 @@ build: generate
 	set -o pipefail; xcodebuild build -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
-# The Mac-only loop: no simulator. When ScreenModelsTests exists, add it to the Fast scheme
-# in project.yml.
+# The Mac-only loop: no simulator.
 fast: generate
 	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)

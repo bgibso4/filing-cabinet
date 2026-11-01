@@ -2,7 +2,7 @@
 import PackageDescription
 
 // Settings shared by every module. ScreenModels and Screens add
-// `.defaultIsolation(MainActor.self)` when they are created.
+// `.defaultIsolation(MainActor.self)`.
 let moduleSettings: [SwiftSetting] = [
     .swiftLanguageMode(.v6),
     .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
@@ -15,11 +15,23 @@ let package = Package(
     platforms: [.iOS(.v27), .macOS(.v27)],
     products: [
         .library(name: "Core", targets: ["Core"]),
+        .library(name: "ScreenModels", targets: ["ScreenModels"]),
         .library(name: "TestSupport", targets: ["TestSupport"]),
     ],
     targets: [
         .target(name: "Core", swiftSettings: moduleSettings),
         .target(name: "TestSupport", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .target(
+            name: "ScreenModels",
+            dependencies: ["Core"],
+            resources: [.process("Localizable.xcstrings")],
+            swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
+        ),
         .testTarget(name: "CoreTests", dependencies: ["Core", "TestSupport"], swiftSettings: moduleSettings),
+        .testTarget(
+            name: "ScreenModelsTests",
+            dependencies: ["ScreenModels", "TestSupport"],
+            swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
+        ),
     ]
 )

@@ -69,8 +69,9 @@ schemes:
       # Everything, on the simulator. Package test targets are added here as they appear.
       targets:
         - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/ScreenModelsTests
 
-  # Mac-only loop: no app target, no simulator. Add `ScreenModelsTests` here when it exists.
+  # Mac-only loop: no app target, no simulator.
   Fast:
     build:
       targets:
@@ -79,3 +80,4 @@ schemes:
       config: Debug
       targets:
         - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/ScreenModelsTests
