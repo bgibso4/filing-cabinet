@@ -68,7 +68,8 @@ Anything not checked is stated plainly in the hand-off ("didn't verify X because
 - Lint config, hook config and test tolerances change only with Ben's OK. Never widen a threshold to make something pass.
 - Changed snapshot references are named in the commit message, each with the reason. The pre-commit hook lists them.
 - Never hand-edit the generated `.xcodeproj` or any `Generated/` file; change the source (`project.yml`, `design/tokens.json`) and `make generate`.
-- Never bypass git hooks (skip flags on commit or push, or overriding the hooks path).
+- Never bypass git hooks: no `--no-verify`, no `git commit -n` (or any short-flag cluster containing `n`), no `-c core.hooksPath=…`. The Bash guard blocks these, and any Bash command whose non-message text contains them. If the pre-commit hook fails, fix the cause; never skip it.
+- Every new piece of logic gets unit tests; every bug fix gets a regression test.
 - Swift 6 language mode, Approachable Concurrency. Banned: `Task.detached`, `@unchecked Sendable`, disabling concurrency checking.
 - `package` access between package modules; `public` only for what the app, snapshot or UI tests use.
 - Colours, spacing, radii and type only from the generated tokens; no bare layout literals (screen measurements are named private constants citing the design source). No shadows.
