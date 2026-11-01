@@ -7,6 +7,11 @@ public struct HomeView: View {
     private let model: HomeModel
     private let onScan: () -> Void
 
+    // Home.dc.html: gap above "Collections" on first launch.
+    private static let collectionsTopGap: CGFloat = 18
+    // Home.dc.html: the fade behind the pill is solid from 38% of its height.
+    private static let fadeSolidLocation: Double = 0.38
+
     public init(model: HomeModel, onScan: @escaping () -> Void) {
         self.model = model
         self.onScan = onScan
@@ -17,6 +22,7 @@ public struct HomeView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Filing Cabinet", bundle: #bundle)
                     .font(Tokens.Typography.largeTitle)
+                    .tracking(Tokens.Typography.largeTitleTracking)
                     .foregroundStyle(Tokens.Color.textPrimary)
                     .frame(minHeight: Tokens.Spacing.tapMin)
                     .accessibilityAddTraits(.isHeader)
@@ -24,15 +30,14 @@ public struct HomeView: View {
                     .font(Tokens.Typography.title2)
                     .foregroundStyle(Tokens.Color.textPrimary)
                     .frame(minHeight: Tokens.Spacing.tapMin)
-                    .padding(.top, 18)
+                    .padding(.top, Self.collectionsTopGap)
                     .accessibilityAddTraits(.isHeader)
                 collections
             }
             .padding(.horizontal, Tokens.Spacing.s4)
         }
-        .contentMargins(.bottom, 130, for: .scrollContent)
         .background(Tokens.Color.bgGrouped)
-        .overlay(alignment: .bottom) { floatingScan }
+        .safeAreaInset(edge: .bottom, spacing: 0) { floatingScan }
     }
 
     private var collections: some View {
@@ -44,24 +49,24 @@ public struct HomeView: View {
         .background(Tokens.Color.bgSurface, in: .rect(cornerRadius: Tokens.Radius.surface))
     }
 
-    /// The button floats at the bottom centre over a fade of the screen background.
+    /// The button floats at the bottom centre. As a safe-area inset it pushes the scroll content up by its real size,
+    /// and the fade of the screen background sits behind it.
     private var floatingScan: some View {
         ScanButton(action: onScan)
-            .padding(.bottom, 28)
+            .padding(.top, Tokens.Spacing.s4)
             .frame(maxWidth: .infinity)
-            .background(alignment: .bottom) {
+            .background {
                 LinearGradient(
                     stops: [
                         .init(color: Tokens.Color.bgGrouped.opacity(0), location: 0),
-                        .init(color: Tokens.Color.bgGrouped, location: 0.62),
+                        .init(color: Tokens.Color.bgGrouped, location: Self.fadeSolidLocation),
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(height: 128)
+                .ignoresSafeArea(edges: .bottom)
                 .allowsHitTesting(false)
             }
-            .ignoresSafeArea(edges: .bottom)
     }
 }
 

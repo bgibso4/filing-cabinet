@@ -72,6 +72,9 @@ enum Tokens {
         static let footnote = Font.system(.footnote, design: .default, weight: .regular).monospacedDigit()
         /// 12 pt
         static let caption = Font.system(.caption, design: .default, weight: .regular).monospacedDigit()
+
+        /// Letter spacing in points for `largeTitle`.
+        static let largeTitleTracking: CGFloat = -0.4
     }
 
     /// The template symbol for a collection, drawn white on its badge.

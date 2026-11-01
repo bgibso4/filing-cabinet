@@ -5,7 +5,13 @@ import SwiftUI
 public struct ScanButton: View {
     private let action: () -> Void
 
-    @ScaledMetric(relativeTo: .body) private var height = 52
+    // Home.dc.html: the pill is 52 pt tall, 64 pt at the large-text variant, and never grows past that.
+    private static let baseHeight: CGFloat = 52
+    private static let maxHeight: CGFloat = 64
+    // Home.dc.html: horizontal padding inside the pill.
+    private static let horizontalPadding: CGFloat = 30
+
+    @ScaledMetric(relativeTo: .body) private var scaledHeight = baseHeight
 
     public init(action: @escaping () -> Void) {
         self.action = action
@@ -19,8 +25,8 @@ public struct ScanButton: View {
             }
             .font(Tokens.Typography.headline)
             .foregroundStyle(Tokens.Color.bgGrouped)
-            .padding(.horizontal, 30)
-            .frame(minHeight: height)
+            .padding(.horizontal, Self.horizontalPadding)
+            .frame(minHeight: min(scaledHeight, Self.maxHeight))
             .background(Tokens.Color.tint, in: .capsule)
         }
         .buttonStyle(.plain)

@@ -17,6 +17,7 @@ struct TypeStyle {
     let size: Int
     let weight: Int
     let serif: Bool
+    let tracking: Double?
 }
 
 enum GeneratorError: Error {
@@ -78,14 +79,30 @@ let radii = try list(dictionary(source["radius"], "radius")["tokens"], "radius.t
     (name: try string($0["name"], "radius name"), value: try points($0["value"], "radius value"))
 }
 
+func tracking(_ value: Any?) throws -> Double? {
+    guard let value else { return nil }
+    guard let text = value as? String, let number = Double(text.replacingOccurrences(of: "px", with: "")) else {
+        throw GeneratorError.malformed("letterSpacing")
+    }
+    return number
+}
+
+/// Keys of a type style the generator honours (or knowingly leaves to the system: line height follows the text style).
+let knownStyleKeys: Set<String> = [
+    "name", "fontSize", "lineHeight", "fontWeight", "letterSpacing", "sample", "usage",
+]
+
 let styles = try list(dictionary(source["type"], "type")["groups"], "type.groups").flatMap { group in
     let serif = try string(group["family"], "family") == "serif"
     return try list(group["styles"], "styles").map {
-        TypeStyle(
+        let unknown = Set($0.keys).subtracting(knownStyleKeys)
+        guard unknown.isEmpty else { throw GeneratorError.malformed("unsupported type style keys \(unknown.sorted())") }
+        return TypeStyle(
             name: try string($0["name"], "style name"),
             size: try points($0["fontSize"], "fontSize"),
             weight: $0["fontWeight"] as? Int ?? 400,
-            serif: serif)
+            serif: serif,
+            tracking: try tracking($0["letterSpacing"]))
     }
 }
 
@@ -171,6 +188,13 @@ let textStyles = [
     "body": "body", "subheadline": "subheadline", "footnote": "footnote", "caption": "caption",
 ]
 
+/// Each Apple text style's size at the default Dynamic Type setting. A token size that differs cannot be honoured
+/// by a text style, so the generator fails rather than silently ignoring the change.
+let defaultSizes = [
+    "largeTitle": 34, "title": 28, "title2": 22, "headline": 17, "body": 17, "subheadline": 15, "footnote": 13,
+    "caption": 12,
+]
+
 func weightName(_ weight: Int) throws -> String {
     switch weight {
     case 400: "regular"
@@ -221,11 +245,20 @@ func typographySection() throws -> String {
     """
     for style in styles {
         guard let textStyle = textStyles[style.name] else { throw GeneratorError.malformed(style.name) }
+        guard defaultSizes[textStyle] == style.size else {
+            throw GeneratorError.malformed("\(style.name) is \(style.size) pt but .\(textStyle) is \(defaultSizes[textStyle] ?? 0) pt")
+        }
         let design = style.serif ? ".serif" : ".default"
         let digits = style.serif ? "" : ".monospacedDigit()"
         let weight = try weightName(style.weight)
         out += "        /// \(style.size) pt\n"
         out += "        static let \(camelCased(style.name)) = Font.system(.\(textStyle), design: \(design), weight: .\(weight))\(digits)\n"
+    }
+    for style in styles {
+        if let tracking = style.tracking {
+            out += "\n        /// Letter spacing in points for `\(camelCased(style.name))`.\n"
+            out += "        static let \(camelCased(style.name))Tracking: CGFloat = \(tracking)\n"
+        }
     }
     return out + "    }\n"
 }

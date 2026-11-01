@@ -7,6 +7,11 @@ struct HomeRowView: View {
     let row: HomeRow
     let showsSeparator: Bool
 
+    // Home.dc.html, first-launch rows: 60 pt minimum height, 10 pt above and below the text, hairline separator.
+    private static let minHeight: CGFloat = 60
+    private static let verticalPadding: CGFloat = 10
+    private static let hairline: CGFloat = 0.5
+
     var body: some View {
         HStack(spacing: Tokens.Spacing.s3) {
             CollectionBadge(collection: row.collection)
@@ -25,15 +30,15 @@ struct HomeRowView: View {
                     .foregroundStyle(Tokens.Color.chevron)
                     .accessibilityHidden(true)
             }
-            .padding(.vertical, 10)
+            .padding(.vertical, Self.verticalPadding)
             .overlay(alignment: .top) {
                 if showsSeparator {
-                    Tokens.Color.separator.frame(height: 0.5)
+                    Tokens.Color.separator.frame(height: Self.hairline)
                 }
             }
         }
         .padding(.horizontal, Tokens.Spacing.s4)
-        .frame(minHeight: 60)
+        .frame(minHeight: Self.minHeight)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.collectionRow(row.collection))
     }
