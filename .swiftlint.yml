@@ -1,0 +1,83 @@
+# swift-format owns formatting; SwiftLint owns everything else. Rules both tools share are
+# disabled here so they never fight.
+excluded:
+  - "**/Generated/**"
+  - .build
+  - scripts/lint-fixtures
+
+opt_in_rules:
+  - array_init
+  - closure_end_indentation
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_first_not_nil
+  - discouraged_optional_boolean
+  - empty_count
+  - empty_string
+  - explicit_init
+  - fatal_error_message
+  - first_where
+  - force_unwrapping
+  - implicit_return
+  - joined_default_parameter
+  - last_where
+  - legacy_multiple
+  - lower_acl_than_parent
+  - multiline_arguments
+  - multiline_parameters
+  - overridden_super_call
+  - prefer_self_in_static_references
+  - redundant_nil_coalescing
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - unowned_variable_capture
+  - vertical_parameter_alignment_on_call
+  - yoda_condition
+  - blanket_disable_command
+
+disabled_rules:
+  - trailing_comma
+  - opening_brace
+  - line_length
+  - vertical_whitespace
+  - indentation_width
+  - closure_spacing
+  - function_name_whitespace
+  - comma
+  - colon
+  - statement_position
+  - trailing_whitespace
+
+custom_rules:
+  no_print:
+    name: "No print()"
+    regex: '\bprint\('
+    message: "Use os.Logger (subsystem com.cadre.filingcabinet, category = module), never print()."
+    severity: error
+
+  try_optional_needs_reason:
+    name: "try? needs a reason"
+    regex: '(?<!//[^\n]{0,300}\n)^(?![^\n]*//)[^\n]*\btry\?'
+    message: "Explain why try? is safe with a comment on the same or previous line."
+    severity: error
+
+  no_shared_in_package:
+    name: "No singletons in packages"
+    regex: '\b[A-Z]\w*\.shared\b'
+    included: 'Packages/'
+    message: "Inject collaborators; do not reach for .shared inside Packages/."
+    severity: error
+
+  localized_needs_bundle:
+    name: "Localized strings need bundle: #bundle"
+    regex: 'Text\("[^"\n]*"\)|String\(localized:\s*"[^"\n]*"\s*\)'
+    included: 'Packages/'
+    message: "Look strings up with bundle: #bundle so they resolve from the owning module."
+    severity: error
+
+  disable_needs_reason:
+    name: "swiftlint:disable needs a reason"
+    regex: 'swiftlint:disable[:a-z]*[ \t]+(?:(?![ \t]-[ \t])[^\n])+$'
+    message: "Add a reason after ' - ', e.g. // swiftlint:disable:next force_cast - reason."
+    severity: error

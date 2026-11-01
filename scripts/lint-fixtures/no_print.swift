@@ -1,0 +1,3 @@
+func fixture() {
+    print("x")
+}

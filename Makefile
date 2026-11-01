@@ -7,13 +7,14 @@ DERIVED     := $(CURDIR)/.build/DerivedData
 SIM_DEST    := platform=iOS Simulator,name=$(SIM_DEVICE),OS=$(SIM_OS)
 BEAUTIFY    := xcbeautify
 
-.PHONY: setup generate build fast
+.PHONY: setup generate build fast lint format
 
-# Fail loudly, with the install command, when a required tool is missing.
+# Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
-	@for tool in xcodegen xcbeautify; do \
-		command -v $$tool >/dev/null || { echo "error: $$tool is missing. Install it: brew install $$tool" >&2; exit 1; }; \
-	done
+	@missing=0; for tool in xcodegen swiftlint xcbeautify jq bats periphery; do \
+		command -v $$tool >/dev/null || { echo "missing: brew install $$tool"; missing=1; }; \
+	done; [ $$missing -eq 0 ] || exit 1
+	@ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
 	@$(MAKE) --no-print-directory generate
 
 generate:
@@ -29,3 +30,13 @@ build: generate
 fast: generate
 	set -o pipefail; xcodebuild test -project $(PROJECT) -scheme Fast \
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+
+SWIFT_DIRS := App Packages
+
+# swift-format owns formatting; SwiftLint owns everything else. Both are strict.
+lint:
+	swiftlint lint --strict --quiet
+	swift format lint --strict --recursive $(SWIFT_DIRS)
+
+format:
+	swift format format --in-place --recursive $(SWIFT_DIRS)
