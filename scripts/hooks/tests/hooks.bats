@@ -102,6 +102,30 @@ stop_json() { echo '{"session_id":"s1","hook_event_name":"Stop"}'; }
   ! fast_ran
 }
 
+@test "a deleted tracked Swift file that sorts last still runs Fast and blocks on failure" {
+  printf 'let z = 1\n' >"$CLAUDE_PROJECT_DIR/Z.swift"
+  git -C "$CLAUDE_PROJECT_DIR" add -A
+  git -C "$CLAUDE_PROJECT_DIR" commit -q -m files
+  "$HOOKS/swift-fingerprint.sh" record "$("$HOOKS/swift-fingerprint.sh")"
+  rm "$CLAUDE_PROJECT_DIR/Z.swift"
+  export FC_FAST_CMD="echo ran >>'$RAN'; echo 'error: broken'; exit 1"
+  run "$HOOKS/stop-gate.sh" <<<"$(stop_json)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r .decision <<<"$output")" = "block" ]
+  fast_ran
+}
+
+@test "an unexpected internal error blocks with a stop gate error" {
+  printf '#!/bin/sh\nexit 1\n' >"$BATS_TEST_TMPDIR/broken.sh"
+  chmod +x "$BATS_TEST_TMPDIR/broken.sh"
+  export FC_FINGERPRINT_CMD="$BATS_TEST_TMPDIR/broken.sh"
+  run "$HOOKS/stop-gate.sh" <<<"$(stop_json)"
+  [ "$status" -eq 0 ]
+  [ "$(jq -r .decision <<<"$output")" = "block" ]
+  [[ "$(jq -r .reason <<<"$output")" == *"stop gate error"* ]]
+  [ ! -d "$TMPDIR/fc-fast.lock.d" ]
+}
+
 @test "a subagent keeps its own attempt counter" {
   set_swift 'let a = 4'
   export FC_FAST_CMD="exit 1"
@@ -117,6 +141,11 @@ stop_json() { echo '{"session_id":"s1","hook_event_name":"Stop"}'; }
   run "$HOOKS/stop-gate.sh" <<<"$(stop_json)"
   [ "$(jq -r .reason <<<"$output" | head -n1)" = "    HomeTests.testGreeting" ]
   [[ "$(jq -r .reason <<<"$output")" != *$'\033'* ]]
+}
+
+@test "guard blocks a short flag after a backslash line continuation" {
+  run "$HOOKS/guard-hook-bypass.sh" <<<"$(bash_json $'git commit -m x \\\n  -n')"
+  [ "$status" -eq 2 ]
 }
 
 @test "guard ignores flags in other commands of the same line" {

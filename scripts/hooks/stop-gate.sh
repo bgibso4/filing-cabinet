@@ -12,12 +12,31 @@ command -v jq >/dev/null || {
 
 tmp="${TMPDIR:-/tmp}"
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fingerprint="$here/swift-fingerprint.sh"
+fingerprint="${FC_FINGERPRINT_CMD:-$here/swift-fingerprint.sh}"
 # Counter is keyed by agent_id when present (SubagentStop), else session_id.
 session="$(jq -r '.agent_id // .session_id // empty' | tr -c 'A-Za-z0-9_-\n' '_')"
 counter="$tmp/fc-stop-$session"
 lock="$tmp/fc-fast.lock.d"
 max_attempts=3
+
+output=""
+holding_lock=0
+failed_command=""
+# Fail loud: any unexpected internal error blocks with its cause. A bare exit 1 is a non-blocking
+# error to Claude Code, which would let the session finish unverified.
+on_error() { failed_command="$BASH_COMMAND"; }
+on_exit() {
+	local status=$?
+	[ -z "$output" ] || rm -f "$output"
+	[ "$holding_lock" -eq 0 ] || rm -rf "$lock"
+	if [ "$status" -ne 0 ]; then
+		jq -n --arg cmd "$failed_command" --arg status "$status" \
+			'{decision: "block", reason: ("stop gate error: `" + $cmd + "` exited " + $status + ". Run `make fast` and check scripts/hooks/stop-gate.sh.")}'
+		exit 0
+	fi
+}
+trap on_error ERR
+trap on_exit EXIT
 
 cd "${CLAUDE_PROJECT_DIR:-$PWD}"
 [ -n "$session" ] || exit 0
@@ -33,10 +52,10 @@ acquire_lock() {
 		sleep 0.1
 	done
 	echo $$ >"$lock/pid"
+	holding_lock=1
 }
 acquire_lock
 output="$(mktemp "$tmp/fc-fast-out.XXXXXX")"
-trap 'rm -rf "$lock" "$output"' EXIT
 
 # Another gate may have verified these exact sources while we waited for the lock.
 "$fingerprint" current && exit 0

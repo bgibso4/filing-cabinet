@@ -12,7 +12,9 @@ fingerprint() {
 	# Hash each file (path + content), then hash the sorted list. Deleted-but-tracked files are skipped.
 	git ls-files -co --exclude-standard -z -- '*.swift' | sort -z |
 		while IFS= read -r -d '' file; do
-			[ -f "$file" ] && printf '%s  %s\n' "$(shasum -a 256 <"$file" | cut -d' ' -f1)" "$file"
+			if [ -f "$file" ]; then
+				printf '%s  %s\n' "$(shasum -a 256 <"$file" | cut -d' ' -f1)" "$file"
+			fi
 		done | shasum -a 256 | cut -d' ' -f1
 }
 

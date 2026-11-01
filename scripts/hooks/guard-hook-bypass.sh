@@ -5,6 +5,8 @@ command -v jq >/dev/null || { echo "jq missing: brew install jq" >&2; exit 2; }
 command="$(jq -r '.tool_input.command // empty')"
 # Inspect options only: drop the quoted argument of -m/--message so a commit message can mention a flag.
 stripped="$(perl -0pe 's/(^|\s)(--message[= ]|-[A-Za-z]*m\s*)("(?:[^"\\]|\\.)*"|\x27[^\x27]*\x27)/$1$2/g' <<<"$command")"
+# Backslash-newline continuations are one command line.
+stripped="$(perl -0pe 's/\\\n/ /g' <<<"$stripped")"
 lower="$(tr '[:upper:]' '[:lower:]' <<<"$stripped")"
 # `git ... commit ... -n` (also inside short-flag clusters such as -nm or -anm) is the same bypass.
 # Matching stays inside one command: it never spans ; & | or a newline.
