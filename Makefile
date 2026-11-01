@@ -13,7 +13,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks unused ci
+.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks unused ci full-run unused-run check-resolved
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -63,7 +63,9 @@ snapshots-record: generate
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) -only-testing:FilingCabinetSnapshotTests | $(BEAUTIFY)
 
 # Everything on the simulator: Core, ScreenModels, Screens and the snapshot tests.
-full: generate
+full: generate full-run
+
+full-run:
 	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
@@ -96,7 +98,9 @@ test-hooks:
 	bats scripts/hooks/tests
 
 # Dead-code scan (.periphery.yml, strict). Builds with its own derived data, on the pinned simulator.
-unused: generate
+unused: generate unused-run
+
+unused-run:
 	periphery scan -- -destination '$(SIM_DEST)' $(XCB_FLAGS)
 
 # Snapshot references to compare against: origin/main when the remote exists, else the local main.
@@ -110,8 +114,12 @@ BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && ech
 ci: generate lint test-hooks
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) | $(BEAUTIFY)
-	$(MAKE) --no-print-directory full unused
+	$(MAKE) --no-print-directory full-run unused-run
 	@echo "Snapshot references changed vs $(BASE_REF):"
 	scripts/changed-snapshots.sh $(BASE_REF)
+	$(MAKE) --no-print-directory check-resolved
+
+# Fails when Xcode rewrote the resolved packages during the builds (run after them; never depends on generate).
+check-resolved:
 	@diff -q Package.resolved $(RESOLVED_DEST)/Package.resolved >/dev/null || { \
 		echo "error: Xcode changed the resolved packages. Copy $(RESOLVED_DEST)/Package.resolved back to ./Package.resolved and commit it." >&2; exit 1; }
