@@ -34,6 +34,10 @@ targets:
     dependencies:
       - package: FilingCabinetKit
         product: Core
+      - package: FilingCabinetKit
+        product: ScreenModels
+      - package: FilingCabinetKit
+        product: Screens
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
@@ -70,6 +74,7 @@ schemes:
       targets:
         - package: FilingCabinetKit/CoreTests
         - package: FilingCabinetKit/ScreenModelsTests
+        - package: FilingCabinetKit/ScreensTests
 
   # Mac-only loop: no app target, no simulator.
   Fast:

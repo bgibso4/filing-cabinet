@@ -1,10 +1,12 @@
+import ScreenModels
+import Screens
 import SwiftUI
 
 @main
 struct FilingCabinetApp: App {
     var body: some Scene {
         WindowGroup {
-            Text("Filing Cabinet")
+            HomeView(model: HomeModel(), onScan: {})
         }
     }
 }

@@ -20,6 +20,7 @@ setup:
 
 generate:
 	@command -v xcodegen >/dev/null || { echo "error: xcodegen is missing. Install it: brew install xcodegen" >&2; exit 1; }
+	swift scripts/generate-tokens.swift
 	xcodegen generate --quiet
 
 build: generate
