@@ -14,10 +14,12 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v27), .macOS(.v27)],
     products: [
-        .library(name: "Core", targets: ["Core"])
+        .library(name: "Core", targets: ["Core"]),
+        .library(name: "TestSupport", targets: ["TestSupport"]),
     ],
     targets: [
         .target(name: "Core", swiftSettings: moduleSettings),
-        .testTarget(name: "CoreTests", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .target(name: "TestSupport", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .testTarget(name: "CoreTests", dependencies: ["Core", "TestSupport"], swiftSettings: moduleSettings),
     ]
 )
