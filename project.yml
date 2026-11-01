@@ -22,6 +22,9 @@ settings:
 packages:
   FilingCabinetKit:
     path: Packages/FilingCabinetKit
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.7
 
 targets:
   FilingCabinet:
@@ -54,6 +57,30 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         CODE_SIGN_STYLE: Automatic
 
+  # App-hosted: snapshots use drawHierarchyInKeyWindow, which needs the real app's key window.
+  FilingCabinetSnapshotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SnapshotTests
+        excludes:
+          - "**/.DS_Store"
+          - "**/__Snapshots__/**"
+    dependencies:
+      # Screens and ScreenModels come from the host app (TEST_HOST): linking them again would build the
+      # package products as dynamic frameworks and break the unhosted package tests' resource bundles.
+      - target: FilingCabinet
+      - package: SnapshotTesting
+        product: SnapshotTesting
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).snapshottests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/FilingCabinet.app/FilingCabinet
+        BUNDLE_LOADER: $(TEST_HOST)
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
 # Empty aggregate: a scheme needs one build target from this project, and Fast must not
 # build the app. The package tests it runs come from the scheme's test targets.
 aggregateTargets:
@@ -75,6 +102,7 @@ schemes:
         - package: FilingCabinetKit/CoreTests
         - package: FilingCabinetKit/ScreenModelsTests
         - package: FilingCabinetKit/ScreensTests
+        - name: FilingCabinetSnapshotTests
 
   # Mac-only loop: no app target, no simulator.
   Fast:

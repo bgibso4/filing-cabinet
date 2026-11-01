@@ -14,3 +14,6 @@ skills-lock.json
 .DS_Store
 xcuserdata/
 .swiftpm/
+
+# Local compare output
+build/

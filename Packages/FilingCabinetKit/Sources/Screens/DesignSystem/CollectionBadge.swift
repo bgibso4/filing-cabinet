@@ -5,18 +5,20 @@ import SwiftUI
 struct CollectionBadge: View {
     let collection: BuiltInCollection
 
-    @ScaledMetric(relativeTo: .body) private var diameter = 34
-    @ScaledMetric(relativeTo: .body) private var symbolSize = 19
+    // Home.dc.html: the badge is 34 pt with a 19 pt symbol at the default and the large-text variant alike,
+    // so it never grows with Dynamic Type; only the row around it does.
+    private static let diameter: CGFloat = 34
+    private static let symbolSize: CGFloat = 19
 
     var body: some View {
         Circle()
             .fill(Tokens.Color.badge(collection))
-            .frame(width: diameter, height: diameter)
+            .frame(width: Self.diameter, height: Self.diameter)
             .overlay {
                 Tokens.symbol(collection)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: symbolSize, height: symbolSize)
+                    .frame(width: Self.symbolSize, height: Self.symbolSize)
                     .foregroundStyle(.white)
             }
             .accessibilityHidden(true)
