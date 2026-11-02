@@ -25,8 +25,19 @@ enum SnapshotConfig {
         traits: UITraitCollection(displayScale: 3)
     )
 
+    /// Every pixel must be within delta E 2 of the reference (spec §6).
+    static let perceptualPrecision: Float = 0.98
+
     // Computed: Snapshotting is not Sendable, so it can't be a shared static.
+    /// The library's image strategy, with `CPUImageMatch` checked first (see there for why).
     static var strategy: Snapshotting<UIViewController, UIImage> {
-        .image(on: device, drawHierarchyInKeyWindow: true, perceptualPrecision: 0.98)
+        var strategy = Snapshotting<UIViewController, UIImage>.image(
+            on: device, drawHierarchyInKeyWindow: true, perceptualPrecision: perceptualPrecision
+        )
+        let libraryDiff = strategy.diffing.diffV2
+        strategy.diffing.diffV2 = { old, new in
+            CPUImageMatch.matches(old, new, perceptualPrecision: perceptualPrecision) ? nil : libraryDiff(old, new)
+        }
+        return strategy
     }
 }

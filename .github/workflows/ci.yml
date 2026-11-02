@@ -22,7 +22,7 @@ jobs:
       # swift-snapshot-testing writes failed/diff images here (xcodebuild forwards TEST_RUNNER_ vars to the tests).
       TEST_RUNNER_SNAPSHOT_ARTIFACTS: ${{ github.workspace }}/.build/snapshot-artifacts
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # changed-snapshots.sh diffs against origin/main.
           fetch-depth: 0
@@ -46,7 +46,7 @@ jobs:
           [ "$(swiftlint version)" = "0.65.1" ] || { echo "error: SwiftLint $(swiftlint version), expected 0.65.1 (update ci.yml and local together)" >&2; exit 1; }
 
       - name: Cache DerivedData and SwiftPM
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             .build/DerivedData
@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload snapshot failures
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: snapshot-failures
           if-no-files-found: ignore
