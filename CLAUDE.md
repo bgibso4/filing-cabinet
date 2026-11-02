@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: foundation built (branch `foundation`, local only).** Package, app, tokens, snapshot and UI tests, lint, hooks and the CI workflow are in place. Next: push to GitHub (pending Ben's go-ahead), then the Plan 1 rewrite in a fresh session. There is no feature code yet.
+**Phase: foundation built (branch `foundation`, PR open on GitHub).** Package, app, tokens, snapshot and UI tests, lint, hooks and the CI workflow are in place. Next: merge once CI is green, then the Plan 1 rewrite in a fresh session. There is no feature code yet.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.
@@ -28,4 +28,4 @@ Use the `ios-verifier` agent for build/test evidence (see the definition of done
 
 - Personal agent tooling (XcodeBuildMCP, Axiom, SwiftUI skills) comes from arsenal's `ios` profile via `arms apply`: local scope, uncommitted.
 - `.claude/settings.json` (project hooks) IS committed here, by approved exception. **Never commit** `.claude/skills/`, `skills-lock.json`, `.claude/settings.local.json` or `.herdr/`.
-- Git repo is local only (no remote yet).
+- Remote: github.com/bgibso4/filing-cabinet (public). CI runs on PRs and pushes to `main`.
