@@ -1,0 +1,19 @@
+# Generated
+*.xcodeproj
+.build/
+DerivedData/
+*.xcresult
+
+# Local only
+Signing.local.xcconfig
+.claude/settings.local.json
+.claude/skills/
+skills-lock.json
+.herdr/
+.superpowers/
+.DS_Store
+xcuserdata/
+.swiftpm/
+
+# Local compare output
+build/

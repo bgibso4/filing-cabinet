@@ -1,0 +1,41 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%lld months" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld month" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld months" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld weeks" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld week" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld weeks" } }
+            }
+          }
+        }
+      }
+    },
+    "Documents" : {},
+    "Forms and letters" : {},
+    "Handwritten notes" : {},
+    "IDs and cards" : {},
+    "Kept forever" : {},
+    "Notes" : {},
+    "Purchase receipts" : {},
+    "Receipts" : {},
+    "Short-lived scraps" : {},
+    "Throwaways" : {},
+    "Wallet" : {}
+  },
+  "version" : "1.0"
+}

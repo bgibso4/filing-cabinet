@@ -1,0 +1,136 @@
+name: FilingCabinet
+options:
+  bundleIdPrefix: com.cadre
+  deploymentTarget:
+    iOS: "27.0"
+  xcodeVersion: "27.1"
+  createIntermediateGroups: true
+
+# DEVELOPMENT_TEAM and APP_BUNDLE_ID come from Signing.xcconfig (which optionally includes a
+# gitignored Signing.local.xcconfig). Never set them in `settings` below: target settings
+# outrank an xcconfig and would silently defeat the override.
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
+
+settings:
+  base:
+    SWIFT_VERSION: "6"
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+packages:
+  FilingCabinetKit:
+    path: Packages/FilingCabinetKit
+  SnapshotTesting:
+    url: https://github.com/pointfreeco/swift-snapshot-testing
+    exactVersion: 1.19.7
+
+targets:
+  FilingCabinet:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - package: FilingCabinetKit
+        product: Core
+      - package: FilingCabinetKit
+        product: ScreenModels
+      - package: FilingCabinetKit
+        product: Screens
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        PRODUCT_NAME: FilingCabinet
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        # No app icon yet (the design handoff ships the layers); XcodeGen otherwise defaults to AppIcon.
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        # iPhone only, portrait only (Info.plist lists the single orientation).
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: 1
+        CODE_SIGN_STYLE: Automatic
+
+  # App-hosted: snapshots use drawHierarchyInKeyWindow, which needs the real app's key window.
+  FilingCabinetSnapshotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SnapshotTests
+        excludes:
+          - "**/.DS_Store"
+          - "**/__Snapshots__/**"
+    dependencies:
+      # Screens and ScreenModels come from the host app (TEST_HOST): linking them again would build the
+      # package products as dynamic frameworks and break the unhosted package tests' resource bundles.
+      - target: FilingCabinet
+      - package: SnapshotTesting
+        product: SnapshotTesting
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).snapshottests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/FilingCabinet.app/FilingCabinet
+        BUNDLE_LOADER: $(TEST_HOST)
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
+  # Runs out of process against the installed app. Core is linked only for AccessibilityID (no resources, no host).
+  FilingCabinetUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: FilingCabinet
+      - package: FilingCabinetKit
+        product: Core
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).uitests
+        TEST_TARGET_NAME: FilingCabinet
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
+# Empty aggregate: a scheme needs one build target from this project, and Fast must not
+# build the app. The package tests it runs come from the scheme's test targets.
+aggregateTargets:
+  FastTests:
+    targets: []
+
+# Hand-written schemes; XcodeGen's auto-generated ones are off so these are the only two.
+schemes:
+  FilingCabinet:
+    build:
+      targets:
+        FilingCabinet: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      # Everything, on the simulator. Package test targets are added here as they appear.
+      targets:
+        - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/ScreenModelsTests
+        - package: FilingCabinetKit/ScreensTests
+        - name: FilingCabinetSnapshotTests
+        - name: FilingCabinetUITests
+
+  # Mac-only loop: no app target, no simulator.
+  Fast:
+    build:
+      targets:
+        FastTests: [test]
+    test:
+      config: Debug
+      targets:
+        - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/ScreenModelsTests

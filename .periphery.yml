@@ -1,0 +1,18 @@
+project: FilingCabinet.xcodeproj
+schemes:
+  - FilingCabinet
+# Build arguments (destination, package flags) come from the Makefile's `unused` target.
+# The package is public API for the app target, so cross-module uses count.
+retain_public: false
+# Test targets count as users, so test-only symbols are not reported.
+# @main, #Preview and SwiftData/Observation macro output are handled by Periphery itself.
+retain_objc_accessible: true
+retain_swift_ui_previews: true
+retain_assign_only_properties: false
+exclude_tests: false
+# LocalizationTests needs `@testable` for the module's internal `Bundle.module`, which Periphery can't see.
+retain_unused_imported_modules:
+  - ScreenModels
+report_exclude:
+  - "**/Generated/**"
+strict: true

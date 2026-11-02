@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run by the thin wrapper `make setup` installs in the shared hooks dir (works in every worktree).
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+make --no-print-directory lint
+changed="$(scripts/changed-snapshots.sh --cached)"
+if [ -n "$changed" ]; then
+    echo "Changed snapshot references — name each in the commit message with the reason:"
+    echo "$changed" | sed 's/^/  /'
+fi
