@@ -53,7 +53,9 @@ disabled_rules:
 custom_rules:
   no_print:
     name: "No print()"
-    regex: '\bprint\('
+    regex: '(?<!\.)\bprint\('
+    match_kinds:
+      - identifier
     message: "Use os.Logger (subsystem com.cadre.filingcabinet, category = module), never print()."
     severity: error
 
@@ -72,7 +74,7 @@ custom_rules:
 
   localized_needs_bundle:
     name: "Localized strings need bundle: #bundle"
-    regex: 'Text\("[^"\n]*"\)|String\(localized:\s*"[^"\n]*"\s*\)'
+    regex: 'Text\("[^"\n]*"\)|String\(localized:\s*"[^"\n]*"\s*\)|(?<![\w.])(Button|Label|Toggle|Section|TextField|Menu|Picker|DatePicker|ContentUnavailableView|LabeledContent|Link)\("|\.(navigationTitle|accessibilityLabel|alert|confirmationDialog)\("'
     included: 'Packages/'
     message: "Look strings up with bundle: #bundle so they resolve from the owning module."
     severity: error

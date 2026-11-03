@@ -117,7 +117,7 @@ BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && ech
 # Periphery 3.8.0 supports Xcode 27 / this project (verified locally); if a future Xcode breaks it, drop
 # `unused` from this list, record it as deferred in AGENTS.md and keep the target.
 ci: generate
-	@git diff --exit-code -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets || { \
+	@test -z "$$(git status --porcelain -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets)" || { \
 		echo "error: generated files differ from the committed ones: run make generate and commit." >&2; exit 1; }
 	$(MAKE) --no-print-directory lint test-hooks test-lint
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
