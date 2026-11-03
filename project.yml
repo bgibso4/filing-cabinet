@@ -119,6 +119,7 @@ schemes:
       # Everything, on the simulator. Package test targets are added here as they appear.
       targets:
         - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/UnderstandingTests
         - package: FilingCabinetKit/ScreenModelsTests
         - package: FilingCabinetKit/ScreensTests
         - name: FilingCabinetSnapshotTests
@@ -133,4 +134,5 @@ schemes:
       config: Debug
       targets:
         - package: FilingCabinetKit/CoreTests
+        - package: FilingCabinetKit/UnderstandingTests
         - package: FilingCabinetKit/ScreenModelsTests

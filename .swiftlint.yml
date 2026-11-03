@@ -98,6 +98,6 @@ custom_rules:
   no_ui_imports_in_mac_modules:
     name: "No UI imports in Mac-buildable modules"
     regex: '^import (SwiftUI|UIKit|VisionKit)\b'
-    included: 'Packages/FilingCabinetKit/(Sources/(Core|ScreenModels|TestSupport)|Tests/(Core|ScreenModels)Tests)/'
+    included: 'Packages/FilingCabinetKit/(Sources/(Core|ScreenModels|TestSupport|Understanding)|Tests/(Core|ScreenModels|Understanding)Tests)/'
     message: "Core, ScreenModels and TestSupport build for macOS (Fast tests): only Screens may import SwiftUI, UIKit or VisionKit."
     severity: error

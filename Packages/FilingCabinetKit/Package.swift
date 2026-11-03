@@ -21,7 +21,8 @@ let package = Package(
     ],
     targets: [
         .target(name: "Core", swiftSettings: moduleSettings),
-        .target(name: "TestSupport", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .target(name: "Understanding", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .target(name: "TestSupport", dependencies: ["Core", "Understanding"], swiftSettings: moduleSettings),
         .target(
             name: "ScreenModels",
             dependencies: ["Core"],
@@ -35,6 +36,11 @@ let package = Package(
             swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
         ),
         .testTarget(name: "CoreTests", dependencies: ["Core", "TestSupport"], swiftSettings: moduleSettings),
+        .testTarget(
+            name: "UnderstandingTests",
+            dependencies: ["Understanding", "TestSupport"],
+            swiftSettings: moduleSettings
+        ),
         .testTarget(
             name: "ScreenModelsTests",
             dependencies: ["ScreenModels", "TestSupport"],
