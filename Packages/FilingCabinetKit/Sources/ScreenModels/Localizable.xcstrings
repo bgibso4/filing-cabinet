@@ -13,6 +13,18 @@
         }
       }
     },
+    "%lld years" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld year" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld years" } }
+            }
+          }
+        }
+      }
+    },
     "%lld weeks" : {
       "localizations" : {
         "en" : {

@@ -41,7 +41,9 @@ public final class HomeModel {
         switch lifespan {
         case .forever: String(localized: "Kept forever", bundle: #bundle)
         case .week: String(localized: "\(1) weeks", bundle: #bundle)
+        case .month: String(localized: "\(1) months", bundle: #bundle)
         case .threeMonths: String(localized: "\(3) months", bundle: #bundle)
+        case .year: String(localized: "\(1) years", bundle: #bundle)
         }
     }
 }
