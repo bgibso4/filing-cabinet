@@ -3,13 +3,13 @@ import CoreText
 import Foundation
 
 /// Made-up pages rendered with Core Text, black on white. Never personal documents.
-public enum SyntheticPages {
+package enum SyntheticPages {
     private static let margin: CGFloat = 200
     private static let lineSpacing: CGFloat = 1.5
 
     /// Renders `lines` top to bottom; each pair is the text and its point size (in pixels at 1:1).
     /// The default size is A4 at 300 dpi, close to a VisionKit page.
-    public static func page(lines: [(String, CGFloat)], size: CGSize = CGSize(width: 2480, height: 3508)) -> CGImage {
+    package static func page(lines: [(String, CGFloat)], size: CGSize = CGSize(width: 2480, height: 3508)) -> CGImage {
         let context = whiteContext(size)
         var baseline = size.height - margin
         for (text, pointSize) in lines {
@@ -29,12 +29,12 @@ public enum SyntheticPages {
     }
 
     /// "CITY PHARMACY" in large type, then two small lines.
-    public static func receipt() -> CGImage {
+    package static func receipt() -> CGImage {
         page(lines: [("CITY PHARMACY", 160), ("Batteries AA", 60), ("TOTAL 12.40", 60)])
     }
 
     /// An empty white page.
-    public static func blank() -> CGImage {
+    package static func blank() -> CGImage {
         page(lines: [])
     }
 

@@ -38,7 +38,7 @@ let package = Package(
         .testTarget(name: "CoreTests", dependencies: ["Core", "TestSupport"], swiftSettings: moduleSettings),
         .testTarget(
             name: "UnderstandingTests",
-            dependencies: ["Understanding", "TestSupport"],
+            dependencies: ["Core", "Understanding", "TestSupport"],
             swiftSettings: moduleSettings
         ),
         .testTarget(

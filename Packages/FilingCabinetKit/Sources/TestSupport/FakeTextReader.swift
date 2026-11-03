@@ -3,9 +3,9 @@ import Synchronization
 import Understanding
 
 /// Test double: answers each `read` with the next scripted step. The last step repeats once the script runs out.
-public final class FakeTextReader: TextReader {
+package final class FakeTextReader: TextReader {
     /// One scripted answer.
-    public enum Step: Sendable {
+    package enum Step: Sendable {
         /// Return this page, after waiting `delay`.
         case page(PageText, delay: Duration = .zero)
         /// Throw this error.
@@ -15,14 +15,14 @@ public final class FakeTextReader: TextReader {
     private let script: Mutex<[Step]>
     private let calls = Mutex(0)
 
-    public init(_ steps: [Step]) {
+    package init(_ steps: [Step]) {
         script = Mutex(steps)
     }
 
     /// How many times `read` has been called.
-    public var readCount: Int { calls.withLock { $0 } }
+    package var readCount: Int { calls.withLock { $0 } }
 
-    public func read(_ page: CGImage) async throws(UnderstandingError) -> PageText {
+    package func read(_ page: CGImage) async throws(UnderstandingError) -> PageText {
         calls.withLock { $0 += 1 }
         let step = script.withLock { steps -> Step in
             guard let first = steps.first else { return .page(PageText(lines: [])) }
@@ -42,7 +42,7 @@ public final class FakeTextReader: TextReader {
     }
 
     /// Always reads the synthetic receipt's three lines.
-    public static func readsCityPharmacy() -> FakeTextReader {
+    package static func readsCityPharmacy() -> FakeTextReader {
         FakeTextReader([
             .page(
                 PageText(lines: [
