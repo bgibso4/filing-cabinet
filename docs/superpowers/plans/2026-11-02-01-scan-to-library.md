@@ -34,13 +34,14 @@
 | A12 | **The bake-off:** a comparison suite runs both readers on the 27 synthetic scans in `design/prototype/scans/` (the 3-page lease scored as one scan) and writes a report (not a gate); a Device timed test measures each on the iPhone; a debug-only launch flag picks the reader. `RecognizeTextRequest` is the default until Ben picks a winner. | Tasks 6, 10 |
 | A13 | **Foundation follow-ups folded in:** #6 (lint rule gaps, approved lint-config change), #24 (drift check), #22 (snapshot window teardown), #12 (audit at the largest text), #7 (hairline). | Tasks 1, 2 |
 | A14 | **OCR cold start is measured on the iPhone before Save's behaviour is fixed.** Vision's first read took 14–26 s on a Mac (warm: ~0.2 s). Task 6 measures cold and warm reads per reader on Ben's phone and stops for Ben; he sets `readingWaitLimit` (M2) from the numbers before Task 14 starts. | Tasks 6, 14 |
+| A15 | **Task 6's checkpoint (2026-11-03).** On Ben's iPhone 16 Pro: `text` reads 447 ms cold and 151 ms per page warm; `documents` 553 ms cold and 194 ms per page. Both got 19/25 titles and 99% recall on the synthetic scans. **`readingWaitLimit` is 1 s.** **The default reader is not decided:** Ben wants more testing first, so `text` stays the provisional default (A12) and the `-TextReader` flag / `READER=` keep both available. | Tasks 10, 14, 19 |
 
 ### My calls (not discussed; veto any before its task starts)
 
 | # | Call | Task |
 |---|---|---|
 | M1 | **Title rule:** the tallest line in the top 40% of page 1 with at least 3 letters; ties go to the higher line. An all-caps line is title-cased ("CITY PHARMACY" → "City Pharmacy", as the review mock shows), except words containing digits, which stay as printed ("UNIT 4B"). Whitespace is collapsed and the title is cut to 60 characters. | 5 |
-| M2 | **While reading:** the title field shows the fallback title and is replaced by the read title when it arrives, unless you've typed. Save waits at most `readingWaitLimit` for reading (provisionally 1 s; Ben sets it from Task 6's numbers, A14). If reading isn't done, the scan saves with the title showing and its search text is written when reading finishes. | 14 |
+| M2 | **While reading:** the title field shows the fallback title and is replaced by the read title when it arrives, unless you've typed. Save waits at most `readingWaitLimit` for reading (1 s, set by Ben from Task 6's numbers, A15). If reading isn't done, the scan saves with the title showing and its search text is written when reading finishes. | 14 |
 | M3 | **A cleared title** saves as the fallback title. | 14 |
 | M4 | **A save failure that isn't a full disk** uses the same alert with the body "Something went wrong. Your pages are still here." (The design only has the out-of-space copy.) | 14 |
 | M5 | **Expired scans are hidden** from Home counts, grids and the viewer. By the requirements they are in Trash, which Plan 2 builds. Nothing is deleted in Plan 1. "Today" refreshes when the app becomes active and at midnight. | 10, 11 |
