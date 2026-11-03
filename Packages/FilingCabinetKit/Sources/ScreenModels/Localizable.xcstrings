@@ -37,6 +37,59 @@
         }
       }
     },
+    "%lld days left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld day left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld days left" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld months left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld month left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld months left" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld years left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld year left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld years left" } }
+            }
+          }
+        }
+      }
+    },
+    "%@ · until %@" : {},
+    "Until %@" : {},
+    "Kept %@" : {},
+    "No cards yet" : {},
+    "No receipts yet" : {},
+    "No notes yet" : {},
+    "No documents yet" : {},
+    "No throwaways" : {},
+    "Nothing recent" : {},
+    "No scans yet" : {},
+    "IDs and cards go here, like your license and insurance card. They’re kept forever." : {},
+    "Purchase receipts go here. Each one is kept 3 months, then moves to Trash." : {},
+    "Handwritten and class notes go here. They’re kept forever." : {},
+    "Forms, letters and anything else go here. They’re kept forever." : {},
+    "Short-lived scraps go here, like a coat-check tag. Each one is kept a week." : {},
+    "Scans from the last 30 days show up here." : {},
+    "Every scan shows up here, newest first." : {},
     "Documents" : {},
     "Forms and letters" : {},
     "Handwritten notes" : {},
