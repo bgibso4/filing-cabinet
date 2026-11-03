@@ -13,11 +13,12 @@ private func temporaryLocation() -> LibraryLocation {
 
 private func longEdge(_ image: CGImage) -> Int { max(image.width, image.height) }
 
-@Test func cachedThumbnailIsReturned() async throws {
+@Test func cachedJpegIsReadWithoutTheOriginal() async throws {
     let location = temporaryLocation()
     let id = ScanID()
     _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem())
         .write([SyntheticPages.receipt()], for: id)
+    try FileManager.default.removeItem(at: location.originals(for: id))
     let loader = ThumbnailLoader(location: location, fileSystem: LocalFileSystem())
 
     let image = try #require(await loader.thumbnail(for: id, page: 0))
@@ -88,8 +89,41 @@ private func longEdge(_ image: CGImage) -> Int { max(image.width, image.height) 
     #expect(pages.cachedPage(for: id, index: 1) != nil)
     #expect(await pages.page(for: id, index: 0) == nil)
 
-    #expect(fakeThumbnails.requests.map(\.id) == [id, id])
+    #expect(fakeThumbnails.requests.map(\.kind) == [.cached, .loaded])
     #expect(fakeThumbnails.requests.map(\.page) == [0, 5])
-    #expect(fakePages.requests.map(\.id) == [id, id])
+    #expect(fakeThumbnails.loadedRequests.map(\.page) == [5])
+    #expect(fakeThumbnails.loadedIDs == [id])
+    #expect(fakePages.requests.map(\.kind) == [.cached, .loaded])
     #expect(fakePages.requests.map(\.page) == [1, 0])
+    #expect(fakePages.loadedRequests.map(\.page) == [0])
+    #expect(fakePages.loadedIDs == [id])
+}
+
+@Test func leastRecentlyUsedPageIsEvictedAndReadsPromote() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    let pages = (0..<4).map { _ in SyntheticPages.page(lines: [], size: CGSize(width: 200, height: 300)) }
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem()).write(pages, for: id)
+    let loader: any PageImageProviding = PageImageLoader(location: location, fileSystem: LocalFileSystem())
+
+    for index in 0...2 { _ = await loader.page(for: id, index: index) }
+    _ = loader.cachedPage(for: id, index: 0)
+    _ = await loader.page(for: id, index: 3)
+
+    #expect(loader.cachedPage(for: id, index: 1) == nil)
+    #expect(loader.cachedPage(for: id, index: 0) != nil)
+}
+
+@Test func thumbnailMemoryCacheIsBoundedAt200() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    let pages = (0..<201).map { _ in SyntheticPages.page(lines: [], size: CGSize(width: 20, height: 30)) }
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem()).write(pages, for: id)
+    let loader: any ThumbnailProviding = ThumbnailLoader(location: location, fileSystem: LocalFileSystem())
+
+    for index in 0..<201 { _ = await loader.thumbnail(for: id, page: index) }
+
+    #expect(loader.cachedThumbnail(for: id, page: 0) == nil)
+    #expect(loader.cachedThumbnail(for: id, page: 1) != nil)
+    #expect(loader.cachedThumbnail(for: id, page: 200) != nil)
 }
