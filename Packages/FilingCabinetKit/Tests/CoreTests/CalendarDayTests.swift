@@ -44,3 +44,16 @@ import Testing
     #expect(clock.now() == date)
     #expect(clock.locale.identifier == "en_US")
 }
+
+@Test func daysUntilCountsCalendarDaysAcrossSpringForward() {
+    // US daylight saving time starts on Mar 14 2027: that day has only 23 hours.
+    let start = CalendarDay(year: 2027, month: 3, day: 13)
+    #expect(start.days(until: CalendarDay(year: 2027, month: 3, day: 15), in: cal) == 2)
+    #expect(start.days(until: CalendarDay(year: 2027, month: 3, day: 14), in: cal) == 1)
+    #expect(start.adding(days: 1, in: cal) == CalendarDay(year: 2027, month: 3, day: 14))
+    #expect(start.adding(days: 2, in: cal) == CalendarDay(year: 2027, month: 3, day: 15))
+}
+
+@Test func systemClockUsesTheGregorianCalendar() {
+    #expect(AppClock.system.calendar.identifier == .gregorian)
+}

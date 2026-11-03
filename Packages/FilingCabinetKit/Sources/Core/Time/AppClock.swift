@@ -12,8 +12,17 @@ public struct AppClock: Sendable {
         self.locale = locale
     }
 
+    /// Always Gregorian, because `CalendarDay.storageValue` is validated as Gregorian: a Buddhist or Hebrew
+    /// device calendar would store days that decode to nil. The time zone follows the device, so "today"
+    /// does not go stale after a zone change.
     public static let system = Self(
-        now: { Date() }, calendar: .current, locale: Locale(identifier: "en_US"))
+        now: { Date() }, calendar: systemCalendar, locale: Locale(identifier: "en_US"))
+
+    private static var systemCalendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .autoupdatingCurrent
+        return calendar
+    }
 
     public static func fixed(_ date: Date, calendar: Calendar, locale: Locale = Locale(identifier: "en_US")) -> Self {
         Self(now: { date }, calendar: calendar, locale: locale)

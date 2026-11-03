@@ -24,3 +24,9 @@ import Testing
     #expect(!TimeLeft.isSoon(daysLeft: 2, spanDays: 7))
     #expect(TimeLeft.isSoon(daysLeft: 1, spanDays: 7))
 }
+
+@Test func daysLeftAcrossSpringForward() {
+    let last = CalendarDay(year: 2027, month: 3, day: 15)
+    #expect(TimeLeft.on(CalendarDay(year: 2027, month: 3, day: 13), lastDay: last, in: cal) == .days(3))
+    #expect(TimeLeft.on(CalendarDay(year: 2027, month: 3, day: 14), lastDay: last, in: cal) == .days(2))
+}
