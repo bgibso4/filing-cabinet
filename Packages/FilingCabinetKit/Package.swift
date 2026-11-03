@@ -16,6 +16,7 @@ let package = Package(
     products: [
         .library(name: "Core", targets: ["Core"]),
         .library(name: "Understanding", targets: ["Understanding"]),
+        .library(name: "Library", targets: ["Library"]),
         .library(name: "ScreenModels", targets: ["ScreenModels"]),
         .library(name: "Screens", targets: ["Screens"]),
         .library(name: "TestSupport", targets: ["TestSupport"]),
@@ -23,7 +24,12 @@ let package = Package(
     targets: [
         .target(name: "Core", swiftSettings: moduleSettings),
         .target(name: "Understanding", dependencies: ["Core"], swiftSettings: moduleSettings),
-        .target(name: "TestSupport", dependencies: ["Core", "Understanding"], swiftSettings: moduleSettings),
+        .target(name: "Library", dependencies: ["Core"], swiftSettings: moduleSettings),
+        .target(
+            name: "TestSupport",
+            dependencies: ["Core", "Understanding", "Library"],
+            swiftSettings: moduleSettings
+        ),
         .target(
             name: "ScreenModels",
             dependencies: ["Core"],
@@ -40,6 +46,11 @@ let package = Package(
         .testTarget(
             name: "UnderstandingTests",
             dependencies: ["Core", "Understanding", "TestSupport"],
+            swiftSettings: moduleSettings
+        ),
+        .testTarget(
+            name: "LibraryTests",
+            dependencies: ["Core", "Library", "TestSupport"],
             swiftSettings: moduleSettings
         ),
         // The reader bake-off (A12): a report, not a gate. Runs only in the ReaderComparison scheme on macOS.

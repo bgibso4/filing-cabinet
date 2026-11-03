@@ -152,6 +152,7 @@ schemes:
       targets:
         - package: FilingCabinetKit/CoreTests
         - package: FilingCabinetKit/UnderstandingTests
+        - package: FilingCabinetKit/LibraryTests
         - package: FilingCabinetKit/ScreenModelsTests
         - package: FilingCabinetKit/ScreensTests
         - name: FilingCabinetSnapshotTests
@@ -167,6 +168,7 @@ schemes:
       targets:
         - package: FilingCabinetKit/CoreTests
         - package: FilingCabinetKit/UnderstandingTests
+        - package: FilingCabinetKit/LibraryTests
         - package: FilingCabinetKit/ScreenModelsTests
 
   # The reader bake-off report (A12) on macOS: `make compare-readers`. Not in Fast or FilingCabinet.
