@@ -52,19 +52,34 @@ package struct PageFileStore: Sendable {
         removeFolders(of: id)
     }
 
-    /// Every scan that has an originals folder, whatever the store says (for orphan cleanup).
+    /// Every scan that has an originals or a thumbnails folder, whatever the store says (for orphan cleanup).
     @concurrent
     package func storedScanIDs() async -> [ScanID] {
-        let folder = location.root.appending(path: "Originals", directoryHint: .isDirectory)
-        guard fileSystem.fileExists(at: folder) else { return [] }
-        do {
-            return try fileSystem.contentsOfDirectory(at: folder)
-                .compactMap { UUID(uuidString: $0.lastPathComponent) }
-                .map(ScanID.init(uuid:))
-        } catch {
-            LibraryLog.logger.error("Listing originals failed: \(error.localizedDescription, privacy: .private)")
-            return []
+        let folders = [
+            location.root.appending(path: "Originals", directoryHint: .isDirectory),
+            location.caches.appending(path: "Thumbnails", directoryHint: .isDirectory),
+        ]
+        var ids: [ScanID] = []
+        for folder in folders where fileSystem.fileExists(at: folder) {
+            do {
+                for url in try fileSystem.contentsOfDirectory(at: folder) {
+                    guard let uuid = UUID(uuidString: url.lastPathComponent) else { continue }
+                    let id = ScanID(uuid: uuid)
+                    if !ids.contains(id) { ids.append(id) }
+                }
+            } catch {
+                LibraryLog.logger.error(
+                    "Listing \(folder.lastPathComponent, privacy: .public) failed: \(error.localizedDescription, privacy: .private)"
+                )
+            }
         }
+        return ids
+    }
+
+    /// Where the scan's originals with these file names live, in the same order.
+    package func originalURLs(named names: [String], for id: ScanID) -> [URL] {
+        let folder = location.originals(for: id)
+        return names.map { folder.appending(path: $0) }
     }
 
     private func removeFolders(of id: ScanID) {
