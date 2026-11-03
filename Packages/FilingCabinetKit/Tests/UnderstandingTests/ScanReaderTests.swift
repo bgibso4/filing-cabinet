@@ -1,0 +1,51 @@
+import CoreGraphics
+import TestSupport
+import Testing
+
+@testable import Understanding
+
+private func text(_ lines: String..., top: String? = nil) -> PageText {
+    var out = lines.enumerated().map {
+        TextLine(text: $1, box: CGRect(x: 0.1, y: 0.5 + Double($0) * 0.05, width: 0.5, height: 0.02))
+    }
+    if let top { out.insert(TextLine(text: top, box: CGRect(x: 0.1, y: 0.05, width: 0.5, height: 0.05)), at: 0) }
+    return PageText(lines: out)
+}
+
+@Test func joinsSearchTextInPageOrder() async {
+    let fake = FakeTextReader([.page(text("a", "b")), .page(text("c"))])
+    let pages = [SyntheticPages.blank(), SyntheticPages.blank()]
+
+    let reading = await ScanReader(reader: fake).read(pages)
+
+    #expect(reading.searchText == "a\nb\nc")
+    #expect(reading.failedPages == 0)
+}
+
+@Test func failedPageIsCountedAndSkipped() async {
+    let fake = FakeTextReader([.page(text("a")), .failure(.recognitionFailed), .page(text("c"))])
+    let pages = [SyntheticPages.blank(), SyntheticPages.blank(), SyntheticPages.blank()]
+
+    let reading = await ScanReader(reader: fake).read(pages)
+
+    #expect(reading.searchText == "a\nc")
+    #expect(reading.failedPages == 1)
+}
+
+@Test func titleComesFromPageOne() async {
+    let fake = FakeTextReader([
+        .page(text("body", top: "CITY PHARMACY")),
+        .page(text("x", top: "Other Page")),
+    ])
+    let pages = [SyntheticPages.blank(), SyntheticPages.blank()]
+
+    let reading = await ScanReader(reader: fake).read(pages)
+
+    #expect(reading.title == "City Pharmacy")
+}
+
+@Test func noPagesReadsNothing() async {
+    let reading = await ScanReader(reader: FakeTextReader([])).read([])
+
+    #expect(reading == ScanReading(title: nil, searchText: "", failedPages: 0))
+}
