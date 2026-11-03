@@ -30,7 +30,7 @@ struct ScanButton: View {
             .background(Tokens.Color.tint, in: .capsule)
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityID.scanButton)
+        .accessibilityIdentifier(AccessibilityID.Home.scan)
     }
 }
 

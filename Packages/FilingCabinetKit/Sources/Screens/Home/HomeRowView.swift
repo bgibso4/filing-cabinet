@@ -7,10 +7,9 @@ struct HomeRowView: View {
     let row: HomeRow
     let showsSeparator: Bool
 
-    // Home.dc.html, first-launch rows: 60 pt minimum height, 10 pt above and below the text, hairline separator.
+    // Home.dc.html, first-launch rows: 60 pt minimum height, 10 pt above and below the text, hairline separator (Hairline).
     private static let minHeight: CGFloat = 60
     private static let verticalPadding: CGFloat = 10
-    private static let hairline: CGFloat = 0.5
 
     var body: some View {
         HStack(spacing: Tokens.Spacing.s3) {
@@ -33,13 +32,13 @@ struct HomeRowView: View {
             .padding(.vertical, Self.verticalPadding)
             .overlay(alignment: .top) {
                 if showsSeparator {
-                    Tokens.Color.separator.frame(height: Self.hairline)
+                    Hairline()
                 }
             }
         }
         .padding(.horizontal, Tokens.Spacing.s4)
         .frame(minHeight: Self.minHeight)
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier(AccessibilityID.collectionRow(row.collection))
+        .accessibilityIdentifier(AccessibilityID.Home.collectionRow(row.collection))
     }
 }
