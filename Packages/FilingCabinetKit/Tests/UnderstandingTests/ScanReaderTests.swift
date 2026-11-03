@@ -49,3 +49,28 @@ private func text(_ lines: String..., top: String? = nil) -> PageText {
 
     #expect(reading == ScanReading(title: nil, searchText: "", failedPages: 0))
 }
+
+@Test func titleIsNilWhenPageOneFails() async {
+    let fake = FakeTextReader([.failure(.recognitionFailed), .page(text("x", top: "Other Page"))])
+    let pages = [SyntheticPages.blank(), SyntheticPages.blank()]
+
+    let reading = await ScanReader(reader: fake).read(pages)
+
+    #expect(reading.title == nil)
+    #expect(reading.searchText == "Other Page\nx")
+    #expect(reading.failedPages == 1)
+}
+
+@Test func cancellingStopsReadingLaterPages() async {
+    let fake = FakeTextReader([.page(text("a"), delay: .seconds(5)), .page(text("b"))])
+    let pages = [SyntheticPages.blank(), SyntheticPages.blank(), SyntheticPages.blank()]
+    let reader = ScanReader(reader: fake)
+
+    let task = Task { await reader.read(pages) }
+    while fake.readCount == 0 { await Task.yield() }
+    task.cancel()
+    let reading = await task.value
+
+    #expect(fake.readCount == 1)
+    #expect(reading.failedPages == 0)
+}
