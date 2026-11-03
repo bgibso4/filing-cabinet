@@ -43,6 +43,8 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make compare SCREEN=<design png stem> REF=<snapshot png>` | side by side, written to `build/compare/` |
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`) |
+| `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
+| `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
 | `make test-lint` | fixture tests for the SwiftLint custom rules |
 | `make check-resolved` | fail if Xcode rewrote the resolved packages |

@@ -15,6 +15,7 @@ let package = Package(
     platforms: [.iOS(.v27), .macOS(.v27)],
     products: [
         .library(name: "Core", targets: ["Core"]),
+        .library(name: "Understanding", targets: ["Understanding"]),
         .library(name: "ScreenModels", targets: ["ScreenModels"]),
         .library(name: "Screens", targets: ["Screens"]),
         .library(name: "TestSupport", targets: ["TestSupport"]),
@@ -39,6 +40,13 @@ let package = Package(
         .testTarget(
             name: "UnderstandingTests",
             dependencies: ["Core", "Understanding", "TestSupport"],
+            swiftSettings: moduleSettings
+        ),
+        // The reader bake-off (A12): a report, not a gate. Runs only in the ReaderComparison scheme on macOS.
+        .testTarget(
+            name: "ReaderComparisonTests",
+            dependencies: ["Core", "Understanding"],
+            exclude: ["expected.json"],
             swiftSettings: moduleSettings
         ),
         .testTarget(

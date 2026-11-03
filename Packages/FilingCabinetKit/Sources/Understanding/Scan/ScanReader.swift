@@ -2,17 +2,17 @@ import CoreGraphics
 import os
 
 /// Reads every page of a scan, in order, and derives the title and search text.
-package struct ScanReader: Sendable {
+public struct ScanReader: Sendable {
     private let reader: any TextReader
 
-    package init(reader: any TextReader) {
+    public init(reader: any TextReader) {
         self.reader = reader
     }
 
     /// A page that fails to read counts in `failedPages` and adds nothing. The title comes from page 1 only,
     /// so it is nil when page 1 fails. Cancelling the task stops reading before the next page.
     @concurrent
-    package func read(_ pages: [CGImage]) async -> ScanReading {
+    public func read(_ pages: [CGImage]) async -> ScanReading {
         var texts: [PageText] = []
         var firstPage: PageText?
         var failed = 0

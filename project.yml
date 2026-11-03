@@ -38,6 +38,8 @@ targets:
       - package: FilingCabinetKit
         product: Core
       - package: FilingCabinetKit
+        product: Understanding
+      - package: FilingCabinetKit
         product: ScreenModels
       - package: FilingCabinetKit
         product: Screens
@@ -100,13 +102,43 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
 
+  # App-hosted timing on a real iPhone (A12, A14): `make device-perf` only, never `make full` or CI.
+  # Understanding comes from the host app (TEST_HOST), as Screens does for the snapshot tests.
+  FilingCabinetDeviceTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: DeviceTests
+        excludes:
+          - "**/.DS_Store"
+      - path: design/prototype/scans/scan-r-pharmacy.jpg
+        buildPhase: resources
+      - path: design/prototype/scans/scan-lease.jpg
+        buildPhase: resources
+      - path: design/prototype/scans/scan-lease-p2.jpg
+        buildPhase: resources
+      - path: design/prototype/scans/scan-note-bio.jpg
+        buildPhase: resources
+      - path: design/prototype/scans/scan-insurance.jpg
+        buildPhase: resources
+    dependencies:
+      - target: FilingCabinet
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).devicetests
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/FilingCabinet.app/FilingCabinet
+        BUNDLE_LOADER: $(TEST_HOST)
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
 # Empty aggregate: a scheme needs one build target from this project, and Fast must not
 # build the app. The package tests it runs come from the scheme's test targets.
 aggregateTargets:
   FastTests:
     targets: []
 
-# Hand-written schemes; XcodeGen's auto-generated ones are off so these are the only two.
+# Hand-written schemes; XcodeGen's auto-generated ones are off so these are the only ones.
 schemes:
   FilingCabinet:
     build:
@@ -136,3 +168,24 @@ schemes:
         - package: FilingCabinetKit/CoreTests
         - package: FilingCabinetKit/UnderstandingTests
         - package: FilingCabinetKit/ScreenModelsTests
+
+  # The reader bake-off report (A12) on macOS: `make compare-readers`. Not in Fast or FilingCabinet.
+  ReaderComparison:
+    build:
+      targets:
+        FastTests: [test]
+    test:
+      config: Debug
+      targets:
+        - package: FilingCabinetKit/ReaderComparisonTests
+
+  # Reader timing on a connected iPhone: `make device-perf DEVICE=<name>`. Not in FilingCabinet or CI.
+  Device:
+    build:
+      targets:
+        FilingCabinet: all
+        FilingCabinetDeviceTests: [test]
+    test:
+      config: Debug
+      targets:
+        - name: FilingCabinetDeviceTests

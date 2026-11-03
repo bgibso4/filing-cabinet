@@ -1,8 +1,7 @@
 import CoreGraphics
 import TestSupport
 import Testing
-
-@testable import Understanding
+import Understanding
 
 private func text(_ lines: String..., top: String? = nil) -> PageText {
     var out = lines.enumerated().map {
