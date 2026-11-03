@@ -40,9 +40,14 @@ targets:
       - package: FilingCabinetKit
         product: Understanding
       - package: FilingCabinetKit
+        product: Library
+      - package: FilingCabinetKit
         product: ScreenModels
       - package: FilingCabinetKit
         product: Screens
+      # Test doubles for the launch flags; the app uses them only under `#if DEBUG` (M9).
+      - package: FilingCabinetKit
+        product: TestSupport
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)

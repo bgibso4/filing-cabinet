@@ -1,7 +1,7 @@
 import Foundation
 
 /// A scan's identity: the one thing that crosses isolation in place of a SwiftData object.
-package struct ScanID: Sendable, Hashable, Codable {
+public struct ScanID: Sendable, Hashable, Codable {
     package let uuid: UUID
 
     package init() {

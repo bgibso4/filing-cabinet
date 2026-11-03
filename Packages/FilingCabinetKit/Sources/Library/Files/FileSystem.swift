@@ -1,7 +1,7 @@
 import Foundation
 
 /// The file operations the library needs: the seam tests use to fail a write.
-package protocol FileSystem: Sendable {
+public protocol FileSystem: Sendable {
     /// Creates the directory and any missing parents; succeeds if it already exists.
     func createDirectory(at url: URL) throws
     /// Writes atomically, replacing any existing file.

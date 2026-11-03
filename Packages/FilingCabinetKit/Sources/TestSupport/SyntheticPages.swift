@@ -3,7 +3,7 @@ import CoreText
 import Foundation
 
 /// Made-up pages rendered with Core Text, black on white. Never personal documents.
-package enum SyntheticPages {
+public enum SyntheticPages {
     private static let margin: CGFloat = 200
     private static let lineSpacing: CGFloat = 1.5
 
@@ -29,7 +29,7 @@ package enum SyntheticPages {
     }
 
     /// "CITY PHARMACY" in large type, then two small lines.
-    package static func receipt() -> CGImage {
+    public static func receipt() -> CGImage {
         page(lines: [("CITY PHARMACY", 160), ("Batteries AA", 60), ("TOTAL 12.40", 60)])
     }
 

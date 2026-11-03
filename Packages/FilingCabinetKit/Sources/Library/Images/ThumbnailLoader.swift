@@ -5,7 +5,7 @@ import ImageIO
 
 /// Loads ~400 px thumbnails. Never decodes a full-resolution original: a missing thumbnail is rebuilt
 /// with `CGImageSourceCreateThumbnailAtIndex`, written back to the cache and returned.
-package struct ThumbnailLoader: ThumbnailProviding {
+public struct ThumbnailLoader: ThumbnailProviding {
     /// M12: thumbnails are 400 px on the long edge.
     private static let maxPixel = 400
     /// Bounded memory: the grid only needs what is near the screen.
@@ -15,17 +15,17 @@ package struct ThumbnailLoader: ThumbnailProviding {
     private let fileSystem: any FileSystem
     private let cache = ImageCache(capacity: memoryCapacity)
 
-    package init(location: LibraryLocation, fileSystem: any FileSystem) {
+    public init(location: LibraryLocation, fileSystem: any FileSystem) {
         self.location = location
         self.fileSystem = fileSystem
     }
 
-    package func cachedThumbnail(for id: ScanID, page: Int) -> CGImage? {
+    public func cachedThumbnail(for id: ScanID, page: Int) -> CGImage? {
         cache.image(for: .init(id: id, page: page))
     }
 
     @concurrent
-    package func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
+    public func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
         let key = ImageCache.Key(id: id, page: page)
         if let hit = cache.image(for: key) { return hit }
         let signposter = LibraryLog.signposter

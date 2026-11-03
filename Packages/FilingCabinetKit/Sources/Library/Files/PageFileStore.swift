@@ -3,7 +3,7 @@ import CoreGraphics
 import Foundation
 
 /// A scan's page files: HEIC originals (`page-N.heic`) and ~400 px JPEG thumbnails (`page-N.jpg`).
-package struct PageFileStore: Sendable {
+public struct PageFileStore: Sendable {
     /// M12: originals are HEIC at 0.8.
     private static let originalQuality = 0.8
     /// M12: thumbnails are 400 px on the long edge.
@@ -12,7 +12,7 @@ package struct PageFileStore: Sendable {
     private let location: LibraryLocation
     private let fileSystem: any FileSystem
 
-    package init(location: LibraryLocation, fileSystem: any FileSystem) {
+    public init(location: LibraryLocation, fileSystem: any FileSystem) {
         self.location = location
         self.fileSystem = fileSystem
     }

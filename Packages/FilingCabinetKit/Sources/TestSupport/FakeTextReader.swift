@@ -3,7 +3,7 @@ import Synchronization
 import Understanding
 
 /// Test double: answers each `read` with the next scripted step. The last step repeats once the script runs out.
-package final class FakeTextReader: TextReader {
+public final class FakeTextReader: TextReader {
     /// One scripted answer.
     package enum Step: Sendable {
         /// Return this page, after waiting `delay`.
@@ -22,7 +22,7 @@ package final class FakeTextReader: TextReader {
     /// How many times `read` has been called.
     package var readCount: Int { calls.withLock { $0 } }
 
-    package func read(_ page: CGImage) async throws(UnderstandingError) -> PageText {
+    public func read(_ page: CGImage) async throws(UnderstandingError) -> PageText {
         calls.withLock { $0 += 1 }
         let step = script.withLock { steps -> Step in
             guard let first = steps.first else { return .page(PageText(lines: [])) }
@@ -42,7 +42,7 @@ package final class FakeTextReader: TextReader {
     }
 
     /// Always reads the synthetic receipt's three lines.
-    package static func readsCityPharmacy() -> FakeTextReader {
+    public static func readsCityPharmacy() -> FakeTextReader {
         FakeTextReader([
             .page(
                 PageText(lines: [

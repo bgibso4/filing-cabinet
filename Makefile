@@ -75,24 +75,27 @@ compare:
 	@[ -n "$(SCREEN)" ] && [ -n "$(REF)" ] || { echo "usage: make compare SCREEN=<design png stem> REF=<snapshot png>" >&2; exit 1; }
 	swift scripts/compare-snapshot.swift "$(SCREEN)" "$(REF)"
 
+# `READER=text|documents` picks the Vision reader for run, run-fake and device (Debug builds only; A12, A15).
+READER_ARGS := $(if $(READER),-TextReader $(READER))
+
 # Run on the pinned simulator.
 run: build
 	xcrun simctl boot '$(SIM_DEVICE)' 2>/dev/null || true
 	xcrun simctl install booted '$(APP_PRODUCT)'
-	xcrun simctl launch booted $(BUNDLE_ID)
+	xcrun simctl launch booted $(BUNDLE_ID) $(READER_ARGS)
 
-# Same, with the UI-test launch flags (logged analytics, no animations).
+# Same, with the UI-test launch flags: in-memory library, no animations, the fake camera, 12 seeded scans.
 run-fake: build
 	xcrun simctl boot '$(SIM_DEVICE)' 2>/dev/null || true
 	xcrun simctl install booted '$(APP_PRODUCT)'
-	xcrun simctl launch booted $(BUNDLE_ID) -UITest
+	xcrun simctl launch booted $(BUNDLE_ID) -UITest -FakeCamera 1 -SeedScans 12 $(READER_ARGS)
 
 # Build for a connected iPhone and install it. Needs the phone plugged in, unlocked and trusted.
 device: generate
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates | $(BEAUTIFY)
 	xcrun devicectl device install app --device "$(DEVICE)" '$(DEVICE_PRODUCT)'
-	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID)
+	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID) $(READER_ARGS)
 
 # The reader bake-off (A12) on this Mac: both readers on every synthetic scan. A report, not a gate.
 compare-readers: generate

@@ -3,17 +3,17 @@ import Foundation
 
 /// Where the library lives on disk: the store and originals under `root`, thumbnails under `caches`
 /// (requirements 04 · Storage). Nothing is excluded from the device backup.
-package struct LibraryLocation: Sendable {
+public struct LibraryLocation: Sendable {
     package let root: URL
     package let caches: URL
 
-    package init(root: URL, caches: URL) {
+    public init(root: URL, caches: URL) {
         self.root = root
         self.caches = caches
     }
 
     /// The SwiftData store file.
-    package var storeURL: URL { root.appending(path: "Library.store") }
+    public var storeURL: URL { root.appending(path: "Library.store") }
 
     /// `root/Originals/<uuid>/`: the scan's HEIC pages.
     package func originals(for id: ScanID) -> URL {
@@ -28,7 +28,7 @@ package struct LibraryLocation: Sendable {
     }
 
     /// Application Support and Caches in the app's container.
-    package static func standard() throws -> Self {
+    public static func standard() throws -> Self {
         let files = FileManager()
         let support = try files.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)

@@ -10,7 +10,7 @@ import SwiftData
 /// in between leaves only orphaned folders, which `removeOrphanedFiles()` clears at the next launch.
 @MainActor
 @Observable
-package final class ScanStore: ScanLibrary {
+public final class ScanStore: ScanLibrary {
     /// Every scan, newest `scannedAt` first.
     package private(set) var scans: [ScanSummary] = []
 
@@ -22,7 +22,7 @@ package final class ScanStore: ScanLibrary {
     @ObservationIgnored private var inFlight: Set<ScanID> = []
 
     /// `persist` defaults to `context.save()`; tests inject a failure.
-    package init(container: ModelContainer, files: PageFileStore, persist: ((ModelContext) throws -> Void)? = nil) {
+    public init(container: ModelContainer, files: PageFileStore, persist: ((ModelContext) throws -> Void)? = nil) {
         self.container = container
         // Every write is persisted explicitly, so a failed save can be rolled back before autosave sees it.
         container.mainContext.autosaveEnabled = false
@@ -32,7 +32,7 @@ package final class ScanStore: ScanLibrary {
     }
 
     /// The SwiftData container for the library. A nil `storeURL` keeps the store in memory.
-    package static func makeContainer(storeURL: URL?) throws -> ModelContainer {
+    public static func makeContainer(storeURL: URL?) throws -> ModelContainer {
         let schema = Schema([ScanRecord.self])
         let configuration =
             if let storeURL {
@@ -97,7 +97,7 @@ package final class ScanStore: ScanLibrary {
 
     /// Removes page folders that have no record and are not being saved right now: what a kill between
     /// writing files and inserting the record leaves behind. Anything it cannot confirm is kept.
-    package func removeOrphanedFiles() async {
+    public func removeOrphanedFiles() async {
         let stored = await files.storedScanIDs()
         var removed = 0
         for id in stored {

@@ -32,13 +32,13 @@ let package = Package(
         ),
         .target(
             name: "ScreenModels",
-            dependencies: ["Core"],
+            dependencies: ["Core", "Understanding", "Library"],
             resources: [.process("Localizable.xcstrings")],
             swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
         ),
         .target(
             name: "Screens",
-            dependencies: ["Core", "ScreenModels"],
+            dependencies: ["Core", "ScreenModels", "Library"],
             resources: [.process("Localizable.xcstrings"), .process("Resources/Tokens.xcassets")],
             swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
         ),
@@ -62,7 +62,7 @@ let package = Package(
         ),
         .testTarget(
             name: "ScreenModelsTests",
-            dependencies: ["ScreenModels", "TestSupport"],
+            dependencies: ["Core", "ScreenModels", "TestSupport"],
             swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
         ),
         // Runs on the simulator only (UIKit); it is not part of the Fast scheme.

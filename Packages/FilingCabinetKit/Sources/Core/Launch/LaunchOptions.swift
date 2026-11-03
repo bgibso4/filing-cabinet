@@ -1,0 +1,75 @@
+import Foundation
+
+/// The launch flags UI tests and `make run-fake` pass. Parsed only in Debug: a Release build passes
+/// `isDebugBuild: false` and every field keeps its default (M9). Unknown flags and missing or invalid values
+/// are ignored.
+public struct LaunchOptions: Sendable, Equatable {
+    /// `-UITest`: in-memory store, a temporary library folder, no animations.
+    public private(set) var isUITest = false
+    /// `-FakeCamera <1…3>`: the fake camera returns this many synthetic pages.
+    public private(set) var fakeCameraPages: Int?
+    /// `-CameraDenied`: camera access reports denied.
+    package private(set) var cameraDenied = false
+    /// `-FixedDate yyyy-MM-dd`: the clock stands still at noon UTC on that day.
+    public private(set) var fixedDate: Date?
+    /// `-SeedScans <n>`: saves `n` synthetic scans at launch.
+    public private(set) var seedScans: Int?
+    /// `-FailSave`: the next page write fails with a full disk.
+    public private(set) var failNextSave = false
+    /// `-FakeReader`: every page reads as the synthetic City Pharmacy receipt (M16).
+    public private(set) var fakeReader = false
+    /// `-ReduceMotion`: forces the save flight's Reduce Motion path.
+    package private(set) var reduceMotion = false
+    /// `-TextReader text|documents`: which Vision reader understands pages (A12, A15).
+    public private(set) var reader = ReaderKind.text
+
+    private static let fakeCameraRange = 1...3
+
+    public init(arguments: [String], isDebugBuild: Bool) {
+        guard isDebugBuild else { return }
+        for (index, flag) in arguments.enumerated() where !setSwitch(flag) {
+            // A value is never skipped over: if it is really the next flag, it fails to parse here and is
+            // read as a flag on its own turn.
+            let value = arguments.indices.contains(index + 1) ? arguments[index + 1] : nil
+            setValue(of: flag, to: value)
+        }
+    }
+
+    /// Sets the flag if it takes no value; false when it is not one of those.
+    private mutating func setSwitch(_ flag: String) -> Bool {
+        switch flag {
+        case "-UITest": isUITest = true
+        case "-CameraDenied": cameraDenied = true
+        case "-FailSave": failNextSave = true
+        case "-FakeReader": fakeReader = true
+        case "-ReduceMotion": reduceMotion = true
+        default: return false
+        }
+        return true
+    }
+
+    private mutating func setValue(of flag: String, to value: String?) {
+        guard let value else { return }
+        switch flag {
+        case "-FakeCamera": fakeCameraPages = Int(value).flatMap { Self.fakeCameraRange ~= $0 ? $0 : nil }
+        case "-FixedDate": fixedDate = Self.noonUTC(value)
+        case "-SeedScans": seedScans = Int(value).flatMap { $0 >= 0 ? $0 : nil }
+        case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
+        default: break
+        }
+    }
+
+    /// `yyyy-MM-dd` at 12:00 UTC, or nil when it is not a real day.
+    private static func noonUTC(_ text: String) -> Date? {
+        let parts = text.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.count == 3, let year = Int(parts[0]), let month = Int(parts[1]), let day = Int(parts[2]),
+            (1...12).contains(month), (1...31).contains(day),
+            let storageDay = CalendarDay(storageValue: year * 10_000 + month * 100 + day)
+        else { return nil }
+        var utc = Calendar(identifier: .gregorian)
+        guard let zone = TimeZone(secondsFromGMT: 0) else { return nil }
+        utc.timeZone = zone
+        return utc.date(
+            from: DateComponents(year: storageDay.year, month: storageDay.month, day: storageDay.day, hour: 12))
+    }
+}
