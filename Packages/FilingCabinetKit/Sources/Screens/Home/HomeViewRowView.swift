@@ -82,7 +82,7 @@ struct HomeViewRowView: View {
 
     private var badge: some View {
         Circle()
-            .fill(Tokens.Color.textSecondary)
+            .fill(Tokens.Color.badgeNeutral)
             .frame(width: Self.diameter, height: Self.diameter)
             .overlay {
                 Image(systemName: symbol)
