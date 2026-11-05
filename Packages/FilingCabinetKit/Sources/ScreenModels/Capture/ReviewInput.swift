@@ -3,7 +3,7 @@ import CoreGraphics
 import Foundation
 
 /// What the camera hands to review: the pages (M19) and where the scan came from.
-package struct ReviewInput: Equatable {
+public struct ReviewInput: Equatable {
     package let pages: [CGImage]
     /// The collection the scan was started from (a grid's Scan), if any.
     package let preselected: BuiltInCollection?

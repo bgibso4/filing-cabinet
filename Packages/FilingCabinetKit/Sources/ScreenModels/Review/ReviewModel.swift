@@ -1,0 +1,304 @@
+import Core
+import CoreGraphics
+import Foundation
+import Library
+import Observation
+import Understanding
+
+/// The review sheet after the camera: the pages, the title (read from page 1 unless typed), the collection and
+/// expiry, then save or discard. Reading runs once per page set; save waits for it at most `readingWaitLimit` and
+/// adds the search text afterwards if it was still reading (M2).
+@Observable
+public final class ReviewModel {
+    package private(set) var pages: [CGImage]
+    /// 0-based.
+    package var currentPage = 0
+    package private(set) var title: String
+    /// "Scan · Oct 12": what a scan with no readable title, or a cleared one, is called (A5, M3).
+    package let fallbackTitle: String
+    package private(set) var collection: BuiltInCollection?
+    package private(set) var expiryOverride: ExpiryOverride?
+    package private(set) var isSaving = false
+    package private(set) var saveAlert: SaveAlert?
+    /// What reading the current pages found; nil until it finishes.
+    private var finishedReading: ScanReading?
+
+    @ObservationIgnored private let input: ReviewInput
+    @ObservationIgnored private let reader: ScanReader
+    @ObservationIgnored private let library: any ScanLibrary
+    @ObservationIgnored private let clock: AppClock
+    @ObservationIgnored private let analytics: any Analytics
+    @ObservationIgnored private let readingWaitLimit: Duration
+    /// One id for the whole review, so a retried save is the same scan.
+    @ObservationIgnored private let id = ScanID()
+    /// True once the user has typed in the title field; reading never overwrites it then.
+    @ObservationIgnored private var isTitleEdited = false
+    /// Reading of the current pages; replaced (and the old one cancelled) when a rescan replaces them.
+    @ObservationIgnored private var reading: Task<ScanReading, Never>?
+
+    public init(
+        input: ReviewInput,
+        reader: ScanReader,
+        library: any ScanLibrary,
+        clock: AppClock,
+        analytics: any Analytics,
+        readingWaitLimit: Duration
+    ) {
+        self.input = input
+        self.reader = reader
+        self.library = library
+        self.clock = clock
+        self.analytics = analytics
+        self.readingWaitLimit = readingWaitLimit
+        pages = input.pages
+        collection = input.preselected
+        fallbackTitle = Self.fallbackTitle(scannedAt: input.scannedAt, clock: clock)
+        title = fallbackTitle
+    }
+
+    // MARK: Pages
+
+    /// "1 page", or "Page 2 of 3" with more than one.
+    package var pageCountText: String {
+        pages.count == 1 ? String(localized: "\(1) pages", bundle: #bundle) : pageAccessibilityLabel
+    }
+
+    /// "Page 2 of 3".
+    package var pageAccessibilityLabel: String {
+        String(localized: "Page \(currentPage + 1) of \(pages.count)", bundle: #bundle)
+    }
+
+    // MARK: Title
+
+    package func editTitle(_ text: String) {
+        title = text
+        isTitleEdited = true
+    }
+
+    // MARK: Collection
+
+    /// "Collection · required" until one is chosen.
+    package var collectionLabel: String {
+        collection == nil
+            ? String(localized: "Collection · required", bundle: #bundle)
+            : String(localized: "Collection", bundle: #bundle)
+    }
+
+    package var collectionValue: String {
+        collection.map(CollectionText.name) ?? String(localized: "Choose a collection", bundle: #bundle)
+    }
+
+    package var collectionOptions: [CollectionOption] {
+        BuiltInCollection.allCases.map {
+            CollectionOption(
+                collection: $0, name: CollectionText.name($0), lifespan: CollectionText.lifespanShort($0.lifespan))
+        }
+    }
+
+    package func choose(_ collection: BuiltInCollection) {
+        self.collection = collection
+    }
+
+    // MARK: Expiry
+
+    package var isExpiryEnabled: Bool { collection != nil }
+
+    /// "Set by the collection" until a collection is chosen, then "3 months · until Jan 9, 2027".
+    package var expiryValue: String {
+        guard let collection else { return String(localized: "Set by the collection", bundle: #bundle) }
+        return ExpiryText.reviewValue(
+            collection: collection, override: expiryOverride, scanDay: scanDay, today: clock.today, clock: clock)
+    }
+
+    /// The collection default first, then every lifespan, shortest first and Forever last (07-06). Empty until a
+    /// collection is chosen. The scan day is today, so no choice has passed.
+    package var expiryOptions: [ExpiryOption] {
+        guard let collection else { return [] }
+        let defaultOption = ExpiryOption(
+            label: String(localized: "\(CollectionText.name(collection)) default", bundle: #bundle),
+            detail: expiryDetail(collection: collection, override: nil),
+            override: nil,
+            isSelected: expiryOverride == nil
+        )
+        return [defaultOption]
+            + Lifespan.allCases.map { lifespan in
+                let override = ExpiryOverride.lifespan(lifespan)
+                return ExpiryOption(
+                    label: lifespan == .forever
+                        ? String(localized: "Forever", bundle: #bundle) : CollectionText.lifespanShort(lifespan),
+                    detail: expiryDetail(collection: collection, override: override),
+                    override: override,
+                    isSelected: expiryOverride == override
+                )
+            }
+    }
+
+    /// The first day "Choose a date…" offers: today.
+    package var earliestCustomDate: Date { clock.today.date(in: clock.calendar) }
+
+    package func chooseExpiry(_ override: ExpiryOverride?) {
+        expiryOverride = override
+    }
+
+    /// Keeps the scan through the end of `date`'s day. A day before today is refused.
+    package func chooseExpiryDate(_ date: Date) {
+        let day = CalendarDay(date, in: clock.calendar)
+        guard day >= clock.today else { return }
+        expiryOverride = .lastDay(day)
+    }
+
+    // MARK: Save
+
+    package var canSave: Bool { collection != nil && !isSaving }
+
+    /// "Save", or "Save to Receipts" once a collection is chosen.
+    package var saveTitle: String {
+        guard let collection else { return String(localized: "Save", bundle: #bundle) }
+        return String(localized: "Save to \(CollectionText.name(collection))", bundle: #bundle)
+    }
+
+    /// Saves the scan, waiting at most `readingWaitLimit` for reading. Saved before reading ends, the scan gets its
+    /// search text once reading does (M2). Nil when there is nothing to save yet or the save failed (`saveAlert`).
+    package func save() async -> SavedScan? {
+        guard let collection, !isSaving else { return nil }
+        isSaving = true
+        defer { isSaving = false }
+        let task = reading ?? beginReading()
+        let found = await readingResult(within: readingWaitLimit)
+        let draft = ScanDraft(
+            id: id,
+            title: savedTitle,
+            collection: collection,
+            scannedAt: input.scannedAt,
+            expiryOverride: expiryOverride,
+            pages: pages,
+            searchText: found?.searchText
+        )
+        do {
+            try await library.save(draft)
+        } catch {
+            saveAlert = SaveAlert(error)
+            analytics.send(.saveFailed(reason: error == .diskFull ? .diskFull : .writeFailed))
+            return nil
+        }
+        analytics.send(.scanSaved(pageCount: pages.count, collection: collection))
+        if found == nil {
+            // Only now does the record exist, so the text can't be dropped for want of one (M2).
+            Task { [library, id] in library.updateSearchText(await task.value.searchText, for: id) }
+        }
+        return SavedScan(
+            id: id,
+            collection: collection,
+            source: input.source,
+            preselected: input.preselected,
+            announcement: String(localized: "Saved to \(CollectionText.name(collection))", bundle: #bundle)
+        )
+    }
+
+    /// The alert's Try again.
+    package func retrySave() async -> SavedScan? {
+        saveAlert = nil
+        return await save()
+    }
+
+    /// The alert's Not now: the pages stay in review.
+    package func dismissSaveAlert() {
+        saveAlert = nil
+    }
+
+    // MARK: Discard
+
+    /// "The page you just scanned won’t be saved." / "The 3 pages you just scanned won’t be saved."
+    package var discardMessage: String {
+        String(localized: "The \(pages.count) pages you just scanned won’t be saved.", bundle: #bundle)
+    }
+
+    package func discard() {
+        reading?.cancel()
+        analytics.send(.scanCancelled(stage: .review))
+    }
+
+    // MARK: Reading
+
+    /// Reads the pages, once per page set, and returns when reading has finished.
+    package func startReading() async {
+        _ = await (reading ?? beginReading()).value
+    }
+
+    /// A finished rescan: its pages replace these, and they are read afresh. A title the user hasn't typed goes
+    /// back to the fallback until the new pages are read.
+    package func replacePages(_ pages: [CGImage]) {
+        reading?.cancel()
+        self.pages = pages
+        currentPage = 0
+        finishedReading = nil
+        if !isTitleEdited { title = fallbackTitle }
+        beginReading()
+    }
+
+    // MARK: Private
+
+    private static func fallbackTitle(scannedAt: Date, clock: AppClock) -> String {
+        let day = CalendarDay(scannedAt, in: clock.calendar)
+        // The scan day as "Oct 12"; passing it as today keeps the year off.
+        return String(localized: "Scan · \(ExpiryText.untilDate(day, today: day, clock: clock))", bundle: #bundle)
+    }
+
+    private var scanDay: CalendarDay { CalendarDay(input.scannedAt, in: clock.calendar) }
+
+    /// The typed or read title, or the fallback when it's blank (M3).
+    private var savedTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? fallbackTitle : trimmed
+    }
+
+    /// The until-date an expiry choice gives, or "Never expires".
+    private func expiryDetail(collection: BuiltInCollection, override: ExpiryOverride?) -> String {
+        let lastDay = Expiry.lastDay(
+            scanDay: scanDay, collectionLifespan: collection.lifespan, override: override, in: clock.calendar)
+        guard let lastDay else { return String(localized: "Never expires", bundle: #bundle) }
+        return ExpiryText.untilDate(lastDay, today: clock.today, clock: clock)
+    }
+
+    @discardableResult
+    private func beginReading() -> Task<ScanReading, Never> {
+        let task = Task { [reader, pages] in
+            let found = await reader.read(pages)
+            // A cancelled reading belongs to pages a rescan replaced; its result is dropped.
+            if !Task.isCancelled { readingFinished(found) }
+            return found
+        }
+        reading = task
+        return task
+    }
+
+    private func readingFinished(_ found: ScanReading) {
+        finishedReading = found
+        if !isTitleEdited { title = found.title ?? fallbackTitle }
+        if found.failedPages > 0 { analytics.send(.textReadingFailed(failedPages: found.failedPages)) }
+    }
+
+    /// What reading found, or nil if it hasn't finished within `limit`. Awaiting `Task.value` ignores cancellation,
+    /// so the task group would wait for the loser; the race watches `finishedReading`, which stops when cancelled.
+    private func readingResult(within limit: Duration) async -> ScanReading? {
+        await withTaskGroup(of: ScanReading?.self) { group in
+            group.addTask { await self.nextFinishedReading() }
+            group.addTask {
+                // A cancelled sleep only means reading won the race.
+                try? await ContinuousClock().sleep(for: limit)
+                return nil
+            }
+            defer { group.cancelAll() }
+            guard let first = await group.next() else { return nil }
+            return first
+        }
+    }
+
+    /// The finished reading, as soon as there is one; nil if cancelled first.
+    private func nextFinishedReading() async -> ScanReading? {
+        for await found in Observations({ self.finishedReading }) {
+            if let found { return found }
+        }
+        return nil
+    }
+}

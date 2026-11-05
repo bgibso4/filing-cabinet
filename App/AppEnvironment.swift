@@ -29,8 +29,6 @@ final class AppEnvironment {
     @ObservationIgnored let clock: AppClock
     @ObservationIgnored let today: Today
     @ObservationIgnored let store: ScanStore
-    /// Read by the review (Task 14); built here so the reader flags apply from launch.
-    @ObservationIgnored let scanReader: ScanReader
     @ObservationIgnored let lifecycle: AppLifecycleModel
     @ObservationIgnored let root: RootDependencies
     @ObservationIgnored private let options: LaunchOptions
@@ -39,6 +37,9 @@ final class AppEnvironment {
     private(set) var isReady = false
     /// Set by the first `launch()`, so a rebuilt scene doesn't clean up or seed again.
     @ObservationIgnored private var hasLaunched = false
+
+    /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
+    private static let readingWaitLimit = Duration.seconds(1)
 
     private init(options: LaunchOptions) {
         self.options = options
@@ -56,11 +57,26 @@ final class AppEnvironment {
         let today = Today(clock: clock)
         self.today = today
         self.store = store
-        scanReader = Self.makeScanReader(options: options)
+        // Built here so the reader flags apply from launch.
+        let scanReader = Self.makeScanReader(options: options)
         lifecycle = AppLifecycleModel(analytics: analytics)
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar),
-            flow: ScanFlowModel(cameraAccess: Self.cameraAccess(options: options), clock: clock, analytics: analytics),
+            flow: ScanFlowModel(
+                cameraAccess: Self.cameraAccess(options: options),
+                clock: clock,
+                analytics: analytics,
+                makeReview: { input in
+                    ReviewModel(
+                        input: input,
+                        reader: scanReader,
+                        library: store,
+                        clock: clock,
+                        analytics: analytics,
+                        readingWaitLimit: Self.readingWaitLimit
+                    )
+                }
+            ),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options)

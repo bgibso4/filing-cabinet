@@ -4,6 +4,7 @@ import Foundation
 import Synchronization
 import TestSupport
 import Testing
+import Understanding
 
 @testable import ScreenModels
 
@@ -12,12 +13,25 @@ private struct Harness {
     let analytics = RecordingAnalytics()
     let model: ScanFlowModel
     static let now = Date(timeIntervalSince1970: 1_791_806_400)
+    static let clock = AppClock.fixed(now, calendar: Calendar(identifier: .gregorian))
+
+    static func makeReview(_ input: ReviewInput) -> ReviewModel {
+        ReviewModel(
+            input: input,
+            reader: ScanReader(reader: FakeTextReader([])),
+            library: FakeLibrary(),
+            clock: clock,
+            analytics: RecordingAnalytics(),
+            readingWaitLimit: .seconds(1)
+        )
+    }
 
     init(_ status: CameraAuthorization, grants: Bool = false) {
         model = ScanFlowModel(
             cameraAccess: FakeCameraAccess(status: status, grantsOnRequest: grants),
-            clock: .fixed(Self.now, calendar: Calendar(identifier: .gregorian)),
-            analytics: analytics
+            clock: Self.clock,
+            analytics: analytics,
+            makeReview: Self.makeReview
         )
     }
 
@@ -166,10 +180,7 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     let analytics = RecordingAnalytics()
     let access = PromptingCameraAccess()
     let model = ScanFlowModel(
-        cameraAccess: access,
-        clock: .fixed(Harness.now, calendar: Calendar(identifier: .gregorian)),
-        analytics: analytics
-    )
+        cameraAccess: access, clock: Harness.clock, analytics: analytics, makeReview: Harness.makeReview)
     let first = Task { await model.scan(from: .home, preselected: nil) }
     while access.requests == 0 { await Task.yield() }
 

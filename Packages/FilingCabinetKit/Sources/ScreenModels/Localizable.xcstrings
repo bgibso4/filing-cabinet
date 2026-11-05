@@ -73,6 +73,45 @@
         }
       }
     },
+    "%lld pages" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld page" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld pages" } }
+            }
+          }
+        }
+      }
+    },
+    "The %lld pages you just scanned won’t be saved." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "The page you just scanned won’t be saved." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "The %lld pages you just scanned won’t be saved." } }
+            }
+          }
+        }
+      }
+    },
+    "Page %lld of %lld" : {},
+    "Scan · %@" : {},
+    "Collection · required" : {},
+    "Collection" : {},
+    "Choose a collection" : {},
+    "Set by the collection" : {},
+    "%@ default" : {},
+    "Forever" : {},
+    "Never expires" : {},
+    "Save" : {},
+    "Save to %@" : {},
+    "Saved to %@" : {},
+    "Couldn’t save this scan" : {},
+    "Your iPhone is out of space. Free some up, then try again. Your pages are still here." : {},
+    "Something went wrong. Your pages are still here." : {},
     "%@ · until %@" : {},
     "Until %@" : {},
     "Kept %@" : {},

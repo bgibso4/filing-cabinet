@@ -17,20 +17,29 @@ public final class ScanFlowModel {
 
     package private(set) var phase = Phase.idle
     package private(set) var reviewInput: ReviewInput?
+    /// The review of `reviewInput`, made when the first camera finishes and kept through rescans.
+    package private(set) var review: ReviewModel?
 
     @ObservationIgnored private let cameraAccess: any CameraAccess
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
+    @ObservationIgnored private let makeReview: (ReviewInput) -> ReviewModel
     /// Where the scan in progress started; set by `scan`, read when the first camera finishes.
     @ObservationIgnored private var source = ScanSource.home
     @ObservationIgnored private var preselected: BuiltInCollection?
     /// True while the system asks for camera access.
     @ObservationIgnored private var isAskingForCamera = false
 
-    public init(cameraAccess: any CameraAccess, clock: AppClock, analytics: any Analytics) {
+    public init(
+        cameraAccess: any CameraAccess,
+        clock: AppClock,
+        analytics: any Analytics,
+        makeReview: @escaping (ReviewInput) -> ReviewModel
+    ) {
         self.cameraAccess = cameraAccess
         self.clock = clock
         self.analytics = analytics
+        self.makeReview = makeReview
     }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
@@ -62,9 +71,14 @@ public final class ScanFlowModel {
 
     /// The first camera's pages start review; a rescan's replace the pages under review.
     package func cameraFinished(_ pages: [CGImage]) {
-        reviewInput =
-            reviewInput?.replacingPages(pages)
-            ?? ReviewInput(pages: pages, preselected: preselected, scannedAt: clock.now(), source: source)
+        if let reviewInput, let review {
+            self.reviewInput = reviewInput.replacingPages(pages)
+            review.replacePages(pages)
+        } else {
+            let input = ReviewInput(pages: pages, preselected: preselected, scannedAt: clock.now(), source: source)
+            reviewInput = input
+            review = makeReview(input)
+        }
         phase = .review
     }
 
@@ -91,6 +105,7 @@ public final class ScanFlowModel {
     /// Review saved or discarded the scan.
     package func reviewEnded() {
         reviewInput = nil
+        review = nil
         phase = .idle
     }
 

@@ -50,3 +50,10 @@ private func draft(scannedAt seconds: TimeInterval) -> ScanDraft {
     try await fake.save(next)
     #expect(fake.scans.map(\.id) == [next.id])
 }
+
+@MainActor
+@Test func fakeLibraryDropsSearchTextForAnUnsavedScanLikeTheStore() {
+    let fake = FakeLibrary()
+    fake.updateSearchText("corner market", for: ScanID())
+    #expect(fake.searchTextUpdates.isEmpty)
+}
