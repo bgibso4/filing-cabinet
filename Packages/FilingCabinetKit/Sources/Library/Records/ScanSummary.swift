@@ -2,15 +2,15 @@ import Core
 import Foundation
 
 /// A Sendable snapshot of one scan, safe to hand across isolation and to the screens.
-package struct ScanSummary: Sendable, Hashable, Identifiable {
-    package let id: ScanID
+public struct ScanSummary: Sendable, Hashable, Identifiable {
+    public let id: ScanID
     package let title: String
     package let collection: BuiltInCollection
     package let scannedAt: Date
     package let expiryOverride: ExpiryOverride?
     package let pageCount: Int
 
-    package init(
+    public init(
         id: ScanID,
         title: String,
         collection: BuiltInCollection,

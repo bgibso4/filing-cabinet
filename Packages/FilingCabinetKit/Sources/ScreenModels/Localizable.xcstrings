@@ -90,6 +90,7 @@
     "Short-lived scraps go here, like a coat-check tag. Each one is kept a week." : {},
     "Scans from the last 30 days show up here." : {},
     "Every scan shows up here, newest first." : {},
+    "All Scans" : {},
     "Documents" : {},
     "Forms and letters" : {},
     "Handwritten notes" : {},
@@ -98,6 +99,7 @@
     "Notes" : {},
     "Purchase receipts" : {},
     "Receipts" : {},
+    "Recent" : {},
     "Short-lived scraps" : {},
     "Throwaways" : {},
     "Wallet" : {}

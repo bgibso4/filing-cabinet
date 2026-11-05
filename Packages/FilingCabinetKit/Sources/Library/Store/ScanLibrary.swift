@@ -2,7 +2,7 @@ import Core
 
 /// The saved scans as the screens see them. `ScanStore` is the real one; `FakeLibrary` stands in for tests.
 @MainActor
-package protocol ScanLibrary: AnyObject {
+public protocol ScanLibrary: AnyObject {
     /// Every scan, newest `scannedAt` first.
     var scans: [ScanSummary] { get }
 

@@ -5,7 +5,7 @@ import Synchronization
 
 /// Serves preloaded thumbnails from both methods and records every request, so performance tests can
 /// assert which pages a grid asked for.
-package final class FakeThumbnails: ThumbnailProviding {
+public final class FakeThumbnails: ThumbnailProviding {
     private struct State {
         var images: [ScanID: [Int: CGImage]]
         var requests: [FakeImageRequest] = []
@@ -14,7 +14,7 @@ package final class FakeThumbnails: ThumbnailProviding {
     private let state: Mutex<State>
 
     /// `images[id][page]` is the thumbnail for that page.
-    package init(images: [ScanID: [Int: CGImage]] = [:]) {
+    public init(images: [ScanID: [Int: CGImage]] = [:]) {
         state = Mutex(State(images: images))
     }
 
@@ -31,11 +31,11 @@ package final class FakeThumbnails: ThumbnailProviding {
         return seen
     }
 
-    package func cachedThumbnail(for id: ScanID, page: Int) -> CGImage? {
+    public func cachedThumbnail(for id: ScanID, page: Int) -> CGImage? {
         serve(id, page, .cached)
     }
 
-    package func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
+    public func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
         serve(id, page, .loaded)
     }
 

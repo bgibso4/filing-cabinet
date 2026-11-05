@@ -4,7 +4,7 @@ import Library
 import Synchronization
 
 /// Serves preloaded pages from both methods and records every request.
-package final class FakePageImages: PageImageProviding {
+public final class FakePageImages: PageImageProviding {
     private struct State {
         var images: [ScanID: [Int: CGImage]]
         var requests: [FakeImageRequest] = []
@@ -13,7 +13,7 @@ package final class FakePageImages: PageImageProviding {
     private let state: Mutex<State>
 
     /// `images[id][index]` is the image for that page.
-    package init(images: [ScanID: [Int: CGImage]] = [:]) {
+    public init(images: [ScanID: [Int: CGImage]] = [:]) {
         state = Mutex(State(images: images))
     }
 
@@ -30,11 +30,11 @@ package final class FakePageImages: PageImageProviding {
         return seen
     }
 
-    package func cachedPage(for id: ScanID, index: Int) -> CGImage? {
+    public func cachedPage(for id: ScanID, index: Int) -> CGImage? {
         serve(id, index, .cached)
     }
 
-    package func page(for id: ScanID, index: Int) async -> CGImage? {
+    public func page(for id: ScanID, index: Int) async -> CGImage? {
         serve(id, index, .loaded)
     }
 

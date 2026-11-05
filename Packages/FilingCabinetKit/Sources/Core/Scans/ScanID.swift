@@ -4,7 +4,7 @@ import Foundation
 public struct ScanID: Sendable, Hashable, Codable {
     package let uuid: UUID
 
-    package init() {
+    public init() {
         self.init(uuid: UUID())
     }
 

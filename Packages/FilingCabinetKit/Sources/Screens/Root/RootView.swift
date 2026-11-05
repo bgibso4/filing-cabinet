@@ -5,7 +5,6 @@ import SwiftUI
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top.
 public struct RootView: View {
     private let dependencies: RootDependencies
-    // periphery:ignore - only bound so far: Home's rows push onto it from Task 12.
     @State private var path: [AppRoute] = []
 
     public init(dependencies: RootDependencies) {
@@ -14,19 +13,30 @@ public struct RootView: View {
 
     public var body: some View {
         NavigationStack(path: $path) {
-            HomeView(model: dependencies.home, onScan: {})
+            HomeView(model: dependencies.home, onScan: {}, onOpen: { path.append($0) })
                 // Home draws its own large title (Home.dc.html); pushed screens bring their own headers.
                 .toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(for: AppRoute.self, destination: destination)
         }
     }
 
-    /// Nothing pushes yet: Home's rows (Task 12), the grid (Task 16) and the viewer (Task 17) fill these in.
+    /// Placeholders until the grid (Task 16) and the viewer (Task 17) fill these in.
     @ViewBuilder
     private func destination(_ route: AppRoute) -> some View {
         switch route {
-        case .collection, .recent, .all, .scan:
+        case .collection(let collection):
+            placeholder(CollectionText.name(collection))
+        case .recent:
+            placeholder(CollectionText.recent)
+        case .all:
+            placeholder(CollectionText.allScans)
+        case .scan:
             Tokens.Color.bgGrouped.ignoresSafeArea()
         }
+    }
+
+    private func placeholder(_ name: String) -> some View {
+        Text(name)
+            .accessibilityIdentifier(AccessibilityID.Grid.header)
     }
 }

@@ -51,12 +51,13 @@ final class AppEnvironment {
         )
         self.analytics = analytics
         self.clock = clock
-        today = Today(clock: clock)
+        let today = Today(clock: clock)
+        self.today = today
         self.store = store
         scanReader = Self.makeScanReader(options: options)
         lifecycle = AppLifecycleModel(analytics: analytics)
         root = RootDependencies(
-            home: HomeModel(),
+            home: HomeModel(library: store, today: today, calendar: clock.calendar),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options)

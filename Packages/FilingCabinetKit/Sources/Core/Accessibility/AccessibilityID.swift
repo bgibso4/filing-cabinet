@@ -15,8 +15,16 @@ public enum AccessibilityID {
         }
     }
 
+    public enum Grid {
+        public static let header = "grid.header"
+
+        public static var all: [String] {
+            [header]
+        }
+    }
+
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
-        Home.all
+        Home.all + Grid.all
     }
 }

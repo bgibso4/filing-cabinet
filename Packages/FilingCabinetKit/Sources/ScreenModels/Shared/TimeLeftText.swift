@@ -5,8 +5,11 @@ import Foundation
 enum TimeLeftText {
     static func text(_ left: TimeLeft) -> String {
         switch left {
-        case .forever, .expired:
+        case .forever:
             String(localized: "Kept forever", bundle: #bundle)
+        case .expired:
+            // Hidden everywhere, but a viewer left open across midnight can reach it. Never claim permanence.
+            String(localized: "\(0) days left", bundle: #bundle)
         case .days(let days) where days >= 365:
             String(localized: "\(days / 365) years left", bundle: #bundle)
         case .days(let days) where days >= 60:

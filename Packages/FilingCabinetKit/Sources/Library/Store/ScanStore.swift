@@ -12,7 +12,7 @@ import SwiftData
 @Observable
 public final class ScanStore: ScanLibrary {
     /// Every scan, newest `scannedAt` first.
-    package private(set) var scans: [ScanSummary] = []
+    public private(set) var scans: [ScanSummary] = []
 
     /// Held so the main context keeps working: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
@@ -43,7 +43,7 @@ public final class ScanStore: ScanLibrary {
         return try ModelContainer(for: schema, configurations: configuration)
     }
 
-    package func save(_ draft: ScanDraft) async throws(LibraryError) {
+    public func save(_ draft: ScanDraft) async throws(LibraryError) {
         let signpost = LibraryLog.signposter.beginInterval("Scan to saved", id: LibraryLog.signposter.makeSignpostID())
         defer { LibraryLog.signposter.endInterval("Scan to saved", signpost) }
         let scanID = draft.id.uuid.uuidString
@@ -78,7 +78,7 @@ public final class ScanStore: ScanLibrary {
         reloadScans()
     }
 
-    package func updateSearchText(_ text: String, for id: ScanID) {
+    public func updateSearchText(_ text: String, for id: ScanID) {
         let scanID = id.uuid.uuidString
         guard let record = record(for: id) else {
             LibraryLog.logger.error("No record for scan \(scanID, privacy: .public) to add search text to")

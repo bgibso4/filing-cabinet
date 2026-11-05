@@ -2,7 +2,7 @@ import Foundation
 
 /// Why the library could not save. ENOSPC and `CocoaError.fileWriteOutOfSpace` are `.diskFull`;
 /// everything else is `.writeFailed`.
-package enum LibraryError: Error, Equatable {
+public enum LibraryError: Error, Equatable {
     case diskFull
     case writeFailed
 

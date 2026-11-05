@@ -3,7 +3,7 @@ import CoreGraphics
 import Foundation
 
 /// A scan ready to save: everything the store needs to write its files and record.
-package struct ScanDraft: Sendable {
+public struct ScanDraft: Sendable {
     package let id: ScanID
     package let title: String
     package let collection: BuiltInCollection

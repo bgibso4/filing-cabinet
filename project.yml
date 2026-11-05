@@ -72,6 +72,10 @@ targets:
         excludes:
           - "**/.DS_Store"
           - "**/__Snapshots__/**"
+      # The fixtures' sample scans (synthetic, from the design prototype).
+      - path: design/prototype/scans
+        includes: ["*.jpg"]
+        buildPhase: resources
     dependencies:
       # Screens and ScreenModels come from the host app (TEST_HOST): linking them again would build the
       # package products as dynamic frameworks and break the unhosted package tests' resource bundles.

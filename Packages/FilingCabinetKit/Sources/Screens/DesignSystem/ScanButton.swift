@@ -28,6 +28,9 @@ struct ScanButton: View {
             .padding(.horizontal, Self.horizontalPadding)
             .frame(minHeight: min(scaledHeight, Self.maxHeight))
             .background(Tokens.Color.tint, in: .capsule)
+            // One element for the whole pill, so the audit measures the text against the pill and not against a
+            // frame that is exactly the glyphs.
+            .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(AccessibilityID.Home.scan)

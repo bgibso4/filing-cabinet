@@ -2,8 +2,12 @@ import Core
 import Foundation
 
 /// Every collection string: names, descriptions, lifespans and empty states.
-enum CollectionText {
-    static func name(_ collection: BuiltInCollection) -> String {
+package enum CollectionText {
+    /// The names of Home's two views.
+    package static var recent: String { String(localized: "Recent", bundle: #bundle) }
+    package static var allScans: String { String(localized: "All Scans", bundle: #bundle) }
+
+    package static func name(_ collection: BuiltInCollection) -> String {
         switch collection {
         case .wallet: String(localized: "Wallet", bundle: #bundle)
         case .receipts: String(localized: "Receipts", bundle: #bundle)

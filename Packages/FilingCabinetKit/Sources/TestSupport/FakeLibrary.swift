@@ -5,9 +5,9 @@ import Observation
 /// Test double for `ScanLibrary`: keeps scans in memory and throws exactly what the real store throws.
 @MainActor
 @Observable
-package final class FakeLibrary: ScanLibrary {
+public final class FakeLibrary: ScanLibrary {
     /// Every scan, newest `scannedAt` first, like the real store.
-    package private(set) var scans: [ScanSummary]
+    public private(set) var scans: [ScanSummary]
     /// Thrown by the next `save`, which then keeps nothing, as the real store does.
     package var failNextSave: LibraryError?
     /// Every successfully saved draft, in save order.
@@ -15,11 +15,11 @@ package final class FakeLibrary: ScanLibrary {
     /// The latest search text per scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
 
-    package init(scans: [ScanSummary] = []) {
+    public init(scans: [ScanSummary] = []) {
         self.scans = scans.sorted { $0.scannedAt > $1.scannedAt }
     }
 
-    package func save(_ draft: ScanDraft) async throws(LibraryError) {
+    public func save(_ draft: ScanDraft) async throws(LibraryError) {
         if let failure = failNextSave {
             failNextSave = nil
             throw failure
@@ -37,7 +37,7 @@ package final class FakeLibrary: ScanLibrary {
         scans.sort { $0.scannedAt > $1.scannedAt }
     }
 
-    package func updateSearchText(_ text: String, for id: ScanID) {
+    public func updateSearchText(_ text: String, for id: ScanID) {
         searchTextUpdates[id] = text
     }
 }
