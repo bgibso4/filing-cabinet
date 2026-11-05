@@ -73,9 +73,9 @@ struct ReviewHarness {
         )
     }
 
-    /// The search text added after the save, waiting up to 5 s for it.
-    func laterSearchText(for id: ScanID) async -> String? {
-        let deadline = ContinuousClock.now + .seconds(5)
+    /// The search text added after the save, waiting up to `limit` for it.
+    func laterSearchText(for id: ScanID, within limit: Duration = .seconds(5)) async -> String? {
+        let deadline = ContinuousClock.now + limit
         while library.searchTextUpdates[id] == nil, ContinuousClock.now < deadline { await Task.yield() }
         return library.searchTextUpdates[id]
     }

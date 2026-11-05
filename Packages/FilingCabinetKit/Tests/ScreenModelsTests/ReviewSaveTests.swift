@@ -53,6 +53,59 @@ func readingThatEndsDuringTheSaveStillAddsText() async throws {
     #expect(await harness.laterSearchText(for: try #require(saved?.id)) == "CITY PHARMACY\nTOTAL 12.40")
 }
 
+/// Two pages, the first read slowly, so a reading cancelled mid-way would leave only page 1's text.
+@MainActor
+private func slowTwoPageReview() -> ReviewHarness {
+    ReviewHarness(
+        pages: [ReviewHarness.page1, ReviewHarness.page2],
+        preselected: .receipts,
+        reads: [.page(ReviewHarness.pharmacy, delay: .milliseconds(300)), .page(ReviewHarness.market)],
+        readingWaitLimit: .milliseconds(10)
+    )
+}
+
+private let bothPagesText = "CITY PHARMACY\nTOTAL 12.40\nCORNER MARKET"
+
+@Test(.timeLimit(.minutes(1)))
+func discardDuringASaveIsIgnored() async throws {
+    let harness = slowTwoPageReview()
+    harness.library.saveDelay = .milliseconds(100)
+    let saving = Task { await harness.model.save() }
+    while !harness.model.isSaving { await Task.yield() }
+
+    harness.model.discard()
+    let saved = await saving.value
+
+    #expect(!harness.analytics.events.contains(.scanCancelled(stage: .review)))
+    #expect(await harness.laterSearchText(for: try #require(saved?.id)) == bothPagesText)
+}
+
+@Test(.timeLimit(.minutes(1)))
+func replacingPagesDuringASaveIsIgnored() async throws {
+    let harness = slowTwoPageReview()
+    harness.library.saveDelay = .milliseconds(100)
+    let saving = Task { await harness.model.save() }
+    while !harness.model.isSaving { await Task.yield() }
+
+    harness.model.replacePages([ReviewHarness.page3])
+    let saved = await saving.value
+
+    #expect(harness.model.pages == [ReviewHarness.page1, ReviewHarness.page2])
+    #expect(harness.library.saved.first?.pages == [ReviewHarness.page1, ReviewHarness.page2])
+    #expect(await harness.laterSearchText(for: try #require(saved?.id)) == bothPagesText)
+}
+
+@Test(.timeLimit(.minutes(1)))
+func readingCancelledAfterTheSaveAddsNoText() async throws {
+    let harness = slowTwoPageReview()
+    let saved = await harness.model.save()
+
+    // Cancelled reading stops after page 1; its partial text must not reach the saved scan.
+    harness.model.discard()
+
+    #expect(await harness.laterSearchText(for: try #require(saved?.id), within: .seconds(1)) == nil)
+}
+
 @Test(.timeLimit(.minutes(1)))
 func savedDraftCarriesEverything() async {
     let harness = ReviewHarness(

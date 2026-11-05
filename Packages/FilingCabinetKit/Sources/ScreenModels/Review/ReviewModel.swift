@@ -183,8 +183,13 @@ public final class ReviewModel {
         }
         analytics.send(.scanSaved(pageCount: pages.count, collection: collection))
         if found == nil {
-            // Only now does the record exist, so the text can't be dropped for want of one (M2).
-            Task { [library, id] in library.updateSearchText(await task.value.searchText, for: id) }
+            // Only now does the record exist, so the text can't be dropped for want of one (M2). A cancelled reading
+            // stopped part-way; its partial text is not the scan's.
+            Task { [library, id] in
+                let found = await task.value
+                guard !task.isCancelled else { return }
+                library.updateSearchText(found.searchText, for: id)
+            }
         }
         return SavedScan(
             id: id,
@@ -213,7 +218,9 @@ public final class ReviewModel {
         String(localized: "The \(pages.count) pages you just scanned won’t be saved.", bundle: #bundle)
     }
 
+    /// Ignored while saving: the save is already under way.
     package func discard() {
+        guard !isSaving else { return }
         reading?.cancel()
         analytics.send(.scanCancelled(stage: .review))
     }
@@ -227,7 +234,9 @@ public final class ReviewModel {
 
     /// A finished rescan: its pages replace these, and they are read afresh. A title the user hasn't typed goes
     /// back to the fallback until the new pages are read.
+    /// Ignored while saving, so the pages being saved are the ones read.
     package func replacePages(_ pages: [CGImage]) {
+        guard !isSaving else { return }
         reading?.cancel()
         self.pages = pages
         currentPage = 0
@@ -240,8 +249,7 @@ public final class ReviewModel {
 
     private static func fallbackTitle(scannedAt: Date, clock: AppClock) -> String {
         let day = CalendarDay(scannedAt, in: clock.calendar)
-        // The scan day as "Oct 12"; passing it as today keeps the year off.
-        return String(localized: "Scan · \(ExpiryText.untilDate(day, today: day, clock: clock))", bundle: #bundle)
+        return String(localized: "Scan · \(DayText.monthDay(day, clock: clock))", bundle: #bundle)
     }
 
     private var scanDay: CalendarDay { CalendarDay(input.scannedAt, in: clock.calendar) }
