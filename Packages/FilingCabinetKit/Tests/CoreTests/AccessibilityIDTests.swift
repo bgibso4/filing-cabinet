@@ -13,3 +13,9 @@ import Testing
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.recentRow))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.allRow))
 }
+
+@Test func cameraIdentifiersArePrefixedAndInAll() {
+    #expect(AccessibilityID.Camera.all.allSatisfy { $0.hasPrefix("camera.") })
+    #expect(AccessibilityID.CameraOff.all.allSatisfy { $0.hasPrefix("cameraOff.") })
+    #expect(Set(AccessibilityID.Camera.all + AccessibilityID.CameraOff.all).isSubset(of: AccessibilityID.all))
+}

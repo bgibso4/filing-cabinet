@@ -24,7 +24,7 @@ final class AppEnvironment {
         private static let isDebugBuild = false
     #endif
 
-    /// Held for the screens that log events; only the lifecycle model uses it so far.
+    /// Held for the screens that log events.
     @ObservationIgnored let analytics: any Analytics
     @ObservationIgnored let clock: AppClock
     @ObservationIgnored let today: Today
@@ -37,6 +37,8 @@ final class AppEnvironment {
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
+    /// Set by the first `launch()`, so a rebuilt scene doesn't clean up or seed again.
+    @ObservationIgnored private var hasLaunched = false
 
     private init(options: LaunchOptions) {
         self.options = options
@@ -58,6 +60,7 @@ final class AppEnvironment {
         lifecycle = AppLifecycleModel(analytics: analytics)
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar),
+            flow: ScanFlowModel(cameraAccess: Self.cameraAccess(options: options), clock: clock, analytics: analytics),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options)
@@ -75,6 +78,8 @@ final class AppEnvironment {
 
     /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`) and enables Scan.
     func launch() async {
+        guard !hasLaunched else { return }
+        hasLaunched = true
         await store.removeOrphanedFiles()
         #if DEBUG
             if let count = options.seedScans {
@@ -130,6 +135,15 @@ final class AppEnvironment {
             if options.fakeReader { return ScanReader(reader: FakeTextReader.readsCityPharmacy()) }
         #endif
         return ScanReader(reader: options.reader.makeReader())
+    }
+
+    /// The system's answer, or a scripted one for `-CameraDenied` and the fake camera (which needs no permission).
+    private static func cameraAccess(options: LaunchOptions) -> any CameraAccess {
+        #if DEBUG
+            if options.cameraDenied { return FakeCameraAccess(status: .denied, grantsOnRequest: false) }
+            if options.fakeCameraPages != nil { return FakeCameraAccess(status: .authorized, grantsOnRequest: true) }
+        #endif
+        return SystemCameraAccess()
     }
 
     private static func cameraMode(options: LaunchOptions) -> CameraMode {

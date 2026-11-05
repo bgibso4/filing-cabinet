@@ -9,8 +9,7 @@ struct FilingCabinetApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(dependencies: environment.root)
-                .disabled(!environment.isReady)
+            RootView(dependencies: environment.root, canScan: environment.isReady)
                 .task { await environment.launch() }
                 .task {
                     // Midnight, a time zone change or a clock change: the system posts a day change (M5).

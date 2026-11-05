@@ -7,6 +7,7 @@ import SwiftUI
 /// first scan it shows the collections' descriptions instead.
 public struct HomeView: View {
     private let model: HomeModel
+    private let canScan: Bool
     private let onScan: () -> Void
     private let onOpen: (AppRoute) -> Void
 
@@ -20,8 +21,12 @@ public struct HomeView: View {
     // Home.dc.html: the fade behind the pill is solid from 38% of its height.
     private static let fadeSolidLocation: Double = 0.38
 
-    public init(model: HomeModel, onScan: @escaping () -> Void, onOpen: @escaping (AppRoute) -> Void) {
+    /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
+    public init(
+        model: HomeModel, canScan: Bool = true, onScan: @escaping () -> Void, onOpen: @escaping (AppRoute) -> Void
+    ) {
         self.model = model
+        self.canScan = canScan
         self.onScan = onScan
         self.onOpen = onOpen
     }
@@ -101,6 +106,7 @@ public struct HomeView: View {
     /// it sits on the plain background below the list.
     private func scanBar(fades: Bool) -> some View {
         ScanButton(action: onScan)
+            .disabled(!canScan)
             .padding(.top, Tokens.Spacing.s4)
             .frame(maxWidth: .infinity)
             .background {

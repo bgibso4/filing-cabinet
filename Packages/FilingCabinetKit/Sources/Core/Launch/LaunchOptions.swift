@@ -9,7 +9,7 @@ public struct LaunchOptions: Sendable, Equatable {
     /// `-FakeCamera <1…3>`: the fake camera returns this many synthetic pages.
     public private(set) var fakeCameraPages: Int?
     /// `-CameraDenied`: camera access reports denied.
-    package private(set) var cameraDenied = false
+    public private(set) var cameraDenied = false
     /// `-FixedDate yyyy-MM-dd`: the clock stands still at noon UTC on that day.
     public private(set) var fixedDate: Date?
     /// `-SeedScans <n>`: saves `n` synthetic scans at launch.

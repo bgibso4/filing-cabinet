@@ -23,8 +23,27 @@ public enum AccessibilityID {
         }
     }
 
+    /// The fake camera UI tests use in place of VisionKit's (M16).
+    public enum Camera {
+        public static let fakeFinish = "camera.fakeFinish"
+        public static let fakeCancel = "camera.fakeCancel"
+
+        public static var all: [String] {
+            [fakeFinish, fakeCancel]
+        }
+    }
+
+    public enum CameraOff {
+        public static let openSettings = "cameraOff.openSettings"
+        public static let close = "cameraOff.close"
+
+        public static var all: [String] {
+            [openSettings, close]
+        }
+    }
+
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
-        Home.all + Grid.all
+        Home.all + Grid.all + Camera.all + CameraOff.all
     }
 }

@@ -1,8 +1,14 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Camera access is off" : {},
+    "Cancel" : {},
+    "Close" : {},
     "Collections" : {},
     "Filing Cabinet" : {},
+    "Filing Cabinet needs the camera to scan documents. Tap Open Settings, turn on Camera, then come back." : {},
+    "Finish" : {},
+    "Open Settings" : {},
     "Scan" : {}
   },
   "version" : "1.0"
