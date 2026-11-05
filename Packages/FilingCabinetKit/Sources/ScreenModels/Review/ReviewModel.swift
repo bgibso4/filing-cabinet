@@ -95,7 +95,7 @@ public final class ReviewModel {
         }
     }
 
-    package func choose(_ collection: BuiltInCollection) {
+    public func choose(_ collection: BuiltInCollection) {
         self.collection = collection
     }
 
@@ -132,6 +132,10 @@ public final class ReviewModel {
                 )
             }
     }
+
+    /// The calendar and locale "Choose a date…" shows its days in (M6).
+    package var calendar: Calendar { clock.calendar }
+    package var locale: Locale { clock.locale }
 
     /// The first day "Choose a date…" offers: today.
     package var earliestCustomDate: Date { clock.today.date(in: clock.calendar) }
@@ -228,7 +232,7 @@ public final class ReviewModel {
     // MARK: Reading
 
     /// Reads the pages, once per page set, and returns when reading has finished.
-    package func startReading() async {
+    public func startReading() async {
         _ = await (reading ?? beginReading()).value
     }
 

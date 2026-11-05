@@ -33,6 +33,11 @@ enum Fixtures {
     // periphery:ignore - read by the viewer snapshots (Task 17).
     static let pages = FakePageImages(images: images(for: .home))
 
+    /// The named sample scans (design/prototype/scans), in order; a missing one is left out.
+    static func scans(_ names: String...) -> [CGImage] {
+        names.compactMap(loadImage)
+    }
+
     // MARK: Data
 
     /// A sample scan: its title, image and age in days.

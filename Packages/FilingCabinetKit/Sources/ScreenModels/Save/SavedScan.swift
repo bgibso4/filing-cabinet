@@ -1,7 +1,7 @@
 import Core
 
 /// What a finished save hands back: enough for the save flight and its VoiceOver announcement (M11).
-package struct SavedScan: Equatable {
+public struct SavedScan: Equatable {
     package let id: ScanID
     package let collection: BuiltInCollection
     package let source: ScanSource

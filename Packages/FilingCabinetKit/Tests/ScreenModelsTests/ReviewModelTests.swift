@@ -150,3 +150,9 @@ func noReadableTextKeepsFallback() async {
     harness.model.discard()
     #expect(harness.analytics.events == [.scanCancelled(stage: .review)])
 }
+
+@Test func dateChoiceUsesTheClocksCalendarAndLocale() {
+    let harness = ReviewHarness(preselected: .receipts)
+    #expect(harness.model.calendar.timeZone == ReviewHarness.newYork.timeZone)
+    #expect(harness.model.locale.identifier == "en_US")
+}

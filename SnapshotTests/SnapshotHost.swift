@@ -27,6 +27,7 @@ enum SnapshotHost {
             controller.overrideUserInterfaceStyle = variant.style
             window.rootViewController = controller
             window.makeKeyAndVisible()
+            settle()
             let strategy = SnapshotConfig.strategy
             assertSnapshot(
                 of: controller,
@@ -37,6 +38,17 @@ enum SnapshotHost {
                 line: line
             )
         }
+    }
+}
+
+extension SnapshotHost {
+    /// How long a new window runs before it is drawn. Liquid Glass adapts to what is behind it over a few frames; drawn
+    /// at once, the glass was caught in one of two states from run to run.
+    private static let settleTime: TimeInterval = 1
+
+    /// Runs the main run loop so layout, the first commits and the glass's adaptation finish before the snapshot.
+    private static func settle() {
+        RunLoop.main.run(until: Date(timeIntervalSinceNow: settleTime))
     }
 }
 

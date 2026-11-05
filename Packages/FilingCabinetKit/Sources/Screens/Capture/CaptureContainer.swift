@@ -13,8 +13,16 @@ struct CaptureContainer: View {
         case .camera:
             camera
         case .review:
-            // Task 15 puts the review screen here.
-            Tokens.Color.bgGrouped.ignoresSafeArea()
+            if let review = flow.review {
+                ReviewView(
+                    model: review,
+                    // ReviewView has already stopped reading (`discard()`); `reviewEnded` doesn't.
+                    onClose: flow.reviewEnded,
+                    onRescan: flow.rescan,
+                    // Task 18 flies page 1 into its collection from here.
+                    onSaved: { _, _ in flow.reviewEnded() }
+                )
+            }
         case .idle, .cameraOff:
             // Only seen while the layer is animating away.
             EmptyView()

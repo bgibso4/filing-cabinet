@@ -19,3 +19,9 @@ import Testing
     #expect(AccessibilityID.CameraOff.all.allSatisfy { $0.hasPrefix("cameraOff.") })
     #expect(Set(AccessibilityID.Camera.all + AccessibilityID.CameraOff.all).isSubset(of: AccessibilityID.all))
 }
+
+@Test func reviewIdentifiersArePrefixedAndInAll() {
+    #expect(AccessibilityID.Review.all.allSatisfy { $0.hasPrefix("review.") })
+    #expect(AccessibilityID.ExpiryDate.all.allSatisfy { $0.hasPrefix("expiryDate.") })
+    #expect(Set(AccessibilityID.Review.all + AccessibilityID.ExpiryDate.all).isSubset(of: AccessibilityID.all))
+}

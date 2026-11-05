@@ -10,7 +10,7 @@ public struct ReviewInput: Equatable {
     package let scannedAt: Date
     package let source: ScanSource
 
-    package init(pages: [CGImage], preselected: BuiltInCollection?, scannedAt: Date, source: ScanSource) {
+    public init(pages: [CGImage], preselected: BuiltInCollection?, scannedAt: Date, source: ScanSource) {
         self.pages = pages
         self.preselected = preselected
         self.scannedAt = scannedAt
