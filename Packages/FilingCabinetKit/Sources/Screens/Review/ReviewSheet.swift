@@ -94,6 +94,8 @@ struct ReviewSheet: View {
         .font(Tokens.Typography.title2)
         .foregroundStyle(Tokens.Color.textPrimary)
         .focused($isEditingTitle)
+        // The save has already taken the title.
+        .disabled(model.isSaving)
         .submitLabel(.done)
         .accessibilityIdentifier(AccessibilityID.Review.titleField)
     }
@@ -120,6 +122,8 @@ struct ReviewSheet: View {
             Hairline()
             ExpiryMenu(model: model)
         }
+        // The save has already taken the choices.
+        .disabled(model.isSaving)
         .background(Tokens.Color.bgWell, in: .rect(cornerRadius: Tokens.Radius.surface))
     }
 

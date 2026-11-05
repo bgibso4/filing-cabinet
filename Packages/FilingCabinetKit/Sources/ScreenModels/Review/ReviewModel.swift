@@ -70,7 +70,9 @@ public final class ReviewModel {
 
     // MARK: Title
 
+    /// Ignored while saving, as every choice is: the save has already taken them.
     package func editTitle(_ text: String) {
+        guard !isSaving else { return }
         title = text
         isTitleEdited = true
     }
@@ -95,7 +97,9 @@ public final class ReviewModel {
         }
     }
 
+    /// Ignored while saving.
     public func choose(_ collection: BuiltInCollection) {
+        guard !isSaving else { return }
         self.collection = collection
     }
 
@@ -140,12 +144,15 @@ public final class ReviewModel {
     /// The first day "Choose a date…" offers: today.
     package var earliestCustomDate: Date { clock.today.date(in: clock.calendar) }
 
+    /// Ignored while saving.
     package func chooseExpiry(_ override: ExpiryOverride?) {
+        guard !isSaving else { return }
         expiryOverride = override
     }
 
-    /// Keeps the scan through the end of `date`'s day. A day before today is refused.
+    /// Keeps the scan through the end of `date`'s day. A day before today is refused, and so is any day while saving.
     package func chooseExpiryDate(_ date: Date) {
+        guard !isSaving else { return }
         let day = CalendarDay(date, in: clock.calendar)
         guard day >= clock.today else { return }
         expiryOverride = .lastDay(day)

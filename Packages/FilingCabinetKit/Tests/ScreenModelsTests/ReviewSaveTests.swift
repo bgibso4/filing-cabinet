@@ -283,3 +283,29 @@ func rescanDropsTheOldReading() async {
     _ = await harness.model.save()
     #expect(harness.library.saved.first?.searchText == "CORNER MARKET")
 }
+
+@Test(.timeLimit(.minutes(1)))
+func choicesDuringASaveAreIgnored() async throws {
+    // Save waits for a slow reading before it builds the draft: a pick in that window must not change what is saved.
+    let harness = ReviewHarness(
+        preselected: .receipts,
+        reads: [.page(ReviewHarness.pharmacy, delay: .milliseconds(500))],
+        readingWaitLimit: .milliseconds(200)
+    )
+    let saving = Task { await harness.model.save() }
+    while !harness.model.isSaving { await Task.yield() }
+
+    harness.model.choose(.wallet)
+    harness.model.editTitle("Typed while saving")
+    harness.model.chooseExpiry(.lifespan(.week))
+    harness.model.chooseExpiryDate(CalendarDay(year: 2026, month: 12, day: 1).date(in: ReviewHarness.newYork))
+    _ = await saving.value
+
+    let draft = try #require(harness.library.saved.first)
+    #expect(draft.collection == .receipts)
+    #expect(draft.title == "Scan · Oct 12")
+    #expect(draft.expiryOverride == nil)
+    #expect(harness.model.collection == .receipts)
+    #expect(harness.model.title == "Scan · Oct 12")
+    #expect(harness.model.expiryOverride == nil)
+}

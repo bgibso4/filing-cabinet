@@ -45,6 +45,37 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(receiptsRow.label.contains("1"), receiptsRow.label)
     }
 
+    func testChooseADateSetsExpiry() {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+        scanOnePage(in: app)
+        app.descendants(matching: .any)[Review.collection].tap()
+        let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
+        XCTAssertTrue(receipts.waitForExistence(timeout: 5))
+        receipts.tap()
+        let expiry = app.descendants(matching: .any)[Review.expiry]
+        let collectionDefault = "3 months · until Jan 9, 2027"
+        waitForValue(collectionDefault, of: expiry)
+
+        // Cancel keeps the collection's default.
+        openChooseADate(in: app)
+        // Not assertIdentifiers: the system calendar's own buttons (month, days) carry no identifiers, as an alert's
+        // don't. Ours are all there.
+        for id in AccessibilityID.ExpiryDate.all {
+            XCTAssertTrue(app.descendants(matching: .any)[id].exists, id)
+        }
+        app.buttons[AccessibilityID.ExpiryDate.cancel].tap()
+        waitForValue(collectionDefault, of: expiry)
+
+        // Done keeps the scan until the chosen day.
+        openChooseADate(in: app)
+        let day = app.descendants(matching: .any)[AccessibilityID.ExpiryDate.picker]
+            .buttons.matching(NSPredicate(format: "label CONTAINS 'October 20'")).firstMatch
+        XCTAssertTrue(day.waitForExistence(timeout: 5))
+        day.tap()
+        app.buttons[AccessibilityID.ExpiryDate.done].tap()
+        waitForValue("Until Oct 20", of: expiry)
+    }
+
     func testReviewAuditAtLargestText() throws {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"], largestText: true)
         scanOnePage(in: app)
@@ -128,6 +159,21 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(finish.waitForExistence(timeout: 5))
         finish.tap()
         XCTAssertTrue(app.buttons[Review.save].waitForExistence(timeout: 5))
+    }
+
+    /// Opens Expiry, then "Choose a date…", and waits for the calendar.
+    private func openChooseADate(in app: XCUIApplication) {
+        app.descendants(matching: .any)[Review.expiry].tap()
+        let chooseDate = app.buttons["Choose a date…"]
+        XCTAssertTrue(chooseDate.waitForExistence(timeout: 5))
+        chooseDate.tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.ExpiryDate.done].waitForExistence(timeout: 5))
+    }
+
+    private func waitForValue(_ value: String, of element: XCUIElement, line: UInt = #line) {
+        let shown = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [shown], timeout: 5), .completed, String(describing: element.value), line: line)
     }
 
     private func waitForTitle(
