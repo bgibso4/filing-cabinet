@@ -23,7 +23,7 @@ public struct HomeView: View {
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
-        model: HomeModel, canScan: Bool = true, onScan: @escaping () -> Void, onOpen: @escaping (AppRoute) -> Void
+        model: HomeModel, canScan: Bool, onScan: @escaping () -> Void, onOpen: @escaping (AppRoute) -> Void
     ) {
         self.model = model
         self.canScan = canScan
@@ -140,13 +140,13 @@ private func previewModel() -> HomeModel {
 }
 
 #Preview("Light") {
-    HomeView(model: previewModel(), onScan: {}, onOpen: { _ in })
+    HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in })
 }
 
 #Preview("Dark") {
-    HomeView(model: previewModel(), onScan: {}, onOpen: { _ in }).preferredColorScheme(.dark)
+    HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in }).preferredColorScheme(.dark)
 }
 
 #Preview("Accessibility 5") {
-    HomeView(model: previewModel(), onScan: {}, onOpen: { _ in }).dynamicTypeSize(.accessibility5)
+    HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in }).dynamicTypeSize(.accessibility5)
 }

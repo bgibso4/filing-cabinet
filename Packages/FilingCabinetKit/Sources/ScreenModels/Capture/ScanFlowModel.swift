@@ -24,6 +24,8 @@ public final class ScanFlowModel {
     /// Where the scan in progress started; set by `scan`, read when the first camera finishes.
     @ObservationIgnored private var source = ScanSource.home
     @ObservationIgnored private var preselected: BuiltInCollection?
+    /// True while the system asks for camera access.
+    @ObservationIgnored private var isAskingForCamera = false
 
     public init(cameraAccess: any CameraAccess, clock: AppClock, analytics: any Analytics) {
         self.cameraAccess = cameraAccess
@@ -32,16 +34,24 @@ public final class ScanFlowModel {
     }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
+    /// Does nothing while a scan is under way, including while the permission prompt is up (`phase` is still idle
+    /// then), so a second tap can't start a second scan.
     package func scan(from source: ScanSource, preselected: BuiltInCollection?) async {
+        guard phase == .idle, !isAskingForCamera else { return }
         analytics.send(.scanStarted(source: source))
         self.source = source
         self.preselected = preselected
-        let allowed =
-            switch cameraAccess.status {
-            case .authorized: true
-            case .notDetermined: await cameraAccess.requestAccess()
-            case .denied: false
-            }
+        let allowed: Bool
+        switch cameraAccess.status {
+        case .authorized:
+            allowed = true
+        case .notDetermined:
+            isAskingForCamera = true
+            allowed = await cameraAccess.requestAccess()
+            isAskingForCamera = false
+        case .denied:
+            allowed = false
+        }
         if allowed {
             phase = .camera(isRescan: false)
         } else {

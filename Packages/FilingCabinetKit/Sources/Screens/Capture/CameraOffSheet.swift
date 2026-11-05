@@ -49,7 +49,8 @@ public struct CameraOffSheet: View {
         .overlay(alignment: .topTrailing) { closeButton }
         // Departs from 04-01/04-04, whose sheet hugs its content: on iOS 27 any shorter detent (a measured height, or
         // .medium) makes a floating sheet, and the accessibility audit reports its text as clipped even when it isn't.
-        // A full-height sheet passes. Ruling, Task 13.
+        // Provisional ruling (Task 13), pending Ben: the target is the compact fitted sheet from the mocks, with a
+        // textClipped audit exception scoped to this sheet if Ben approves one.
         .presentationDetents([.large])
         // The sheet draws the mock's grabber itself: the system one is an unidentified button, and Close already
         // dismisses for VoiceOver.

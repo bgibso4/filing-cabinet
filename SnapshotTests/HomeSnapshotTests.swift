@@ -8,7 +8,7 @@ final class HomeSnapshotTests: XCTestCase {
     @MainActor
     private func home(_ library: FakeLibrary) -> HomeView {
         let model = HomeModel(library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
-        return HomeView(model: model, onScan: {}, onOpen: { _ in })
+        return HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in })
     }
 
     @MainActor

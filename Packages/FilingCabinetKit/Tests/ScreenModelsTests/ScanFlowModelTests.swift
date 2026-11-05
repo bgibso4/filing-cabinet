@@ -1,6 +1,7 @@
 import Core
 import CoreGraphics
 import Foundation
+import Synchronization
 import TestSupport
 import Testing
 
@@ -131,4 +132,52 @@ func scanStartedCarriesItsSource(_ source: ScanSource) async {
     let harness = Harness(.authorized)
     await harness.model.scan(from: source, preselected: nil)
     #expect(harness.analytics.events == [.scanStarted(source: source)])
+}
+
+/// Camera access whose permission prompt stays up until the test answers it.
+private final class PromptingCameraAccess: CameraAccess {
+    private struct State {
+        var requests = 0
+        var prompt: CheckedContinuation<Bool, Never>?
+    }
+
+    private let state = Mutex(State())
+
+    let status = CameraAuthorization.notDetermined
+
+    var requests: Int { state.withLock { $0.requests } }
+
+    func requestAccess() async -> Bool {
+        await withCheckedContinuation { prompt in
+            state.withLock { state in
+                state.requests += 1
+                state.prompt = prompt
+            }
+        }
+    }
+
+    func answer(_ granted: Bool) {
+        state.withLock { $0.prompt.take() }?.resume(returning: granted)
+    }
+}
+
+@Test(.timeLimit(.minutes(1)))
+func scanningAgainWhileThePromptIsUpDoesNothing() async {
+    let analytics = RecordingAnalytics()
+    let access = PromptingCameraAccess()
+    let model = ScanFlowModel(
+        cameraAccess: access,
+        clock: .fixed(Harness.now, calendar: Calendar(identifier: .gregorian)),
+        analytics: analytics
+    )
+    let first = Task { await model.scan(from: .home, preselected: nil) }
+    while access.requests == 0 { await Task.yield() }
+
+    await model.scan(from: .home, preselected: nil)
+    access.answer(true)
+    await first.value
+
+    #expect(access.requests == 1)
+    #expect(analytics.events == [.scanStarted(source: .home)])
+    #expect(model.phase == .camera(isRescan: false))
 }
