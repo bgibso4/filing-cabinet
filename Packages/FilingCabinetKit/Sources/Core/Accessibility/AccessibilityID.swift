@@ -16,10 +16,20 @@ public enum AccessibilityID {
     }
 
     public enum Grid {
+        /// The system back button (the grid keeps the navigation bar so swipe back works). SwiftUI can't set its
+        /// identifier, so this is the one UIKit gives it.
+        public static let back = "BackButton"
         public static let header = "grid.header"
+        public static let scan = "grid.scan"
+        /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
+        public static let tilePrefix = "grid.tile."
+
+        public static func tile(_ id: ScanID) -> String {
+            tilePrefix + id.uuid.uuidString
+        }
 
         public static var all: [String] {
-            [header]
+            [back, header, scan]
         }
     }
 

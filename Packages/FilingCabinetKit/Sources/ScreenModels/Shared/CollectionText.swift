@@ -7,6 +7,15 @@ package enum CollectionText {
     package static var recent: String { String(localized: "Recent", bundle: #bundle) }
     package static var allScans: String { String(localized: "All Scans", bundle: #bundle) }
 
+    /// Recent's subtitle.
+    static var lastThirtyDays: String { String(localized: "Last 30 days", bundle: #bundle) }
+
+    /// "91 scans", "1 scan", "No scans" (M15).
+    static func scanCount(_ count: Int) -> String {
+        count == 0
+            ? String(localized: "No scans", bundle: #bundle) : String(localized: "\(count) scans", bundle: #bundle)
+    }
+
     package static func name(_ collection: BuiltInCollection) -> String {
         switch collection {
         case .wallet: String(localized: "Wallet", bundle: #bundle)

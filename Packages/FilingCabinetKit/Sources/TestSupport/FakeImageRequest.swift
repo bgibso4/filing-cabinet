@@ -1,16 +1,16 @@
 import Core
 
 /// One recorded call on a fake image provider.
-package struct FakeImageRequest: Equatable, Sendable {
+public struct FakeImageRequest: Equatable, Sendable {
     /// `.cached` is a synchronous memory lookup; `.loaded` is an async load.
-    package enum Kind: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
         case cached
         case loaded
     }
 
-    package let id: ScanID
-    package let page: Int
-    package let kind: Kind
+    public let id: ScanID
+    public let page: Int
+    public let kind: Kind
 
     package init(id: ScanID, page: Int, kind: Kind) {
         self.id = id

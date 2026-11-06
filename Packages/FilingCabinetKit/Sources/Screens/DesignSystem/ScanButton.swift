@@ -1,8 +1,8 @@
-import Core
 import SwiftUI
 
 /// The Scan pill: graphite in light, near-white in dark, always labelled "Scan".
 struct ScanButton: View {
+    private let identifier: String
     private let action: () -> Void
 
     // Home.dc.html: the pill is 52 pt tall, 64 pt at the large-text variant, and never grows past that.
@@ -13,7 +13,8 @@ struct ScanButton: View {
 
     @ScaledMetric(relativeTo: .body) private var scaledHeight = baseHeight
 
-    init(action: @escaping () -> Void) {
+    init(identifier: String, action: @escaping () -> Void) {
+        self.identifier = identifier
         self.action = action
     }
 
@@ -33,14 +34,14 @@ struct ScanButton: View {
             .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityID.Home.scan)
+        .accessibilityIdentifier(identifier)
     }
 }
 
 #Preview("Light") {
-    ScanButton {}.padding()
+    ScanButton(identifier: "preview") {}.padding()
 }
 
 #Preview("Dark") {
-    ScanButton {}.padding().background(Tokens.Color.bgGrouped).preferredColorScheme(.dark)
+    ScanButton(identifier: "preview") {}.padding().background(Tokens.Color.bgGrouped).preferredColorScheme(.dark)
 }

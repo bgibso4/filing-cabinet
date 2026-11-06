@@ -18,8 +18,6 @@ public struct HomeView: View {
     private static let collectionsTopGap: CGFloat = 6
     // Home.dc.html line 175: the views card sits 16 pt below the collections.
     private static let viewsTopGap: CGFloat = 16
-    // Home.dc.html: the fade behind the pill is solid from 38% of its height.
-    private static let fadeSolidLocation: Double = 0.38
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -31,21 +29,9 @@ public struct HomeView: View {
         self.onOpen = onOpen
     }
 
-    @Environment(\.dynamicTypeSize) private var typeSize
-
     public var body: some View {
-        if typeSize.isAccessibilitySize {
-            // At accessibility sizes the list is taller than the screen, so a row would rest half under the Scan
-            // button's fade. The list ends where the button's area begins instead.
-            VStack(spacing: 0) {
-                scrolling
-                scanBar(fades: false)
-            }
-            .background(Tokens.Color.bgGrouped)
-        } else {
+        ScanBarLayout(canScan: canScan, scanIdentifier: AccessibilityID.Home.scan, onScan: onScan) {
             scrolling
-                .background(Tokens.Color.bgGrouped)
-                .safeAreaInset(edge: .bottom, spacing: 0) { scanBar(fades: true) }
         }
     }
 
@@ -99,30 +85,6 @@ public struct HomeView: View {
         case .recent: .recent
         case .all: .all
         }
-    }
-
-    /// The Scan button at the bottom centre. At default sizes it floats over the content on a fade of the screen
-    /// background (as a safe-area inset it pushes the scroll content up by its real size); at accessibility sizes
-    /// it sits on the plain background below the list.
-    private func scanBar(fades: Bool) -> some View {
-        ScanButton(action: onScan)
-            .disabled(!canScan)
-            .padding(.top, Tokens.Spacing.s4)
-            .frame(maxWidth: .infinity)
-            .background {
-                if fades {
-                    LinearGradient(
-                        stops: [
-                            .init(color: Tokens.Color.bgGrouped.opacity(0), location: 0),
-                            .init(color: Tokens.Color.bgGrouped, location: Self.fadeSolidLocation),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea(edges: .bottom)
-                    .allowsHitTesting(false)
-                }
-            }
     }
 }
 

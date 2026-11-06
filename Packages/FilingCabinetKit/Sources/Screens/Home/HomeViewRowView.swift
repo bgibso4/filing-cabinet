@@ -81,23 +81,13 @@ struct HomeViewRowView: View {
     }
 
     private var badge: some View {
-        Circle()
-            .fill(Tokens.Color.badgeNeutral)
-            .frame(width: Self.diameter, height: Self.diameter)
-            .overlay {
-                Image(systemName: symbol)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: Self.symbolSize, height: Self.symbolSize)
-                    .foregroundStyle(.white)
-            }
-            .accessibilityHidden(true)
+        ViewBadge(symbol: symbol, diameter: Self.diameter, symbolSize: Self.symbolSize)
     }
 
     private var symbol: String {
         switch row.kind {
-        case .recent: "clock"
-        case .all: "square.grid.2x2"
+        case .recent: ViewSymbol.recent
+        case .all: ViewSymbol.all
         }
     }
 

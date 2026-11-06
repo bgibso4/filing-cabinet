@@ -22,10 +22,10 @@ public final class FakeThumbnails: ThumbnailProviding {
     package var requests: [FakeImageRequest] { state.withLock { $0.requests } }
 
     /// Only the async loads: what a view actually asked the disk side for.
-    package var loadedRequests: [FakeImageRequest] { requests.filter { $0.kind == .loaded } }
+    public var loadedRequests: [FakeImageRequest] { requests.filter { $0.kind == .loaded } }
 
     /// The distinct scans among the async loads, in first-request order.
-    package var loadedIDs: [ScanID] {
+    public var loadedIDs: [ScanID] {
         var seen: [ScanID] = []
         for request in loadedRequests where !seen.contains(request.id) { seen.append(request.id) }
         return seen

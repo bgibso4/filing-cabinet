@@ -1,7 +1,7 @@
 import Core
 
-/// Which grid a screen shows. Plan-public: `RootDependencies.makeGrid` takes it (promoted when that lands).
-package enum GridKind: Hashable {
+/// Which grid a screen shows.
+public enum GridKind: Hashable {
     case collection(BuiltInCollection)
     case recent
     case all

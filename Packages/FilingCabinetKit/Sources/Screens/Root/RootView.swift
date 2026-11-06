@@ -1,4 +1,3 @@
-import Core
 import ScreenModels
 import SwiftUI
 
@@ -60,23 +59,28 @@ public struct RootView: View {
         )
     }
 
-    /// Placeholders until the grid (Task 16) and the viewer (Task 17) fill these in.
+    /// The scan route is a placeholder until the viewer (Task 17) fills it in.
     @ViewBuilder
     private func destination(_ route: AppRoute) -> some View {
         switch route {
         case .collection(let collection):
-            placeholder(CollectionText.name(collection))
+            grid(.collection(collection))
         case .recent:
-            placeholder(CollectionText.recent)
+            grid(.recent)
         case .all:
-            placeholder(CollectionText.allScans)
+            grid(.all)
         case .scan:
             Tokens.Color.bgGrouped.ignoresSafeArea()
         }
     }
 
-    private func placeholder(_ name: String) -> some View {
-        Text(name)
-            .accessibilityIdentifier(AccessibilityID.Grid.header)
+    private func grid(_ kind: GridKind) -> some View {
+        CollectionGridView(
+            model: dependencies.makeGrid(kind),
+            thumbnails: dependencies.thumbnails,
+            canScan: canScan,
+            onOpen: { path.append(.scan($0)) },
+            onScan: { Task { await flow.scan(from: .grid, preselected: kind.preselection) } }
+        )
     }
 }

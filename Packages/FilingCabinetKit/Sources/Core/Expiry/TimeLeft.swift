@@ -1,7 +1,7 @@
 import Foundation
 
 /// What is left of a scan's life on a given day.
-package enum TimeLeft: Sendable, Equatable {
+package enum TimeLeft: Sendable, Hashable {
     case forever
     case days(Int)
     case expired

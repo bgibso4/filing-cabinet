@@ -27,7 +27,6 @@ enum Fixtures {
         FakeLibrary(scans: entries(set).map(\.summary))
     }
 
-    // periphery:ignore - read by the grid snapshots (Task 16).
     static let thumbnails = FakeThumbnails(images: images(for: .home))
 
     // periphery:ignore - read by the viewer snapshots (Task 17).
@@ -58,7 +57,8 @@ enum Fixtures {
         let image: String
     }
 
-    // Collection.dc.html lines 219-221: the receipt stores and the ages of the 23 receipts.
+    // Collection.dc.html lines 219-222: the receipt stores and the ages of the 23 receipts. Tallow Electric has no
+    // sample scan in design/prototype/scans, so Pizzeria Sole stands in for it.
     private static let stores = [
         ("Corner Market", "scan-r-corner"), ("Bluebird Café", "scan-r-bluebird"), ("City Pharmacy", "scan-r-pharmacy"),
         ("Harbor Gas", "scan-r-gas"), ("Page & Spine", "scan-r-books"), ("Northside Hardware", "scan-r-hardware"),
@@ -67,7 +67,7 @@ enum Fixtures {
     private static let receiptAges = [
         0, 1, 3, 5, 8, 12, 15, 19, 22, 26, 30, 34, 40, 45, 51, 55, 60, 66, 71, 77, 84, 86, 88,
     ]
-    private static let receiptStores = [0, 1, 3, 0, 2, 5, 1, 4, 0, 3, 5, 1, 6, 0, 2, 5, 3, 1, 0, 4, 5, 0, 2]
+    private static let receiptStores = [0, 1, 3, 0, 2, 6, 1, 4, 0, 3, 5, 1, 6, 0, 2, 6, 3, 1, 0, 4, 5, 0, 2]
 
     // Collection.dc.html lines 225-235: the other collections' scans.
     private static let wallet = [
@@ -88,30 +88,25 @@ enum Fixtures {
         Sample("Valet ticket", "scan-throw-valet", 6),
     ]
 
+    /// Throwaways come first: equal days keep this order, and the mocks put Coat check before Bluebird Café.
     private static let homeEntries: [Entry] = {
-        var entries: [Entry] = []
-        for (index, age) in receiptAges.enumerated() {
+        let receipts = receiptAges.enumerated().map { index, age in
             let store = stores[receiptStores[index]]
-            entries.append(entry(store.0, store.1, .receipts, age))
+            return entry(store.0, store.1, .receipts, age)
         }
-        for collection in [BuiltInCollection.wallet, .notes, .documents, .throwaways] {
-            let source: [Sample]
-            let count: Int
-            switch collection {
-            case .wallet: (source, count) = (wallet, 6)
-            case .notes: (source, count) = (notes, 41)
-            case .documents: (source, count) = (documents, 18)
-            default: (source, count) = (throwaways, 3)
-            }
-            for index in 0..<count {
-                let item = source[index % source.count]
-                // Past the first lap the same sample repeats, one day older each time, and stays inside the lifespan.
-                let age = index < source.count ? item.daysAgo : item.daysAgo + index - source.count
-                entries.append(entry(item.title, item.image, collection, collection == .throwaways ? min(age, 5) : age))
-            }
-        }
-        return entries
+        return laps(throwaways, .throwaways, count: 3) + receipts + laps(wallet, .wallet, count: 6)
+            + laps(notes, .notes, count: 41) + laps(documents, .documents, count: 18)
     }()
+
+    /// `count` scans from the samples. Past the first lap they repeat, older than Recent's 30 days, so Recent and the
+    /// top of All Scans show each sample once, as the mocks do. Only kept-forever collections take more than one lap.
+    private static func laps(_ samples: [Sample], _ collection: BuiltInCollection, count: Int) -> [Entry] {
+        (0..<count).map { index in
+            let sample = samples[index % samples.count]
+            let daysAgo = index < samples.count ? sample.daysAgo : sample.daysAgo + 30 + index
+            return entry(sample.title, sample.image, collection, daysAgo)
+        }
+    }
 
     private static func entry(_ title: String, _ image: String, _ collection: BuiltInCollection, _ daysAgo: Int)
         -> Entry
