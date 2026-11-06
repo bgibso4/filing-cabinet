@@ -21,7 +21,8 @@
     "Rescan" : {},
     "Scan" : {},
     "Title" : {},
-    "Try again" : {}
+    "Try again" : {},
+    "Zoomed" : {}
   },
   "version" : "1.0"
 }

@@ -83,6 +83,8 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
 
     func scrollViewDidZoom(_ scrollView: UIScrollView) {
         positionContent()
+        // Said aloud by VoiceOver, and how a UI test sees that the page is zoomed.
+        accessibilityValue = zoomScale > 1 ? String(localized: "Zoomed", bundle: #bundle) : nil
     }
 
     private var fitRegion: CGRect { bounds.inset(by: fitInsets) }

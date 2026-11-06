@@ -59,7 +59,7 @@ public struct ViewerView: View {
                     .sharedBackgroundVisibility(.hidden)
                 }
             }
-            // The bar can't hold the pill at large text, which wraps instead of cutting off (requirements 06 · Accessibility).
+            // The bar can't hold the pill above the default text size, which wraps instead of cutting off (requirements 06 · Accessibility).
             .safeAreaInset(edge: .top) {
                 if headerIsBelowTheBar {
                     header.padding(.horizontal, Tokens.Spacing.s4)
@@ -77,7 +77,8 @@ public struct ViewerView: View {
             }
     }
 
-    private var headerIsBelowTheBar: Bool { typeSize.isAccessibilitySize }
+    /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
+    private var headerIsBelowTheBar: Bool { typeSize > .large }
 
     private var pager: some View {
         TabView(selection: $model.currentPage) {
@@ -108,7 +109,7 @@ public struct ViewerView: View {
     private var header: some View {
         PagePill(title: Text(model.title), identifier: AccessibilityID.Viewer.header, shape: headerShape) {
             // At large text the line wraps, and the dot stays with its first line.
-            HStack(alignment: typeSize.isAccessibilitySize ? .firstTextBaseline : .center, spacing: Self.dotGap) {
+            HStack(alignment: headerIsBelowTheBar ? .firstTextBaseline : .center, spacing: Self.dotGap) {
                 if let collection = model.collection { CollectionDot(collection: collection) }
                 Text("\(model.collectionName) · \(timeLeft)", bundle: #bundle)
             }

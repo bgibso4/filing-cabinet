@@ -133,7 +133,11 @@ final class BrowseJourneyTests: XCTestCase {
     func testEdgeSwipeGoesBackFromAZoomedPage() {
         let app = seededApp()
         openThreePageScan(in: app)
-        app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch.doubleTap()
+        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
+        page.doubleTap()
+        // The page says it is zoomed once the zoom has finished; only then is the swipe a test of a zoomed page.
+        let zoomed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Zoomed"), object: page)
+        XCTAssertEqual(XCTWaiter.wait(for: [zoomed], timeout: 5), .completed, "The page never reported being zoomed")
         edgeSwipeBack(in: app)
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
     }

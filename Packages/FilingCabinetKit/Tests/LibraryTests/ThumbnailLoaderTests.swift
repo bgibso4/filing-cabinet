@@ -127,3 +127,21 @@ private func longEdge(_ image: CGImage) -> Int { max(image.width, image.height) 
     #expect(loader.cachedThumbnail(for: id, page: 1) != nil)
     #expect(loader.cachedThumbnail(for: id, page: 200) != nil)
 }
+
+@Test func cancelledPageLoadDecodesNothing() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem())
+        .write([SyntheticPages.receipt()], for: id)
+    let loader = PageImageLoader(location: location, fileSystem: LocalFileSystem())
+
+    // Cancelled before it calls the loader, so the loader sees a cancelled task.
+    let load = Task {
+        while !Task.isCancelled { await Task.yield() }
+        return await loader.page(for: id, index: 0)
+    }
+    load.cancel()
+
+    #expect(await load.value == nil)
+    #expect(loader.cachedPage(for: id, index: 0) == nil)
+}

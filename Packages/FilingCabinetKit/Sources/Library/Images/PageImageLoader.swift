@@ -24,6 +24,8 @@ public struct PageImageLoader: PageImageProviding {
     public func page(for id: ScanID, index: Int) async -> CGImage? {
         let key = ImageCache.Key(id: id, page: index)
         if let hit = cache.image(for: key) { return hit }
+        // A page the viewer has already moved past isn't worth a full-size decode.
+        guard !Task.isCancelled else { return nil }
         let url = location.originals(for: id).appending(path: "page-\(index + 1).heic")
         guard
             fileSystem.fileExists(at: url),
