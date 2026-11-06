@@ -80,6 +80,9 @@ final class AppEnvironment {
             makeGrid: { kind in
                 CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar)
             },
+            makeViewer: { id in
+                ViewerModel(id: id, library: store, today: today, calendar: clock.calendar)
+            },
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options)

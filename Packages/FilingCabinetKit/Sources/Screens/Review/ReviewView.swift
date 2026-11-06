@@ -125,11 +125,9 @@ public struct ReviewView: View {
     }
 
     private var pill: some View {
-        PagePill(
-            title: Text("New scan", bundle: #bundle),
-            detail: model.pageCountText,
-            identifier: AccessibilityID.Review.pagePill
-        )
+        PagePill(title: Text("New scan", bundle: #bundle), identifier: AccessibilityID.Review.pagePill) {
+            Text(model.pageCountText)
+        }
     }
 
     private var rescanButton: some View {

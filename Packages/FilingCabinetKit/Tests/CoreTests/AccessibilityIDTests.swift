@@ -26,6 +26,14 @@ import Testing
     #expect(Set(AccessibilityID.Review.all + AccessibilityID.ExpiryDate.all).isSubset(of: AccessibilityID.all))
 }
 
+@Test func viewerIdentifiersArePrefixedAndBackIsTheSystems() {
+    #expect(AccessibilityID.Viewer.back == AccessibilityID.Grid.back)
+    #expect(AccessibilityID.Viewer.header.hasPrefix("viewer."))
+    #expect(AccessibilityID.Viewer.page.hasPrefix("viewer."))
+    #expect(AccessibilityID.Viewer.strip.hasPrefix("viewer."))
+    #expect(Set(AccessibilityID.Viewer.all).isSubset(of: AccessibilityID.all))
+}
+
 @Test func gridIdentifiersArePrefixedAndTilesAreCheckedByPrefix() {
     #expect(AccessibilityID.Grid.header.hasPrefix("grid."))
     #expect(AccessibilityID.Grid.scan.hasPrefix("grid."))

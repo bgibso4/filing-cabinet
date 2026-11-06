@@ -80,8 +80,22 @@ public enum AccessibilityID {
         }
     }
 
+    public enum Viewer {
+        /// The system back button, as on the grid.
+        public static let back = Grid.back
+        public static let header = "viewer.header"
+        public static let page = "viewer.page"
+        public static let strip = "viewer.strip"
+
+        public static var all: [String] {
+            [back, header, page, strip]
+        }
+    }
+
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
+        // The viewer's back button is the grid's: one system identifier, counted once.
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + ExpiryDate.all
+            + Viewer.all.filter { $0 != Viewer.back }
     }
 }

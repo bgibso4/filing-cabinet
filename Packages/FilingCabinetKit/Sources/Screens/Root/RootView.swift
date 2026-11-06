@@ -59,7 +59,6 @@ public struct RootView: View {
         )
     }
 
-    /// The scan route is a placeholder until the viewer (Task 17) fills it in.
     @ViewBuilder
     private func destination(_ route: AppRoute) -> some View {
         switch route {
@@ -69,8 +68,12 @@ public struct RootView: View {
             grid(.recent)
         case .all:
             grid(.all)
-        case .scan:
-            Tokens.Color.bgGrouped.ignoresSafeArea()
+        case .scan(let id):
+            ViewerRoute(
+                makeModel: { dependencies.makeViewer(id) },
+                pages: dependencies.pages,
+                thumbnails: dependencies.thumbnails
+            )
         }
     }
 

@@ -28,7 +28,7 @@ struct ThumbnailRedrawTests {
             library: FakeLibrary(scans: [scan]),
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar)
-        let picture = try #require(Self.magentaImage())
+        let picture = try #require(WindowPixels.image(.magenta))
         let view = CollectionGridView(
             model: model,
             thumbnails: CachedAfterFirstRead(image: picture),
@@ -50,49 +50,9 @@ struct ThumbnailRedrawTests {
         var shows = false
         while !shows, ContinuousClock.now < end {
             try await Task.sleep(for: .milliseconds(100))
-            shows = try Self.showsMagenta(window)
+            shows = try WindowPixels.shows(.magenta, in: window)
         }
         #expect(shows)
-    }
-
-    private static func magentaImage() -> CGImage? {
-        let context = CGContext(
-            data: nil,
-            width: 4,
-            height: 4,
-            bitsPerComponent: 8,
-            bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
-        context?.setFillColor(CGColor(srgbRed: 1, green: 0, blue: 1, alpha: 1))
-        context?.fill(CGRect(x: 0, y: 0, width: 4, height: 4))
-        return context?.makeImage()
-    }
-
-    /// Whether any of the window's pixels is the picture's colour; nothing else on the screen is close to it.
-    private static func showsMagenta(_ window: UIWindow) throws -> Bool {
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        let rendered = UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
-            window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
-        }
-        let image = try #require(rendered.cgImage)
-        let width = image.width
-        let height = image.height
-        var pixels = [UInt8](repeating: 0, count: width * height * 4)
-        let context = try #require(
-            CGContext(
-                data: &pixels,
-                width: width,
-                height: height,
-                bitsPerComponent: 8,
-                bytesPerRow: width * 4,
-                space: CGColorSpace(name: CGColorSpace.sRGB) ?? CGColorSpaceCreateDeviceRGB(),
-                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
-        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-        return stride(from: 0, to: pixels.count, by: 4).contains { offset in
-            pixels[offset] > 200 && pixels[offset + 1] < 60 && pixels[offset + 2] > 200
-        }
     }
 }
 

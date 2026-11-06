@@ -18,7 +18,7 @@ public final class FakePageImages: PageImageProviding {
     }
 
     /// Every request, in order, from both `cachedPage` and `page`.
-    package var requests: [FakeImageRequest] { state.withLock { $0.requests } }
+    public var requests: [FakeImageRequest] { state.withLock { $0.requests } }
 
     /// Only the async loads: what a view actually asked the disk side for.
     package var loadedRequests: [FakeImageRequest] { requests.filter { $0.kind == .loaded } }

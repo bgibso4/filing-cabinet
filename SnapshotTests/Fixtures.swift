@@ -27,10 +27,13 @@ enum Fixtures {
         FakeLibrary(scans: entries(set).map(\.summary))
     }
 
-    static let thumbnails = FakeThumbnails(images: images(for: .home))
+    static let thumbnails = FakeThumbnails(images: allImages)
+    static let pages = FakePageImages(images: allImages)
 
-    // periphery:ignore - read by the viewer snapshots (Task 17).
-    static let pages = FakePageImages(images: images(for: .home))
+    /// ScanView.dc.html line 332: the lease, three pages, kept forever.
+    static let lease = viewerScan("Lease 2026", .documents, daysAgo: 7, pageCount: 3)
+    /// ScanView.dc.html line 330: added Jul 19, 2026, so 5 days left of its 90 on Oct 12.
+    static let receipt = viewerScan("Corner Market", .receipts, daysAgo: 85, pageCount: 1)
 
     /// The named sample scans (design/prototype/scans), in order; a missing one is left out.
     static func scans(_ names: String...) -> [CGImage] {
@@ -123,7 +126,30 @@ enum Fixtures {
         }
     }
 
+    private static func viewerScan(
+        _ title: String, _ collection: BuiltInCollection, daysAgo: Int, pageCount: Int
+    ) -> ScanSummary {
+        ScanSummary(
+            id: ScanID(),
+            title: title,
+            collection: collection,
+            scannedAt: clock.calendar.date(byAdding: .day, value: -daysAgo, to: clock.now()) ?? clock.now(),
+            expiryOverride: nil,
+            pageCount: pageCount)
+    }
+
     // MARK: Images
+
+    private static let allImages: [ScanID: [Int: CGImage]] = {
+        var all = images(for: .home)
+        all[lease.id] = byIndex(scans("scan-lease", "scan-lease-p2", "scan-lease-p3"))
+        all[receipt.id] = byIndex(scans("scan-r-corner"))
+        return all
+    }()
+
+    private static func byIndex(_ images: [CGImage]) -> [Int: CGImage] {
+        Dictionary(uniqueKeysWithValues: images.enumerated().map { ($0.offset, $0.element) })
+    }
 
     private static func images(for set: FixtureSet) -> [ScanID: [Int: CGImage]] {
         var cache: [String: CGImage] = [:]

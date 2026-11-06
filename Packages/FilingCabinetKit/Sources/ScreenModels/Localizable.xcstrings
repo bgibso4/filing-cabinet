@@ -110,6 +110,7 @@
       }
     },
     "Page %lld of %lld" : {},
+    "%@, page %lld" : {},
     "Scan · %@" : {},
     "Collection · required" : {},
     "Collection" : {},

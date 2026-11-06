@@ -32,7 +32,9 @@ private let utc: Calendar = {
             == (0..<7).map {
                 CalendarDay(year: 2026, month: 10, day: 12 - $0)
             })
-    #expect(store.scans.allSatisfy { $0.pageCount == 1 && !$0.title.isEmpty })
+    #expect(store.scans.allSatisfy { !$0.title.isEmpty })
+    // Documents' scans have three pages, so a journey has pages to swipe through.
+    #expect(store.scans.map(\.pageCount) == [1, 1, 1, 3, 1, 1, 1])
     #expect(Set(store.scans.map(\.title)).count == 7)
-    #expect(store.scans.allSatisfy { store.pageFileURLs(for: $0.id).count == 1 })
+    #expect(store.scans.allSatisfy { store.pageFileURLs(for: $0.id).count == $0.pageCount })
 }

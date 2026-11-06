@@ -1,6 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ · %@" : {},
     "Camera access is off" : {},
     "Cancel" : {},
     "Choose a date…" : {},

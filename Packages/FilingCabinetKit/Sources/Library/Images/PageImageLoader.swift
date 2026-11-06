@@ -28,7 +28,9 @@ public struct PageImageLoader: PageImageProviding {
         guard
             fileSystem.fileExists(at: url),
             let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+            // Decoded here, off the main actor; otherwise the first draw would do it on the main thread.
+            let image = CGImageSourceCreateImageAtIndex(
+                source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
         else { return nil }
         cache.insert(image, for: key)
         return image
