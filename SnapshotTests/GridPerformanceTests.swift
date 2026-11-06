@@ -43,11 +43,13 @@ struct GridPerformanceTests {
         let firstScreen = thumbnails.loadedRequests.count
         #expect(firstScreen >= Self.firstScreenful)
         #expect(firstScreen <= Self.maxPerStep)
-        // The visible tiles first, in any order, then the window in order.
-        let firstIDs = thumbnails.loadedRequests.map(\.id)
-        #expect(Set(firstIDs.prefix(Self.visibleTiles)) == Set(scans.prefix(Self.visibleTiles).map(\.id)))
+        // The visible tiles and the window, and nothing else; the window in order among themselves. That no prefetch
+        // comes before the layout pass ends is proved with scripted events in `GridPrefetcherTests`.
         let prefetchEnd = Self.visibleTiles + Self.prefetchedTiles
-        #expect(Array(firstIDs.dropFirst(Self.visibleTiles)) == scans[Self.visibleTiles..<prefetchEnd].map(\.id))
+        let firstIDs = thumbnails.loadedRequests.prefix(prefetchEnd).map(\.id)
+        #expect(Set(firstIDs) == Set(scans.prefix(prefetchEnd).map(\.id)))
+        let prefetchWindow = scans[Self.visibleTiles..<prefetchEnd].map(\.id)
+        #expect(firstIDs.filter(prefetchWindow.contains) == prefetchWindow)
 
         let scrollView = try #require(Self.firstScrollView(in: window))
         var seen = thumbnails.loadedRequests.count

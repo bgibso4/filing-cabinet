@@ -89,15 +89,15 @@ package final class GridPrefetcher {
     /// Starts the next load unless one is running; that one starts the next from whatever the window is by then.
     private func pump() {
         guard loading == nil, let provider, let next = nextToLoad(from: provider) else { return }
-        loading = Task { [weak self] in
-            // Only the load is low priority. This bookkeeping stays at normal priority on the main actor, where
-            // low-priority work can wait for a long time behind everything else.
-            await Task(priority: .utility) { @concurrent in
-                _ = await provider.thumbnail(for: next, page: 0)
-            }.value
-            guard !Task.isCancelled else { return }
-            self?.loading = nil
-            self?.pump()
+        // The load reports back instead of being awaited: anything of higher priority awaiting it would escalate it.
+        loading = Task(priority: .utility) { @concurrent [weak self] in
+            _ = await provider.thumbnail(for: next, page: 0)
+            await MainActor.run {
+                // On the main actor, like `stop()`, so a stopped load can't touch a later one's state.
+                guard !Task.isCancelled else { return }
+                self?.loading = nil
+                self?.pump()
+            }
         }
     }
 

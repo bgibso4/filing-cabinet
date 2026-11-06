@@ -29,7 +29,11 @@ struct ThumbnailView: View {
             }
             .clipped()
             .task(id: [AnyHashable(id), AnyHashable(page)]) {
-                guard provider.cachedThumbnail(for: id, page: page) == nil else { return }
+                // A prefetch can have filled the cache since the body last read it; nothing else would redraw this.
+                if let cached = provider.cachedThumbnail(for: id, page: page) {
+                    loaded = cached
+                    return
+                }
                 let image = await provider.thumbnail(for: id, page: page)
                 guard !Task.isCancelled else { return }
                 loaded = image

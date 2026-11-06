@@ -24,6 +24,7 @@ private nonisolated final class HeldThumbnails: ThumbnailProviding {
     private struct State {
         var held: Set<ScanID>
         var loaded: [ScanID] = []
+        var finishPriorities: [TaskPriority] = []
     }
 
     private let state: Mutex<State>
@@ -33,6 +34,8 @@ private nonisolated final class HeldThumbnails: ThumbnailProviding {
     }
 
     var loaded: [ScanID] { state.withLock { $0.loaded } }
+    /// Each finished load's priority at the end of the load, by when any escalation has happened.
+    var finishPriorities: [TaskPriority] { state.withLock { $0.finishPriorities } }
 
     func release() {
         state.withLock { $0.held = [] }
@@ -46,6 +49,7 @@ private nonisolated final class HeldThumbnails: ThumbnailProviding {
             // A cancelled sleep only ends the wait early; the loop's check then stops it.
             try? await Task.sleep(for: .milliseconds(1))
         }
+        state.withLock { $0.finishPriorities.append(Task.currentPriority) }
         return nil
     }
 }
@@ -141,6 +145,22 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     thumbnails.release()
     await drain(until: 37) { thumbnails.loaded.count }
     #expect(thumbnails.loaded == [ids[12]] + Array(ids[62..<98]))
+}
+
+@Test func aLoadStaysAtLowPriorityWhileItRuns() async throws {
+    let ids = (0..<100).map { _ in ScanID() }
+    let thumbnails = HeldThumbnails(holding: [ids[1]])
+    defer { thumbnails.release() }
+    let prefetcher = GridPrefetcher(quietPeriod: .zero)
+    prefetcher.update(ids: ids, provider: thumbnails)
+    prefetcher.tileAppeared(ids[0])
+    await drain(until: 1) { thumbnails.loaded.count }
+    // Long enough for anything waiting on the load to escalate it.
+    try await Task.sleep(for: .milliseconds(30))
+    thumbnails.release()
+    await drain(until: 36) { thumbnails.finishPriorities.count }
+    #expect(thumbnails.finishPriorities.count == 36)
+    #expect(thumbnails.finishPriorities.allSatisfy { $0 == .utility })
 }
 
 @Test func theFirstScreenReportingBottomUpStillPrefetchesForward() async {

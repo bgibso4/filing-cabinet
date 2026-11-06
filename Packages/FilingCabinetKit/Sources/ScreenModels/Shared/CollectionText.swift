@@ -55,6 +55,11 @@ package enum CollectionText {
         }
     }
 
+    /// "3 scans · Kept 3 months".
+    static func scanCountAndKept(_ count: Int, _ lifespan: Lifespan) -> String {
+        String(localized: "\(scanCount(count)) · \(kept(lifespan))", bundle: #bundle)
+    }
+
     static func emptyTitle(_ grid: GridKind) -> String {
         switch grid {
         case .collection(.wallet): String(localized: "No cards yet", bundle: #bundle)

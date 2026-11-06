@@ -125,6 +125,7 @@
     "Your iPhone is out of space. Free some up, then try again. Your pages are still here." : {},
     "Something went wrong. Your pages are still here." : {},
     "%@ · until %@" : {},
+    "%@ · %@" : {},
     "Until %@" : {},
     "Kept %@" : {},
     "No cards yet" : {},
