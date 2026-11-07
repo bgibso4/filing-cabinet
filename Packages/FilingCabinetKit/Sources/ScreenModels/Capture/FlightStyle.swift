@@ -1,9 +1,9 @@
 import CoreGraphics
 import Foundation
 
-/// How the saved page reaches its destination: flying there, or fading where it is (M13, Reduce Motion).
+/// How the saved page reaches its destination: flying to a frame, or fading where it is (M13, Reduce Motion).
 package enum FlightStyle: Equatable {
-    case fly
+    case fly(frame: CGRect)
     case fade
 
     // My call, all four: Review.dc.html has no timing beyond what the plan sets (0.45 s spring, 0.2 s cross-fade).
@@ -16,14 +16,11 @@ package enum FlightStyle: Equatable {
     package static let landingFadeDuration: TimeInterval = 0.15
     package static let fadeDuration: TimeInterval = 0.2
 
-    package static func choose(reduceMotion: Bool, hasDestination: Bool) -> Self {
-        !reduceMotion && hasDestination ? .fly : .fade
-    }
-
-    /// `frame`, if it can be seen in `region`: the middle of it is inside. A frame scrolled away, or never measured,
-    /// is no destination.
-    package static func landingFrame(_ frame: CGRect?, visibleIn region: CGRect) -> CGRect? {
-        guard let frame, !frame.isEmpty, region.contains(CGPoint(x: frame.midX, y: frame.midY)) else { return nil }
-        return frame
+    /// Flies to `target` if it can be seen in `region` (the middle of it is inside) and motion is allowed. A frame
+    /// scrolled away or never measured is no destination, and Reduce Motion cross-fades.
+    package static func choose(target: CGRect?, region: CGRect, reduceMotion: Bool) -> Self {
+        guard !reduceMotion, let target, !target.isEmpty, region.contains(CGPoint(x: target.midX, y: target.midY))
+        else { return .fade }
+        return .fly(frame: target)
     }
 }

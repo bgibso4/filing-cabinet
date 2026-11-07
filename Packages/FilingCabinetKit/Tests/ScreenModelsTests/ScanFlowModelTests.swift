@@ -213,24 +213,20 @@ private func saved(
     #expect(harness.model.flightFinished() == nil)
 }
 
-@Test func flightStyleIsAFadeWithReduceMotionOrNoDestination() {
-    #expect(FlightStyle.choose(reduceMotion: false, hasDestination: true) == .fly)
-    #expect(FlightStyle.choose(reduceMotion: true, hasDestination: true) == .fade)
-    #expect(FlightStyle.choose(reduceMotion: false, hasDestination: false) == .fade)
-    #expect(FlightStyle.choose(reduceMotion: true, hasDestination: false) == .fade)
-}
-
-@Test func aDestinationOutsideTheVisibleAreaCountsAsNone() {
+@Test func aPageFliesOnlyToAFrameOnScreenAndOnlyWithMotion() {
     let screen = CGRect(x: 0, y: 0, width: 402, height: 874)
     let onScreen = CGRect(x: 16, y: 200, width: 34, height: 34)
-    #expect(FlightStyle.landingFrame(onScreen, visibleIn: screen) == onScreen)
-    #expect(FlightStyle.landingFrame(nil, visibleIn: screen) == nil)
+    #expect(FlightStyle.choose(target: onScreen, region: screen, reduceMotion: false) == .fly(frame: onScreen))
+    // Reduce Motion cross-fades even with a frame to fly to.
+    #expect(FlightStyle.choose(target: onScreen, region: screen, reduceMotion: true) == .fade)
+    // No frame, or one not yet measured: nowhere to land.
+    #expect(FlightStyle.choose(target: nil, region: screen, reduceMotion: false) == .fade)
+    #expect(FlightStyle.choose(target: .zero, region: screen, reduceMotion: false) == .fade)
     // Scrolled off the top, off the bottom, or more than half gone.
-    #expect(FlightStyle.landingFrame(onScreen.offsetBy(dx: 0, dy: -600), visibleIn: screen) == nil)
-    #expect(FlightStyle.landingFrame(onScreen.offsetBy(dx: 0, dy: 900), visibleIn: screen) == nil)
-    #expect(FlightStyle.landingFrame(onScreen.offsetBy(dx: 0, dy: -220), visibleIn: screen) == nil)
-    // A view not yet measured is not somewhere to land.
-    #expect(FlightStyle.landingFrame(.zero, visibleIn: screen) == nil)
+    for offset in [-600.0, 900, -220] {
+        let moved = onScreen.offsetBy(dx: 0, dy: offset)
+        #expect(FlightStyle.choose(target: moved, region: screen, reduceMotion: false) == .fade)
+    }
 }
 
 /// The UI journey bounds the whole overlay at 2 s; waiting for a late frame must not eat into it.

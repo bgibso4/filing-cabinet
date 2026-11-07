@@ -23,7 +23,7 @@ struct CaptureContainer: View {
                 )
             }
         case .idle, .cameraOff:
-            // Only seen while a discarded scan's layer is animating away.
+            // Nothing to show: Discard and Cancel cut the layer (a full Review frame, then a full Home frame), no slide.
             EmptyView()
         }
     }

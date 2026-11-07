@@ -43,6 +43,11 @@ private struct FlightTarget: ViewModifier {
         let frame = proxy.frame(in: .global)
         guard let scrollBounds = proxy.bounds(of: .scrollView) else { return frame }
         // `bounds(of:)` answers in this view's own coordinates, which start at its top left.
-        return FlightStyle.landingFrame(frame, visibleIn: scrollBounds.offsetBy(dx: frame.minX, dy: frame.minY))
+        let visible = scrollBounds.offsetBy(dx: frame.minX, dy: frame.minY)
+        // Motion is allowed here: this only asks whether the frame is on show; the overlay applies Reduce Motion.
+        guard case .fly(let shown) = FlightStyle.choose(target: frame, region: visible, reduceMotion: false) else {
+            return nil
+        }
+        return shown
     }
 }

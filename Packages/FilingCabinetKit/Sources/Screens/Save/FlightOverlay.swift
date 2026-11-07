@@ -62,10 +62,9 @@ struct FlightOverlay: View {
 
     private func run(_ flight: ScanFlowModel.Flight) async {
         await pause(FlightStyle.destinationWait)
-        let target = FlightStyle.landingFrame(latestTargetFrame, visibleIn: screen)
         let style = FlightStyle.choose(
-            reduceMotion: systemReduceMotion || forcesReduceMotion, hasDestination: target != nil)
-        if style == .fly, let target {
+            target: latestTargetFrame, region: screen, reduceMotion: systemReduceMotion || forcesReduceMotion)
+        if case .fly(let target) = style {
             withAnimation(.spring(duration: FlightStyle.flyDuration)) {
                 landing = Landing(frame: target, cornerRadius: cornerRadius(at: target, for: flight.destination))
             }

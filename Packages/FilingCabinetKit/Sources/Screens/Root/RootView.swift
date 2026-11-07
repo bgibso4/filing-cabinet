@@ -23,10 +23,12 @@ public struct RootView: View {
                 onScan: { Task { await flow.scan(from: .home, preselected: nil) } },
                 onOpen: { path.append($0) }
             )
+            .accessibilityHidden(isCapturing.wrappedValue)
             // Home draws its own large title (Home.dc.html); pushed screens bring their own headers.
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
+        .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
         .environment(\.flightDestination, visibleFlightDestination)
         .overlayPreferenceValue(FlightTargetFrameKey.self) { frame in
             FlightOverlay(flow: flow, targetFrame: frame, forcesReduceMotion: dependencies.forcesReduceMotion)
@@ -37,8 +39,6 @@ public struct RootView: View {
                 // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so it
                 // is already drawn the moment the layer goes; otherwise the screen is blank for two frames.
                 .presentationBackground(.clear)
-                // That also leaves the root reachable: keep VoiceOver in the layer.
-                .accessibilityAddTraits(.isModal)
         }
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
@@ -78,8 +78,12 @@ public struct RootView: View {
         )
     }
 
-    @ViewBuilder
     private func destination(_ route: AppRoute) -> some View {
+        screen(route).accessibilityHidden(isCapturing.wrappedValue)
+    }
+
+    @ViewBuilder
+    private func screen(_ route: AppRoute) -> some View {
         switch route {
         case .collection(let collection):
             grid(.collection(collection))

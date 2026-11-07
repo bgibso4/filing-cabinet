@@ -58,7 +58,6 @@ final class ScanJourneyTests: XCTestCase {
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
         XCTAssertTrue(tile.firstMatch.waitForExistence(timeout: 5))
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Save.flight].exists)
         // Scan answers again, on the same grid.
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
         app.buttons[AccessibilityID.Grid.back].tap()
@@ -68,7 +67,8 @@ final class ScanJourneyTests: XCTestCase {
     }
 
     /// Scanned in Receipts, saved to Wallet: Wallet's badge is on Home, under the grid, so the page fades in place
-    /// (M13), and Receipts stays empty. The page must be gone inside the same bound.
+    /// (M13), and Receipts stays empty. Wallet shows no count to hold back, so this proves the journey ends on Home with
+    /// Wallet's row there; it does not time the overlay (the Receipts tests do).
     func testSaveToAnotherCollectionFromAGridFades() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: "Wallet")
@@ -77,7 +77,8 @@ final class ScanJourneyTests: XCTestCase {
         waitForFlightToLand(in: app, collection: .wallet)
     }
 
-    /// Scrolled far down a grid, the new tile isn't on screen: the page fades, and the grid stays where it was.
+    /// Scrolled far down a grid, the new tile isn't on screen: the page fades, and the grid stays where it was. The
+    /// overlay isn't timed here (no visible count); this proves the layer ends, Scan is back and the scroll holds.
     func testSaveWithTheTileScrolledAwayFades() {
         let app = launchApp(["-SeedScans", "60", "-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         let all = app.buttons[AccessibilityID.Home.allRow]
@@ -94,7 +95,6 @@ final class ScanJourneyTests: XCTestCase {
         save.tap()
         XCTAssertTrue(save.waitForNonExistence(timeout: 10))
         XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Save.flight].exists)
         XCTAssertFalse(header.isHittable)
     }
 
@@ -156,7 +156,9 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(alert.waitForExistence(timeout: 5))
         alert.buttons["Discard"].tap()
         XCTAssertTrue(app.buttons[Review.save].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].exists)
+        let scan = app.buttons[AccessibilityID.Home.scan]
+        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.isHittable)
     }
 
     func testRescanCancelKeepsTitle() {
@@ -188,7 +190,6 @@ final class ScanJourneyTests: XCTestCase {
         attachScreenshot(of: app, named: "save-failed-alert")
         alert.buttons["Try again"].tap()
 
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 10))
         waitForFlightToLand(in: app)
     }
 
@@ -236,11 +237,14 @@ final class ScanJourneyTests: XCTestCase {
         scan.tap()
         let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
         XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        // The grid under the camera is out of the tree too, its Scan bar included.
+        XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].waitForNonExistence(timeout: 5))
+        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
         finish.tap()
         XCTAssertTrue(app.buttons[Review.save].waitForExistence(timeout: 5))
     }
 
-    private func chooseReceipts(in app: XCUIApplication) {
+    func chooseReceipts(in app: XCUIApplication) {
         app.descendants(matching: .any)[Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
         XCTAssertTrue(receipts.waitForExistence(timeout: 5))
@@ -248,7 +252,8 @@ final class ScanJourneyTests: XCTestCase {
     }
 
     /// The landing row holds its count back until the overlay ends (`HomeRow.shownCount`), so the count showing 1
-    /// within the bound means the overlay ended within it. The overlay itself is never in the accessibility tree.
+    /// within the bound means the overlay ended within it. The overlay is hidden from accessibility, so nothing here
+    /// looks for it.
     private func waitForFlightToLand(
         in app: XCUIApplication, collection: BuiltInCollection = .receipts, line: UInt = #line
     ) {
@@ -258,11 +263,11 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 5), line: line)
         let landed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS '1'"), object: row)
         XCTAssertEqual(XCTWaiter.wait(for: [landed], timeout: 2), .completed, row.label, line: line)
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Save.flight].exists, line: line)
+        XCTAssertTrue(row.isHittable, line: line)
     }
 
     /// Taps Scan once launch has enabled it, then Finish on the fake camera, and waits for review.
-    private func scanOnePage(in app: XCUIApplication) {
+    func scanOnePage(in app: XCUIApplication) {
         let scan = app.buttons[AccessibilityID.Home.scan]
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
         XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)

@@ -1,5 +1,11 @@
 import SwiftUI
 
+extension EnvironmentValues {
+    /// True while the camera or review covers the screens. The cover is clear, so they stay in the window and in the
+    /// accessibility tree unless they hide themselves.
+    @Entry var captureLayerIsUp = false
+}
+
 /// A screen's scrolling content with the Scan button at the bottom centre. At default sizes the button floats over
 /// the content on a fade of the screen background (as a safe-area inset it pushes the scroll content up by its real
 /// size). At accessibility sizes the content is taller than the screen, so a row would rest half under the fade: the
@@ -15,6 +21,7 @@ struct ScanBarLayout<Content: View>: View {
     private var fadeSolidLocation: Double { 0.38 }
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.captureLayerIsUp) private var captureLayerIsUp
 
     var body: some View {
         if typeSize.isAccessibilitySize {
@@ -31,8 +38,7 @@ struct ScanBarLayout<Content: View>: View {
     }
 
     private func scanBar(fades: Bool) -> some View {
-        ScanButton(identifier: scanIdentifier, action: onScan)
-            .disabled(!canScan)
+        button
             .padding(.top, Tokens.Spacing.s4)
             .frame(maxWidth: .infinity)
             .background {
@@ -49,5 +55,13 @@ struct ScanBarLayout<Content: View>: View {
                     .allowsHitTesting(false)
                 }
             }
+    }
+
+    /// `accessibilityHidden` doesn't take the button out of the accessibility tree (measured in a UI test, with the
+    /// cause unknown); `hidden()` does, and keeps its place so nothing moves when the layer goes.
+    @ViewBuilder
+    private var button: some View {
+        let scan = ScanButton(identifier: scanIdentifier, action: onScan).disabled(!canScan)
+        if captureLayerIsUp { scan.hidden() } else { scan }
     }
 }
