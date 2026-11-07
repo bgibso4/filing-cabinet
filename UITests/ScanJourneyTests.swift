@@ -81,6 +81,11 @@ final class ScanJourneyTests: XCTestCase {
     /// overlay isn't timed here (no visible count); this proves the layer ends, Scan is back and the scroll holds.
     func testSaveWithTheTileScrolledAwayFades() {
         let app = launchApp(["-SeedScans", "60", "-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+        // Scan stays disabled until all sixty are saved, which takes most of a minute on a busy machine. Waiting here
+        // also means the grid has stopped growing before it is scrolled.
+        let enabled = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isEnabled == true"), object: app.buttons[AccessibilityID.Home.scan])
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 120), .completed)
         let all = app.buttons[AccessibilityID.Home.allRow]
         XCTAssertTrue(all.waitForExistence(timeout: 30))
         all.tap()
