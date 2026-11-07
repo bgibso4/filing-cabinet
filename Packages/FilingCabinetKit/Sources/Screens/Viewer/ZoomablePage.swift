@@ -13,6 +13,8 @@ struct ZoomablePage: View {
     let label: String
     let fitInsets: UIEdgeInsets
     let provider: any PageImageProviding
+    /// Whether the page is zoomed past 1×, each time that changes.
+    let onZoomChange: (Bool) -> Void
 
     private struct Key: Hashable {
         // periphery:ignore - read only by the synthesized Hashable and Equatable
@@ -35,7 +37,8 @@ struct ZoomablePage: View {
             pageKey: key,
             isCurrent: isCurrent,
             label: label,
-            fitInsets: fitInsets
+            fitInsets: fitInsets,
+            onZoomChange: onZoomChange
         )
         .task(id: holdsImage ? key : nil) {
             guard holdsImage else {
@@ -68,6 +71,7 @@ struct ZoomablePage: View {
         let isCurrent: Bool
         let label: String
         let fitInsets: UIEdgeInsets
+        let onZoomChange: (Bool) -> Void
 
         func makeUIView(context: Context) -> ZoomableScrollView {
             let view = ZoomableScrollView()
@@ -79,6 +83,7 @@ struct ZoomablePage: View {
 
         func updateUIView(_ view: ZoomableScrollView, context: Context) {
             view.fitInsets = fitInsets
+            view.onZoomChange = onZoomChange
             view.accessibilityLabel = label
             view.show(image, pageKey: pageKey)
             // Coming back to a page finds it whole.

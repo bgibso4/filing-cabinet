@@ -65,6 +65,8 @@ public enum AccessibilityID {
         public static let collection = "review.collection"
         public static let expiry = "review.expiry"
         public static let save = "review.save"
+        /// Only with more than one page, so not in `all`.
+        public static let strip = "review.strip"
 
         public static var all: [String] {
             [close, rescan, pagePill, title, titleField, collection, expiry, save]
@@ -97,7 +99,7 @@ public enum AccessibilityID {
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.
-        Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + ExpiryDate.all
+        Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back }
     }
 }

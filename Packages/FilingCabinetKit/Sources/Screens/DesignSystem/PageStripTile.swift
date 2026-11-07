@@ -27,19 +27,39 @@ extension View {
             self
             .frame(width: size.width, height: size.height, alignment: .top)
             .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
-            .overlay {
-                if isCurrent {
-                    // Pages are paper, white in both appearances, so the ring is the light appearance's dark text.
-                    RoundedRectangle(cornerRadius: Tokens.Radius.nested)
-                        .strokeBorder(Tokens.Color.textPrimary, lineWidth: PageStripTile.currentRing)
-                        .environment(\.colorScheme, .light)
-                }
-            }
+            .overlay { PageStripTileEdge(isCurrent: isCurrent) }
             .padding(.horizontal, isCurrent ? PageStripTile.currentMargin : 0)
     }
 }
 
+/// A page's edge in the strip: the current one ringed, the others outlined with a hairline so white pages read on pale
+/// glass. Pages are paper, white in both appearances, so both lines take the light appearance's colours.
+private struct PageStripTileEdge: View {
+    let isCurrent: Bool
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: Tokens.Radius.nested)
+            .strokeBorder(
+                isCurrent ? Tokens.Color.textPrimary : Tokens.Color.separator,
+                lineWidth: isCurrent ? PageStripTile.currentRing : 1 / displayScale
+            )
+            .environment(\.colorScheme, .light)
+    }
+}
+
 extension View {
+    /// Lets VoiceOver page with a swipe up or down on the strip, as the pager does with a finger.
+    func pageStripAdjustable(page: Binding<Int>, count: Int) -> some View {
+        accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: page.wrappedValue = min(page.wrappedValue + 1, count - 1)
+            case .decrement: page.wrappedValue = max(page.wrappedValue - 1, 0)
+            @unknown default: break
+            }
+        }
+    }
+
     /// The Liquid Glass bar a page strip sits on, so its pages read over a white page as well as the background (P3).
     func pageStripBar() -> some View {
         self

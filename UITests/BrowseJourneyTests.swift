@@ -133,13 +133,34 @@ final class BrowseJourneyTests: XCTestCase {
     func testEdgeSwipeGoesBackFromAZoomedPage() {
         let app = seededApp()
         openThreePageScan(in: app)
-        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
-        page.doubleTap()
         // The page says it is zoomed once the zoom has finished; only then is the swipe a test of a zoomed page.
-        let zoomed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Zoomed"), object: page)
-        XCTAssertEqual(XCTWaiter.wait(for: [zoomed], timeout: 5), .completed, "The page never reported being zoomed")
+        zoomTheFirstPage(in: app)
         edgeSwipeBack(in: app)
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+    }
+
+    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() {
+        let app = seededApp()
+        openThreePageScan(in: app)
+        zoomTheFirstPage(in: app)
+        // The first swipes pan the zoomed page to its edge; the one after that pages, as in Photos.
+        let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
+        let second = NSPredicate(format: "label == %@", "Page 2 of 3")
+        var swipes = 0
+        while swipes < 4 {
+            app.windows.firstMatch.swipeLeft()
+            swipes += 1
+            let paged = XCTNSPredicateExpectation(predicate: second, object: strip)
+            if XCTWaiter.wait(for: [paged], timeout: 2) == .completed { break }
+        }
+        assertPageLabel("Page 2 of 3", in: app)
+    }
+
+    private func zoomTheFirstPage(in app: XCUIApplication) {
+        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
+        page.doubleTap()
+        let zoomed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Zoomed"), object: page)
+        XCTAssertEqual(XCTWaiter.wait(for: [zoomed], timeout: 5), .completed, "The page never reported being zoomed")
     }
 
     private func openReceipts(in app: XCUIApplication) {

@@ -7,8 +7,15 @@ import Observation
 /// from `Today`, so the header moves when either does and the view pops when the scan goes away (M5).
 @Observable
 public final class ViewerModel {
-    /// 0-based. The pager writes it.
-    public var currentPage = 0
+    /// 0-based. The pager writes it. Another page starts unzoomed.
+    public var currentPage = 0 {
+        didSet {
+            if currentPage != oldValue { isPageZoomed = false }
+        }
+    }
+
+    /// Whether the current page is zoomed past 1×; the page writes it.
+    package var isPageZoomed = false
 
     package let id: ScanID
 

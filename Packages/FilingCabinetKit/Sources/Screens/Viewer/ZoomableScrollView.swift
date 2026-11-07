@@ -21,6 +21,10 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
         }
     }
 
+    /// Called when the page goes past 1× or comes back to it.
+    var onZoomChange: ((Bool) -> Void)?
+    private var isZoomed = false
+
     init() {
         super.init(frame: .zero)
         delegate = self
@@ -90,6 +94,10 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
         positionContent()
         // Said aloud by VoiceOver, and how a UI test sees that the page is zoomed.
         accessibilityValue = zoomScale > 1 ? String(localized: "Zoomed", bundle: #bundle) : nil
+        if (zoomScale > 1) != isZoomed {
+            isZoomed = zoomScale > 1
+            onZoomChange?(isZoomed)
+        }
     }
 
     private var fittedImageSize: CGSize {

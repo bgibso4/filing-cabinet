@@ -76,6 +76,15 @@ private func model(_ scan: ScanSummary, library: FakeLibrary? = nil, today: Toda
     #expect(viewer.pageLabel == "Page 2 of 3")
 }
 
+@Test func anotherPageStartsUnzoomed() {
+    let viewer = model(summary("Lease 2026", .documents, pages: 3))
+    viewer.isPageZoomed = true
+    viewer.currentPage = 0
+    #expect(viewer.isPageZoomed, "the same page stays zoomed")
+    viewer.currentPage = 1
+    #expect(!viewer.isPageZoomed)
+}
+
 @Test func singlePageHasNoStrip() {
     #expect(!model(summary("Corner Market", .receipts)).showsStrip)
     #expect(model(summary("Lease 2026", .documents, pages: 2)).showsStrip)

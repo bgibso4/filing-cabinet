@@ -1,11 +1,13 @@
+import Core
 import CoreGraphics
 import SwiftUI
 
 /// A row of small pages under a multi-page scan on a glass bar, the current one larger and ringed (Review.dc.html lines
-/// 226-231, the bar as the viewer's). The pill already says which page is showing, so the strip is hidden from VoiceOver.
+/// 226-231, the bar as the viewer's). VoiceOver reads it as "Page 2 of 3" and pages with it.
 struct PageStrip: View {
     let pages: [CGImage]
-    let currentPage: Int
+    @Binding var currentPage: Int
+    let label: String
 
     // Review.dc.html line 227: 4 pt between pages.
     private static let gap: CGFloat = 4
@@ -20,6 +22,9 @@ struct PageStrip: View {
             }
         }
         .pageStripBar()
-        .accessibilityHidden(true)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityIdentifier(AccessibilityID.Review.strip)
+        .pageStripAdjustable(page: $currentPage, count: pages.count)
     }
 }

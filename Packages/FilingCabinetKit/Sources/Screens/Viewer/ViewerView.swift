@@ -25,6 +25,7 @@ public struct ViewerView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.colorScheme) private var colorScheme
 
     public init(
         model: ViewerModel,
@@ -44,16 +45,18 @@ public struct ViewerView: View {
                     ViewerPageStrip(
                         id: model.id,
                         pageCount: model.pageCount,
-                        currentPage: model.currentPage,
+                        currentPage: $model.currentPage,
                         label: model.pageLabel,
                         thumbnails: thumbnails
                     )
                     .padding(.horizontal, Tokens.Spacing.s4)
                     .padding(.bottom, Self.stripBottomGap)
+                    .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
             // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works.
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbarColorScheme(controlsScheme, for: .navigationBar)
             .toolbar {
                 if !headerIsBelowTheBar {
                     ToolbarItem(placement: .principal) {
@@ -66,6 +69,7 @@ public struct ViewerView: View {
             .safeAreaInset(edge: .top) {
                 if headerIsBelowTheBar {
                     header.padding(.horizontal, Tokens.Spacing.s4)
+                        .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
             .onChange(of: model.isMissing, initial: true) { _, isMissing in
@@ -79,6 +83,10 @@ public struct ViewerView: View {
                 }
             }
     }
+
+    /// A zoomed page fills the screen with paper, white in both appearances, so the glass controls over it take the
+    /// light appearance: dark mode's white text would fade into glass over white (the strip's ring has the same reason).
+    private var controlsScheme: ColorScheme? { model.isPageZoomed ? .light : nil }
 
     /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
     private var headerIsBelowTheBar: Bool { typeSize > .large }
@@ -102,7 +110,9 @@ public struct ViewerView: View {
                     label: model.pageImageLabel(page),
                     fitInsets: fitInsets,
                     provider: pages
-                )
+                ) { isZoomed in
+                    if page == model.currentPage { model.isPageZoomed = isZoomed }
+                }
             }
             .ignoresSafeArea()
         }

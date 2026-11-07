@@ -6,7 +6,7 @@ import SwiftUI
 /// on top, the scan (paged, with a strip, when there are several), and the sheet with the title, collection, expiry
 /// and Save.
 public struct ReviewView: View {
-    private let model: ReviewModel
+    @Bindable private var model: ReviewModel
     private let onClose: () -> Void
     private let onRescan: () -> Void
     private let onSaved: (SavedScan) -> Void
@@ -46,8 +46,10 @@ public struct ReviewView: View {
                 Spacer(minLength: 0)
                 if model.pages.count > 1 {
                     // The glass bar's own padding makes up the rest of the mock's 12 pt.
-                    PageStrip(pages: model.pages, currentPage: model.currentPage)
-                        .padding(.vertical, Tokens.Spacing.s3 - PageStripTile.barPadding)
+                    PageStrip(
+                        pages: model.pages, currentPage: $model.currentPage, label: model.pageAccessibilityLabel
+                    )
+                    .padding(.vertical, Tokens.Spacing.s3 - PageStripTile.barPadding)
                 }
             }
             ReviewSheet(model: model, onSave: save)
@@ -145,7 +147,6 @@ public struct ReviewView: View {
     @ViewBuilder
     private var pages: some View {
         if model.pages.count > 1 {
-            @Bindable var model = model
             Pager(count: model.pages.count, selection: $model.currentPage) { index in
                 page(at: index)
             }

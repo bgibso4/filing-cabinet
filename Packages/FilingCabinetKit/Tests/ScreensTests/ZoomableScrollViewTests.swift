@@ -60,6 +60,13 @@
             #expect(view.contentOffset == CGPoint(x: -50, y: -100))
         }
 
+        @Test func aZoomedPageLargerThanTheScreenReachesItsEdges() throws {
+            let view = page(showing: try image(width: 100, height: 200))
+            // 600 by 1200: bigger than the 400 by 800 screen both ways, so nothing is held back for the controls.
+            view.setZoomScale(2, animated: false)
+            #expect(view.contentInset == .zero)
+        }
+
         @Test func doubleTapTogglesTwoTimes() throws {
             let view = page(showing: try image(width: 100, height: 200))
             view.toggleZoom(at: CGPoint(x: 150, y: 300), animated: false)
