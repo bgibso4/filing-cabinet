@@ -9,13 +9,10 @@ public struct ReviewView: View {
     private let model: ReviewModel
     private let onClose: () -> Void
     private let onRescan: () -> Void
-    private let onSaved: (SavedScan, CGRect) -> Void
+    private let onSaved: (SavedScan) -> Void
 
     @State private var isConfirmingDiscard = false
     @Environment(\.dynamicTypeSize) private var typeSize
-    /// Page 1's frame in global coordinates, handed to the save flight.
-    @State private var firstPageFrame = CGRect.zero
-    @State private var pagesMidX: CGFloat = 0
 
     // Review.dc.html lines 211-212: the page is at most 358 pt wide (16 pt in from each side) and, in the sheet state,
     // 332 pt tall, 16 pt below the top buttons.
@@ -24,12 +21,12 @@ public struct ReviewView: View {
     // No mock for the largest text (12-03 is the card): the scan keeps this much height while the sheet scrolls.
     private static let pageMinHeight: CGFloat = 120
 
-    /// `onClose` runs after the user confirms the discard; `onSaved` after a successful save, with page 1's frame.
+    /// `onClose` runs after the user confirms the discard; `onSaved` after a successful save.
     public init(
         model: ReviewModel,
         onClose: @escaping () -> Void,
         onRescan: @escaping () -> Void,
-        onSaved: @escaping (SavedScan, CGRect) -> Void
+        onSaved: @escaping (SavedScan) -> Void
     ) {
         self.model = model
         self.onClose = onClose
@@ -44,11 +41,6 @@ public struct ReviewView: View {
                 pages
                     .frame(maxWidth: Self.pageMaxWidth)
                     .frame(minHeight: Self.pageMinHeight, maxHeight: Self.pageMaxHeight)
-                    .onGeometryChange(for: CGFloat.self) {
-                        $0.frame(in: .global).midX
-                    } action: {
-                        pagesMidX = $0
-                    }
                     .padding(.top, Tokens.Spacing.s4)
                     .padding(.horizontal, Tokens.Spacing.s4)
                 Spacer(minLength: 0)
@@ -169,35 +161,20 @@ public struct ReviewView: View {
         Image(decorative: model.pages[index], scale: 1)
             .resizable()
             .scaledToFit()
-            .onGeometryChange(for: CGRect.self) {
-                $0.frame(in: .global)
-            } action: { frame in
-                if index == 0 { firstPageFrame = frame }
-            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: Actions
 
-    /// Where page 1 would stand if it were showing. Paged away from it, its frame is off to the side, and the flight
-    /// starts from the middle where the page in view is.
-    private var flightStart: CGRect {
-        var frame = firstPageFrame
-        frame.origin.x = pagesMidX - frame.width / 2
-        return frame
-    }
-
     private func save() {
-        let frame = flightStart
         Task {
-            if let saved = await model.save() { onSaved(saved, frame) }
+            if let saved = await model.save() { onSaved(saved) }
         }
     }
 
     private func retrySave() {
-        let frame = flightStart
         Task {
-            if let saved = await model.retrySave() { onSaved(saved, frame) }
+            if let saved = await model.retrySave() { onSaved(saved) }
         }
     }
 

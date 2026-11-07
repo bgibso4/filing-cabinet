@@ -11,8 +11,6 @@ public struct RootDependencies {
     let thumbnails: any ThumbnailProviding
     let pages: any PageImageProviding
     let cameraMode: CameraMode
-    /// `-ReduceMotion`: the save flight takes its Reduce Motion path whatever the system setting.
-    let forcesReduceMotion: Bool
 
     public init(
         home: HomeModel,
@@ -21,8 +19,7 @@ public struct RootDependencies {
         makeViewer: @escaping (ScanID) -> ViewerModel,
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
-        cameraMode: CameraMode,
-        forcesReduceMotion: Bool
+        cameraMode: CameraMode
     ) {
         self.home = home
         self.flow = flow
@@ -31,6 +28,5 @@ public struct RootDependencies {
         self.thumbnails = thumbnails
         self.pages = pages
         self.cameraMode = cameraMode
-        self.forcesReduceMotion = forcesReduceMotion
     }
 }

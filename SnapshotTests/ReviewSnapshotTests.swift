@@ -23,7 +23,7 @@ final class ReviewSnapshotTests: XCTestCase {
         )
         await model.startReading()
         if let collection { model.choose(collection) }
-        return ReviewView(model: model, onClose: {}, onRescan: {}, onSaved: { _, _ in })
+        return ReviewView(model: model, onClose: {}, onRescan: {}, onSaved: { _ in })
     }
 
     @MainActor

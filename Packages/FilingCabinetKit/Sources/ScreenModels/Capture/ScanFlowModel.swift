@@ -15,20 +15,12 @@ public final class ScanFlowModel {
         case review
     }
 
-    /// The saved page on its way to its destination, after the capture layer has gone.
-    package struct Flight: Equatable {
-        package let saved: SavedScan
-        package let from: CGRect
-        package let destination: FlightDestination
-        /// Page 1 alone: the other pages are released as review ends.
-        package let page: CGImage
-    }
-
     package private(set) var phase = Phase.idle
     package private(set) var reviewInput: ReviewInput?
     /// The review of `reviewInput`, made when the first camera finishes and kept through rescans.
     package private(set) var review: ReviewModel?
-    package private(set) var flight: Flight?
+    /// The scan the last save made, for the haptic and the announcement; stays until the next save.
+    package private(set) var lastSaved: SavedScan?
 
     @ObservationIgnored private let cameraAccess: any CameraAccess
     @ObservationIgnored private let clock: AppClock
@@ -112,29 +104,13 @@ public final class ScanFlowModel {
         phase = .idle
     }
 
-    /// Review saved or discarded the scan. A saved scan's page 1 flies on from `rect`, its frame in review. The view
-    /// ends the layer without animation for a save, since this module can't name SwiftUI's transactions.
-    package func reviewEnded(saved: SavedScan?, from rect: CGRect?) {
-        if let saved, let page = reviewInput?.pages.first {
-            flight = Flight(
-                saved: saved, from: rect ?? .zero, destination: Self.flightDestination(for: saved), page: page)
-        }
+    /// Review saved (`saved`) or discarded the scan. The view ends the layer without animation: Save, Discard and
+    /// Cancel all cut straight back to Home.
+    package func reviewEnded(saved: SavedScan?) {
+        if let saved { lastSaved = saved }
         reviewInput = nil
         review = nil
         phase = .idle
-    }
-
-    /// Ends the flight; returns the announcement to post now that it has (M11).
-    package func flightFinished() -> String? {
-        defer { flight = nil }
-        return flight?.saved.announcement
-    }
-
-    /// The scan's own tile when it started in a grid that shows the scan (Recent, All Scans or its collection);
-    /// otherwise the collection's badge.
-    package static func flightDestination(for saved: SavedScan) -> FlightDestination {
-        let gridShowsIt = saved.source == .grid && (saved.preselected == nil || saved.preselected == saved.collection)
-        return gridShowsIt ? .tile(saved.id) : .badge(saved.collection)
     }
 
     private func leaveCamera() {

@@ -40,7 +40,7 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertEqual(save.label, "Save to Receipts")
         save.tap()
 
-        waitForFlightToLand(in: app)
+        waitForSaveToReturnHome(in: app)
     }
 
     /// The whole of Plan 1: a three-page scan is read, filed under Documents, found there and paged through.
@@ -56,7 +56,7 @@ final class ScanJourneyTests: XCTestCase {
         let save = app.buttons[Review.save]
         XCTAssertEqual(save.label, "Save to Documents")
         save.tap()
-        waitForFlightToLand(in: app, collection: .documents)
+        waitForSaveToReturnHome(in: app, collection: .documents)
 
         let row = app.buttons[AccessibilityID.Home.collectionRow(.documents)]
         row.tap()
@@ -90,14 +90,10 @@ final class ScanJourneyTests: XCTestCase {
     }
 
     func testSaveReturnsHomeAndCountTicks() {
-        saveReceiptFromHome(flags: [])
+        saveReceiptFromHome()
     }
 
-    func testSaveReturnsHomeAndCountTicksWithReduceMotion() {
-        saveReceiptFromHome(flags: ["-ReduceMotion"])
-    }
-
-    /// Inside Receipts the page lands on its own tile; the flight is over once Home shows the count.
+    /// Saved inside Receipts, the layer cuts back to the grid, which shows the new tile.
     func testSaveInsideItsCollectionEndsOnTheGrid() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: nil)
@@ -112,20 +108,18 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(row.label.contains("1"), row.label)
     }
 
-    /// Scanned in Receipts, saved to Wallet: Wallet's badge is on Home, under the grid, so the page fades in place
-    /// (M13), and Receipts stays empty. Wallet shows no count to hold back, so this proves the journey ends on Home with
-    /// Wallet's row there; it does not time the overlay (the Receipts tests do).
-    func testSaveToAnotherCollectionFromAGridFades() {
+    /// Scanned in Receipts, saved to Wallet: Wallet's count is on Home.
+    func testSaveToAnotherCollectionFromAGridCountsOnHome() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: "Wallet")
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
         app.buttons[AccessibilityID.Grid.back].tap()
-        waitForFlightToLand(in: app, collection: .wallet)
+        waitForSaveToReturnHome(in: app, collection: .wallet)
     }
 
-    /// Scrolled far down a grid, the new tile isn't on screen: the page fades, and the grid stays where it was. The
-    /// overlay isn't timed here (no visible count); this proves the layer ends, Scan is back and the scroll holds.
-    func testSaveWithTheTileScrolledAwayFades() {
+    /// Scrolled far down a grid, the new tile isn't on screen: the layer ends, Scan is back and the grid stays where it
+    /// was.
+    func testSaveWithTheTileScrolledAwayKeepsTheScroll() {
         let app = launchApp(["-SeedScans", "60", "-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         // Scan stays disabled until all sixty are saved, which takes most of a minute on a busy machine. Waiting here
         // also means the grid has stopped growing before it is scrolled.
@@ -241,7 +235,7 @@ final class ScanJourneyTests: XCTestCase {
         attachScreenshot(of: app, named: "save-failed-alert")
         alert.buttons["Try again"].tap()
 
-        waitForFlightToLand(in: app)
+        waitForSaveToReturnHome(in: app)
     }
 
     /// The real Vision reader on the synthetic receipt. 90 s covers Vision's cold start on a CI simulator; if this
@@ -258,14 +252,14 @@ final class ScanJourneyTests: XCTestCase {
 
 /// Kept out of the class body so it stays under the type length limit.
 extension ScanJourneyTests {
-    private func saveReceiptFromHome(flags: [String]) {
-        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"] + flags)
+    private func saveReceiptFromHome() {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         scanOnePage(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
         XCTAssertTrue(save.waitForNonExistence(timeout: 10))
-        waitForFlightToLand(in: app)
+        waitForSaveToReturnHome(in: app)
     }
 
     /// Opens Receipts, scans there and saves, optionally to another collection.
@@ -311,18 +305,16 @@ extension ScanJourneyTests {
         option.tap()
     }
 
-    /// The landing row holds its count back until the overlay ends (`HomeRow.shownCount`), so the count showing 1
-    /// within the bound means the overlay ended within it. The overlay is hidden from accessibility, so nothing here
-    /// looks for it.
-    private func waitForFlightToLand(
+    /// The layer is gone and Home shows the collection's new count.
+    private func waitForSaveToReturnHome(
         in app: XCUIApplication, collection: BuiltInCollection = .receipts, line: UInt = #line
     ) {
         // Home stays in the tree under the capture layer, so its own elements say nothing about the layer being gone.
         XCTAssertTrue(app.buttons[Review.save].waitForNonExistence(timeout: 10), line: line)
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
         XCTAssertTrue(row.waitForExistence(timeout: 5), line: line)
-        let landed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS '1'"), object: row)
-        XCTAssertEqual(XCTWaiter.wait(for: [landed], timeout: 2), .completed, row.label, line: line)
+        let counted = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS '1'"), object: row)
+        XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, row.label, line: line)
         XCTAssertTrue(row.isHittable, line: line)
     }
 

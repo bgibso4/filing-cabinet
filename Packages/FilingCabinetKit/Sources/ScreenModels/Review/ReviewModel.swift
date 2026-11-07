@@ -204,9 +204,6 @@ public final class ReviewModel {
         }
         return SavedScan(
             id: id,
-            collection: collection,
-            source: input.source,
-            preselected: input.preselected,
             announcement: String(localized: "Saved to \(CollectionText.name(collection))", bundle: #bundle)
         )
     }

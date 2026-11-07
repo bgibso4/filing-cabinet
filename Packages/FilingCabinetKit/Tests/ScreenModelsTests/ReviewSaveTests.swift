@@ -126,9 +126,7 @@ func savedDraftCarriesEverything() async {
     #expect(draft?.scannedAt == ReviewHarness.now)
     #expect(draft?.pages == [ReviewHarness.page1, ReviewHarness.page2])
     #expect(draft?.searchText == "CITY PHARMACY\nTOTAL 12.40\nCORNER MARKET")
-    #expect(
-        saved?.collection == .receipts && saved?.source == .grid && saved?.preselected == .receipts
-            && saved?.announcement == "Saved to Receipts")
+    #expect(saved?.announcement == "Saved to Receipts")
 }
 
 @Test(.timeLimit(.minutes(1)))
@@ -235,7 +233,7 @@ func finishedRescanReplacesTheReviewsPages() async {
 
     #expect(flow.review === review)
     #expect(review?.pages == [ReviewHarness.page2, ReviewHarness.page3])
-    flow.reviewEnded(saved: nil, from: nil)
+    flow.reviewEnded(saved: nil)
     #expect(flow.review == nil)
 }
 

@@ -136,115 +136,35 @@ private let other = SyntheticPages.page(lines: [("TWO", 40)], size: CGSize(width
 @Test func endingReviewReturnsHomeAndDropsTheInput() async {
     let harness = Harness(.authorized)
     await harness.reachReview([receipt])
-    harness.model.reviewEnded(saved: nil, from: nil)
+    harness.model.reviewEnded(saved: nil)
     #expect(harness.model.phase == .idle)
     #expect(harness.model.reviewInput == nil)
-    #expect(harness.model.flight == nil)
+    #expect(harness.model.lastSaved == nil)
 }
 
-// MARK: The save flight
+// MARK: Save
 
-private let flightStart = CGRect(x: 16, y: 80, width: 358, height: 332)
-
-private func saved(
-    in collection: BuiltInCollection, source: ScanSource, preselected: BuiltInCollection?
-) -> SavedScan {
-    SavedScan(
-        id: ScanID(),
-        collection: collection,
-        source: source,
-        preselected: preselected,
-        announcement: "Saved to \(collection.rawValue)"
-    )
-}
-
-@Test func savingFromHomeTargetsTheBadge() {
-    let scan = saved(in: .receipts, source: .home, preselected: nil)
-    #expect(ScanFlowModel.flightDestination(for: scan) == .badge(.receipts))
-}
-
-@Test func savingFromTheSameCollectionTargetsTheTile() {
-    let scan = saved(in: .receipts, source: .grid, preselected: .receipts)
-    #expect(ScanFlowModel.flightDestination(for: scan) == .tile(scan.id))
-}
-
-@Test func savingFromRecentTargetsTheTile() {
-    let scan = saved(in: .wallet, source: .grid, preselected: nil)
-    #expect(ScanFlowModel.flightDestination(for: scan) == .tile(scan.id))
-}
-
-@Test func savingFromAnotherCollectionTargetsTheBadge() {
-    let scan = saved(in: .wallet, source: .grid, preselected: .receipts)
-    #expect(ScanFlowModel.flightDestination(for: scan) == .badge(.wallet))
-}
-
-@Test func announcementNamesTheCollection() async throws {
-    let harness = Harness(.authorized)
-    await harness.reachReview([receipt])
-    let review = try #require(harness.model.review)
-    review.choose(.receipts)
-    let scan = await review.save()
-
-    harness.model.reviewEnded(saved: scan, from: flightStart)
-
-    #expect(harness.model.flightFinished() == "Saved to Receipts")
-    #expect(harness.model.flight == nil)
-}
-
-@Test func aSavedScanEndsTheLayerAndFliesOnlyPageOne() async throws {
+@Test func savingEndsTheLayerAndKeepsTheSavedScanForTheAnnouncement() async throws {
     let harness = Harness(.authorized)
     await harness.reachReview([receipt, other])
-    let scan = saved(in: .receipts, source: .home, preselected: nil)
+    let review = try #require(harness.model.review)
+    review.choose(.receipts)
+    let scan = try #require(await review.save())
 
-    harness.model.reviewEnded(saved: scan, from: flightStart)
+    harness.model.reviewEnded(saved: scan)
 
     #expect(harness.model.phase == .idle)
     #expect(harness.model.review == nil)
     #expect(harness.model.reviewInput == nil)
-    let flight = try #require(harness.model.flight)
-    #expect(flight.saved == scan)
-    #expect(flight.from == flightStart)
-    #expect(flight.destination == .badge(.receipts))
-    #expect(flight.page == receipt)
+    #expect(harness.model.lastSaved == scan)
+    #expect(scan.announcement == "Saved to Receipts")
 }
 
-@Test func aFinishedFlightHasNothingMoreToAnnounce() {
+@Test func discardingLeavesTheLastSavedScanAlone() async {
     let harness = Harness(.authorized)
-    #expect(harness.model.flightFinished() == nil)
-}
-
-@Test func aPageFliesOnlyToAFrameOnScreenAndOnlyWithMotion() {
-    let screen = CGRect(x: 0, y: 0, width: 402, height: 874)
-    let onScreen = CGRect(x: 16, y: 200, width: 34, height: 34)
-    #expect(FlightStyle.choose(target: onScreen, region: screen, reduceMotion: false) == .fly(frame: onScreen))
-    // Reduce Motion cross-fades even with a frame to fly to.
-    #expect(FlightStyle.choose(target: onScreen, region: screen, reduceMotion: true) == .fade)
-    // No frame, or one not yet measured: nowhere to land.
-    #expect(FlightStyle.choose(target: nil, region: screen, reduceMotion: false) == .fade)
-    #expect(FlightStyle.choose(target: .zero, region: screen, reduceMotion: false) == .fade)
-    // Scrolled off the top, off the bottom, or more than half gone.
-    for offset in [-600.0, 900, -220] {
-        let moved = onScreen.offsetBy(dx: 0, dy: offset)
-        #expect(FlightStyle.choose(target: moved, region: screen, reduceMotion: false) == .fade)
-    }
-}
-
-/// The UI journey bounds the whole overlay at 2 s; waiting for a late frame must not eat into it.
-@Test func theDestinationWaitLeavesTheFlightInsideItsBound() {
-    #expect(FlightStyle.destinationWait > 0)
-    #expect(FlightStyle.destinationWait < FlightStyle.flyDuration)
-    #expect(FlightStyle.destinationWait + FlightStyle.flyDuration + FlightStyle.landingFadeDuration < 1)
-    #expect(FlightStyle.destinationWait + FlightStyle.fadeDuration < 1)
-}
-
-@Test func theLandingRowHoldsBackTheNewScanUntilTheFlightEnds() {
-    let row = HomeRow(collection: .receipts, name: "Receipts", detail: .count(3))
-    #expect(row.shownCount(during: nil) == 3)
-    #expect(row.shownCount(during: .badge(.receipts)) == 2)
-    #expect(row.shownCount(during: .badge(.wallet)) == 3)
-    #expect(row.shownCount(during: .tile(ScanID())) == 3)
-    let firstLaunch = HomeRow(collection: .receipts, name: "Receipts", detail: .subtitle("Bills"))
-    #expect(firstLaunch.shownCount(during: .badge(.receipts)) == nil)
+    await harness.reachReview([receipt])
+    harness.model.reviewEnded(saved: nil)
+    #expect(harness.model.lastSaved == nil)
 }
 
 @Test(arguments: [ScanSource.home, .grid])

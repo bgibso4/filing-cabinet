@@ -17,22 +17,16 @@ struct CaptureContainer: View {
                 ReviewView(
                     model: review,
                     // ReviewView has already stopped reading (`discard()`); `reviewEnded` doesn't.
-                    onClose: { flow.reviewEnded(saved: nil, from: nil) },
+                    onClose: { flow.reviewEnded(saved: nil) },
                     onRescan: flow.rescan,
-                    onSaved: endWithFlight
+                    onSaved: { flow.reviewEnded(saved: $0) }
                 )
             }
         case .idle, .cameraOff:
-            // Nothing to show: Discard and Cancel cut the layer (a full Review frame, then a full Home frame), no slide.
+            // Nothing to show: Save, Discard and Cancel cut the layer (a full Review frame, then a full Home frame),
+            // no slide.
             EmptyView()
         }
-    }
-
-    /// The layer goes at once, so the page in the overlay takes over from the page in review where it stands.
-    private func endWithFlight(_ saved: SavedScan, from frame: CGRect) {
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) { flow.reviewEnded(saved: saved, from: frame) }
     }
 
     @ViewBuilder

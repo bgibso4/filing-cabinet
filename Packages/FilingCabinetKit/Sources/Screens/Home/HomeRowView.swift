@@ -15,7 +15,6 @@ struct HomeRowView: View {
     private static let subtitlePadding: CGFloat = 10
 
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.flightDestination) private var flightDestination
 
     var body: some View {
         Button(action: onOpen) {
@@ -34,7 +33,7 @@ struct HomeRowView: View {
     /// Badge, text, count and chevron on one line, with the separator inset to the text.
     private var inline: some View {
         HStack(spacing: Tokens.Spacing.s3) {
-            badge
+            CollectionBadge(collection: row.collection)
             HStack(spacing: Tokens.Spacing.s3) {
                 texts
                 Spacer(minLength: 0)
@@ -52,7 +51,7 @@ struct HomeRowView: View {
     private var stacked: some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
             HStack(spacing: Tokens.Spacing.s3) {
-                badge
+                CollectionBadge(collection: row.collection)
                 Spacer(minLength: 0)
                 trailing
             }
@@ -61,10 +60,6 @@ struct HomeRowView: View {
         .padding(.vertical, Tokens.Spacing.s3)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .top) { separator }
-    }
-
-    private var badge: some View {
-        CollectionBadge(collection: row.collection).flightTarget(.badge(row.collection))
     }
 
     private var texts: some View {
@@ -82,7 +77,7 @@ struct HomeRowView: View {
 
     @ViewBuilder
     private var trailing: some View {
-        if let count = row.shownCount(during: flightDestination) {
+        if case .count(let count) = row.detail {
             HomeCount(count: count)
         }
         Image(systemName: "chevron.right")
