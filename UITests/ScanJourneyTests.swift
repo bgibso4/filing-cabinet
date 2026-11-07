@@ -49,7 +49,7 @@ final class ScanJourneyTests: XCTestCase {
         try audit(app)
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app)
-        XCTAssertEqual(app.descendants(matching: .any)[Review.pagePill].label, "New scan, 3 pages")
+        XCTAssertEqual(app.descendants(matching: .any)[Review.pagePill].label, "New scan, Page 1 of 3")
         choose("Documents", in: app)
         assertIdentifiers(Review.all, in: app)
         try audit(app)
