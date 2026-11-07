@@ -160,7 +160,7 @@ private let other = SyntheticPages.page(lines: [("TWO", 40)], size: CGSize(width
     #expect(scan.announcement == "Saved to Receipts")
 }
 
-@Test func discardingLeavesTheLastSavedScanAlone() async {
+@Test func discardSetsNoSavedScan() async {
     let harness = Harness(.authorized)
     await harness.reachReview([receipt])
     harness.model.reviewEnded(saved: nil)

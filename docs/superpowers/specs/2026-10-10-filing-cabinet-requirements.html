@@ -366,7 +366,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
         <tr><td>At expiry</td><td><span class="chosen">Straight to Trash, 30-day purge, batched notification</span></td><td class="rejected">Warn first · archive · ask each time</td></tr>
         <tr><td>When expired scans move</td><td><span class="chosen">At the expiry moment, worked out from dates; notifications scheduled ahead, one per day</span></td><td class="rejected">A cleanup run on app open and background refresh</td></tr>
         <tr><td>Navigation</td><td><span class="chosen">One Home screen: Search, Favorites, collection rows, Recent, All and Trash; Settings top right; one Scan button at the bottom</span></td><td class="rejected">A tab bar with Scan in the middle (tabs are for places, the scanner is full-screen, and the other tabs are rarely used)</td></tr>
-        <tr><td>After saving a scan <span class="changed">Changed</span></td><td><span class="chosen">Back where you were; the page flies into its collection on Home, or into its tile when you scanned inside the collection. No note</span></td><td class="rejected">"Saved to Receipts · 90 days" note · open the new scan</td></tr>
+        <tr><td>After saving a scan <span class="changed">Changed</span></td><td><span class="chosen">Back where you were, with a plain cut (no animation); the collection's count ticks up. No note</span></td><td class="rejected">"Saved to Receipts · 90 days" note · open the new scan</td></tr>
         <tr><td>Notification permission <span class="changed">Changed</span></td><td><span class="chosen">Asked on the second first-launch screen ("Know when it cleans up"), then iOS asks</span></td><td class="rejected">After the first save of a scan that will expire · never</td></tr>
         <tr><td>Shortening a lifespan that would trash existing scans</td><td><span class="chosen">Confirm first, with the count</span></td><td class="rejected">Apply silently</td></tr>
         <tr><td>Scan from inside a collection</td><td><span class="chosen">Allowed; pre-selects that collection over the suggestion</span></td><td class="rejected">Suggestion decides · Home only</td></tr>
@@ -418,7 +418,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <li><b>If no suggestion arrives within about 5 seconds</b>, it stops waiting and the card grows into the full sheet (the one designed for phones without Apple Intelligence), with the scan shrinking to make room. The title comes from the text without Apple Intelligence, so it is less trustworthy and the sheet keeps it right there to edit; the collection is required before Save. Mock: https://claude.ai/artifact/ULgeFhB5rS6qNzMwLebT5N</li>
       <li>The review closes with an X. Cancel asks "Discard this scan?".</li>
       <li>A failed save (usually a full iPhone) shows an alert with Not now and Try again; nothing is lost.</li>
-      <li>After saving there is no note: the page flies into its collection's badge on Home (the count ticks up), or into its own tile when you scanned inside the collection.</li>
+      <li>After saving there is no note and no animation: the review closes back to where you were, and the collection's count ticks up.</li>
     </ul>
 
     <h3>Viewing and changing a scan</h3>
@@ -489,7 +489,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <li><b>Contrast</b> meets WCAG AA (4.5:1 text, 3:1 symbols). Light "soon" orange is #ad500e; light destructive text uses #d70015 (dark keeps #ff453a); collection badges use the deeper colours in both themes (wallet #3f6fa3, receipts #c0533a, notes #7a5aa8, documents #4b8160, throwaways #b98a1f).</li>
       <li><b>Large text:</b> everything follows Dynamic Type up to the largest sizes and wraps rather than cutting off. Collection grids drop to two columns (Wallet to one); the review card stacks with a full-width Save; detail rows put the label above the value; Settings descriptions wrap under the name.</li>
       <li><b>VoiceOver:</b> a tile reads as one item ("Corner Market, Receipts, 2 days left, favorite") with actions for Open, Favorite and Move to Trash (Restore and Delete now in Trash). Icon-only buttons are named. The page pill reads "Page 2 of 3". Save, Restore, Delete and moves announce the result. Colour is never the only signal.</li>
-      <li><b>Reduce Motion:</b> zooms, flights and the card-to-sheet growth become quick cross-fades.</li>
+      <li><b>Reduce Motion:</b> zooms and the card-to-sheet growth become quick cross-fades.</li>
     </ul>
 
     <h3>Haptics</h3>
