@@ -43,6 +43,52 @@ final class ScanJourneyTests: XCTestCase {
         waitForFlightToLand(in: app)
     }
 
+    /// The whole of Plan 1: a three-page scan is read, filed under Documents, found there and paged through.
+    func testScanToViewer() throws {
+        let app = launchApp(["-FakeCamera", "3", "-FakeReader", "-FixedDate", "2026-10-12"])
+        try audit(app)
+        scanOnePage(in: app)
+        waitForTitle("City Pharmacy", in: app)
+        XCTAssertEqual(app.descendants(matching: .any)[Review.pagePill].label, "New scan, 3 pages")
+        choose("Documents", in: app)
+        assertIdentifiers(Review.all, in: app)
+        try audit(app)
+        let save = app.buttons[Review.save]
+        XCTAssertEqual(save.label, "Save to Documents")
+        save.tap()
+        waitForFlightToLand(in: app, collection: .documents)
+
+        let row = app.buttons[AccessibilityID.Home.collectionRow(.documents)]
+        row.tap()
+        let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
+        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        assertIdentifiers(AccessibilityID.Grid.all, in: app)
+        try audit(app)
+        let tile = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(tile.waitForExistence(timeout: 5))
+        tile.tap()
+
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        assertIdentifiers(AccessibilityID.Viewer.all, in: app)
+        try audit(app)
+        let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
+        for page in 2...3 {
+            app.windows.firstMatch.swipeLeft()
+            let shown = XCTNSPredicateExpectation(
+                predicate: NSPredicate(format: "label == %@", "Page \(page) of 3"), object: strip)
+            XCTAssertEqual(
+                XCTWaiter.wait(for: [shown], timeout: 5), .completed, String(describing: strip.label))
+        }
+
+        app.buttons[AccessibilityID.Viewer.back].tap()
+        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        app.buttons[AccessibilityID.Grid.back].tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.collectionRow(.documents)].isHittable)
+    }
+
     func testSaveReturnsHomeAndCountTicks() {
         saveReceiptFromHome(flags: [])
     }
@@ -206,8 +252,12 @@ final class ScanJourneyTests: XCTestCase {
         waitForTitle("City Pharmacy", in: app, timeout: 90)
     }
 
-    // MARK: Helpers
+}
 
+// MARK: Helpers
+
+/// Kept out of the class body so it stays under the type length limit.
+extension ScanJourneyTests {
     private func saveReceiptFromHome(flags: [String]) {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"] + flags)
         scanOnePage(in: app)
@@ -250,10 +300,15 @@ final class ScanJourneyTests: XCTestCase {
     }
 
     func chooseReceipts(in app: XCUIApplication) {
+        choose("Receipts", in: app)
+    }
+
+    /// Opens the collection menu on review and picks the named collection.
+    private func choose(_ collection: String, in app: XCUIApplication) {
         app.descendants(matching: .any)[Review.collection].tap()
-        let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
-        XCTAssertTrue(receipts.waitForExistence(timeout: 5))
-        receipts.tap()
+        let option = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", collection)).firstMatch
+        XCTAssertTrue(option.waitForExistence(timeout: 5))
+        option.tap()
     }
 
     /// The landing row holds its count back until the overlay ends (`HomeRow.shownCount`), so the count showing 1

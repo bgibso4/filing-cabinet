@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plan 1 (scan to library) approved and being executed on branch `plan-1`.** The foundation is merged (PR #1). The plan is `docs/superpowers/plans/2026-11-02-01-scan-to-library.md` (reading copy: https://claude.ai/artifact/KMWMTBS6gjiAHLs9S1M8be), run subagent-driven. It has checkpoints that need Ben: after Task 6 (on-device OCR timing), after Task 7 (push to check HEIC in CI) and in Task 19 (phone check).
+**Phase: Plan 1 (scan to library) is built on branch `plan-1`; PR #39 is open.** The foundation is merged (PR #1). The plan is `docs/superpowers/plans/2026-11-02-01-scan-to-library.md` (reading copy: https://claude.ai/artifact/KMWMTBS6gjiAHLs9S1M8be). What is left: a local `make ci`, the phone check with Ben (Task 19), CI's Full suite and the whole-branch review. Then merge.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.
