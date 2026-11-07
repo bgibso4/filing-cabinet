@@ -54,11 +54,13 @@ private nonisolated final class HeldThumbnails: ThumbnailProviding {
     }
 }
 
-/// Waits for `count` loads, then a little longer to catch any extra ones.
+/// Waits for `count` loads, then a little longer to catch any extra ones. There is no deadline here: loads run at
+/// `.utility` and a busy machine can hold them back for a long time, which is what that priority is for. A prefetcher
+/// that really stalls fails on the tests' time limit, which cancels this wait.
 private func drain(until count: Int, loaded: () -> Int) async {
-    let deadline = ContinuousClock.now + .seconds(5)
-    while loaded() < count, ContinuousClock.now < deadline {
-        await Task.yield()
+    while loaded() < count, !Task.isCancelled {
+        // A cancelled sleep only ends the wait early; the loop's check then stops it.
+        try? await Task.sleep(for: .milliseconds(1))
     }
     // A cancelled sleep only shortens the wait; the expectations after it still run.
     try? await Task.sleep(for: .milliseconds(30))
@@ -76,7 +78,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     for index in range { prefetcher.tileDisappeared(ids[index]) }
 }
 
-@Test func visibleTilesPrefetchTheWindowPastThem() async {
+@Test(.timeLimit(.minutes(1))) func visibleTilesPrefetchTheWindowPastThem() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -87,7 +89,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.allSatisfy { $0.page == 0 })
 }
 
-@Test func aTileThatAppearsLeavesAndAppearsAgainWithNoLoadFinishedStillPrefetches() async {
+@Test(.timeLimit(.minutes(1))) func aTileThatAppearsLeavesAndAppearsAgainWithNoLoadFinishedStillPrefetches() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -99,7 +101,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.map(\.id) == Array(ids[1..<37]))
 }
 
-@Test func aVisibleTileWhoseLoadNeverReturnsDoesNotBlockPrefetching() async {
+@Test(.timeLimit(.minutes(1))) func aVisibleTileWhoseLoadNeverReturnsDoesNotBlockPrefetching() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = HeldThumbnails(holding: [ids[0]])
     defer { thumbnails.release() }
@@ -113,7 +115,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loaded.filter { $0 != ids[0] } == Array(ids[1..<37]))
 }
 
-@Test func eventsDuringTheQuietPeriodRestartItAndOnlyTheFinalRangeCounts() async throws {
+@Test(.timeLimit(.minutes(1))) func eventsDuringTheQuietPeriodRestartItAndOnlyTheFinalRangeCounts() async throws {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .seconds(1))
@@ -128,7 +130,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.map(\.id) == Array(ids[12..<48]))
 }
 
-@Test func aChangeDuringALoadSetsTheNextLoadAndLoadsStayOneAtATime() async throws {
+@Test(.timeLimit(.minutes(1))) func aChangeDuringALoadSetsTheNextLoadAndLoadsStayOneAtATime() async throws {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = HeldThumbnails(holding: [ids[12]])
     defer { thumbnails.release() }
@@ -147,7 +149,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loaded == [ids[12]] + Array(ids[62..<98]))
 }
 
-@Test func aLoadStaysAtLowPriorityWhileItRuns() async throws {
+@Test(.timeLimit(.minutes(1))) func aLoadStaysAtLowPriorityWhileItRuns() async throws {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = HeldThumbnails(holding: [ids[1]])
     defer { thumbnails.release() }
@@ -163,7 +165,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.finishPriorities.allSatisfy { $0 == .utility })
 }
 
-@Test func theFirstScreenReportingBottomUpStillPrefetchesForward() async {
+@Test(.timeLimit(.minutes(1))) func theFirstScreenReportingBottomUpStillPrefetchesForward() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -173,7 +175,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.map(\.id) == Array(ids[12..<48]))
 }
 
-@Test func windowRollsForwardWithoutRepeatingWhatItTried() async {
+@Test(.timeLimit(.minutes(1))) func windowRollsForwardWithoutRepeatingWhatItTried() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -187,7 +189,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.map(\.id) == Array(ids[12..<51]))
 }
 
-@Test func scrollingBackPrefetchesAboveNearestFirst() async {
+@Test(.timeLimit(.minutes(1))) func scrollingBackPrefetchesAboveNearestFirst() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -201,7 +203,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.dropFirst(down).map(\.id) == Array(ids[13..<49].reversed()))
 }
 
-@Test func theEndOfTheListPrefetchesNothing() async {
+@Test(.timeLimit(.minutes(1))) func theEndOfTheListPrefetchesNothing() async {
     let ids = (0..<20).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -211,7 +213,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.isEmpty)
 }
 
-@Test func whatIsAlreadyInMemoryIsNotLoadedAgain() async throws {
+@Test(.timeLimit(.minutes(1))) func whatIsAlreadyInMemoryIsNotLoadedAgain() async throws {
     let ids = (0..<20).map { _ in ScanID() }
     let picture = try #require(image())
     let thumbnails = FakeThumbnails(images: [ids[3]: [0: picture]])
@@ -222,7 +224,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.map(\.id) == Array(ids[2..<3] + ids[4..<20]))
 }
 
-@Test func stoppingCancelsThePrefetch() async {
+@Test(.timeLimit(.minutes(1))) func stoppingCancelsThePrefetch() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
@@ -233,7 +235,7 @@ private func hide(_ range: Range<Int>, of ids: [ScanID], on prefetcher: GridPref
     #expect(thumbnails.loadedRequests.isEmpty)
 }
 
-@Test func noVisibleTilesMeansNoPrefetch() async {
+@Test(.timeLimit(.minutes(1))) func noVisibleTilesMeansNoPrefetch() async {
     let ids = (0..<100).map { _ in ScanID() }
     let thumbnails = FakeThumbnails()
     let prefetcher = GridPrefetcher(quietPeriod: .zero)
