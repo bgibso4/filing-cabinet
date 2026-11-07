@@ -3,9 +3,9 @@ import SwiftUI
 import XCTest
 
 final class CameraOffSnapshotTests: XCTestCase {
-    /// The system draws a presented sheet's chrome, which a snapshot can't capture, so this reproduces it: the full-height
-    /// sheet's rounded surface below the status bar, inset from the screen edges (Home.dc.html line 288). The sheet draws
-    /// its own grabber. The dimmed Home behind it is left out.
+    /// The system draws a presented sheet's chrome, which a snapshot can't capture, so this reproduces it: the compact
+    /// sheet's rounded surface at the bottom of the screen, inset from the screen edges (Home.dc.html line 288). The sheet
+    /// draws its own grabber. The dimmed Home behind it is left out.
     private struct SheetChrome: View {
         private static let inset: CGFloat = 8
         private static let cornerRadius: CGFloat = 34
@@ -18,7 +18,7 @@ final class CameraOffSnapshotTests: XCTestCase {
                 .background(Color("bg-surface", bundle: screensBundle))
                 .clipShape(.rect(cornerRadius: Self.cornerRadius))
                 .padding([.horizontal, .bottom], Self.inset)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .background(Color("bg-grouped", bundle: screensBundle))
                 .ignoresSafeArea(edges: .bottom)
         }

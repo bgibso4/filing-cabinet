@@ -1,3 +1,4 @@
+import Core
 import XCTest
 
 /// Issues the audit may ignore. Each entry needs a comment with the reason it is a false positive.
@@ -10,7 +11,17 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
     { app, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
         return element.frame.minY >= app.windows.firstMatch.frame.maxY - 2
-    }
+    },
+    // On iOS 27 the audit reports text as clipped on any floating sheet (any detent shorter than .large), even with the
+    // text intact. Ben chose the mocks' compact camera-off sheet knowing this (2026-11-06). Only textClipped, and only
+    // this sheet's three text elements, matched by identifier; any other screen's clipped text still fails.
+    { _, issue in
+        guard issue.auditType == .textClipped, let element = issue.element else { return false }
+        let sheetText = [
+            AccessibilityID.CameraOff.title, AccessibilityID.CameraOff.message, AccessibilityID.CameraOff.openSettings,
+        ]
+        return sheetText.contains(element.identifier)
+    },
 ]
 
 /// The only call site of `performAccessibilityAudit`. Audit types are listed explicitly, not left to the default.

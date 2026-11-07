@@ -3,14 +3,17 @@ import SwiftUI
 import UIKit
 
 /// Shown on every Scan after the user turned camera access off: iOS won't ask again, so it points to Settings.
-/// A full-height sheet: the text scrolls, with Open Settings pinned below it. It draws its own grabber, so a container
-/// only adds the sheet's surface and corners.
+/// A compact sheet that hugs its content (04-01, 04-04). When the text is larger than the sheet can be, it scrolls, with
+/// Open Settings pinned below it. It draws its own grabber, so a container only adds the sheet's surface and corners.
 public struct CameraOffSheet: View {
     private let onOpenSettings: () -> Void
     private let onClose: () -> Void
 
     @Environment(\.openURL) private var openURL
     @Environment(\.dynamicTypeSize) private var typeSize
+    /// The heights the sheet hugs, measured because the text's height depends on its size and the screen's width.
+    @State private var messageHeight: CGFloat = 0
+    @State private var buttonHeight: CGFloat = 0
 
     // Home.dc.html line 288: 20 pt side and bottom padding; the content starts 30 pt below the 5 pt grabber,
     // which sits 8 pt from the top.
@@ -41,17 +44,20 @@ public struct CameraOffSheet: View {
     public var body: some View {
         // One copy of the content: ViewThatFits would keep a hidden second copy that the accessibility audit reports.
         VStack(spacing: 0) {
-            ScrollView { message }
+            ScrollView {
+                message.onGeometryChange(for: CGFloat.self, of: \.size.height) { messageHeight = $0 }
+            }
+            .frame(maxHeight: messageHeight)
             openSettingsButton
                 .fixedSize(horizontal: false, vertical: true)
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { buttonHeight = $0 }
         }
         .overlay(alignment: .top) { grabber }
         .overlay(alignment: .topTrailing) { closeButton }
-        // Departs from 04-01/04-04, whose sheet hugs its content: on iOS 27 any shorter detent (a measured height, or
-        // .medium) makes a floating sheet, and the accessibility audit reports its text as clipped even when it isn't.
-        // Provisional ruling (Task 13), pending Ben: the target is the compact fitted sheet from the mocks, with a
-        // textClipped audit exception scoped to this sheet if Ben approves one.
-        .presentationDetents([.large])
+        // Ben's decision (2026-11-06): the mocks' compact sheet. On iOS 27 any detent shorter than .large makes a floating
+        // sheet, and the accessibility audit reports its text as clipped even when it is intact, so this sheet's text has
+        // a textClipped exemption in UITests/Support/Audit.swift. Every other audit type still applies to it.
+        .presentationDetents([.height(messageHeight + buttonHeight)])
         // The sheet draws the mock's grabber itself: the system one is an unidentified button, and Close already
         // dismisses for VoiceOver.
         .presentationDragIndicator(.hidden)
@@ -74,6 +80,7 @@ public struct CameraOffSheet: View {
                 .foregroundStyle(Tokens.Color.textPrimary)
                 .padding(.top, Self.titleGap)
                 .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier(AccessibilityID.CameraOff.title)
             Text(
                 "Filing Cabinet needs the camera to scan documents. Tap Open Settings, turn on Camera, then come back.",
                 bundle: #bundle
@@ -83,6 +90,7 @@ public struct CameraOffSheet: View {
             // At accessibility sizes the mock's 300 pt cap would leave a word or two per line.
             .frame(maxWidth: typeSize.isAccessibilitySize ? nil : Self.messageMaxWidth)
             .padding(.top, Self.messageGap)
+            .accessibilityIdentifier(AccessibilityID.CameraOff.message)
         }
         .multilineTextAlignment(.center)
         .fixedSize(horizontal: false, vertical: true)

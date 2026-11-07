@@ -49,11 +49,13 @@ public enum AccessibilityID {
     }
 
     public enum CameraOff {
+        public static let title = "cameraOff.title"
+        public static let message = "cameraOff.message"
         public static let openSettings = "cameraOff.openSettings"
         public static let close = "cameraOff.close"
 
         public static var all: [String] {
-            [openSettings, close]
+            [title, message, openSettings, close]
         }
     }
 
