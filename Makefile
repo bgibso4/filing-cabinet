@@ -13,7 +13,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci full-run unused-run check-resolved
+.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci full-run unused-run check-resolved compare-readers device-perf
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -47,7 +47,7 @@ fast: generate
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
 		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
-SWIFT_DIRS := App Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests
+SWIFT_DIRS := App Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests DeviceTests
 
 # swift-format owns formatting; SwiftLint owns everything else. Both are strict.
 lint:
@@ -75,24 +75,51 @@ compare:
 	@[ -n "$(SCREEN)" ] && [ -n "$(REF)" ] || { echo "usage: make compare SCREEN=<design png stem> REF=<snapshot png>" >&2; exit 1; }
 	swift scripts/compare-snapshot.swift "$(SCREEN)" "$(REF)"
 
+# `READER=text|documents` picks the Vision reader for run, run-fake and device (Debug builds only; A12, A15).
+READER_ARGS := $(if $(READER),-TextReader $(READER))
+
 # Run on the pinned simulator.
 run: build
 	xcrun simctl boot '$(SIM_DEVICE)' 2>/dev/null || true
 	xcrun simctl install booted '$(APP_PRODUCT)'
-	xcrun simctl launch booted $(BUNDLE_ID)
+	xcrun simctl launch booted $(BUNDLE_ID) $(READER_ARGS)
 
-# Same, with the UI-test launch flags (logged analytics, no animations).
+# Same, with the UI-test launch flags: in-memory library, no animations, the fake camera, 12 seeded scans.
 run-fake: build
 	xcrun simctl boot '$(SIM_DEVICE)' 2>/dev/null || true
 	xcrun simctl install booted '$(APP_PRODUCT)'
-	xcrun simctl launch booted $(BUNDLE_ID) -UITest
+	xcrun simctl launch booted $(BUNDLE_ID) -UITest -FakeCamera 1 -SeedScans 12 $(READER_ARGS)
 
 # Build for a connected iPhone and install it. Needs the phone plugged in, unlocked and trusted.
 device: generate
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates | $(BEAUTIFY)
 	xcrun devicectl device install app --device "$(DEVICE)" '$(DEVICE_PRODUCT)'
-	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID)
+	xcrun devicectl device process launch --device "$(DEVICE)" $(BUNDLE_ID) $(READER_ARGS)
+
+# The reader bake-off (A12) on this Mac: both readers on every synthetic scan. A report, not a gate.
+compare-readers: generate
+	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme ReaderComparison \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+	@echo "Report: build/reader-comparison.md"
+
+# Reader timing on a connected iPhone (A12, A14). Not part of `full` or CI. XCTest runs every class of one
+# invocation in one process, so each cold-read class gets its own `xcodebuild test` (a fresh app launch) and the
+# warm per-page timing runs last. Attachments land in build/device-perf/<class>/.
+PERF_DIR     := build/device-perf
+PERF_CLASSES := TextReaderColdTests DocumentsReaderColdTests ReaderTimingTests
+
+device-perf: generate
+	rm -rf $(PERF_DIR)
+	@for class in $(PERF_CLASSES); do \
+		set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme Device \
+			-destination 'platform=iOS,name=$(DEVICE)' -derivedDataPath $(DERIVED) -allowProvisioningUpdates \
+			-only-testing:FilingCabinetDeviceTests/$$class -resultBundlePath $(PERF_DIR)/$$class.xcresult \
+			| $(BEAUTIFY) || exit 1; \
+		xcrun xcresulttool export attachments --path $(PERF_DIR)/$$class.xcresult \
+			--output-path $(PERF_DIR)/$$class >/dev/null || exit 1; \
+	done
+	@echo "Timings:"; for file in $(PERF_DIR)/*/*.txt; do cat "$$file"; echo; done
 
 # Unit tests for the Claude Code hook scripts.
 test-hooks:
@@ -117,7 +144,7 @@ BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && ech
 # Periphery 3.8.0 supports Xcode 27 / this project (verified locally); if a future Xcode breaks it, drop
 # `unused` from this list, record it as deferred in AGENTS.md and keep the target.
 ci: generate
-	@git diff --exit-code -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets || { \
+	@test -z "$$(git status --porcelain -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets)" || { \
 		echo "error: generated files differ from the committed ones: run make generate and commit." >&2; exit 1; }
 	$(MAKE) --no-print-directory lint test-hooks test-lint
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \

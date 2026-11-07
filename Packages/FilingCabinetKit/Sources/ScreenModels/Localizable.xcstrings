@@ -13,6 +13,30 @@
         }
       }
     },
+    "%lld scans" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld years" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld year" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld years" } }
+            }
+          }
+        }
+      }
+    },
     "%lld weeks" : {
       "localizations" : {
         "en" : {
@@ -25,6 +49,104 @@
         }
       }
     },
+    "%lld days left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld day left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld days left" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld months left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld month left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld months left" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld years left" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld year left" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld years left" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld pages" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld page" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld pages" } }
+            }
+          }
+        }
+      }
+    },
+    "The %lld pages you just scanned won’t be saved." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "The page you just scanned won’t be saved." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "The %lld pages you just scanned won’t be saved." } }
+            }
+          }
+        }
+      }
+    },
+    "Page %lld of %lld" : {},
+    "%@, page %lld" : {},
+    "Scan · %@" : {},
+    "Collection · required" : {},
+    "Collection" : {},
+    "Choose a collection" : {},
+    "Set by the collection" : {},
+    "%@ default" : {},
+    "Forever" : {},
+    "Never expires" : {},
+    "Save" : {},
+    "Save to %@" : {},
+    "Saved to %@" : {},
+    "Couldn’t save this scan" : {},
+    "Your iPhone is out of space. Free some up, then try again. Your pages are still here." : {},
+    "Something went wrong. Your pages are still here." : {},
+    "%@ · until %@" : {},
+    "%@ · %@" : {},
+    "Until %@" : {},
+    "Kept %@" : {},
+    "No cards yet" : {},
+    "No receipts yet" : {},
+    "No notes yet" : {},
+    "No documents yet" : {},
+    "No throwaways" : {},
+    "Nothing recent" : {},
+    "No scans" : {},
+    "No scans yet" : {},
+    "Last 30 days" : {},
+    "%@, %@, %@" : {},
+    "IDs and cards go here, like your license and insurance card. They’re kept forever." : {},
+    "Purchase receipts go here. Each one is kept 3 months, then moves to Trash." : {},
+    "Handwritten and class notes go here. They’re kept forever." : {},
+    "Forms, letters and anything else go here. They’re kept forever." : {},
+    "Short-lived scraps go here, like a coat-check tag. Each one is kept a week." : {},
+    "Scans from the last 30 days show up here." : {},
+    "Every scan shows up here, newest first." : {},
+    "All Scans" : {},
     "Documents" : {},
     "Forms and letters" : {},
     "Handwritten notes" : {},
@@ -33,6 +155,7 @@
     "Notes" : {},
     "Purchase receipts" : {},
     "Receipts" : {},
+    "Recent" : {},
     "Short-lived scraps" : {},
     "Throwaways" : {},
     "Wallet" : {}

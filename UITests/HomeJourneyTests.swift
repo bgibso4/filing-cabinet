@@ -18,12 +18,14 @@ final class HomeJourneyTests: XCTestCase {
         XCTAssertTrue(scan.waitForExistence(timeout: 5))
         XCTAssertTrue(scan.isHittable)
         XCTAssertEqual(scan.label, "Scan")
+        assertIdentifiers([AccessibilityID.Home.scan], in: app)
         try audit(app)
     }
 
-    func testScanButtonHittableAtLargestText() {
-        let app = launchApp(["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
-        XCTAssertTrue(app.buttons[AccessibilityID.scanButton].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons[AccessibilityID.scanButton].isHittable)
+    func testHomeAuditAtLargestText() throws {
+        let app = launchApp(largestText: true)
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].isHittable)
+        try audit(app)
     }
 }

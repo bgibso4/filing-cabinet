@@ -2,20 +2,37 @@
 /// free text.
 public enum AnalyticsEvent: Sendable, Equatable {
     case appOpened
+    case scanStarted(source: ScanSource)
+    case cameraDenied
+    /// VisionKit reported an error (one event per failure, foundations §8).
+    case cameraFailed
+    case scanCancelled(stage: CancelStage)
+    case scanSaved(pageCount: Int, collection: BuiltInCollection)
+    case saveFailed(reason: FailureReason)
+    case textReadingFailed(failedPages: Int)
 
     public var name: String {
         switch self {
         case .appOpened: "appOpened"
+        case .scanStarted: "scanStarted"
+        case .cameraDenied: "cameraDenied"
+        case .cameraFailed: "cameraFailed"
+        case .scanCancelled: "scanCancelled"
+        case .scanSaved: "scanSaved"
+        case .saveFailed: "saveFailed"
+        case .textReadingFailed: "textReadingFailed"
         }
     }
 
     public var payload: [AnalyticsKey: AnalyticsValue] {
         switch self {
-        case .appOpened: [:]
+        case .appOpened, .cameraDenied, .cameraFailed: [:]
+        case .scanStarted(let source): [.source: .token(.init(source))]
+        case .scanCancelled(let stage): [.stage: .token(.init(stage))]
+        case .scanSaved(let pageCount, let collection):
+            [.pageCount: .int(pageCount), .collection: .token(.init(collection))]
+        case .saveFailed(let reason): [.reason: .token(.init(reason))]
+        case .textReadingFailed(let failedPages): [.failedPages: .int(failedPages)]
         }
     }
 }
-
-/// Payload keys. Empty until an event needs one; the first key adds the `String` raw type
-/// (an enum with no cases cannot declare one).
-public enum AnalyticsKey: Hashable, Sendable {}

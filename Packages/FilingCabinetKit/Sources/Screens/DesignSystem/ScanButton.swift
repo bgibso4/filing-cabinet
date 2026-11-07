@@ -1,8 +1,8 @@
-import Core
 import SwiftUI
 
 /// The Scan pill: graphite in light, near-white in dark, always labelled "Scan".
 struct ScanButton: View {
+    private let identifier: String
     private let action: () -> Void
 
     // Home.dc.html: the pill is 52 pt tall, 64 pt at the large-text variant, and never grows past that.
@@ -12,8 +12,10 @@ struct ScanButton: View {
     private static let horizontalPadding: CGFloat = 30
 
     @ScaledMetric(relativeTo: .body) private var scaledHeight = baseHeight
+    @Environment(\.isEnabled) private var isEnabled
 
-    init(action: @escaping () -> Void) {
+    init(identifier: String, action: @escaping () -> Void) {
+        self.identifier = identifier
         self.action = action
     }
 
@@ -24,20 +26,24 @@ struct ScanButton: View {
                 Text("Scan", bundle: #bundle)
             }
             .font(Tokens.Typography.headline)
-            .foregroundStyle(Tokens.Color.bgGrouped)
+            .foregroundStyle(isEnabled ? Tokens.Color.bgGrouped : Tokens.Color.textSecondary)
             .padding(.horizontal, Self.horizontalPadding)
             .frame(minHeight: min(scaledHeight, Self.maxHeight))
-            .background(Tokens.Color.tint, in: .capsule)
+            .background(isEnabled ? Tokens.Color.tint : Tokens.Color.bgWell, in: .capsule)
+            // One element for the whole pill, so the audit measures the text against the pill and not against a
+            // frame that is exactly the glyphs.
+            .accessibilityElement(children: .combine)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityID.scanButton)
+        // Not .plain, which fades a disabled pill below AA contrast and lets the content behind it show through.
+        .buttonStyle(UnfadedButtonStyle())
+        .accessibilityIdentifier(identifier)
     }
 }
 
 #Preview("Light") {
-    ScanButton {}.padding()
+    ScanButton(identifier: "preview") {}.padding()
 }
 
 #Preview("Dark") {
-    ScanButton {}.padding().background(Tokens.Color.bgGrouped).preferredColorScheme(.dark)
+    ScanButton(identifier: "preview") {}.padding().background(Tokens.Color.bgGrouped).preferredColorScheme(.dark)
 }
