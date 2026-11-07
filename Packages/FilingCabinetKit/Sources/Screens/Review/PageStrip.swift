@@ -1,8 +1,8 @@
 import CoreGraphics
 import SwiftUI
 
-/// A row of small pages under a multi-page scan, the current one larger (Review.dc.html lines 226-231). The pill
-/// already says which page is showing, so the strip is hidden from VoiceOver.
+/// A row of small pages under a multi-page scan on a glass bar, the current one larger and ringed (Review.dc.html lines
+/// 226-231, the bar as the viewer's). The pill already says which page is showing, so the strip is hidden from VoiceOver.
 struct PageStrip: View {
     let pages: [CGImage]
     let currentPage: Int
@@ -19,6 +19,7 @@ struct PageStrip: View {
                     .pageStripTile(isCurrent: index == currentPage)
             }
         }
+        .pageStripBar()
         .accessibilityHidden(true)
     }
 }

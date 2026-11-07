@@ -1,7 +1,9 @@
+import ScreenModels
 import UIKit
 
-/// One page, fitted into the part of the screen the insets leave, that zooms to full resolution. At 1× it doesn't
-/// scroll at all, so a swipe goes to the pager or the navigation stack.
+/// One page, full screen, fitted into the part of the screen the insets leave, that zooms to full resolution. Zoomed, it
+/// grows out to the screen's edges under the controls (see `PageAxisInsets`). At 1× it doesn't scroll at all, so a swipe
+/// goes to the pager or the navigation stack.
 final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
     private static let maximumZoom: CGFloat = 4
     private static let doubleTapZoom: CGFloat = 2
@@ -12,7 +14,7 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
     /// The image's size at 1×; the image is only laid out again when this changes.
     private var fittedSize = CGSize.zero
 
-    /// Where 1× fits the page. A zoomed page can be moved under these areas, up to where they end.
+    /// Where 1× fits the page, from the screen's edges. A zoomed page grows into these areas.
     var fitInsets = UIEdgeInsets.zero {
         didSet {
             if fitInsets != oldValue { setNeedsLayout() }
@@ -29,6 +31,9 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
         showsVerticalScrollIndicator = false
         decelerationRate = .fast
         isScrollEnabled = false
+        // A zoomed page runs under the bar and the strip, which float over it in glass rather than fading it out.
+        topEdgeEffect.isHidden = true
+        bottomEdgeEffect.isHidden = true
         addSubview(imageView)
         let doubleTap = UITapGestureRecognizer(target: self, action: #selector(doubleTapped))
         doubleTap.numberOfTapsRequired = 2
@@ -87,10 +92,8 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
         accessibilityValue = zoomScale > 1 ? String(localized: "Zoomed", bundle: #bundle) : nil
     }
 
-    private var fitRegion: CGRect { bounds.inset(by: fitInsets) }
-
     private var fittedImageSize: CGSize {
-        let region = fitRegion
+        let region = bounds.inset(by: fitInsets)
         guard let image, image.width > 0, image.height > 0, region.width > 0, region.height > 0 else { return .zero }
         let width = CGFloat(image.width)
         let height = CGFloat(image.height)
@@ -98,16 +101,16 @@ final class ZoomableScrollView: UIScrollView, UIScrollViewDelegate {
         return CGSize(width: width * scale, height: height * scale)
     }
 
-    /// Centres what is smaller than the region. At 1× nothing can scroll, so the offset has to be set here.
+    /// Places the page: centred between the controls while it fits there, out to the screen's edges as it grows. At 1×
+    /// nothing can scroll, so the offset has to be set here.
     private func positionContent() {
-        let region = fitRegion
-        let sideGap = max(0, (region.width - contentSize.width) / 2)
-        let endGap = max(0, (region.height - contentSize.height) / 2)
+        let across = PageAxisInsets(
+            content: contentSize.width, bounds: bounds.width, fitLeading: fitInsets.left, fitTrailing: fitInsets.right)
+        let down = PageAxisInsets(
+            content: contentSize.height, bounds: bounds.height, fitLeading: fitInsets.top, fitTrailing: fitInsets.bottom
+        )
         contentInset = UIEdgeInsets(
-            top: fitInsets.top + endGap,
-            left: fitInsets.left + sideGap,
-            bottom: fitInsets.bottom + endGap,
-            right: fitInsets.right + sideGap)
+            top: down.leading, left: across.leading, bottom: down.trailing, right: across.trailing)
         isScrollEnabled = zoomScale > 1
         if !isScrollEnabled {
             contentOffset = CGPoint(x: -contentInset.left, y: -contentInset.top)

@@ -45,8 +45,9 @@ public struct ReviewView: View {
                     .padding(.horizontal, Tokens.Spacing.s4)
                 Spacer(minLength: 0)
                 if model.pages.count > 1 {
+                    // The glass bar's own padding makes up the rest of the mock's 12 pt.
                     PageStrip(pages: model.pages, currentPage: model.currentPage)
-                        .padding(.vertical, Tokens.Spacing.s3)
+                        .padding(.vertical, Tokens.Spacing.s3 - PageStripTile.barPadding)
                 }
             }
             ReviewSheet(model: model, onSave: save)
@@ -145,12 +146,9 @@ public struct ReviewView: View {
     private var pages: some View {
         if model.pages.count > 1 {
             @Bindable var model = model
-            TabView(selection: $model.currentPage) {
-                ForEach(model.pages.indices, id: \.self) { index in
-                    page(at: index).tag(index)
-                }
+            Pager(count: model.pages.count, selection: $model.currentPage) { index in
+                page(at: index)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
         } else {
             page(at: 0)
         }

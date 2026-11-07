@@ -3,11 +3,13 @@ import Library
 import SwiftUI
 
 /// One page in the viewer: what the provider has in memory at once, otherwise the load's result when it arrives.
-/// The image lives only as long as this view; the viewer removes the view once the page is far from the current one.
+/// It holds a full-size image only while `holdsImage`; the viewer turns that off once the page is far from the current
+/// one, and the view stays (see `Pager`) with nothing in it.
 struct ZoomablePage: View {
     let id: ScanID
     let index: Int
     let isCurrent: Bool
+    let holdsImage: Bool
     let label: String
     let fitInsets: UIEdgeInsets
     let provider: any PageImageProviding
@@ -29,13 +31,17 @@ struct ZoomablePage: View {
     var body: some View {
         let key = Key(id: id, index: index)
         Representable(
-            image: provider.cachedPage(for: id, index: index) ?? (loaded?.key == key ? loaded?.image : nil),
+            image: image(for: key),
             pageKey: key,
             isCurrent: isCurrent,
             label: label,
             fitInsets: fitInsets
         )
-        .task(id: key) {
+        .task(id: holdsImage ? key : nil) {
+            guard holdsImage else {
+                loaded = nil
+                return
+            }
             // A neighbour's load can have filled the cache since the body last read it; nothing else would redraw this.
             if let cached = provider.cachedPage(for: id, index: index) {
                 loaded = Loaded(key: key, image: cached)
@@ -49,6 +55,11 @@ struct ZoomablePage: View {
             }
             loaded = Loaded(key: key, image: image)
         }
+    }
+
+    private func image(for key: Key) -> CGImage? {
+        guard holdsImage else { return nil }
+        return provider.cachedPage(for: id, index: index) ?? (loaded?.key == key ? loaded?.image : nil)
     }
 
     private struct Representable: UIViewRepresentable {

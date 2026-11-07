@@ -14,12 +14,14 @@ public struct ViewerView: View {
     private static let headerMaxWidth: CGFloat = 240
     // ScanView.dc.html line 223: 5 pt between the dot and the text.
     private static let dotGap: CGFloat = 5
-    // ScanView.dc.html lines 367-368: a page fits from 14 pt under the header's row (top 120, the row ending at 106) to
-    // 164 pt above the screen's bottom edge (120 + 560 of 844), 34 of them the safe area.
-    private static let pageFitInsets = UIEdgeInsets(top: 14, left: 0, bottom: 130, right: 0)
+    // ScanView.dc.html lines 367-368: at rest a page fits from 14 pt under the header's row (top 120, the row ending at
+    // 106) to 164 pt above the screen's bottom edge (120 + 560 of 844), 34 of them the safe area. Measured from the safe
+    // area, which holds the bar.
+    private static let pageFitTopGap: CGFloat = 14
+    private static let pageFitBottomGap: CGFloat = 130
     // ScanView.dc.html line 254: the strip's 44 pt ends 108 pt above the screen's bottom edge (top 692 of 844), 34 of
-    // them the safe area.
-    private static let stripBottomGap: CGFloat = 74
+    // them the safe area. The strip's glass bar reaches below its pages by its padding.
+    private static let stripBottomGap: CGFloat = 74 - PageStripTile.barPadding
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -46,6 +48,7 @@ public struct ViewerView: View {
                         label: model.pageLabel,
                         thumbnails: thumbnails
                     )
+                    .padding(.horizontal, Tokens.Spacing.s4)
                     .padding(.bottom, Self.stripBottomGap)
                 }
             }
@@ -80,30 +83,29 @@ public struct ViewerView: View {
     /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
     private var headerIsBelowTheBar: Bool { typeSize > .large }
 
+    /// Full screen, under the status bar and the glass controls, so a zoomed page fills it (P2). At rest each page still
+    /// fits between the controls: the fit insets are the safe area plus the mock's gaps.
     private var pager: some View {
-        TabView(selection: $model.currentPage) {
-            ForEach(0..<model.pageCount, id: \.self) { page in
-                Group {
-                    // A paged TabView can keep every page it has shown; only these three may hold a full-size image.
-                    if model.holdsPage(page) {
-                        ZoomablePage(
-                            id: model.id,
-                            index: page,
-                            isCurrent: page == model.currentPage,
-                            label: model.pageImageLabel(page),
-                            fitInsets: Self.pageFitInsets,
-                            provider: pages
-                        )
-                    } else {
-                        Color.clear
-                    }
-                }
-                .tag(page)
+        GeometryReader { proxy in
+            let fitInsets = UIEdgeInsets(
+                top: proxy.safeAreaInsets.top + Self.pageFitTopGap,
+                left: proxy.safeAreaInsets.leading,
+                bottom: proxy.safeAreaInsets.bottom + Self.pageFitBottomGap,
+                right: proxy.safeAreaInsets.trailing)
+            Pager(count: model.pageCount, selection: $model.currentPage) { page in
+                ZoomablePage(
+                    id: model.id,
+                    index: page,
+                    isCurrent: page == model.currentPage,
+                    // Only these three may hold a full-size image, however far a long scan is swiped.
+                    holdsImage: model.holdsPage(page),
+                    label: model.pageImageLabel(page),
+                    fitInsets: fitInsets,
+                    provider: pages
+                )
             }
+            .ignoresSafeArea()
         }
-        // Stays inside the safe area: a page TabView that ignores it draws its pages off centre by half the difference
-        // between the top and bottom insets (41 pt under this bar). So a zoomed page stops at the bar.
-        .tabViewStyle(.page(indexDisplayMode: .never))
     }
 
     private var header: some View {

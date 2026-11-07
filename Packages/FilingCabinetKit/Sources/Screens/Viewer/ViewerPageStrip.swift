@@ -2,8 +2,8 @@ import Core
 import Library
 import SwiftUI
 
-/// The small pages under a multi-page scan, the current one larger and in view. It follows the pager rather than being
-/// used directly, and only ever renders thumbnails. VoiceOver reads it as "Page 2 of 3".
+/// The small pages under a multi-page scan, on a glass bar, the current one larger, ringed and in view. It follows the
+/// pager rather than being used directly, and only ever renders thumbnails. VoiceOver reads it as "Page 2 of 3".
 struct ViewerPageStrip: View {
     let id: ScanID
     let pageCount: Int
@@ -27,13 +27,16 @@ struct ViewerPageStrip: View {
             }
             .scrollIndicators(.hidden)
             .scrollDisabled(true)
-            // A few pages sit in the middle of the screen; a 20-page scan runs past its edges.
+            // A few pages sit in the middle of the bar; a 20-page scan runs past its ends.
             .defaultScrollAnchor(.center, for: .alignment)
+            // The bar hugs a few pages and stops at the screen's margins for many.
+            .frame(maxWidth: PageStripTile.rowWidth(pages: pageCount, gap: Self.gap))
             .frame(height: PageStripTile.currentSize.height)
             .onChange(of: currentPage, initial: true) { _, page in
                 proxy.scrollTo(page, anchor: .center)
             }
         }
+        .pageStripBar()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)
         .accessibilityIdentifier(AccessibilityID.Viewer.strip)
