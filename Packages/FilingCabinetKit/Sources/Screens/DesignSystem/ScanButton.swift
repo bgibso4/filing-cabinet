@@ -12,6 +12,7 @@ struct ScanButton: View {
     private static let horizontalPadding: CGFloat = 30
 
     @ScaledMetric(relativeTo: .body) private var scaledHeight = baseHeight
+    @Environment(\.isEnabled) private var isEnabled
 
     init(identifier: String, action: @escaping () -> Void) {
         self.identifier = identifier
@@ -25,15 +26,16 @@ struct ScanButton: View {
                 Text("Scan", bundle: #bundle)
             }
             .font(Tokens.Typography.headline)
-            .foregroundStyle(Tokens.Color.bgGrouped)
+            .foregroundStyle(isEnabled ? Tokens.Color.bgGrouped : Tokens.Color.textSecondary)
             .padding(.horizontal, Self.horizontalPadding)
             .frame(minHeight: min(scaledHeight, Self.maxHeight))
-            .background(Tokens.Color.tint, in: .capsule)
+            .background(isEnabled ? Tokens.Color.tint : Tokens.Color.bgWell, in: .capsule)
             // One element for the whole pill, so the audit measures the text against the pill and not against a
             // frame that is exactly the glyphs.
             .accessibilityElement(children: .combine)
         }
-        .buttonStyle(.plain)
+        // Not .plain, which fades a disabled pill below AA contrast and lets the content behind it show through.
+        .buttonStyle(UnfadedButtonStyle())
         .accessibilityIdentifier(identifier)
     }
 }
