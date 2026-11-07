@@ -28,14 +28,22 @@ public struct RootView: View {
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
+        // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
+        .onChange(of: isCapturing.wrappedValue) { _, isUp in
+            if isUp {
+                dependencies.home.hold()
+            } else {
+                withAnimation { dependencies.home.release() }
+            }
+        }
         .sensoryFeedback(.success, trigger: flow.lastSaved) { _, new in new != nil }
         .onChange(of: flow.lastSaved) { _, saved in
             if let saved { AccessibilityNotification.Announcement(saved.announcement).post() }
         }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
-                // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so it
-                // is already drawn the moment the layer goes; otherwise the screen is blank for two frames.
+                // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
+                // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
         }
         .sheet(isPresented: isCameraOff) {

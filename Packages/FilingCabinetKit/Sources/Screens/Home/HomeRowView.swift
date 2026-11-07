@@ -13,8 +13,17 @@ struct HomeRowView: View {
     private static let minHeight: CGFloat = 60
     // Home.dc.html line 367: 10 pt above and below the text on first launch, none once counts replace the subtitle.
     private static let subtitlePadding: CGFloat = 10
+    // Task 20 Part C (Ben): "a small scale pop as the number ticks up". My call: 20 % up in 0.12 s (an ease-out, so
+    // it reaches full size before the settle starts), then a 0.3 s spring back.
+    private static let popScale: CGFloat = 1.2
+    private static let popUp = Animation.easeOut(duration: 0.12)
+    private static let popSettle = Animation.spring(duration: 0.3, bounce: 0.3)
 
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// True while the count is popped. Kept on the row, not the count, so the very first count (which replaces the
+    /// first-launch subtitle as it arrives) pops too.
+    @State private var isPopped = false
 
     var body: some View {
         Button(action: onOpen) {
@@ -28,6 +37,14 @@ struct HomeRowView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.Home.collectionRow(row.collection))
+        .onChange(of: row.pulse) {
+            guard !reduceMotion else { return }
+            withAnimation(Self.popUp) {
+                isPopped = true
+            } completion: {
+                withAnimation(Self.popSettle) { isPopped = false }
+            }
+        }
     }
 
     /// Badge, text, count and chevron on one line, with the separator inset to the text.
@@ -79,6 +96,7 @@ struct HomeRowView: View {
     private var trailing: some View {
         if case .count(let count) = row.detail {
             HomeCount(count: count)
+                .scaleEffect(isPopped ? Self.popScale : 1)
         }
         Image(systemName: "chevron.right")
             .font(Tokens.Typography.footnote.weight(.semibold))

@@ -96,6 +96,9 @@ public final class ScanFlowModel {
         leaveCamera()
     }
 
+    /// True when closing the camera ends the scan (the first camera); a rescan's camera goes back to review.
+    package var leavingCameraEndsTheScan: Bool { reviewInput == nil }
+
     package func rescan() {
         phase = .camera(isRescan: true)
     }
@@ -104,8 +107,8 @@ public final class ScanFlowModel {
         phase = .idle
     }
 
-    /// Review saved (`saved`) or discarded the scan. The view ends the layer without animation: Save, Discard and
-    /// Cancel all cut straight back to Home.
+    /// Review saved (`saved`) or discarded the scan. The view calls this once the layer has slid away, so the haptic
+    /// and the announcement come after the slide.
     package func reviewEnded(saved: SavedScan?) {
         if let saved { lastSaved = saved }
         reviewInput = nil
@@ -114,7 +117,7 @@ public final class ScanFlowModel {
     }
 
     private func leaveCamera() {
-        if reviewInput == nil {
+        if leavingCameraEndsTheScan {
             phase = .idle
         } else {
             phase = .review

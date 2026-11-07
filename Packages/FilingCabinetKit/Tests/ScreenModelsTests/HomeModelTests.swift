@@ -43,8 +43,25 @@ private func scans(_ collection: BuiltInCollection, _ count: Int, daysAgo: Int =
 }
 
 private func model(_ summaries: [ScanSummary], clock: MovableNow = MovableNow(noon)) -> HomeModel {
+    model(FakeLibrary(scans: summaries), clock: clock)
+}
+
+private func model(_ library: FakeLibrary, clock: MovableNow = MovableNow(noon)) -> HomeModel {
     let appClock = AppClock(now: { clock.now }, calendar: utc, locale: Locale(identifier: "en_US"))
-    return HomeModel(library: FakeLibrary(scans: summaries), today: Today(clock: appClock), calendar: utc)
+    return HomeModel(library: library, today: Today(clock: appClock), calendar: utc)
+}
+
+private func save(_ collection: BuiltInCollection, to library: FakeLibrary) async throws {
+    try await library.save(
+        ScanDraft(
+            id: ScanID(),
+            title: "New",
+            collection: collection,
+            scannedAt: noon,
+            expiryOverride: nil,
+            pages: [],
+            searchText: ""
+        ))
 }
 
 @Test func emptyLibraryShowsDescriptionsAndNoViews() {
@@ -96,4 +113,62 @@ private func model(_ summaries: [ScanSummary], clock: MovableNow = MovableNow(no
     today.refresh()
     #expect(home.rows.last?.detail == .count(0))
     #expect(home.viewRows.last?.count == 1)
+}
+
+// MARK: Holding while the capture layer is up (P5)
+
+@Test func whileHeldHomeShowsTheLibraryAsItWasAndCatchesUpOnRelease() async throws {
+    let library = FakeLibrary(scans: scans(.receipts, 2))
+    let home = model(library)
+    home.hold()
+    try await save(.receipts, to: library)
+    #expect(home.rows[1].detail == .count(2))
+    #expect(home.viewRows.last?.count == 2)
+
+    home.release()
+    #expect(home.rows[1].detail == .count(3))
+    #expect(home.viewRows.last?.count == 3)
+}
+
+@Test func releasePulsesOnlyTheCollectionsWhoseCountWentUp() async throws {
+    let library = FakeLibrary(scans: scans(.receipts, 2) + scans(.wallet, 1))
+    let home = model(library)
+    #expect(home.rows.map(\.pulse) == [0, 0, 0, 0, 0])
+
+    home.hold()
+    try await save(.receipts, to: library)
+    #expect(home.rows.map(\.pulse) == [0, 0, 0, 0, 0])
+    home.release()
+    #expect(home.rows.map(\.pulse) == [0, 1, 0, 0, 0])
+
+    // A second save elsewhere pulses that row and leaves Receipts' trigger where it was.
+    home.hold()
+    try await save(.wallet, to: library)
+    home.release()
+    #expect(home.rows.map(\.pulse) == [1, 1, 0, 0, 0])
+}
+
+@Test func theFirstSaveCatchesUpFromTheFirstLaunchRowsAndPulses() async throws {
+    let library = FakeLibrary()
+    let home = model(library)
+    home.hold()
+    try await save(.notes, to: library)
+    #expect(home.isEmpty)
+
+    home.release()
+    #expect(!home.isEmpty)
+    #expect(home.rows[2].detail == .count(1))
+    #expect(home.rows.map(\.pulse) == [0, 0, 1, 0, 0])
+}
+
+@Test func aReleaseWithNothingSavedOrNoHoldPulsesNothing() async throws {
+    let library = FakeLibrary(scans: scans(.receipts, 1))
+    let home = model(library)
+    home.hold()
+    home.release()
+    // A change while Home isn't held (seeding at launch, say) shows at once and doesn't pulse.
+    try await save(.receipts, to: library)
+    home.release()
+    #expect(home.rows[1].detail == .count(2))
+    #expect(home.rows.map(\.pulse) == [0, 0, 0, 0, 0])
 }

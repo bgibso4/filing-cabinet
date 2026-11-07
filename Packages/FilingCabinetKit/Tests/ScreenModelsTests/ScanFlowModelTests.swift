@@ -160,6 +160,15 @@ private let other = SyntheticPages.page(lines: [("TWO", 40)], size: CGSize(width
     #expect(scan.announcement == "Saved to Receipts")
 }
 
+@Test func onlyTheFirstCameraEndsTheScanWhenItCloses() async {
+    let harness = Harness(.authorized)
+    await harness.model.scan(from: .home, preselected: nil)
+    #expect(harness.model.leavingCameraEndsTheScan)
+    harness.model.cameraFinished([receipt])
+    harness.model.rescan()
+    #expect(!harness.model.leavingCameraEndsTheScan)
+}
+
 @Test func discardSetsNoSavedScan() async {
     let harness = Harness(.authorized)
     await harness.reachReview([receipt])

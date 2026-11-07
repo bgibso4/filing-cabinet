@@ -93,7 +93,7 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome()
     }
 
-    /// Saved inside Receipts, the layer cuts back to the grid, which shows the new tile.
+    /// Saved inside Receipts, the layer slides back to the grid, which shows the new tile.
     func testSaveInsideItsCollectionEndsOnTheGrid() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: nil)

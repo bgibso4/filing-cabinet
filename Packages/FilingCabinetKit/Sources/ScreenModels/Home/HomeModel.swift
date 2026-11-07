@@ -5,12 +5,17 @@ import Observation
 
 /// What Home shows: the collections with their counts, and the Recent and All Scans views. With no visible scan
 /// it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read from the
-/// library and from `Today`, so the numbers move when either does.
+/// library and from `Today`, so the numbers move when either does, except while held: under the capture layer Home
+/// keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
 @Observable
 public final class HomeModel {
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
+    /// The scans Home shows while held; nil when it follows the library.
+    private var heldScans: [ScanSummary]?
+    /// Per collection, how many times a release found its count higher: each row's pop trigger.
+    private var pulses: [BuiltInCollection: Int] = [:]
 
     public init(library: any ScanLibrary, today: Today, calendar: Calendar) {
         self.library = library
@@ -32,7 +37,8 @@ public final class HomeModel {
                     ? .count(shelf.count(in: collection))
                     : .subtitle(
                         CollectionText.description(collection) + " · "
-                            + CollectionText.lifespanShort(collection.lifespan))
+                            + CollectionText.lifespanShort(collection.lifespan)),
+                pulse: pulses[collection, default: 0]
             )
         }
     }
@@ -46,7 +52,25 @@ public final class HomeModel {
         ]
     }
 
+    /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
+    package func hold() {
+        heldScans = library.scans
+    }
+
+    /// Catches up with the library, and pulses each collection whose count went up while Home was held. Without a
+    /// hold it does nothing.
+    package func release() {
+        guard let heldScans else { return }
+        let before = LibraryShelf(scans: heldScans, today: today.day, calendar: calendar)
+        self.heldScans = nil
+        let after = shelf
+        for collection in BuiltInCollection.allCases
+        where after.count(in: collection) > before.count(in: collection) {
+            pulses[collection, default: 0] += 1
+        }
+    }
+
     private var shelf: LibraryShelf {
-        LibraryShelf(scans: library.scans, today: today.day, calendar: calendar)
+        LibraryShelf(scans: heldScans ?? library.scans, today: today.day, calendar: calendar)
     }
 }

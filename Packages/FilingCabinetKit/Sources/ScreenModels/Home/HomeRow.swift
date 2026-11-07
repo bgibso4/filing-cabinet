@@ -11,6 +11,8 @@ public struct HomeRow: Identifiable, Equatable, Sendable {
     public let collection: BuiltInCollection
     public let name: String
     public let detail: Detail
+    /// Goes up each time Home catches up after a scan and this row's count went up; the count pops on each change.
+    package let pulse: Int
 
     public var id: BuiltInCollection { collection }
 }
