@@ -17,7 +17,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
                              ReaderComparisonTests (the bake-off report, not a gate)
 SnapshotTests/               app-hosted snapshot tests; references live beside the tests
-UITests/                     journey and accessibility-coverage UI tests
+UITests/                     journey UI tests, with identifier coverage and accessibility audits
 DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
 scripts/                     token generator, compare, pre-commit, lint-rule tests
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
@@ -35,15 +35,17 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 
 | Command | Does |
 |---|---|
-| `make setup` | check tools, install the pre-commit hook, generate |
+| `make setup` | check tools, install the pre-commit hook, create the `FC iPhone 17` simulator, generate |
 | `make generate` | token generator + XcodeGen; copies `Package.resolved` into the project |
-| `make build` | build the app for the pinned simulator (iPhone 17, iOS 27.0) |
+| `make build` | build the app for the pinned simulator (`FC iPhone 17`: an iPhone 17 on iOS 27.0, this project's own; `SIM_DEVICE=` overrides) |
 | `make fast` | Fast tests on macOS, no simulator |
-| `make full` | everything on the simulator: package, snapshot and UI tests |
-| `make ci` | exactly what CI runs: generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, full, Periphery, changed snapshots, `check-resolved` |
+| `make full` | everything on the simulator: package, snapshot and UI tests. `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out) |
+| `make ci` | everything CI runs: `ci-checks`, then `ci-sim` |
+| `make ci-checks` | generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, Periphery, changed snapshots, `check-resolved` |
+| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` and `SHARD=browse` (the two longest UI classes) and `SHARD=main` (everything else) |
 | `make lint` / `make format` | SwiftLint + swift-format strict lint / apply swift-format |
 | `make unused` | Periphery dead-code scan |
-| `make snapshots-record` | re-record snapshot references on the pinned simulator |
+| `make snapshots-record` | re-record snapshot references on the pinned simulator (`ONLY=` for some classes) |
 | `make compare SCREEN=<design png stem> REF=<snapshot png>` | side by side, written to `build/compare/` |
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |

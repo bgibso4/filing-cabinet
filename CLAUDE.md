@@ -24,6 +24,8 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 Use the `ios-verifier` agent for build/test evidence (see the definition of done in AGENTS.md).
 
+For a task, run the snapshot and UI tests for the screens it touched with `make full ONLY="FilingCabinetUITests/<Class> FilingCabinetSnapshotTests/<Class>"`. CI runs the whole suite on every push.
+
 ## Workspace
 
 - Personal agent tooling (XcodeBuildMCP, Axiom, SwiftUI skills) comes from arsenal's `ios` profile via `arms apply`: local scope, uncommitted.
