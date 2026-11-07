@@ -30,6 +30,11 @@ final class CameraAccessJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].waitForExistence(timeout: 5))
         attachScreenshot(of: app, named: "camera-off-sheet-ax")
         try audit(app)
+        // Scrolled to its end, the sheet keeps Close on its fixed header, clear of the text. The title can't scroll fully
+        // out of view at this size, and the audit flags a title cut by the scroll edge, so this asserts Close instead.
+        app.staticTexts[AccessibilityID.CameraOff.message].swipeUp()
+        attachScreenshot(of: app, named: "camera-off-sheet-ax-scrolled")
+        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.close].isHittable)
     }
 
     func testCancelledCameraReturnsHome() {

@@ -181,10 +181,11 @@ final class BrowseJourneyTests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
     }
 
-    /// Scan stays disabled until seeding ends, and sixty scans take longer than reaching this audit does.
+    /// Scan stays disabled until seeding ends. No launch option holds seeding open, so this checks the state the moment
+    /// Scan exists, with nothing else waited on first, and audits straight after.
     func testDisabledScanAuditAtLargestText() throws {
         let app = launchApp(["-SeedScans", "60", "-FixedDate", "2026-10-12"], largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.allRow].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 30))
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isEnabled)
         try audit(app)
     }

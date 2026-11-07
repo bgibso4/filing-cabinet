@@ -12,6 +12,7 @@ package final class GridPrefetcher {
     private static let layoutQuietPeriod = Duration.milliseconds(50)
 
     private let quietPeriod: Duration
+    private let sleep: (Duration) async -> Void
     private var ids: [ScanID] = []
     private var indexes: [ScanID: Int] = [:]
     private var provider: (any ThumbnailProviding)?
@@ -26,9 +27,17 @@ package final class GridPrefetcher {
     private var waiting: Task<Void, Never>?
     private var loading: Task<Void, Never>?
 
-    /// Tests with no layout pass to wait for use a `quietPeriod` of zero or close to it.
-    package init(quietPeriod: Duration = layoutQuietPeriod) {
+    /// Tests with no layout pass to wait for use a `quietPeriod` of zero or close to it. `sleep` is how a quiet period
+    /// passes: a test scripts it to prove restarts without a wall clock. It returns early when its task is cancelled.
+    package init(
+        quietPeriod: Duration = layoutQuietPeriod,
+        sleep: @escaping (Duration) async -> Void = { duration in
+            // A cancelled sleep ends early, and the caller's check stops the work.
+            try? await Task.sleep(for: duration)
+        }
+    ) {
         self.quietPeriod = quietPeriod
+        self.sleep = sleep
     }
 
     /// The grid's tiles, in order, and where their thumbnails come from.
@@ -63,9 +72,8 @@ package final class GridPrefetcher {
 
     private func refreshWhenQuiet() {
         waiting?.cancel()
-        waiting = Task { [weak self, quietPeriod] in
-            // A cancelled sleep ends early, and the check below stops the work.
-            try? await Task.sleep(for: quietPeriod)
+        waiting = Task { [weak self, quietPeriod, sleep] in
+            await sleep(quietPeriod)
             guard !Task.isCancelled else { return }
             self?.refresh()
         }
