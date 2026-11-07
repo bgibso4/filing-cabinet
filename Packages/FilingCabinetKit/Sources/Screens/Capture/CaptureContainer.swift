@@ -17,16 +17,22 @@ struct CaptureContainer: View {
                 ReviewView(
                     model: review,
                     // ReviewView has already stopped reading (`discard()`); `reviewEnded` doesn't.
-                    onClose: flow.reviewEnded,
+                    onClose: { flow.reviewEnded(saved: nil, from: nil) },
                     onRescan: flow.rescan,
-                    // Task 18 flies page 1 into its collection from here.
-                    onSaved: { _, _ in flow.reviewEnded() }
+                    onSaved: endWithFlight
                 )
             }
         case .idle, .cameraOff:
-            // Only seen while the layer is animating away.
+            // Only seen while a discarded scan's layer is animating away.
             EmptyView()
         }
+    }
+
+    /// The layer goes at once, so the page in the overlay takes over from the page in review where it stands.
+    private func endWithFlight(_ saved: SavedScan, from frame: CGRect) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { flow.reviewEnded(saved: saved, from: frame) }
     }
 
     @ViewBuilder

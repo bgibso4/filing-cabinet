@@ -15,6 +15,11 @@ public enum AccessibilityID {
         }
     }
 
+    public enum Save {
+        /// The page in flight; a UI test checks that it is gone once the flight ends.
+        public static let flight = "flight"
+    }
+
     public enum Grid {
         /// The system back button (the grid keeps the navigation bar so swipe back works). SwiftUI can't set its
         /// identifier, so this is the one UIKit gives it.

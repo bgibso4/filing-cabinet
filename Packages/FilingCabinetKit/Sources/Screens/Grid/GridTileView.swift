@@ -33,6 +33,7 @@ struct GridTileView: View {
                 )
                 .aspectRatio(shape == .card ? Self.cardAspect : Self.pageAspect, contentMode: .fit)
                 .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                .flightTarget(.tile(tile.id))
                 HStack(spacing: Self.dotGap) {
                     if let dot = tile.dot { CollectionDot(collection: dot) }
                     Text(tile.title)

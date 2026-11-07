@@ -2,7 +2,8 @@ import ScreenModels
 import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
-/// covers it while a scan is in the camera or in review; the camera-off sheet slides over it.
+/// covers it while a scan is in the camera or in review; the camera-off sheet slides over it. A saved page flies over
+/// everything once the capture layer has gone.
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
@@ -26,8 +27,18 @@ public struct RootView: View {
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
+        .environment(\.flightDestination, visibleFlightDestination)
+        .overlayPreferenceValue(FlightTargetFrameKey.self) { frame in
+            FlightOverlay(flow: flow, targetFrame: frame, forcesReduceMotion: dependencies.forcesReduceMotion)
+        }
+        .sensoryFeedback(.success, trigger: flow.flight) { _, new in new != nil }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
+                // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so it
+                // is already drawn the moment the layer goes; otherwise the screen is blank for two frames.
+                .presentationBackground(.clear)
+                // That also leaves the root reachable: keep VoiceOver in the layer.
+                .accessibilityAddTraits(.isModal)
         }
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
@@ -35,6 +46,14 @@ public struct RootView: View {
     }
 
     private var flow: ScanFlowModel { dependencies.flow }
+
+    /// The current flight's destination if it is on the top screen. Home's rows stay laid out under a pushed grid, so
+    /// scanning in Receipts and saving to Wallet has nowhere to land (M13).
+    private var visibleFlightDestination: FlightDestination? {
+        guard let destination = flow.flight?.destination else { return nil }
+        if case .badge = destination, !path.isEmpty { return nil }
+        return destination
+    }
 
     /// The capture layer can't be swiped away; the flow decides when it ends.
     private var isCapturing: Binding<Bool> {

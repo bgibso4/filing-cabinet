@@ -235,7 +235,7 @@ func finishedRescanReplacesTheReviewsPages() async {
 
     #expect(flow.review === review)
     #expect(review?.pages == [ReviewHarness.page2, ReviewHarness.page3])
-    flow.reviewEnded()
+    flow.reviewEnded(saved: nil, from: nil)
     #expect(flow.review == nil)
 }
 
