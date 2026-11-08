@@ -14,6 +14,7 @@ public struct ThumbnailLoader: ThumbnailProviding {
     private let location: LibraryLocation
     private let fileSystem: any FileSystem
     private let cache = ImageCache(capacity: memoryCapacity)
+    private let decodes = ImageDecodeQueue(label: "com.cadre.filingcabinet.thumbnail-decode")
 
     public init(location: LibraryLocation, fileSystem: any FileSystem) {
         self.location = location
@@ -28,6 +29,11 @@ public struct ThumbnailLoader: ThumbnailProviding {
     public func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
         let key = ImageCache.Key(id: id, page: page)
         if let hit = cache.image(for: key) { return hit }
+        return await decodes.image(for: key) { [self] in load(page: page, for: id, key: key) }
+    }
+
+    /// The cached JPEG, or the thumbnail rebuilt from the original; runs on the decode queue.
+    private func load(page: Int, for id: ScanID, key: ImageCache.Key) -> CGImage? {
         let signposter = LibraryLog.signposter
         let state = signposter.beginInterval("Thumbnail decode")
         defer { signposter.endInterval("Thumbnail decode", state) }
