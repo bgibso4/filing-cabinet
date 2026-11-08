@@ -87,3 +87,16 @@ jobs:
           path: |
             .build/snapshot-artifacts
             .build/DerivedData/Logs/Test/*.xcresult
+
+      # Measuring where CI's time goes: xcodebuild's stamped output, Xcode's build log (per target and file) and the
+      # test results (per test and step), on every run.
+      - name: Upload timing evidence
+        if: always() && matrix.job != 'checks'
+        uses: actions/upload-artifact@v7
+        with:
+          name: timing-${{ matrix.job }}
+          if-no-files-found: ignore
+          path: |
+            .build/xcodebuild.log
+            .build/DerivedData/Logs/Build/*.xcactivitylog
+            .build/DerivedData/Logs/Test/*.xcresult

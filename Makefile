@@ -79,9 +79,14 @@ snapshots-record: sim generate
 # Everything on the simulator: package tests, snapshot tests and UI tests. ONLY and SKIP narrow it (TEST_ARGS).
 full: generate full-run
 
+# On CI, xcodebuild's raw output is also kept with the time each line appeared, in .build/xcodebuild.log: xcbeautify
+# buffers, so the job log alone can't say where the time goes (CI sets CI=true).
+STAMP = $(if $(CI),perl -MPOSIX -e 'mkdir ".build"; open(my $$log, ">", ".build/xcodebuild.log") or die; $$log->autoflush(1); \
+	while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }' |)
+
 full-run: sim
 	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(TEST_ARGS) | $(BEAUTIFY)
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(TEST_ARGS) | $(STAMP) $(BEAUTIFY)
 
 # Side by side: SCREEN=<design/screens stem> REF=<snapshot png> -> build/compare/<stem>.png
 compare:
