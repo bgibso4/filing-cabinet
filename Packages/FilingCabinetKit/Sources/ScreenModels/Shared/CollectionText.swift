@@ -69,6 +69,29 @@ package enum CollectionText {
         }
     }
 
+    /// A lifespan as a menu choice: "1 week" … "1 year", "Forever".
+    static func lifespanChoice(_ lifespan: Lifespan) -> String {
+        lifespan == .forever ? String(localized: "Forever", bundle: #bundle) : lifespanShort(lifespan)
+    }
+
+    /// What a lifespan makes a scan "older than" (nil for Forever, which makes none): "a week", "a month",
+    /// "3 months", "a year".
+    static func olderThan(_ lifespan: Lifespan) -> String? {
+        switch lifespan {
+        case .week: String(localized: "a week", bundle: #bundle)
+        case .month: String(localized: "a month", bundle: #bundle)
+        case .threeMonths: String(localized: "\(3) months", bundle: #bundle)
+        case .year: String(localized: "a year", bundle: #bundle)
+        case .forever: nil
+        }
+    }
+
+    /// The shortening ask's title: "Keep receipts 1 month?".
+    static func keepTitle(_ collection: BuiltInCollection, _ lifespan: Lifespan) -> String {
+        String(
+            localized: "Keep \(noun(collection, count: 2)) \(lifespanChoice(lifespan))?", bundle: #bundle)
+    }
+
     /// "Kept 1 week", "Kept forever".
     static func kept(_ lifespan: Lifespan) -> String {
         switch lifespan {

@@ -17,8 +17,7 @@ struct ExpiryChoices {
         )
         let lifespanChoices = Lifespan.allCases.map { lifespan in
             (
-                label: lifespan == .forever
-                    ? String(localized: "Forever", bundle: #bundle) : CollectionText.lifespanShort(lifespan),
+                label: CollectionText.lifespanChoice(lifespan),
                 override: ExpiryOverride?.some(.lifespan(lifespan))
             )
         }

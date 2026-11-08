@@ -8,4 +8,5 @@ public enum AnalyticsKey: String, Sendable {
     case failedPages
     case field
     case count
+    case lifespan
 }

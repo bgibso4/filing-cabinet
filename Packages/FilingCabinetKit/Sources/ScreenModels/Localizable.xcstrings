@@ -198,7 +198,21 @@
     "Empty Trash?" : {},
     "Deletes %@ permanently. This can’t be undone." : {},
     "Empty Trash" : {},
-    "%@ · each is deleted after %lld days here" : {}
+    "%@ · each is deleted after %lld days here" : {},
+    "a week" : {},
+    "a month" : {},
+    "a year" : {},
+    "Change" : {},
+    "is" : {},
+    "are" : {},
+    "Keep %@ %@?" : {},
+    "%lld %@ %@ older than %@ and will go to Trash now. You can restore them for %lld days." : {},
+    "Applies to %@ you already have. Scans you gave their own expiry keep it." : {},
+    "Turned off in iPhone Settings" : {},
+    "A note when scans move to Trash" : {},
+    "Filing Cabinet %@ · Private by design" : {},
+    "How long each one keeps scans" : {},
+    "Counted from each scan’s date." : {}
   },
   "version" : "1.0"
 }

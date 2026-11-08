@@ -19,6 +19,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case scansDeleted(count: Int)
     /// Trash's Empty Trash.
     case trashEmptied(count: Int)
+    /// Settings › Collections › a collection's "Keep scans for".
+    case lifespanChanged(collection: BuiltInCollection, lifespan: Lifespan)
 
     public var name: String {
         switch self {
@@ -35,6 +37,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .scansRestored: "scansRestored"
         case .scansDeleted: "scansDeleted"
         case .trashEmptied: "trashEmptied"
+        case .lifespanChanged: "lifespanChanged"
         }
     }
 
@@ -50,6 +53,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .scanEdited(let field): [.field: .token(.init(field))]
         case .scanMovedToTrash(let collection): [.collection: .token(.init(collection))]
         case .scansRestored(let count), .scansDeleted(let count), .trashEmptied(let count): [.count: .int(count)]
+        case .lifespanChanged(let collection, let lifespan):
+            [.collection: .token(.init(collection)), .lifespan: .token(.init(lifespan))]
         }
     }
 }
