@@ -7,11 +7,6 @@ import Synchronization
 import TestSupport
 import Testing
 
-private func temporaryLocation() -> LibraryLocation {
-    let base = FileManager.default.temporaryDirectory.appending(path: "ThumbnailLoaderTests-\(UUID().uuidString)")
-    return LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
-}
-
 private func longEdge(_ image: CGImage) -> Int { max(image.width, image.height) }
 
 @Test func cachedJpegIsReadWithoutTheOriginal() async throws {

@@ -6,12 +6,6 @@ import Library
 import TestSupport
 import Testing
 
-/// A fresh, empty library location under the temporary directory.
-private func temporaryLocation() -> LibraryLocation {
-    let base = FileManager.default.temporaryDirectory.appending(path: "PageFileStoreTests-\(UUID().uuidString)")
-    return LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
-}
-
 /// Writes like the real file system, but fails the given original with ENOSPC.
 private struct FailingFileSystem: FileSystem {
     let failingFileName: String

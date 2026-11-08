@@ -17,6 +17,8 @@ public final class ScanStore: ScanLibrary {
     /// Held so the main context keeps working: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let files: PageFileStore
+    /// Today, for Trash days.
+    @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let persist: (ModelContext) throws -> Void
     /// Every fetch of scan records goes through here.
     @ObservationIgnored private let fetch: (ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord]
@@ -25,15 +27,19 @@ public final class ScanStore: ScanLibrary {
 
     /// `persist` defaults to `context.save()`; tests inject a failure.
     public convenience init(
-        container: ModelContainer, files: PageFileStore, persist: ((ModelContext) throws -> Void)? = nil
+        container: ModelContainer,
+        files: PageFileStore,
+        clock: AppClock,
+        persist: ((ModelContext) throws -> Void)? = nil
     ) {
-        self.init(container: container, files: files, persist: persist, fetch: nil)
+        self.init(container: container, files: files, clock: clock, persist: persist, fetch: nil)
     }
 
     /// `fetch` defaults to `context.fetch(_:)`; tests count fetches.
     init(
         container: ModelContainer,
         files: PageFileStore,
+        clock: AppClock,
         persist: ((ModelContext) throws -> Void)?,
         fetch: ((ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord])?
     ) {
@@ -41,6 +47,7 @@ public final class ScanStore: ScanLibrary {
         // Every write is persisted explicitly, so a failed save can be rolled back before autosave sees it.
         container.mainContext.autosaveEnabled = false
         self.files = files
+        self.clock = clock
         self.persist = persist ?? { try $0.save() }
         self.fetch = fetch ?? { try $0.fetch($1) }
         reloadScans()
@@ -112,6 +119,60 @@ public final class ScanStore: ScanLibrary {
         }
     }
 
+    /// The requirements' defaults until lifespans can be edited.
+    public var lifespans: CollectionLifespans { .defaults }
+
+    public func rename(_ id: ScanID, to title: String) throws(LibraryError) {
+        LibraryLog.logger.info("Renaming scan \(id.uuid.uuidString, privacy: .public): \(title, privacy: .private)")
+        try edit([id]) { $0.title = title }
+    }
+
+    public func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError) {
+        LibraryLog.logger.info(
+            "Moving scan \(id.uuid.uuidString, privacy: .public) to \(collection.rawValue, privacy: .public)")
+        let today = clock.today
+        let lifespans = lifespans
+        try edit([id]) { record in
+            if let scan = record.summary {
+                let trashedDay = scan.trashedDayAfterMoving(
+                    to: collection, lifespans: lifespans, today: today, in: clock.calendar)
+                record.trashedDay = trashedDay?.storageValue
+            }
+            record.collectionKey = collection.rawValue
+        }
+    }
+
+    public func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError) {
+        LibraryLog.logger.info("Setting the expiry of scan \(id.uuid.uuidString, privacy: .public)")
+        try edit([id]) { $0.expiryOverride = override }
+    }
+
+    public func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {
+        LibraryLog.logger.info(
+            "Moving \(ids.count, privacy: .public) scans to Trash: \(Self.list(ids), privacy: .public)")
+        let today = clock.today.storageValue
+        try edit(ids) { $0.trashedDay = today }
+    }
+
+    public func restore(_ ids: [ScanID]) throws(LibraryError) {
+        LibraryLog.logger.info("Restoring \(ids.count, privacy: .public) scans: \(Self.list(ids), privacy: .public)")
+        try edit(ids) { record in
+            record.trashedDay = nil
+            record.expiryOverride = .lifespan(.forever)
+        }
+    }
+
+    public func deleteNow(_ ids: [ScanID]) async throws(LibraryError) {
+        LibraryLog.logger.info("Deleting \(ids.count, privacy: .public) scans: \(Self.list(ids), privacy: .public)")
+        let records = try records(for: ids)
+        let deleted = records.map { ScanID(uuid: $0.scanID) }
+        records.forEach(context.delete)
+        try persistEdit()
+        for id in deleted {
+            await files.remove(id)
+        }
+    }
+
     /// Removes page folders that have no record and are not being saved right now: what a kill between
     /// writing files and inserting the record leaves behind. Anything it cannot confirm is kept.
     public func removeOrphanedFiles() async {
@@ -132,6 +193,49 @@ public final class ScanStore: ScanLibrary {
     package func pageFileURLs(for id: ScanID) -> [URL] {
         guard let record = record(for: id) else { return [] }
         return files.originalURLs(named: record.pageFileNames, for: id)
+    }
+
+    /// Changes each scan's record, then persists: all or nothing.
+    private func edit(_ ids: [ScanID], _ change: (ScanRecord) -> Void) throws(LibraryError) {
+        try records(for: ids).forEach(change)
+        try persistEdit()
+    }
+
+    /// Persists the pending edits and reloads `scans`; on failure discards them and throws `.writeFailed`.
+    private func persistEdit() throws(LibraryError) {
+        do {
+            try persist(context)
+        } catch {
+            LibraryLog.logger.error("Saving an edit failed: \(error.localizedDescription, privacy: .private)")
+            context.rollback()
+            throw .writeFailed
+        }
+        reloadScans()
+    }
+
+    /// The records of these scans, in one fetch. Scans with no record are logged and left out; a failed fetch
+    /// throws `.writeFailed`, since the edit cannot happen.
+    private func records(for ids: [ScanID]) throws(LibraryError) -> [ScanRecord] {
+        let uuids = ids.map(\.uuid)
+        let descriptor = FetchDescriptor<ScanRecord>(predicate: #Predicate { uuids.contains($0.scanID) })
+        let found: [ScanRecord]
+        do {
+            found = try fetch(context, descriptor)
+        } catch {
+            LibraryLog.logger.error(
+                "Fetching \(ids.count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
+            )
+            throw .writeFailed
+        }
+        if found.count < ids.count {
+            LibraryLog.logger.error(
+                "\(ids.count - found.count, privacy: .public) of \(ids.count, privacy: .public) scans have no record")
+        }
+        return found
+    }
+
+    private static func list(_ ids: [ScanID]) -> String {
+        ids.map(\.uuid.uuidString).joined(separator: ", ")
     }
 
     /// The one context every SwiftData read and write goes through.

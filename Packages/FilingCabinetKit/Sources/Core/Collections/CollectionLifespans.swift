@@ -1,6 +1,6 @@
 /// How long each collection keeps its scans. The single source of a collection's lifespan: nothing else
 /// reads `BuiltInCollection.defaultLifespan`.
-package struct CollectionLifespans: Sendable, Hashable {
+public struct CollectionLifespans: Sendable, Hashable {
     private let byCollection: [BuiltInCollection: Lifespan]
 
     /// The requirements' defaults.

@@ -5,19 +5,11 @@ import Testing
 
 @testable import Library
 
-private let utc: Calendar = {
-    var calendar = Calendar(identifier: .gregorian)
-    calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? calendar.timeZone
-    return calendar
-}()
-
 @MainActor
 @Test func seedCyclesCollectionsAndStepsBackADayEach() async throws {
     let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
     let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
-    let store = ScanStore(
-        container: try ScanStore.makeContainer(storeURL: nil),
-        files: PageFileStore(location: location, fileSystem: LocalFileSystem()))
+    let store = try makeStore(location: location)
     // 2026-10-12 at 12:00 UTC.
     let now = Date(timeIntervalSince1970: 1_791_806_400)
 

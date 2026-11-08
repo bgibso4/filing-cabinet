@@ -92,8 +92,15 @@ public struct HomeView: View {
 @MainActor
 private final class PreviewLibrary: ScanLibrary {
     let scans: [ScanSummary] = []
+    let lifespans = CollectionLifespans.defaults
     func save(_ draft: ScanDraft) async throws(LibraryError) {}
     func updateSearchText(_ text: String, for id: ScanID) {}
+    func rename(_ id: ScanID, to title: String) throws(LibraryError) {}
+    func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError) {}
+    func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError) {}
+    func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {}
+    func restore(_ ids: [ScanID]) throws(LibraryError) {}
+    func deleteNow(_ ids: [ScanID]) async throws(LibraryError) {}
 }
 
 @MainActor

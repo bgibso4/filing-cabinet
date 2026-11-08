@@ -17,6 +17,17 @@ private func draft(scannedAt seconds: TimeInterval) -> ScanDraft {
     )
 }
 
+private func summary(_ title: String, _ collection: BuiltInCollection, scannedAt: Date) -> ScanSummary {
+    ScanSummary(
+        id: ScanID(),
+        title: title,
+        collection: collection,
+        scannedAt: scannedAt,
+        expiryOverride: nil,
+        pageCount: 1
+    )
+}
+
 @MainActor
 @Test func fakeLibraryKeepsScansNewestFirstLikeTheStore() async throws {
     let fake = FakeLibrary()
@@ -56,4 +67,51 @@ private func draft(scannedAt seconds: TimeInterval) -> ScanDraft {
     let fake = FakeLibrary()
     fake.updateSearchText("corner market", for: ScanID())
     #expect(fake.searchTextUpdates.isEmpty)
+}
+
+@MainActor
+@Test func fakeFollowsTheSameTrashRules() throws {
+    // A receipt scanned Jul 19, moved to Throwaways on Oct 12, as in the store's test.
+    let receipt = summary("Corner Market", .receipts, scannedAt: noon(7, 19))
+    let library: any ScanLibrary = FakeLibrary(scans: [receipt], clock: octoberTwelfth)
+
+    try library.move(receipt.id, to: .throwaways)
+
+    #expect(library.scans.first?.collection == .throwaways)
+    #expect(library.scans.first?.trashedDay == day(10, 12))
+    #expect(place(of: receipt.id, in: library) == .trash(daysLeft: 30, entered: day(10, 12)))
+}
+
+@MainActor
+@Test func fakeEditsLikeTheStore() async throws {
+    let scans = (0..<3).map { summary("Scan \($0)", .documents, scannedAt: noon(10, 10 - $0)) }
+    let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
+
+    try library.rename(scans[0].id, to: "Lease 2026")
+    try library.setExpiry(.lifespan(.year), for: scans[0].id)
+    try library.moveToTrash([scans[1].id, scans[2].id])
+    try library.restore([scans[2].id])
+    try await library.deleteNow([scans[1].id])
+
+    #expect(library.lifespans == .defaults)
+    #expect(library.scans.map(\.id) == [scans[0].id, scans[2].id])
+    #expect(library.scans[0].title == "Lease 2026")
+    #expect(library.scans[0].expiryOverride == .lifespan(.year))
+    #expect(library.scans[1].trashedDay == nil)
+    #expect(library.scans[1].expiryOverride == .lifespan(.forever))
+}
+
+@MainActor
+@Test func fakeFailsTheNextEditOnlyAndChangesNothing() throws {
+    let scan = summary("Corner Market", .receipts, scannedAt: noon(10, 1))
+    let library = FakeLibrary(scans: [scan], clock: octoberTwelfth)
+    library.failNextEdit = .writeFailed
+
+    #expect(throws: LibraryError.writeFailed) {
+        try library.rename(scan.id, to: "Renamed")
+    }
+    #expect(library.scans.map(\.title) == ["Corner Market"])
+
+    try library.rename(scan.id, to: "Renamed")
+    #expect(library.scans.map(\.title) == ["Renamed"])
 }

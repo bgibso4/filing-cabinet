@@ -50,7 +50,8 @@ final class AppEnvironment {
         let store = Self.makeStore(
             location: location,
             inMemory: options.isUITest,
-            pageFileSystem: Self.pageFileSystem(fileSystem, options: options)
+            pageFileSystem: Self.pageFileSystem(fileSystem, options: options),
+            clock: clock
         )
         self.analytics = analytics
         self.clock = clock
@@ -143,12 +144,14 @@ final class AppEnvironment {
     }
 
     /// On disk, or in memory for UI tests.
-    private static func makeStore(location: LibraryLocation, inMemory: Bool, pageFileSystem: any FileSystem)
-        -> ScanStore
-    {
+    private static func makeStore(
+        location: LibraryLocation, inMemory: Bool, pageFileSystem: any FileSystem, clock: AppClock
+    ) -> ScanStore {
         do {
             let container = try ScanStore.makeContainer(storeURL: inMemory ? nil : location.storeURL)
-            return ScanStore(container: container, files: PageFileStore(location: location, fileSystem: pageFileSystem))
+            return ScanStore(
+                container: container, files: PageFileStore(location: location, fileSystem: pageFileSystem), clock: clock
+            )
         } catch {
             // Running on without the store would lose every scan saved this session.
             logger.fault("The library store could not be opened: \(error.localizedDescription, privacy: .private)")

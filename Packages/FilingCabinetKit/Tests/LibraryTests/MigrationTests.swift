@@ -29,7 +29,8 @@ private func v1StoreCopy() throws -> URL {
         container: container,
         files: PageFileStore(
             location: LibraryLocation(root: try temporaryFolder(), caches: try temporaryFolder()),
-            fileSystem: LocalFileSystem())
+            fileSystem: LocalFileSystem()),
+        clock: octoberTwelfth
     ).scans
 
     #expect(scans.map(\.title) == ["Bluebird Café", "Library Card", "City Pharmacy"])
