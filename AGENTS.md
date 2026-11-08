@@ -79,6 +79,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-Notifications authorized\|denied\|notDetermined` | a fake notification center answers with that authorization |
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
+| `-SeedTrash <n>` | saves `n` synthetic scans at launch and moves scan `i` to Trash on today − `i` |
 | `-FailSave` | the next page write fails with a full disk |
 | `-ReduceMotion` | the capture layer fades rather than slides, and Home's count doesn't pop |
 

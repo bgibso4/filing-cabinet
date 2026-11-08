@@ -50,7 +50,7 @@ final class SettingsJourneyTests: XCTestCase {
         menuItem("1 year", in: app).tap()
         XCTAssertTrue(waitFor(keepScansFor, value: "1 year"))
         XCTAssertFalse(app.alerts.firstMatch.exists)
-        let trashBefore = trashCount(in: app)
+        let trashBefore = trashCountFromHomeThenBackToReceipts(in: app)
 
         // A week: the 11-day-old receipt would go to Trash now, so it asks first.
         keepScansFor.tap()
@@ -66,7 +66,27 @@ final class SettingsJourneyTests: XCTestCase {
         ask.buttons["Change"].tap()
         XCTAssertTrue(waitFor(keepScansFor, value: "1 week"))
 
-        XCTAssertEqual(trashCount(in: app), trashBefore + 1)
+        XCTAssertEqual(trashCountFromHomeThenBackToReceipts(in: app), trashBefore + 1)
+    }
+
+    /// iOS has blocked notifications, so the switch sends the person to iPhone Settings, and stays off when they come
+    /// back without changing anything.
+    func testBlockedNotificationsOpenIPhoneSettings() throws {
+        let app = seededApp()
+        openSettings(in: app)
+        let notifications = app.switches[AccessibilityID.Settings.notifications]
+        XCTAssertEqual(notifications.value as? String, "0")
+
+        notifications.tap()
+        let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
+        XCTAssertTrue(settings.wait(for: .runningForeground, timeout: 10))
+
+        app.activate()
+        XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
+        XCTAssertTrue(notifications.waitForExistence(timeout: 5))
+        XCTAssertEqual(notifications.value as? String, "0")
+        // The value is what VoiceOver reads; the screenshot shows the switch is drawn off too.
+        attachScreenshot("notifications-back-from-iphone-settings", of: app)
     }
 
     func testAuditAtLargestTextSettings() throws {
@@ -92,7 +112,7 @@ final class SettingsJourneyTests: XCTestCase {
     }
 
     /// Back to Home, reads the number on the Trash row, and opens the screen again: Settings, Collections, Receipts.
-    private func trashCount(in app: XCUIApplication) -> Int {
+    private func trashCountFromHomeThenBackToReceipts(in app: XCUIApplication) -> Int {
         let back = app.buttons[AccessibilityID.Grid.back]
         for _ in 0..<3 { back.tap() }
         let trashRow = app.buttons[AccessibilityID.Home.trashRow]

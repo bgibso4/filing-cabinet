@@ -18,7 +18,7 @@
     }
 
     @Test func onlyCleanupRequestsAreReplaced() {
-        #expect(SystemNotificationCenter.isCleanup("cleanup-2026-10-12"))
+        #expect(SystemNotificationCenter.isCleanup(ScheduledNotice.idPrefix + "2026-10-12"))
         #expect(!SystemNotificationCenter.isCleanup("reminder-1"))
     }
 #endif

@@ -3,8 +3,6 @@ import UserNotifications
 
 /// The system's notification center. Cleanup notes are alerts only: no badge, no sound, one thread.
 public struct SystemNotificationCenter: CleanupNotifying {
-    /// Every cleanup note's id starts with this, so replacing them leaves any other pending note alone.
-    private static let idPrefix = "cleanup-"
     private static let threadIdentifier = "cleanup"
 
     public init() {}
@@ -58,5 +56,5 @@ public struct SystemNotificationCenter: CleanupNotifying {
         }
     }
 
-    static func isCleanup(_ identifier: String) -> Bool { identifier.hasPrefix(idPrefix) }
+    static func isCleanup(_ identifier: String) -> Bool { identifier.hasPrefix(ScheduledNotice.idPrefix) }
 }
