@@ -171,13 +171,14 @@ ci-checks: generate
 	$(MAKE) --no-print-directory check-resolved
 
 # The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
-# longest UI classes. main skips them rather than listing the rest, so a new test class always lands in main.
+# longest UI classes, and browse also takes the snapshot tests (it had the shortest tests: about 210 s, against about
+# 750 s in main, CI run 42508098398). main skips them rather than listing the rest, so a new test class lands in main.
 # CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
 # The scan shard first flaked (4 of 10 CI runs): each read of the screen took 1 to 4 s there, and waits of 2 to 5 s
 # ran out. One launch per class (Launch.swift) and one read per check in the tight waits address that (#43).
 SHARD             ?= all
 SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests
-SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests
+SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests FilingCabinetSnapshotTests
 SHARD_ONLY_scan   := $(SHARD_SCAN)
 SHARD_ONLY_browse := $(SHARD_BROWSE)
 SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
@@ -185,8 +186,9 @@ SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
 # Xcode's compilation cache: keyed on each compilation's inputs (not file dates), so CI restores it from earlier runs
 # and skips compiling what a change did not touch. ci.yml caches this folder.
 CAS_PATH      := $(CURDIR)/.build/CompilationCache
-# Diagnosis: xcodebuild's raw output, each line stamped with the time it appeared (xcbeautify buffers its own).
-STAMP         := perl -MPOSIX -e 'open(my $$log, ">", shift) or die; $$log->autoflush(1); while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }'
+# Timing evidence: xcodebuild's raw output, each line stamped with the time it appeared, appended to .build/xcodebuild.log
+# (xcbeautify buffers, so the job log can't say where the time goes). ci.yml uploads it with the build log and results.
+STAMP         := perl -MPOSIX -e 'open(my $$log, ">>", ".build/xcodebuild.log") or die; $$log->autoflush(1); while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }'
 CI_SIM_FLAGS   = $(XCB_FLAGS) -project $(PROJECT) -scheme FilingCabinet -destination '$(SIM_DEST)' \
 	-derivedDataPath $(DERIVED) COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$(CAS_PATH) $(TEST_ARGS)
 
@@ -200,9 +202,9 @@ ci-sim: generate
 	udid="$$(xcrun simctl list devices 'iOS $(SIM_OS)' | grep -F '    $(SIM_DEVICE) (' | head -1 | grep -oE '[0-9A-F-]{36}')"; \
 		[ -n "$$udid" ] || { echo "error: no $(SIM_DEVICE) on iOS $(SIM_OS)" >&2; exit 1; }; \
 		mkdir -p .build; xcrun simctl bootstatus "$$udid" -b > .build/boot.log 2>&1 & boot=$$!; \
-		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) | $(STAMP) .build/build-for-testing.log | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
+		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) | $(STAMP) | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
 		wait $$boot || { tail -20 .build/boot.log >&2; echo "error: the simulator did not boot" >&2; exit 1; }; \
-		xcodebuild test-without-building $(CI_SIM_FLAGS) | $(BEAUTIFY)
+		xcodebuild test-without-building $(CI_SIM_FLAGS) | $(STAMP) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory check-resolved
 
 # Fails when Xcode rewrote the resolved packages during the builds (run after them; never depends on generate).
