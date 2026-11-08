@@ -173,8 +173,11 @@ ci-checks: generate
 # The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
 # longest UI classes. main skips them rather than listing the rest, so a new test class always lands in main.
 # CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
+# The scan shard runs the package tests first. Alone on a cold simulator, the scan journeys ran slow enough to fail
+# their waits in 3 of 6 CI runs; in the single job, where the package tests warmed the simulator first, never (#43).
 SHARD             ?= all
-SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests
+SHARD_PACKAGES    := CoreTests UnderstandingTests LibraryTests ScreenModelsTests ScreensTests
+SHARD_SCAN        := $(SHARD_PACKAGES) FilingCabinetUITests/ScanJourneyTests
 SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests
 SHARD_ONLY_scan   := $(SHARD_SCAN)
 SHARD_ONLY_browse := $(SHARD_BROWSE)
