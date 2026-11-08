@@ -18,6 +18,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var failNextSave = false
     /// `-FakeReader`: every page reads as the synthetic City Pharmacy receipt (M16).
     public private(set) var fakeReader = false
+    /// `-ReduceMotion`: the capture layer and Home take their Reduce Motion paths whatever the system setting.
+    public private(set) var reduceMotion = false
     /// `-TextReader text|documents`: which Vision reader understands pages (A12, A15).
     public private(set) var reader = ReaderKind.text
 
@@ -40,6 +42,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-CameraDenied": cameraDenied = true
         case "-FailSave": failNextSave = true
         case "-FakeReader": fakeReader = true
+        case "-ReduceMotion": reduceMotion = true
         default: return false
         }
         return true

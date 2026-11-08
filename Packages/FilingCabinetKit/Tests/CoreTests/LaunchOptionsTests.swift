@@ -12,6 +12,7 @@ private let everyFlag = [
     "-SeedScans", "12",
     "-FailSave",
     "-FakeReader",
+    "-ReduceMotion",
     "-TextReader", "documents",
 ]
 
@@ -27,6 +28,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.seedScans == 12)
     #expect(options.failNextSave)
     #expect(options.fakeReader)
+    #expect(options.reduceMotion)
     #expect(options.reader == .documents)
 }
 
@@ -40,6 +42,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.seedScans == nil)
     #expect(!options.failNextSave)
     #expect(!options.fakeReader)
+    #expect(!options.reduceMotion)
     #expect(options.reader == .text)
 }
 

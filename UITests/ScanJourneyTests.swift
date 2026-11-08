@@ -94,8 +94,14 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome()
     }
 
-    /// A second scan after a save opens a camera on screen (regression: the slide-away stayed applied, so the next
-    /// camera opened off screen, a black screen on Ben's phone).
+    /// Under Reduce Motion the layer fades rather than slides, and the fade's end is what ends it: until then Home is
+    /// out of the tree and the invisible layer takes every touch.
+    func testSaveReturnsHomeWithReduceMotion() {
+        saveReceiptFromHome(flags: ["-ReduceMotion"])
+    }
+
+    /// Guards that a second scan after a save opens a camera on screen, so the slide-away never carries over to the
+    /// next layer.
     func testSecondScanAfterASaveShowsTheCamera() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         scanOnePage(in: app)
@@ -270,8 +276,8 @@ final class ScanJourneyTests: XCTestCase {
 
 /// Kept out of the class body so it stays under the type length limit.
 extension ScanJourneyTests {
-    private func saveReceiptFromHome() {
-        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+    private func saveReceiptFromHome(flags: [String] = []) {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"] + flags)
         scanOnePage(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]

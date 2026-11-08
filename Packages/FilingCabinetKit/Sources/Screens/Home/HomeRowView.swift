@@ -20,7 +20,7 @@ struct HomeRowView: View {
     private static let popSettle = Animation.spring(duration: 0.3, bounce: 0.3)
 
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reducesMotion) private var reduceMotion
     /// True while the count is popped. Kept on the row, not the count, so the very first count (which replaces the
     /// first-launch subtitle as it arrives) pops too.
     @State private var isPopped = false

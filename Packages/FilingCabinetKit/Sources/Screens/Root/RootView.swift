@@ -51,6 +51,8 @@ public struct RootView: View {
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
         }
+        // Outermost, so the capture layer's cover gets it as well as Home.
+        .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
     }
 
     private var flow: ScanFlowModel { dependencies.flow }

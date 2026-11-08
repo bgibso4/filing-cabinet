@@ -77,6 +77,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-FailSave` | the next page write fails with a full disk |
+| `-ReduceMotion` | the capture layer fades rather than slides, and Home's count doesn't pop |
 
 ## Import line
 
