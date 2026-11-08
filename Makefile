@@ -189,7 +189,7 @@ CAS_PATH      := $(CURDIR)/.build/CompilationCache
 # Timing evidence: xcodebuild's raw output, each line stamped with the time it appeared, appended to .build/xcodebuild.log
 # (xcbeautify buffers, so the job log can't say where the time goes). ci.yml uploads it with the build log and results.
 STAMP         := perl -MPOSIX -e 'open(my $$log, ">>", ".build/xcodebuild.log") or die; $$log->autoflush(1); while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }'
-CI_SIM_FLAGS   = $(XCB_FLAGS) -project $(PROJECT) -scheme FilingCabinet -destination '$(SIM_DEST)' \
+CI_SIM_FLAGS   = $(XCB_FLAGS) -project $(PROJECT) -scheme FilingCabinet \
 	-derivedDataPath $(DERIVED) COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$(CAS_PATH) $(TEST_ARGS)
 
 ci-sim: ONLY = $(SHARD_ONLY_$(SHARD))
@@ -199,12 +199,15 @@ ci-sim: generate
 	# The simulator boots while the tests build, and the tests wait until it has finished booting. Left to xcodebuild
 	# on a slow CI runner, the UI test runner once started before accessibility had loaded and failed before any
 	# test ran (#43). By ID: the CI image has an iPhone 17 for more than one iOS version.
+	# The build names no device: CoreSimulator stalls for minutes after a fresh boot, and an xcodebuild that asked it
+	# for the destination waited 3 to 5 min before building (CI run 42517153018; 7 to 25 s with no boot alongside).
 	udid="$$(xcrun simctl list devices 'iOS $(SIM_OS)' | grep -F '    $(SIM_DEVICE) (' | head -1 | grep -oE '[0-9A-F-]{36}')"; \
 		[ -n "$$udid" ] || { echo "error: no $(SIM_DEVICE) on iOS $(SIM_OS)" >&2; exit 1; }; \
 		mkdir -p .build; xcrun simctl bootstatus "$$udid" -b > .build/boot.log 2>&1 & boot=$$!; \
-		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) | $(STAMP) | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
+		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) \
+			-destination 'generic/platform=iOS Simulator' ARCHS=arm64 | $(STAMP) | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
 		wait $$boot || { tail -20 .build/boot.log >&2; echo "error: the simulator did not boot" >&2; exit 1; }; \
-		xcodebuild test-without-building $(CI_SIM_FLAGS) | $(STAMP) | $(BEAUTIFY)
+		xcodebuild test-without-building $(CI_SIM_FLAGS) -destination '$(SIM_DEST)' | $(STAMP) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory check-resolved
 
 # Fails when Xcode rewrote the resolved packages during the builds (run after them; never depends on generate).
