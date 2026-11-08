@@ -15,9 +15,16 @@ struct FilingCabinetApp: App {
                 .task { await environment.launch() }
                 .task { await environment.notifier.run() }
                 .task {
-                    // Midnight, a time zone change or a clock change: the system posts a day change (M5). A zone
-                    // change can move the day a scan enters Trash even when today stays, so notes are planned again.
+                    // Midnight or a clock change: the system posts a day change (M5), and notes are planned again.
                     for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {
+                        environment.today.refresh()
+                        environment.notifier.reschedule()
+                    }
+                }
+                .task {
+                    // A time zone change can move today, and the day each scan enters Trash even when today stays;
+                    // the day change isn't documented to come then, so this plans again on its own.
+                    for await _ in NotificationCenter.default.notifications(named: .NSSystemTimeZoneDidChange) {
                         environment.today.refresh()
                         environment.notifier.reschedule()
                     }
@@ -33,6 +40,8 @@ struct FilingCabinetApp: App {
             switch phase {
             case .active:
                 environment.lifecycle.sceneBecameActive()
+                // Now, so the first frame after midnight doesn't show yesterday.
+                environment.today.refresh()
                 Task { await environment.becameActive() }
             case .background:
                 // Leaving the app clears Home's cleanup banner (M4).

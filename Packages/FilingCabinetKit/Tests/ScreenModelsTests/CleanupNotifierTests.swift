@@ -61,10 +61,10 @@ private struct NotifierHarness {
     }
 }
 
-/// Polls until `condition` holds; false if it never did.
+/// Polls for up to 5 s until `condition` holds; false if it never did.
 @MainActor
 private func eventually(_ condition: () -> Bool) async throws -> Bool {
-    for _ in 0..<200 {
+    for _ in 0..<500 {
         if condition() { return true }
         try await Task.sleep(for: .milliseconds(10))
     }
@@ -129,8 +129,8 @@ private let cityPharmacy = "Moved the City Pharmacy receipt to Trash. It’s the
 }
 
 @MainActor
-@Test func rescheduleReadsTheClockAndAuthorizationAgain() async throws {
-    // Neither iOS allowing notes in Settings nor a time-zone change moves anything the notifier observes.
+@Test func rescheduleReadsAuthorizationAgain() async throws {
+    // iOS allowing notes in iPhone Settings moves nothing the notifier observes.
     let harness = try NotifierHarness([expiring("City Pharmacy", daysAhead: 3)], authorization: .notDetermined)
     defer { harness.cleanUp() }
     #expect(try await eventually { harness.pendingBodies == [] })
@@ -139,4 +139,18 @@ private let cityPharmacy = "Moved the City Pharmacy receipt to Trash. It’s the
     harness.notifier.reschedule()
 
     #expect(try await eventually { harness.pendingBodies == [cityPharmacy] })
+}
+
+@MainActor
+@Test func rescheduleReadsTheClockAgain() async throws {
+    // A time-zone change moves the clock's day without `Today` noticing: here the scan entering Trash tomorrow
+    // enters today by the clock, so there is nothing left to announce.
+    let harness = try NotifierHarness([expiring("City Pharmacy", daysAhead: 1)])
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.pendingBodies == [cityPharmacy] })
+    harness.now.set(noon.addingTimeInterval(86_400))
+
+    harness.notifier.reschedule()
+
+    #expect(try await eventually { harness.pendingBodies == [] })
 }

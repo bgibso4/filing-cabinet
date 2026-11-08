@@ -177,10 +177,9 @@ final class AppEnvironment {
         isReady = true
     }
 
-    /// Back in the app: a new day, a new time zone or a new answer in iPhone Settings may have come meanwhile. Once
-    /// launch has finished, Trash is purged again.
+    /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
+    /// have come meanwhile. Once launch has finished, Trash is purged again.
     func becameActive() async {
-        today.refresh()
         notifier.reschedule()
         await banner.refreshAuthorization()
         guard isReady else { return }
