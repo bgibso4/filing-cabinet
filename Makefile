@@ -81,8 +81,9 @@ full: generate full-run
 
 # On CI, xcodebuild's raw output is also kept with the time each line appeared, in .build/xcodebuild.log: xcbeautify
 # buffers, so the job log alone can't say where the time goes (CI sets CI=true).
-STAMP = $(if $(CI),perl -MPOSIX -e 'mkdir ".build"; open(my $$log, ">", ".build/xcodebuild.log") or die; $$log->autoflush(1); \
-	while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }' |)
+STAMP_LOG = perl -MPOSIX -e 'mkdir ".build"; open(my $$log, ">", ".build/xcodebuild.log") or die; $$log->autoflush(1); \
+	while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }'
+STAMP = $(if $(CI),$(STAMP_LOG) |)
 
 full-run: sim
 	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
