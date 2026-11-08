@@ -29,14 +29,14 @@ struct DetailsTitleEditor: View {
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier(AccessibilityID.Details.renameHint)
                 .padding(.horizontal, Self.labelInset)
         }
     }
 
     private var field: some View {
         HStack(spacing: Tokens.Spacing.s2) {
-            TextField(text: $text) {
+            // Vertical, so a long title or large text wraps rather than cutting off, as Review's title field does.
+            TextField(text: typedText, axis: .vertical) {
                 Text("Title", bundle: #bundle)
             }
             // Headline is the closest token to the mock's 20 pt semibold.
@@ -44,8 +44,9 @@ struct DetailsTitleEditor: View {
             .foregroundStyle(Tokens.Color.textPrimary)
             .focused(isFocused)
             .submitLabel(.done)
-            .onSubmit(onCommit)
             .accessibilityIdentifier(AccessibilityID.Details.titleField)
+            // Wrapped lines keep off the field's edge.
+            .padding(.vertical, Tokens.Spacing.s2)
             if !text.isEmpty { clearButton }
         }
         .padding(.leading, Self.fieldLeading)
@@ -55,6 +56,20 @@ struct DetailsTitleEditor: View {
             RoundedRectangle(cornerRadius: Tokens.Radius.surface)
                 .strokeBorder(Tokens.Color.textPrimary, lineWidth: Self.edgeWidth)
         }
+    }
+
+    /// The title as typed. A vertical field takes Return as a new line, so a line break commits instead.
+    private var typedText: Binding<String> {
+        Binding(
+            get: { text },
+            set: { typed in
+                if typed.contains(where: \.isNewline) {
+                    text = typed.filter { !$0.isNewline }
+                    onCommit()
+                } else {
+                    text = typed
+                }
+            })
     }
 
     private var clearButton: some View {

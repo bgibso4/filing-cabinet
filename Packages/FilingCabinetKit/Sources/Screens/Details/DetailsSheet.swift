@@ -31,7 +31,9 @@ public struct DetailsSheet: View {
     private static let textInset: CGFloat = 4
     // ScanDetails.dc.html line 54: renaming, the label starts 10 pt below the grabber.
     private static let editorTop: CGFloat = 10
-    // About the default-size sheet's height (07-01), shown for the instant before the real height is measured.
+    // The default-size sheet's height (07-01), shown for the instant before the real height is measured: 8 + 5 for the
+    // grabber, 8 + 44 for the title, 18 for the scanned line, 14 + 121 for the rows (two 60 pt rows and a hairline) and
+    // 18 below (ScanDetails.dc.html lines 34-97).
     private static let unmeasuredHeight: CGFloat = 236
 
     public init(model: DetailsModel, height: Binding<CGFloat>) {

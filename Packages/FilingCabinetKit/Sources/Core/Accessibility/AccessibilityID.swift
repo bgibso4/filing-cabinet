@@ -111,15 +111,10 @@ public enum AccessibilityID {
         public static let expiry = "details.expiry"
         /// Only after a move, with its note.
         public static let undo = "details.undo"
-        /// The sheet's text, which the accessibility audit reports on its own: the title inside its button, the scanned
-        /// line, the note after a move and the rename hint.
+        /// The sheet's text the accessibility audit reports on its own: the title inside its button and the scanned
+        /// line.
         public static let titleText = "details.titleText"
         public static let scannedLine = "details.scannedLine"
-        public static let movedNote = "details.movedNote"
-        public static let renameHint = "details.renameHint"
-        public static var text: [String] {
-            [titleText, scannedLine, movedNote, renameHint]
-        }
 
         public static var all: [String] {
             [sheet, title, titleField, collection, expiry, undo]
@@ -133,6 +128,8 @@ public enum AccessibilityID {
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
-            + Viewer.all.filter { $0 != Viewer.back } + Details.all + [Details.clearTitle] + Details.text
+            + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
+                Details.clearTitle, Details.titleText, Details.scannedLine,
+            ]
     }
 }

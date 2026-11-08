@@ -62,24 +62,35 @@ final class DetailsSnapshotTests: XCTestCase {
         return DetailsScreen(content: DetailsOverViewer(viewer: viewer, details: details, screensBundle: bundle))
     }
 
+    /// One variant at a time, each with new models: closing a window ends renaming (the sheet commits the title as it
+    /// disappears), so a screen shared across variants would leave the later ones out of the state under test.
+    @MainActor
+    private func assertScreens(
+        _ scan: ScanSummary, testName: String, change: @escaping (DetailsModel) -> Void = { _ in }
+    ) throws {
+        for variant in SnapshotConfig.variants {
+            try SnapshotHost.assertScreen(screen(scan, change: change), testName: testName, variants: [variant])
+        }
+    }
+
     @MainActor
     func testLease() throws {
-        try SnapshotHost.assertScreen(screen(Fixtures.lease), testName: "details_lease")
+        try assertScreens(Fixtures.lease, testName: "details_lease")
     }
 
     /// Oct 16, not the mock's Oct 17 (A10).
     @MainActor
     func testReceipt() throws {
-        try SnapshotHost.assertScreen(screen(Fixtures.receipt), testName: "details_receipt")
+        try assertScreens(Fixtures.receipt, testName: "details_receipt")
     }
 
     @MainActor
     func testMoved() throws {
-        try SnapshotHost.assertScreen(screen(Fixtures.receipt) { $0.choose(.documents) }, testName: "details_moved")
+        try assertScreens(Fixtures.receipt, testName: "details_moved") { $0.choose(.documents) }
     }
 
     @MainActor
     func testRename() throws {
-        try SnapshotHost.assertScreen(screen(Fixtures.lease) { $0.startRenaming() }, testName: "details_rename")
+        try assertScreens(Fixtures.lease, testName: "details_rename") { $0.startRenaming() }
     }
 }

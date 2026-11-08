@@ -9,7 +9,8 @@ struct DetailsRows: View {
 
     // ScanDetails.dc.html line 73: the well starts 14 pt below the scanned line.
     private static let wellTop: CGFloat = 14
-    // ScanDetails.dc.html line 135: the note is 10 pt below the well and 4 pt in, its Undo 32 pt tall at least.
+    // ScanDetails.dc.html line 135: the note is 10 pt below the well and 4 pt in, 12 pt before its Undo (Undo keeps a
+    // 44 pt target rather than the mock's 32).
     private static let noteTop: CGFloat = 10
     private static let noteInset: CGFloat = 4
     private static let noteGap: CGFloat = 12
@@ -48,7 +49,6 @@ struct DetailsRows: View {
             Text(note.text)
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
-                .accessibilityIdentifier(AccessibilityID.Details.movedNote)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button(action: model.undoMove) {
                 Text("Undo", bundle: #bundle)
