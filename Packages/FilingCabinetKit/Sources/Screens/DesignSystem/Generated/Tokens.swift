@@ -28,6 +28,8 @@ enum Tokens {
         static let expirySoon = SwiftUI.Color("expiry-soon", bundle: .module)
         static let scanGround = SwiftUI.Color("scan-ground", bundle: .module)
         static let separator = SwiftUI.Color("separator", bundle: .module)
+        static let switchKnobOff = SwiftUI.Color("switch-knob-off", bundle: .module)
+        static let switchTrackOff = SwiftUI.Color("switch-track-off", bundle: .module)
         static let textPrimary = SwiftUI.Color("text-primary", bundle: .module)
         static let textSecondary = SwiftUI.Color("text-secondary", bundle: .module)
         static let textTertiary = SwiftUI.Color("text-tertiary", bundle: .module)

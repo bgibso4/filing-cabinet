@@ -99,10 +99,7 @@ public struct SettingsView: View {
                 .accessibilityHidden(true)
         } trailing: {
             Toggle(isOn: notificationsOn) { notificationsText }
-                .labelsHidden()
-                // Settings2.dc.html line 178: switches stay black and white; colour is only for collections and
-                // expiry.
-                .tint(Tokens.Color.tint)
+                .toggleStyle(MonochromeToggleStyle())
                 .accessibilityIdentifier(AccessibilityID.Settings.notifications)
         }
     }
