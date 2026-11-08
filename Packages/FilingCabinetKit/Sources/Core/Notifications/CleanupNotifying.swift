@@ -5,7 +5,7 @@ package protocol CleanupNotifying: Sendable {
     /// Asks iOS once; true when the person allowed notes.
     func requestAuthorization() async -> Bool
 
-    // periphery:ignore - first used by Task 12 (Settings screens, notification scheduling)
+    // periphery:ignore - first called by Task 14 (CleanupNotifier)
     /// Makes `notices` the only pending notes.
     func replacePending(with notices: [ScheduledNotice]) async
 }

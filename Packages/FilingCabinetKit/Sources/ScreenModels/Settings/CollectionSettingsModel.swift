@@ -60,8 +60,9 @@ package final class CollectionSettingsModel {
     package func choose(_ lifespan: Lifespan) {
         guard lifespan != library.lifespans[collection] else { return }
         let expiring = library.scansExpiring(ifLifespan: lifespan, for: collection)
-        if expiring > 0 {
-            confirmation = LifespanConfirmation(collection: collection, lifespan: lifespan, expiring: expiring)
+        if expiring > 0, let ask = LifespanConfirmation(collection: collection, lifespan: lifespan, expiring: expiring)
+        {
+            confirmation = ask
         } else {
             apply(lifespan)
         }

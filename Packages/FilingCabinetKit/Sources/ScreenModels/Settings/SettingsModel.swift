@@ -41,18 +41,20 @@ package final class SettingsModel {
         authorization = await notifications.authorization()
     }
 
-    /// The switch was flipped. Turning on asks iOS the first time (M3); once the person has said no, only
-    /// iPhone Settings can change it, so the caller gets `.openSystemSettings`.
+    /// The switch was flipped. Turning on asks iOS the first time (M3). When iOS had already blocked notes before
+    /// the tap, only iPhone Settings can change it, so the caller gets `.openSystemSettings`; a refusal of the
+    /// ask made by this very call returns nil.
     package func setNotifications(_ isOn: Bool) async -> SettingsAction? {
         guard isOn else {
             preferences.notificationsOn = false
             return nil
         }
+        await refreshAuthorization()
+        if authorization == .denied { return .openSystemSettings }
         if authorization == .notDetermined {
             _ = await notifications.requestAuthorization()
             await refreshAuthorization()
         }
-        if authorization == .denied { return .openSystemSettings }
         preferences.notificationsOn = true
         return nil
     }

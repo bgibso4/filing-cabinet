@@ -11,7 +11,7 @@ package final class AppPreferences {
         didSet { defaults.set(notificationsOn, forKey: Key.notificationsOn) }
     }
 
-    /// The last day whose cleanup the person has already seen, so a note is not sent twice.
+    /// The last day whose cleanup Home's banner has already reported (Task 14), so it counts only what is new.
     package var cleanupSeenThrough: CalendarDay? {
         didSet { defaults.set(cleanupSeenThrough?.storageValue, forKey: Key.cleanupSeenThrough) }
     }

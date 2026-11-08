@@ -9,11 +9,12 @@ package struct LifespanConfirmation: Equatable {
     package let confirmTitle: String
     let lifespan: Lifespan
 
-    /// `expiring` is how many scans the change sends to Trash now (at least one). `lifespan` is never Forever.
-    init(collection: BuiltInCollection, lifespan: Lifespan, expiring count: Int) {
+    /// `expiring` is how many scans the change sends to Trash now (at least one). Nil for Forever, which
+    /// expires nothing.
+    init?(collection: BuiltInCollection, lifespan: Lifespan, expiring count: Int) {
         let noun = CollectionText.noun(collection, count: count)
         let verb = count == 1 ? String(localized: "is", bundle: #bundle) : String(localized: "are", bundle: #bundle)
-        let age = CollectionText.olderThan(lifespan) ?? ""
+        guard let age = CollectionText.olderThan(lifespan) else { return nil }
         title = CollectionText.keepTitle(collection, lifespan)
         message = String(
             localized:
