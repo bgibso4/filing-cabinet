@@ -7,9 +7,8 @@ import SwiftUI
 /// the scan leaves Trash, the viewer pops back to it (M6) and VoiceOver hears what happened (M19).
 struct TrashViewerChrome: View {
     let model: ViewerModel
-
-    /// Counts restores, so each one plays the success haptic.
-    @State private var restores = 0
+    /// After a restore. The success haptic plays from a screen that stays: this one pops in the same update.
+    let onRestored: () -> Void
 
     var body: some View {
         TrashActionBar(
@@ -20,21 +19,13 @@ struct TrashViewerChrome: View {
             onDelete: model.deleteNow,
             onRestore: restore
         )
-        .sensoryFeedback(.success, trigger: restores)
-        .trashConfirmationAlert(model.confirmation, cancel: model.cancelConfirmation, perform: performConfirmation)
+        .trashConfirmationAlert(
+            model.confirmation, cancel: model.cancelConfirmation, perform: model.performConfirmation)
     }
 
     private func restore() {
         guard let announcement = model.restore() else { return }
-        restores += 1
+        onRestored()
         AccessibilityNotification.Announcement(announcement).post()
-    }
-
-    private func performConfirmation() {
-        Task {
-            if let announcement = await model.performConfirmation() {
-                AccessibilityNotification.Announcement(announcement).post()
-            }
-        }
     }
 }

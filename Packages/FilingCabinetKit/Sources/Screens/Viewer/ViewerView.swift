@@ -14,6 +14,8 @@ public struct ViewerView: View {
     /// The Details sheet's height while it is up, nil while it is closed.
     private let detailsHeight: CGFloat?
     private let onDetails: () -> Void
+    /// After Restore, opened from Trash.
+    private let onRestored: () -> Void
 
     // ScanView.dc.html line 221: the pill is at most 240 pt wide; Trash.dc.html line 164: 250 pt opened from Trash.
     private static let headerMaxWidth: CGFloat = 240
@@ -52,13 +54,15 @@ public struct ViewerView: View {
         pages: any PageImageProviding,
         thumbnails: any ThumbnailProviding,
         detailsHeight: CGFloat? = nil,
-        onDetails: @escaping () -> Void = {}
+        onDetails: @escaping () -> Void = {},
+        onRestored: @escaping () -> Void = {}
     ) {
         self.model = model
         self.pages = pages
         self.thumbnails = thumbnails
         self.detailsHeight = detailsHeight
         self.onDetails = onDetails
+        self.onRestored = onRestored
     }
 
     public var body: some View {
@@ -73,7 +77,8 @@ public struct ViewerView: View {
                         .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
-            // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works.
+            // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works,
+            // except from Trash, which has Close and no swipe back.
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(controlsScheme, for: .navigationBar)
             // Trash.dc.html line 163: Close rather than back, in the system's glass.
@@ -175,7 +180,7 @@ public struct ViewerView: View {
                 case .library:
                     ViewerBottomBar(onDetails: onDetails, trashMessage: model.trashMessage, onTrash: moveToTrash)
                 case .trash:
-                    TrashViewerChrome(model: model)
+                    TrashViewerChrome(model: model, onRestored: onRestored)
                 }
             }
             .padding(.horizontal, Self.barSideInset)

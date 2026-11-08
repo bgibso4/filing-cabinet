@@ -9,6 +9,7 @@ public struct ViewerRoute: View {
     private let makeDetails: () -> DetailsModel
     private let pages: any PageImageProviding
     private let thumbnails: any ThumbnailProviding
+    private let onRestored: () -> Void
     @State private var model: ViewerModel
     /// Made each time Details opens, so it starts without an Undo from last time.
     @State private var details: DetailsModel?
@@ -18,11 +19,13 @@ public struct ViewerRoute: View {
         makeModel: () -> ViewerModel,
         makeDetails: @escaping () -> DetailsModel,
         pages: any PageImageProviding,
-        thumbnails: any ThumbnailProviding
+        thumbnails: any ThumbnailProviding,
+        onRestored: @escaping () -> Void = {}
     ) {
         self.makeDetails = makeDetails
         self.pages = pages
         self.thumbnails = thumbnails
+        self.onRestored = onRestored
         model = makeModel()
     }
 
@@ -32,7 +35,8 @@ public struct ViewerRoute: View {
             pages: pages,
             thumbnails: thumbnails,
             detailsHeight: details == nil ? nil : detailsHeight,
-            onDetails: { details = makeDetails() }
+            onDetails: { details = makeDetails() },
+            onRestored: onRestored
         )
         .sheet(isPresented: isShowingDetails) {
             if let details { DetailsSheet(model: details, height: $detailsHeight) }

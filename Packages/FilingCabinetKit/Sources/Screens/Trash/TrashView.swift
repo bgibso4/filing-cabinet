@@ -51,7 +51,7 @@ public struct TrashView: View {
                 }
             }
             .trashConfirmationAlert(
-                model.confirmation, cancel: model.cancelConfirmation, perform: performConfirmation
+                model.confirmation, cancel: model.cancelConfirmation, perform: model.performConfirmation
             )
             .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
     }
@@ -157,14 +157,6 @@ public struct TrashView: View {
             onRestore: restoreSelected
         )
         .padding(.horizontal, Self.selectionBarInset)
-    }
-
-    private func performConfirmation() {
-        Task {
-            if let announcement = await model.performConfirmation() {
-                AccessibilityNotification.Announcement(announcement).post()
-            }
-        }
     }
 
     private func deleteSelected() {

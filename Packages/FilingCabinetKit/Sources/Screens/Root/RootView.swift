@@ -8,6 +8,9 @@ public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
     @State private var path: [AppRoute] = []
+    /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
+    /// update.
+    @State private var restores = 0
 
     /// `canScan` is false until launch cleanup has finished, so a scan never races it.
     public init(dependencies: RootDependencies, canScan: Bool) {
@@ -40,6 +43,7 @@ public struct RootView: View {
             }
         }
         .sensoryFeedback(.success, trigger: flow.lastSaved) { _, new in new != nil }
+        .sensoryFeedback(.success, trigger: restores)
         .onChange(of: flow.lastSaved) { _, saved in
             if let saved { AccessibilityNotification.Announcement(saved.announcement).post() }
         }
@@ -105,13 +109,14 @@ public struct RootView: View {
         }
     }
 
-    /// Opened from Trash, the viewer never opens Details.
+    /// The mode decides the viewer's controls: opened from Trash, ViewerView shows nothing that opens Details.
     private func viewer(_ id: ScanID, _ mode: ViewerModel.Mode) -> some View {
         ViewerRoute(
             makeModel: { dependencies.makeViewer(id, mode) },
             makeDetails: { dependencies.makeDetails(id) },
             pages: dependencies.pages,
-            thumbnails: dependencies.thumbnails
+            thumbnails: dependencies.thumbnails,
+            onRestored: { restores += 1 }
         )
     }
 
