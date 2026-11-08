@@ -2,10 +2,15 @@ import Core
 import SwiftUI
 
 /// The viewer's bottom bar (ScanView.dc.html lines 260-268): Info in a glass pill at the centre, which opens Details,
-/// and Trash at the trailing edge. Share and Favorite come with Plan 4.
+/// and Trash at the trailing edge, which asks first (06-04). Share and Favorite come with Plan 4.
 struct ViewerBottomBar: View {
     let onDetails: () -> Void
+    /// What Trash's confirmation says.
+    let trashMessage: String
+    /// The confirmation's Move to Trash.
     let onTrash: () -> Void
+
+    @State private var isConfirmingTrash = false
 
     // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons.
     private static let pillPadding: CGFloat = 10
@@ -46,6 +51,16 @@ struct ViewerBottomBar: View {
             label: Text("Move to Trash", bundle: #bundle),
             identifier: AccessibilityID.Viewer.trash,
             diameter: Self.trashDiameter,
-            action: onTrash)
+            action: { isConfirmingTrash = true }
+        )
+        .sensoryFeedback(.warning, trigger: isConfirmingTrash) { _, isConfirming in isConfirming }
+        // Anchored to the button, the dialog comes up from it as a popover with no Cancel, like Photos (06-04).
+        .confirmationDialog(
+            Text("Move to Trash", bundle: #bundle), isPresented: $isConfirmingTrash, titleVisibility: .hidden
+        ) {
+            Button(action: onTrash) { Text("Move to Trash", bundle: #bundle) }
+        } message: {
+            Text(trashMessage)
+        }
     }
 }

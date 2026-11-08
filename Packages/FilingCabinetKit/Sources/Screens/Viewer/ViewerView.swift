@@ -91,6 +91,7 @@ public struct ViewerView: View {
             .onChange(of: model.isMissing, initial: true) { _, isMissing in
                 if isMissing { dismiss() }
             }
+            .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
             // Ready before the swipe: a page's first frame reads the cache.
             .task(id: model.currentPage) {
                 for page in model.neighbouringPages {
@@ -159,10 +160,14 @@ public struct ViewerView: View {
                 )
                 .padding(.horizontal, Tokens.Spacing.s4)
             }
-            // Trash does nothing until Task 7.
-            ViewerBottomBar(onDetails: onDetails, onTrash: {})
+            ViewerBottomBar(onDetails: onDetails, trashMessage: model.trashMessage, onTrash: moveToTrash)
                 .padding(.horizontal, Self.barSideInset)
         }
+    }
+
+    /// Trash's confirmed move: the view pops as the scan leaves the library.
+    private func moveToTrash() {
+        if model.moveToTrash() { MovedToTrash.announce() }
     }
 
     /// A button that opens Details (M13).

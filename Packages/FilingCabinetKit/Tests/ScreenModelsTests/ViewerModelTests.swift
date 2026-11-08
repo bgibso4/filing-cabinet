@@ -26,12 +26,20 @@ private func summary(
         pageCount: pages)
 }
 
-private func model(_ scan: ScanSummary, library: FakeLibrary? = nil, today: Today? = nil) -> ViewerModel {
+private let clock = AppClock.fixed(noon, calendar: utc)
+
+private func model(
+    _ scan: ScanSummary,
+    library: FakeLibrary? = nil,
+    today: Today? = nil,
+    analytics: RecordingAnalytics = RecordingAnalytics()
+) -> ViewerModel {
     ViewerModel(
         id: scan.id,
-        library: library ?? FakeLibrary(scans: [scan]),
-        today: today ?? Today(clock: AppClock.fixed(noon, calendar: utc)),
-        calendar: utc)
+        library: library ?? FakeLibrary(scans: [scan], clock: clock),
+        today: today ?? Today(clock: clock),
+        calendar: utc,
+        analytics: analytics)
 }
 
 @Test func leaseHeaderReadsKeptForever() {
@@ -132,4 +140,46 @@ private func model(_ scan: ScanSummary, library: FakeLibrary? = nil, today: Toda
             searchText: ""))
     #expect(viewer.currentPage == 2)
     #expect(viewer.pageLabel == "Page 3 of 3")
+}
+
+// MARK: - Move to Trash
+
+@Test func trashMessageUsesTheNoun() {
+    #expect(
+        model(summary("Corner Market", .receipts)).trashMessage
+            == "This receipt moves to Trash. You can restore it for 30 days.")
+    #expect(
+        model(summary("Lease 2026", .documents)).trashMessage
+            == "This document moves to Trash. You can restore it for 30 days.")
+}
+
+@Test func moveToTrashLeavesTheViewer() {
+    let scan = summary("Corner Market", .receipts)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let viewer = model(scan, library: library)
+    #expect(viewer.moveToTrash())
+    #expect(viewer.isMissing)
+    #expect(library.scans.first?.trashedDay == CalendarDay(year: 2026, month: 10, day: 12))
+    #expect(viewer.editAlert == nil)
+}
+
+@Test func analyticsForTrashCarriesCollection() {
+    let analytics = RecordingAnalytics()
+    let viewer = model(summary("Corner Market", .receipts), analytics: analytics)
+    viewer.moveToTrash()
+    #expect(analytics.events == [.scanMovedToTrash(collection: .receipts)])
+}
+
+@Test func aFailedMoveToTrashShowsTheAlertAndKeepsTheScan() {
+    let scan = summary("Corner Market", .receipts)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    library.failNextEdit = .diskFull
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, library: library, analytics: analytics)
+    #expect(!viewer.moveToTrash())
+    #expect(!viewer.isMissing)
+    #expect(viewer.editAlert != nil)
+    #expect(analytics.events.isEmpty)
+    viewer.dismissEditAlert()
+    #expect(viewer.editAlert == nil)
 }

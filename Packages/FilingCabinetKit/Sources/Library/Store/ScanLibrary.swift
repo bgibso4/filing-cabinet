@@ -26,7 +26,6 @@ public protocol ScanLibrary: AnyObject {
     /// Nil returns the scan to its collection's lifespan.
     func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError)
 
-    // periphery:ignore - first called by Task 7 (Move to Trash from the viewer); the Library tests exercise it now
     /// The scans enter Trash today.
     func moveToTrash(_ ids: [ScanID]) throws(LibraryError)
 

@@ -11,6 +11,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case saveFailed(reason: FailureReason)
     case textReadingFailed(failedPages: Int)
     case scanEdited(field: EditedField)
+    /// The viewer's Trash button; a collection move into Trash reports `scanEdited` instead.
+    case scanMovedToTrash(collection: BuiltInCollection)
 
     public var name: String {
         switch self {
@@ -23,6 +25,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .saveFailed: "saveFailed"
         case .textReadingFailed: "textReadingFailed"
         case .scanEdited: "scanEdited"
+        case .scanMovedToTrash: "scanMovedToTrash"
         }
     }
 
@@ -36,6 +39,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .saveFailed(let reason): [.reason: .token(.init(reason))]
         case .textReadingFailed(let failedPages): [.failedPages: .int(failedPages)]
         case .scanEdited(let field): [.field: .token(.init(field))]
+        case .scanMovedToTrash(let collection): [.collection: .token(.init(collection))]
         }
     }
 }

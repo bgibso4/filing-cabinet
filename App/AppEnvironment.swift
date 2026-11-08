@@ -82,7 +82,7 @@ final class AppEnvironment {
                 CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar)
             },
             makeViewer: { id in
-                ViewerModel(id: id, library: store, today: today, calendar: clock.calendar)
+                ViewerModel(id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
             makeDetails: { id in
                 DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)

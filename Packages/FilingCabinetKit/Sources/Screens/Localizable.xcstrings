@@ -31,7 +31,9 @@
     "Title" : {},
     "Try again" : {},
     "Undo" : {},
-    "Zoomed" : {}
+    "Zoomed" : {},
+    "Move" : {},
+    "Moved to Trash" : {}
   },
   "version" : "1.0"
 }

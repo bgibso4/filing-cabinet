@@ -52,7 +52,12 @@ final class DetailsSnapshotTests: XCTestCase {
     private func screen(_ scan: ScanSummary, change: (DetailsModel) -> Void = { _ in }) throws -> DetailsScreen {
         let library = FakeLibrary(scans: [scan])
         let today = Today(clock: Fixtures.clock)
-        let viewer = ViewerModel(id: scan.id, library: library, today: today, calendar: Fixtures.clock.calendar)
+        let viewer = ViewerModel(
+            id: scan.id,
+            library: library,
+            today: today,
+            calendar: Fixtures.clock.calendar,
+            analytics: RecordingAnalytics())
         let details = DetailsModel(
             id: scan.id, library: library, today: today, clock: Fixtures.clock, analytics: RecordingAnalytics())
         change(details)

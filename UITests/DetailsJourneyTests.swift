@@ -1,8 +1,8 @@
 import Core
 import XCTest
 
-/// Details over the viewer: rename, a collection move with Undo, and an expiry choice. Menus are never snapshotted, so
-/// the expiry menu is attached as a screenshot.
+/// Details over the viewer: rename, a collection move with Undo, an expiry choice, and the moves into Trash from the
+/// viewer and from Details. Menus, dialogs and alerts are never snapshotted, so they are attached as screenshots.
 @MainActor
 final class DetailsJourneyTests: XCTestCase {
     override func setUp() {
@@ -49,10 +49,7 @@ final class DetailsJourneyTests: XCTestCase {
         expiry.tap()
         let year = menuItem("1 year", in: app)
         XCTAssertTrue(year.waitForExistence(timeout: 5))
-        let shot = XCTAttachment(screenshot: app.screenshot())
-        shot.name = "details-expiry-menu"
-        shot.lifetime = .keepAlways
-        add(shot)
+        attachScreenshot("details-expiry-menu", of: app)
         year.tap()
         XCTAssertTrue(waitFor(expiry, valuePrefix: "Oct "))
 
@@ -61,6 +58,55 @@ final class DetailsJourneyTests: XCTestCase {
         let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
         XCTAssertTrue(header.waitForExistence(timeout: 5))
         XCTAssertEqual(header.label, "Groceries, details")
+    }
+
+    /// 06-04: Trash asks in a popover from the button; Move to Trash pops back to a grid with one fewer tile.
+    func testMoveToTrashFromTheViewer() {
+        let app = seededApp()
+        openReceipts(in: app)
+        let before = tiles(in: app).count
+        tiles(in: app).firstMatch.tap()
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        XCTAssertTrue(header.waitForExistence(timeout: 5))
+
+        app.buttons[AccessibilityID.Viewer.trash].tap()
+        // The Trash button is labelled Move to Trash too.
+        let confirm = app.buttons.matching(
+            NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Viewer.trash)
+        ).firstMatch
+        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["This receipt moves to Trash. You can restore it for 30 days."].exists)
+        attachScreenshot("viewer-move-to-trash", of: app)
+        confirm.tap()
+
+        XCTAssertTrue(header.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
+    }
+
+    /// 07-07: moving an 11-day-old receipt to Throwaways (kept 1 week) asks first; Move closes the sheet and pops.
+    func testMovingToThrowawaysAsksFirst() {
+        let app = seededApp()
+        openReceipts(in: app)
+        let before = tiles(in: app).count
+        // Seed index 11: the oldest receipt.
+        let old = tiles(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "Sample scan 12,")).firstMatch
+        XCTAssertTrue(old.waitForExistence(timeout: 5))
+        old.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        openDetails(in: app)
+
+        choose("Throwaways", from: AccessibilityID.Details.collection, in: app)
+        let alert = app.alerts["Move to Throwaways?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        attachScreenshot("details-move-to-throwaways", of: app)
+        alert.buttons["Move"].tap()
+
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(
+            app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
     }
 
     func testAuditAtLargestTextDetails() throws {
@@ -74,14 +120,29 @@ final class DetailsJourneyTests: XCTestCase {
 
     /// The seed's newest Receipts scan, one page.
     private func openAReceipt(in app: XCUIApplication) {
+        openReceipts(in: app)
+        tiles(in: app).firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+    }
+
+    /// The Receipts grid, newest first.
+    private func openReceipts(in app: XCUIApplication) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
-        let tiles = app.buttons.matching(
-            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
-        XCTAssertTrue(tiles.firstMatch.waitForExistence(timeout: 5))
-        tiles.firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(tiles(in: app).firstMatch.waitForExistence(timeout: 5))
+    }
+
+    private func tiles(in app: XCUIApplication) -> XCUIElementQuery {
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
+    }
+
+    /// Dialogs and alerts are never snapshotted: a screenshot is kept for review instead.
+    private func attachScreenshot(_ name: String, of app: XCUIApplication) {
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
     }
 
     /// The header pill opens Details, and the pill makes way for it.
@@ -110,6 +171,11 @@ final class DetailsJourneyTests: XCTestCase {
 
     private func waitFor(_ element: XCUIElement, value: String) -> Bool {
         let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
+        return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
+    }
+
+    private func waitFor(_ query: XCUIElementQuery, count: Int) -> Bool {
+        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == %d", count), object: query)
         return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
     }
 

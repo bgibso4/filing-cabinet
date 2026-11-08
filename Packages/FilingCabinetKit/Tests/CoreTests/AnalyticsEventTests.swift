@@ -50,6 +50,10 @@ private struct Expected {
             event: .scanEdited(field: .collection),
             name: "scanEdited",
             payload: [.field: .token(.init(EditedField.collection))]),
+        Expected(
+            event: .scanMovedToTrash(collection: .receipts),
+            name: "scanMovedToTrash",
+            payload: [.collection: .token(.init(BuiltInCollection.receipts))]),
     ]
     for item in expected {
         #expect(item.event.name == item.name)

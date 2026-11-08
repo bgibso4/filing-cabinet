@@ -61,16 +61,19 @@ public struct DetailsSheet: View {
             if !isFocused { commitTitle() }
         }
         .onDisappear(perform: commitTitle)
+        .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
+        // A move that would send the scan to Trash asks first (07-07); Move closes the sheet as the viewer pops.
         .alert(
-            model.editAlert?.title ?? "",
+            model.pendingTrashMove?.title ?? "",
             isPresented: Binding(
-                get: { model.editAlert != nil },
+                get: { model.pendingTrashMove != nil },
                 set: { isPresented in
-                    if !isPresented { model.dismissEditAlert() }
+                    if !isPresented { model.cancelTrashMove() }
                 }),
-            presenting: model.editAlert
+            presenting: model.pendingTrashMove
         ) { _ in
-            Button(role: .cancel, action: model.dismissEditAlert) { Text("OK", bundle: #bundle) }
+            Button(role: .cancel, action: model.cancelTrashMove) { Text("Cancel", bundle: #bundle) }
+            Button(action: confirmTrashMove) { Text("Move", bundle: #bundle) }
         } message: { alert in
             Text(alert.message)
         }
@@ -145,6 +148,11 @@ public struct DetailsSheet: View {
         .buttonStyle(.plain)
         .accessibilityLabel(Text("Rename \(model.title)", bundle: #bundle))
         .accessibilityIdentifier(AccessibilityID.Details.title)
+    }
+
+    private func confirmTrashMove() {
+        model.confirmTrashMove()
+        if model.isMissing { MovedToTrash.announce() }
     }
 
     private func startRenaming() {

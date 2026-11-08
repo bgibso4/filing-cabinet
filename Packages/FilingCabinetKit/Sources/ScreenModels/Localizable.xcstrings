@@ -178,7 +178,8 @@
     "throwaway" : {},
     "throwaways" : {},
     "scan" : {},
-    "scans" : {}
+    "scans" : {},
+    "This %@ moves to Trash. You can restore it for %lld days." : {}
   },
   "version" : "1.0"
 }

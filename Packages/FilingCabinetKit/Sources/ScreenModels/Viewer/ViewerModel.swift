@@ -17,17 +17,22 @@ public final class ViewerModel {
     /// Whether the current page is zoomed past 1×; the page writes it.
     package var isPageZoomed = false
 
+    /// Set when Move to Trash fails to save; the scan stays (M18).
+    package private(set) var editAlert: EditAlert?
+
     package let id: ScanID
 
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
+    private let analytics: any Analytics
 
-    public init(id: ScanID, library: any ScanLibrary, today: Today, calendar: Calendar) {
+    public init(id: ScanID, library: any ScanLibrary, today: Today, calendar: Calendar, analytics: any Analytics) {
         self.id = id
         self.library = library
         self.today = today
         self.calendar = calendar
+        self.analytics = analytics
     }
 
     package var title: String { scan?.title ?? "" }
@@ -58,6 +63,36 @@ public final class ViewerModel {
     /// than three decoded however far it is swiped.
     package func holdsPage(_ page: Int) -> Bool {
         page == currentPage || neighbouringPages.contains(page)
+    }
+
+    // MARK: Trash
+
+    /// The Trash button's confirmation (06-04): "This receipt moves to Trash. You can restore it for 30 days."
+    package var trashMessage: String {
+        let noun = scan.map { CollectionText.noun($0.collection, count: 1) } ?? CollectionText.scansNoun(count: 1)
+        return String(
+            localized: "This \(noun) moves to Trash. You can restore it for \(Lifecycle.trashDays) days.",
+            bundle: #bundle)
+    }
+
+    /// The confirmation's Move to Trash. True once the scan is in Trash (the view pops); false with `editAlert` when
+    /// the move fails to save.
+    @discardableResult
+    package func moveToTrash() -> Bool {
+        guard let scan else { return false }
+        do {
+            try library.moveToTrash([id])
+        } catch {
+            editAlert = EditAlert()
+            return false
+        }
+        analytics.send(.scanMovedToTrash(collection: scan.collection))
+        return true
+    }
+
+    /// The edit alert's OK.
+    package func dismissEditAlert() {
+        editAlert = nil
     }
 
     private var scan: ScanSummary? { library.scans.first { $0.id == id } }

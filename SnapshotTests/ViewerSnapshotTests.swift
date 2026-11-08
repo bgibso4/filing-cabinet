@@ -12,7 +12,8 @@ final class ViewerSnapshotTests: XCTestCase {
             id: scan.id,
             library: FakeLibrary(scans: [scan]),
             today: Today(clock: Fixtures.clock),
-            calendar: Fixtures.clock.calendar)
+            calendar: Fixtures.clock.calendar,
+            analytics: RecordingAnalytics())
         // Pushed on a navigation stack, because the back button is the system's and only a pushed screen has one.
         return NavigationStack(path: .constant([0])) {
             Color.clear.navigationDestination(for: Int.self) { _ in
