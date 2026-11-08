@@ -75,7 +75,6 @@ struct ZoomablePage: View {
 
         func makeUIView(context: Context) -> ZoomableScrollView {
             let view = ZoomableScrollView()
-            view.isAccessibilityElement = true
             view.accessibilityTraits = .image
             view.accessibilityIdentifier = AccessibilityID.Viewer.page
             return view
@@ -85,6 +84,9 @@ struct ZoomablePage: View {
             view.fitInsets = fitInsets
             view.onZoomChange = onZoomChange
             view.accessibilityLabel = label
+            // Only the page on screen is in the accessibility tree; VoiceOver pages with the strip's adjustable
+            // action, so focus never lands on a page that is off screen.
+            view.isAccessibilityElement = isCurrent
             view.show(image, pageKey: pageKey)
             // Coming back to a page finds it whole.
             if !isCurrent { view.resetZoom() }
