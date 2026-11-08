@@ -41,15 +41,16 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         }
         return element.identifier == AccessibilityID.pillTitle(AccessibilityID.Viewer.header)
     },
-    // iOS 27's audit reports Trash's bottom-bar Liquid Glass buttons as low contrast even with near-black text on
-    // near-white glass (about 15:1 measured in the audit's own element screenshot, Trash redesign evidence). Ben
-    // accepted this on 2026-11-08. Only contrast, and only these three buttons, matched by identifier; any other
-    // element, and any contrast issue with no element, still fails.
+    // iOS 27's audit reports Trash's Liquid Glass buttons as low contrast even with near-black text on near-white glass
+    // (about 15:1 measured in the audit's own element screenshot, Trash redesign evidence): the bottom bar's three and
+    // the toolbar's Select/Cancel pill (CI run 42494009425). Ben accepted this on 2026-11-08 (#59). Only contrast, and
+    // only these four buttons, matched by identifier; any other element, and any contrast issue with no element, still
+    // fails.
     { _, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
         let glassButtons = [
             AccessibilityID.Trash.emptyTrash, AccessibilityID.Trash.deleteSelected,
-            AccessibilityID.TrashViewer.deleteNow,
+            AccessibilityID.TrashViewer.deleteNow, AccessibilityID.Trash.select,
         ]
         return glassButtons.contains(element.identifier)
     },
