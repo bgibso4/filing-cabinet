@@ -10,6 +10,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case scanSaved(pageCount: Int, collection: BuiltInCollection)
     case saveFailed(reason: FailureReason)
     case textReadingFailed(failedPages: Int)
+    case scanEdited(field: EditedField)
 
     public var name: String {
         switch self {
@@ -21,6 +22,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .scanSaved: "scanSaved"
         case .saveFailed: "saveFailed"
         case .textReadingFailed: "textReadingFailed"
+        case .scanEdited: "scanEdited"
         }
     }
 
@@ -33,6 +35,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
             [.pageCount: .int(pageCount), .collection: .token(.init(collection))]
         case .saveFailed(let reason): [.reason: .token(.init(reason))]
         case .textReadingFailed(let failedPages): [.failedPages: .int(failedPages)]
+        case .scanEdited(let field): [.field: .token(.init(field))]
         }
     }
 }

@@ -26,6 +26,27 @@ package enum CollectionText {
         }
     }
 
+    /// What the collection's scans are called in copy (M5): "receipt" for one, "receipts" for any other count.
+    static func noun(_ collection: BuiltInCollection, count: Int) -> String {
+        switch (collection, count == 1) {
+        case (.wallet, true): String(localized: "card", bundle: #bundle)
+        case (.wallet, false): String(localized: "cards", bundle: #bundle)
+        case (.receipts, true): String(localized: "receipt", bundle: #bundle)
+        case (.receipts, false): String(localized: "receipts", bundle: #bundle)
+        case (.notes, true): String(localized: "note", bundle: #bundle)
+        case (.notes, false): String(localized: "notes", bundle: #bundle)
+        case (.documents, true): String(localized: "document", bundle: #bundle)
+        case (.documents, false): String(localized: "documents", bundle: #bundle)
+        case (.throwaways, true): String(localized: "throwaway", bundle: #bundle)
+        case (.throwaways, false): String(localized: "throwaways", bundle: #bundle)
+        }
+    }
+
+    /// What scans from mixed or unknown collections are called (M5).
+    static func scansNoun(count: Int) -> String {
+        count == 1 ? String(localized: "scan", bundle: #bundle) : String(localized: "scans", bundle: #bundle)
+    }
+
     static func description(_ collection: BuiltInCollection) -> String {
         switch collection {
         case .wallet: String(localized: "IDs and cards", bundle: #bundle)

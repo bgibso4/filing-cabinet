@@ -158,7 +158,27 @@
     "Recent" : {},
     "Short-lived scraps" : {},
     "Throwaways" : {},
-    "Wallet" : {}
+    "Wallet" : {},
+    "%@ · passed" : {},
+    "Scanned %@ · %@" : {},
+    "Expiry now follows %@." : {},
+    "Keeps its own expiry." : {},
+    "Couldn’t save this change" : {},
+    "Something went wrong. Try again." : {},
+    "Move to %@?" : {},
+    "%@ are kept %@ from the scan date. This %@ is from %@, so it goes to Trash now. You can restore it for %lld days." : {},
+    "card" : {},
+    "cards" : {},
+    "receipt" : {},
+    "receipts" : {},
+    "note" : {},
+    "notes" : {},
+    "document" : {},
+    "documents" : {},
+    "throwaway" : {},
+    "throwaways" : {},
+    "scan" : {},
+    "scans" : {}
   },
   "version" : "1.0"
 }

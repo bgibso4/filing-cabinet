@@ -46,6 +46,10 @@ private struct Expected {
             payload: [.reason: .token(.init(FailureReason.diskFull))]),
         Expected(
             event: .textReadingFailed(failedPages: 2), name: "textReadingFailed", payload: [.failedPages: .int(2)]),
+        Expected(
+            event: .scanEdited(field: .collection),
+            name: "scanEdited",
+            payload: [.field: .token(.init(EditedField.collection))]),
     ]
     for item in expected {
         #expect(item.event.name == item.name)
@@ -57,4 +61,5 @@ private struct Expected {
     #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])
     #expect(FailureReason.allCases.map(\.rawValue) == ["diskFull", "writeFailed"])
+    #expect(EditedField.allCases.map(\.rawValue) == ["title", "collection", "expiry"])
 }

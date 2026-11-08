@@ -96,14 +96,7 @@ public final class ReviewModel {
         collection.map(CollectionText.name) ?? String(localized: "Choose a collection", bundle: #bundle)
     }
 
-    package var collectionOptions: [CollectionOption] {
-        BuiltInCollection.allCases.map {
-            CollectionOption(
-                collection: $0,
-                name: CollectionText.name($0),
-                lifespan: CollectionText.lifespanShort(CollectionLifespans.defaults[$0]))
-        }
-    }
+    package var collectionOptions: [CollectionOption] { CollectionOption.all(lifespans: library.lifespans) }
 
     /// Ignored while saving.
     public func choose(_ collection: BuiltInCollection) {
@@ -119,30 +112,19 @@ public final class ReviewModel {
     package var expiryValue: String {
         guard let collection else { return String(localized: "Set by the collection", bundle: #bundle) }
         return ExpiryText.reviewValue(
-            collection: collection, override: expiryOverride, scanDay: scanDay, today: clock.today, clock: clock)
+            collectionLifespan: library.lifespans[collection],
+            override: expiryOverride,
+            scanDay: scanDay,
+            today: clock.today,
+            clock: clock)
     }
 
     /// The collection default first, then every lifespan, shortest first and Forever last (07-06). Empty until a
     /// collection is chosen. The scan day is today, so no choice has passed.
     package var expiryOptions: [ExpiryOption] {
         guard let collection else { return [] }
-        let defaultOption = ExpiryOption(
-            label: String(localized: "\(CollectionText.name(collection)) default", bundle: #bundle),
-            detail: expiryDetail(collection: collection, override: nil),
-            override: nil,
-            isSelected: expiryOverride == nil
-        )
-        return [defaultOption]
-            + Lifespan.allCases.map { lifespan in
-                let override = ExpiryOverride.lifespan(lifespan)
-                return ExpiryOption(
-                    label: lifespan == .forever
-                        ? String(localized: "Forever", bundle: #bundle) : CollectionText.lifespanShort(lifespan),
-                    detail: expiryDetail(collection: collection, override: override),
-                    override: override,
-                    isSelected: expiryOverride == override
-                )
-            }
+        return ExpiryChoices(scanDay: scanDay, today: clock.today, lifespans: library.lifespans, clock: clock)
+            .options(collection: collection, override: expiryOverride)
     }
 
     /// The calendar and locale "Choose a date…" shows its days in (M6).
@@ -275,15 +257,6 @@ public final class ReviewModel {
     private var savedTitle: String {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? fallbackTitle : trimmed
-    }
-
-    /// The until-date an expiry choice gives, or "Never expires".
-    private func expiryDetail(collection: BuiltInCollection, override: ExpiryOverride?) -> String {
-        let collectionLifespan = CollectionLifespans.defaults[collection]
-        let lastDay = Expiry.lastDay(
-            scanDay: scanDay, collectionLifespan: collectionLifespan, override: override, in: clock.calendar)
-        guard let lastDay else { return String(localized: "Never expires", bundle: #bundle) }
-        return ExpiryText.untilDate(lastDay, today: clock.today, clock: clock)
     }
 
     @discardableResult

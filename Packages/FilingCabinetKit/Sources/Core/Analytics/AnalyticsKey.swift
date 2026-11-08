@@ -6,4 +6,5 @@ public enum AnalyticsKey: String, Sendable {
     case collection
     case reason
     case failedPages
+    case field
 }

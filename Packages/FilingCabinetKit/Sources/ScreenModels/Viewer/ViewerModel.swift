@@ -63,6 +63,7 @@ public final class ViewerModel {
     private var scan: ScanSummary? { library.scans.first { $0.id == id } }
 
     private var shelf: LibraryShelf {
-        LibraryShelf(scans: scan.map { [$0] } ?? [], today: today.day, calendar: calendar)
+        LibraryShelf(
+            scans: scan.map { [$0] } ?? [], lifespans: library.lifespans, today: today.day, calendar: calendar)
     }
 }

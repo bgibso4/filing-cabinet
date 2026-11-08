@@ -18,13 +18,11 @@ public protocol ScanLibrary: AnyObject {
     /// Sets the scan's search text once reading finishes. A failure is logged; the scan stays saved.
     func updateSearchText(_ text: String, for id: ScanID)
 
-    // periphery:ignore - first called by Task 5 (Details model); the Library tests exercise it now
     func rename(_ id: ScanID, to title: String) throws(LibraryError)
 
     /// Keeps the scan's own expiry. A scan the move expires goes to Trash today; one already there stays (M1).
     func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError)
 
-    // periphery:ignore - first called by Task 5 (Details model); the Library tests exercise it now
     /// Nil returns the scan to its collection's lifespan.
     func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError)
 

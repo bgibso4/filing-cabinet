@@ -37,7 +37,7 @@ public final class HomeModel {
                     ? .count(shelf.count(in: collection))
                     : .subtitle(
                         CollectionText.description(collection) + " · "
-                            + CollectionText.lifespanShort(CollectionLifespans.defaults[collection])),
+                            + CollectionText.lifespanShort(shelf.lifespans[collection])),
                 pulse: pulses[collection, default: 0]
             )
         }
@@ -64,7 +64,7 @@ public final class HomeModel {
     /// out and pulse nothing.
     package func release() {
         guard let heldScans else { return }
-        let before = LibraryShelf(scans: heldScans, today: today.day, calendar: calendar)
+        let before = LibraryShelf(scans: heldScans, lifespans: library.lifespans, today: today.day, calendar: calendar)
         self.heldScans = nil
         let after = shelf
         for collection in BuiltInCollection.allCases
@@ -74,6 +74,7 @@ public final class HomeModel {
     }
 
     private var shelf: LibraryShelf {
-        LibraryShelf(scans: heldScans ?? library.scans, today: today.day, calendar: calendar)
+        LibraryShelf(
+            scans: heldScans ?? library.scans, lifespans: library.lifespans, today: today.day, calendar: calendar)
     }
 }

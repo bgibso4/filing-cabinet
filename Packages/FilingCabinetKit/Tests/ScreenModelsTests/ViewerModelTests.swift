@@ -1,7 +1,6 @@
 import Core
 import Foundation
 import Library
-import Synchronization
 import Testing
 
 @testable import ScreenModels
@@ -14,21 +13,6 @@ private let utc: Calendar = {
 }()
 
 private let noon = CalendarDay(year: 2026, month: 10, day: 12).date(in: utc).addingTimeInterval(12 * 3600)
-
-/// A clock the test moves by hand.
-nonisolated private final class MovableNow: Sendable {
-    private let date: Mutex<Date>
-
-    init(_ date: Date) {
-        self.date = Mutex(date)
-    }
-
-    var now: Date { date.withLock { $0 } }
-
-    func set(_ newDate: Date) {
-        date.withLock { $0 = newDate }
-    }
-}
 
 private func summary(
     _ title: String, _ collection: BuiltInCollection, scanned: CalendarDay? = nil, pages: Int = 1

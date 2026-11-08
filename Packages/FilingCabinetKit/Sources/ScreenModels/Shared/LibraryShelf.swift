@@ -2,22 +2,39 @@ import Core
 import Foundation
 import Library
 
-/// The scans a screen may show on a given day: expired ones are hidden everywhere (M5).
+/// The scans a screen may show on a given day, sorted by where they are: the library (expired ones are hidden
+/// everywhere, M5) and Trash. Where each scan is comes from `Lifecycle`, under the library's lifespans.
 struct LibraryShelf {
+    /// How long each collection keeps its scans.
+    let lifespans: CollectionLifespans
+    /// Every scan in the library, newest first.
+    let visible: [ScanSummary]
+    /// Every scan in Trash, the soonest gone first.
+    let trash: [ScanSummary]
+
     private let calendar: Calendar
     private let today: CalendarDay
 
-    init(scans: [ScanSummary], today: CalendarDay, calendar: Calendar) {
+    init(scans: [ScanSummary], lifespans: CollectionLifespans, today: CalendarDay, calendar: Calendar) {
+        self.lifespans = lifespans
         self.calendar = calendar
         self.today = today
-        visible =
-            scans
-            .filter { Self.timeLeft($0, today: today, calendar: calendar) != .expired }
-            .sorted { $0.scannedAt > $1.scannedAt }
+        var visible: [ScanSummary] = []
+        var trash: [(scan: ScanSummary, daysLeft: Int)] = []
+        for scan in scans {
+            switch scan.place(lifespans: lifespans, today: today, in: calendar) {
+            case .library: visible.append(scan)
+            case .trash(let daysLeft, _): trash.append((scan, daysLeft))
+            case .gone: break
+            }
+        }
+        self.visible = visible.sorted { $0.scannedAt > $1.scannedAt }
+        // Soonest gone first; a tie, newest first.
+        self.trash =
+            trash
+            .sorted { ($0.daysLeft, $1.scan.scannedAt) < ($1.daysLeft, $0.scan.scannedAt) }
+            .map(\.scan)
     }
-
-    /// Everything not expired, newest first.
-    let visible: [ScanSummary]
 
     /// Scans from the last 30 days, today included: day 29 is in, day 30 is out (M15).
     var recent: [ScanSummary] {
@@ -32,38 +49,32 @@ struct LibraryShelf {
         self.in(collection).count
     }
 
+    /// What is left of a library scan's life; `.expired` for any scan not in the library.
     func timeLeft(_ scan: ScanSummary) -> TimeLeft {
-        Self.timeLeft(scan, today: today, calendar: calendar)
+        guard case .library(let left) = place(scan) else { return .expired }
+        return left
+    }
+
+    /// Days a scan in Trash has left, today included; 0 for any scan not in Trash.
+    func trashDaysLeft(_ scan: ScanSummary) -> Int {
+        guard case .trash(let daysLeft, _) = place(scan) else { return 0 }
+        return daysLeft
     }
 
     /// Orange rule, judged against the scan's own span.
     func isSoon(_ scan: ScanSummary) -> Bool {
-        guard case .days(let left) = timeLeft(scan), let last = lastDay(scan) else { return false }
+        guard case .days(let left) = timeLeft(scan), let last = scan.lastDay(lifespans: lifespans, in: calendar) else {
+            return false
+        }
         let span = scanDay(scan).days(until: last, in: calendar) + 1
         return TimeLeft.isSoon(daysLeft: left, spanDays: span)
     }
 
+    private func place(_ scan: ScanSummary) -> ScanPlace {
+        scan.place(lifespans: lifespans, today: today, in: calendar)
+    }
+
     private func scanDay(_ scan: ScanSummary) -> CalendarDay {
-        Self.scanDay(scan, calendar: calendar)
-    }
-
-    private func lastDay(_ scan: ScanSummary) -> CalendarDay? {
-        Self.lastDay(scan, calendar: calendar)
-    }
-
-    private static func scanDay(_ scan: ScanSummary, calendar: Calendar) -> CalendarDay {
         CalendarDay(scan.scannedAt, in: calendar)
-    }
-
-    private static func lastDay(_ scan: ScanSummary, calendar: Calendar) -> CalendarDay? {
-        Expiry.lastDay(
-            scanDay: scanDay(scan, calendar: calendar),
-            collectionLifespan: CollectionLifespans.defaults[scan.collection],
-            override: scan.expiryOverride,
-            in: calendar)
-    }
-
-    private static func timeLeft(_ scan: ScanSummary, today: CalendarDay, calendar: Calendar) -> TimeLeft {
-        TimeLeft.on(today, lastDay: lastDay(scan, calendar: calendar), in: calendar)
     }
 }
