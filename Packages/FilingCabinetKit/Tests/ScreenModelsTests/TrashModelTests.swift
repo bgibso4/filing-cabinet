@@ -228,6 +228,61 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
     #expect(model.tileConfirmation(first) == nil)
 }
 
+/// In select mode, VoiceOver's Delete now on one tile asks from that tile, not from Delete N, which deletes the ticked
+/// scans and may be off.
+@Test func selectModeDeleteOfOneTileAsksFromTheTile() {
+    let model = TrashHarness(three).model
+    let first = model.tiles[0].id
+    let second = model.tiles[1].id
+    model.toggleSelecting()
+
+    model.confirmDelete([first])  // nothing ticked: Delete N is off
+    #expect(model.selectionConfirmation == nil)
+    #expect(model.tileConfirmation(first) == model.confirmation)
+
+    model.cancelConfirmation()
+    model.toggle(first)
+    model.confirmDelete([second])  // not the ticked one
+    #expect(model.selectionConfirmation == nil)
+    #expect(model.tileConfirmation(second) == model.confirmation)
+    #expect(model.tileConfirmation(first) == nil)
+}
+
+/// Select or Cancel drops a pending question, so a long-press Delete now whose popover never showed can't come up
+/// from select mode's controls.
+@Test func switchingModesDropsAPendingQuestion() {
+    let model = TrashHarness(three).model
+    model.confirmDelete([model.tiles[0].id])
+    model.toggleSelecting()
+    #expect(model.confirmation == nil)
+    model.confirmEmpty()
+    model.toggleSelecting()
+    #expect(model.confirmation == nil)
+}
+
+/// A pending delete counts as nothing once any of its scans has left Trash, so it can't come up later unasked.
+@Test func aPendingDeleteIsNothingOnceItsScansLeaveTrash() {
+    let model = TrashHarness(three).model
+    let first = model.tiles[0].id
+    let second = model.tiles[1].id
+    model.confirmDelete([first, second])
+    model.restore([first])
+    #expect(model.confirmation == nil)
+    #expect(model.tileConfirmation(second) == nil)
+    model.toggleSelecting()
+    #expect(model.selectionConfirmation == nil)
+}
+
+/// A pending Empty Trash counts as nothing once Trash is empty.
+@Test func aPendingEmptyIsNothingOnceTrashIsEmpty() {
+    let model = TrashHarness(three).model
+    model.confirmEmpty()
+    model.restore(model.tiles.map(\.id))
+    #expect(model.isEmpty)
+    #expect(model.confirmation == nil)
+    #expect(model.emptyConfirmation == nil)
+}
+
 @Test func confirmedDeleteRemovesOnlyThoseScans() async throws {
     let harness = TrashHarness(three)
     let model = harness.model

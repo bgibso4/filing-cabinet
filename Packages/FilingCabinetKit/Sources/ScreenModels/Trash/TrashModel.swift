@@ -8,8 +8,8 @@ import Observation
 /// tiles and the selection with it.
 @Observable
 public final class TrashModel {
-    /// Set by Delete and Empty Trash; nothing is removed until `performConfirmation(_:)`.
-    package private(set) var confirmation: TrashConfirmation?
+    /// Set by Delete and Empty Trash; nothing is removed until `performConfirmation(_:)`. Read through `confirmation`.
+    private var asked: TrashConfirmation?
     /// Set when a write fails; the action changed nothing (M18).
     package private(set) var editAlert: EditAlert?
     package private(set) var isSelecting = false
@@ -83,10 +83,12 @@ public final class TrashModel {
 
     // MARK: Select
 
-    /// Select / Cancel. Leaving select mode forgets the ticks.
+    /// Select / Cancel. Leaving select mode forgets the ticks, and either way any question still pending is dropped: it
+    /// belongs to the other mode's controls.
     public func toggleSelecting() {
         isSelecting.toggle()
         ticked = []
+        asked = nil
     }
 
     public func toggle(_ id: ScanID) {
@@ -120,35 +122,49 @@ public final class TrashModel {
     package func confirmDelete(_ ids: [ScanID]) {
         let scans = shelf.trash.filter { ids.contains($0.id) }
         guard let first = scans.first else { return }
-        confirmation = TrashConfirmation(deleting: scans.map(\.id), firstTitle: first.title)
+        asked = TrashConfirmation(deleting: scans.map(\.id), firstTitle: first.title)
     }
 
     /// Asks before deleting everything in Trash.
     package func confirmEmpty() {
         let count = shelf.trash.count
         guard count > 0 else { return }
-        confirmation = TrashConfirmation(emptying: count)
+        asked = TrashConfirmation(emptying: count)
     }
 
-    // Where the confirmation comes up from: the button that asked (Ben, 2026-11-08), and nowhere else.
+    /// What Delete or Empty Trash asked, while it still stands: a delete whose scans have left Trash, or an Empty Trash
+    /// once Trash is empty, counts as nothing, so it can never come up later unasked (as `selected` drops scans).
+    package var confirmation: TrashConfirmation? {
+        guard let asked else { return nil }
+        let inTrash = Set(shelf.trash.map(\.id))
+        switch asked.action {
+        case .delete(let ids): return Set(ids).isSubset(of: inTrash) ? asked : nil
+        case .empty: return inTrash.isEmpty ? nil : asked
+        }
+    }
+
+    // Where the confirmation comes up from: the control that asked (Ben, 2026-11-08), and nowhere else.
 
     /// Empty Trash's, from Empty Trash.
     package var emptyConfirmation: TrashConfirmation? {
         confirmation?.action == .empty ? confirmation : nil
     }
 
-    /// Delete N's, from Delete N while selecting (a tile's accessibility action asks from there too).
+    /// Delete N's, from Delete N: it deletes exactly the ticked scans, so Delete N is on.
     package var selectionConfirmation: TrashConfirmation? {
-        isSelecting && confirmation?.action != .empty ? confirmation : nil
+        guard isSelecting, let confirmation, case .delete(let ids) = confirmation.action, Set(ids) == selected else {
+            return nil
+        }
+        return confirmation
     }
 
-    /// A long-pressed tile's Delete now, from that tile.
+    /// One tile's Delete now (its long-press menu, or VoiceOver's action, also while selecting), from that tile.
     package func tileConfirmation(_ id: ScanID) -> TrashConfirmation? {
-        !isSelecting && confirmation?.action == .delete([id]) ? confirmation : nil
+        selectionConfirmation == nil && confirmation?.action == .delete([id]) ? confirmation : nil
     }
 
     package func cancelConfirmation() {
-        confirmation = nil
+        asked = nil
     }
 
     /// Runs what this confirmation asked. It is the one the dialog presented, not `confirmation`: the dialog may clear
@@ -157,7 +173,7 @@ public final class TrashModel {
     @discardableResult
     package func performConfirmation(_ asked: TrashConfirmation) async -> String? {
         let action = asked.action
-        confirmation = nil
+        self.asked = nil
         let count: Int
         do {
             switch action {

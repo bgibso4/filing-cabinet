@@ -45,6 +45,7 @@ final class TrashJourneyTests: XCTestCase {
         try audit(app)
 
         try restoreByLongPress(in: app)
+        askDeleteNowByLongPress(in: app)
         try deleteTwoBySelecting(in: app)
         try emptyTrash(in: app)
 
@@ -68,6 +69,8 @@ final class TrashJourneyTests: XCTestCase {
         openTrash(in: app)
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         openFirstTile(in: app)
+        // Audit entry 2 is scoped to the Trash screen by its header: under the viewer it is gone.
+        XCTAssertFalse(app.staticTexts[AccessibilityID.Trash.header].exists)
         try audit(app)
     }
 
@@ -96,12 +99,12 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Trashed scan 5 will be deleted. This can’t be undone."].exists)
         XCTAssertTrue(confirmButton("Delete", besides: AccessibilityID.TrashViewer.deleteNow, in: app).exists)
         attachScreenshot("trash-viewer-delete-now", of: app)
-        dismissPopover(in: app)
+        dismissPopover(tapping: header)
         XCTAssertTrue(deleteOne.waitForNonExistence(timeout: 5))
         // Dismissed, it asks again.
         deleteNow.tap()
         XCTAssertTrue(deleteOne.waitForExistence(timeout: 5))
-        dismissPopover(in: app)
+        dismissPopover(tapping: header)
         XCTAssertTrue(deleteOne.waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.TrashViewer.restore].waitForExistence(timeout: 5))
 
@@ -130,6 +133,28 @@ final class TrashJourneyTests: XCTestCase {
         restore.tap()
         XCTAssertTrue(waitFor(tiles(in: app), count: 4))
         XCTAssertFalse(app.staticTexts["Delete permanently?"].exists)
+    }
+
+    /// Long press, Delete now: it asks from the tile. Tapped away, nothing is left pending: Select asks nothing.
+    private func askDeleteNowByLongPress(in app: XCUIApplication) {
+        let tile = tiles(in: app).firstMatch
+        tile.press(forDuration: 1)
+        let deleteNow = menuItem("Delete now", in: app)
+        XCTAssertTrue(deleteNow.waitForExistence(timeout: 5))
+        deleteNow.tap()
+        let deleteOne = app.staticTexts["Delete permanently?"]
+        XCTAssertTrue(deleteOne.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirmButton("Delete", besides: tile.identifier, in: app).exists)
+        attachScreenshot("trash-tile-delete-now", of: app)
+        dismissPopover(tapping: app.staticTexts[AccessibilityID.Trash.header])
+        XCTAssertTrue(deleteOne.waitForNonExistence(timeout: 5))
+
+        app.buttons[AccessibilityID.Trash.select].tap()
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+        XCTAssertFalse(deleteOne.waitForExistence(timeout: 2), "select mode asked unasked")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.Trash.select].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitFor(tiles(in: app), count: 4))
     }
 
     /// Select two, then Delete 2 asks first; deleting ends select mode.
@@ -195,9 +220,10 @@ final class TrashJourneyTests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", label, identifier)).firstMatch
     }
 
-    /// A tap away from the popover, which is how it is dismissed: a popover shows no Cancel.
-    private func dismissPopover(in app: XCUIApplication) {
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+    /// A tap away from the popover, which is how it is dismissed (a popover shows no Cancel): on the screen's header,
+    /// which a popover from the bottom bar or a tile never covers.
+    private func dismissPopover(tapping header: XCUIElement) {
+        header.tap()
     }
 
     /// Menus and confirmations are never snapshotted: a screenshot is kept for review instead.
