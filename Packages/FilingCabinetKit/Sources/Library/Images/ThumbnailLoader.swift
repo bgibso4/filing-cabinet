@@ -29,7 +29,13 @@ public struct ThumbnailLoader: ThumbnailProviding {
     public func thumbnail(for id: ScanID, page: Int) async -> CGImage? {
         let key = ImageCache.Key(id: id, page: page)
         if let hit = cache.image(for: key) { return hit }
-        return await decodes.image(for: key) { [self] in load(page: page, for: id, key: key) }
+        // A tile scrolled away before its turn isn't worth queueing.
+        guard !Task.isCancelled else { return nil }
+        return await decodes.image(for: key) { [cache] in
+            cache.image(for: key)
+        } decode: { [self] in
+            load(page: page, for: id, key: key)
+        }
     }
 
     /// The cached JPEG, or the thumbnail rebuilt from the original; runs on the decode queue.

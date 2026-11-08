@@ -1,3 +1,4 @@
+import Core
 import SwiftUI
 
 /// The Liquid Glass header pill: a label over a supporting line ("New scan" over "1 page", "Lease 2026" over its
@@ -30,6 +31,7 @@ struct PagePill<Detail: View>: View {
     var body: some View {
         VStack(spacing: 0) {
             title
+                .accessibilityIdentifier(AccessibilityID.pillTitle(identifier))
                 .font(Tokens.Typography.headline)
                 .foregroundStyle(Tokens.Color.textPrimary)
             detail

@@ -24,15 +24,13 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
     },
     // In dark mode the audit misreads the viewer header's white text on dark Liquid Glass and reports low contrast,
     // though the text is the primary colour and its element screenshot reads clearly (on file in Task 20's reports).
-    // Ben accepted this on 2026-11-07. Only contrast, only while the device is in dark mode, and only the viewer header
-    // or a text node inside its frame (the audit reports the title's own node, not the combined header element).
-    { app, issue in
+    // Ben accepted this on 2026-11-07. Only contrast, only while the device is in dark mode, and only the header's title
+    // line (the audit reports it on its own, inside the combined header); the time-left line still fails.
+    { _, issue in
         guard issue.auditType == .contrast, XCUIDevice.shared.appearance == .dark, let element = issue.element else {
             return false
         }
-        if element.identifier == AccessibilityID.Viewer.header { return true }
-        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
-        return header.exists && header.frame.contains(element.frame)
+        return element.identifier == AccessibilityID.pillTitle(AccessibilityID.Viewer.header)
     },
 ]
 

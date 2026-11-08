@@ -17,7 +17,6 @@ struct ZoomablePageView: UIViewRepresentable {
     func makeUIView(context: Context) -> ZoomableScrollView {
         let view = ZoomableScrollView()
         view.accessibilityTraits = .image
-        view.accessibilityIdentifier = AccessibilityID.Viewer.page
         return view
     }
 
@@ -26,8 +25,12 @@ struct ZoomablePageView: UIViewRepresentable {
         view.onZoomChange = onZoomChange
         view.accessibilityLabel = label
         // Only the page on screen is in the accessibility tree; VoiceOver pages with the strip's adjustable action, so
-        // focus never lands on a page that is off screen. A decorative page never is.
-        view.isAccessibilityElement = label != nil && isCurrent
+        // focus never lands on a page that is off screen. A decorative page never is. Hidden, not just "not an
+        // element": a scroll view that isn't an element is still a container, and would carry the identifier.
+        let isElement = label != nil && isCurrent
+        view.isAccessibilityElement = isElement
+        view.accessibilityElementsHidden = !isElement
+        view.accessibilityIdentifier = isElement ? AccessibilityID.Viewer.page : nil
         view.show(image, pageKey: pageKey)
         // Coming back to a page finds it whole.
         if !isCurrent { view.resetZoom() }

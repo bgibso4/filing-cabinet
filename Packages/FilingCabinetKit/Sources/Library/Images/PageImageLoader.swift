@@ -28,7 +28,9 @@ public struct PageImageLoader: PageImageProviding {
         // A page the viewer has already moved past isn't worth a full-size decode.
         guard !Task.isCancelled else { return nil }
         let url = location.originals(for: id).appending(path: "page-\(index + 1).heic")
-        return await decodes.image(for: key) { [fileSystem, cache] in
+        return await decodes.image(for: key) { [cache] in
+            cache.image(for: key)
+        } decode: { [fileSystem, cache] in
             guard
                 fileSystem.fileExists(at: url),
                 let source = CGImageSourceCreateWithURL(url as CFURL, nil),
