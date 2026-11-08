@@ -136,9 +136,10 @@ public struct ViewerView: View {
         headerIsBelowTheBar ? AnyShape(.rect(cornerRadius: Tokens.Radius.surface)) : AnyShape(.capsule)
     }
 
+    /// Only a soon expiry colours its own run. Otherwise the run takes the pill's detail colour, which is the primary
+    /// colour in dark mode (Ben, 2026-11-07): a colour set here would override it.
     private var timeLeft: Text {
-        Text(model.timeLeftText)
-            .fontWeight(model.isSoon ? .semibold : .regular)
-            .foregroundStyle(model.isSoon ? Tokens.Color.expirySoon : Tokens.Color.textSecondary)
+        let text = Text(model.timeLeftText)
+        return model.isSoon ? text.fontWeight(.semibold).foregroundStyle(Tokens.Color.expirySoon) : text
     }
 }
