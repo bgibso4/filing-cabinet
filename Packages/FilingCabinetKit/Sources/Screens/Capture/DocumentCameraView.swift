@@ -32,7 +32,14 @@ struct DocumentCameraView: UIViewControllerRepresentable {
         func documentCameraViewController(
             _ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan
         ) {
-            let pages = (0..<scan.pageCount).compactMap { scan.imageOfPage(at: $0).cgImage }
+            let pages = (0..<scan.pageCount).compactMap { index in
+                let page = scan.imageOfPage(at: index).cgImage
+                if page == nil {
+                    ScreensLog.logger.error("Document camera page \(index, privacy: .public) has no image; dropped")
+                }
+                return page
+            }
+            // No pages left is handled as a failure by the flow.
             parent.onFinish(pages)
         }
 

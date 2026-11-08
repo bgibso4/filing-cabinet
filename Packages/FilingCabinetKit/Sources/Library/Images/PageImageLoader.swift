@@ -10,6 +10,7 @@ public struct PageImageLoader: PageImageProviding {
     private let location: LibraryLocation
     private let fileSystem: any FileSystem
     private let cache = ImageCache(capacity: memoryCapacity)
+    private let decodes = ImageDecodeQueue(label: "com.cadre.filingcabinet.page-decode")
 
     public init(location: LibraryLocation, fileSystem: any FileSystem) {
         self.location = location
@@ -27,14 +28,18 @@ public struct PageImageLoader: PageImageProviding {
         // A page the viewer has already moved past isn't worth a full-size decode.
         guard !Task.isCancelled else { return nil }
         let url = location.originals(for: id).appending(path: "page-\(index + 1).heic")
-        guard
-            fileSystem.fileExists(at: url),
-            let source = CGImageSourceCreateWithURL(url as CFURL, nil),
-            // Decoded here, off the main actor; otherwise the first draw would do it on the main thread.
-            let image = CGImageSourceCreateImageAtIndex(
-                source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
-        else { return nil }
-        cache.insert(image, for: key)
-        return image
+        return await decodes.image(for: key) { [cache] in
+            cache.image(for: key)
+        } decode: { [fileSystem, cache] in
+            guard
+                fileSystem.fileExists(at: url),
+                let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                // Decoded here, off the main actor; otherwise the first draw would do it on the main thread.
+                let image = CGImageSourceCreateImageAtIndex(
+                    source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary)
+            else { return nil }
+            cache.insert(image, for: key)
+            return image
+        }
     }
 }

@@ -88,6 +88,8 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp()
         openThreePageScan(in: app)
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
+        // Only the page on screen is in the accessibility tree (M5).
+        XCTAssertEqual(app.descendants(matching: .any).matching(identifier: AccessibilityID.Viewer.page).count, 1)
         try audit(app)
 
         assertPageLabel("Page 1 of 3", in: app)
@@ -111,6 +113,16 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp(largestText: true)
         openThreePageScan(in: app)
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
+        try audit(app)
+    }
+
+    /// In dark mode the pill's whole detail line, time left included, is the primary colour (Ben, 2026-11-07).
+    func testViewerAuditInDarkMode() throws {
+        XCUIDevice.shared.appearance = .dark
+        // A teardown block, not `defer`: a failure stops the test with an exception that skips `defer`.
+        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
+        let app = seededApp()
+        openThreePageScan(in: app)
         try audit(app)
     }
 

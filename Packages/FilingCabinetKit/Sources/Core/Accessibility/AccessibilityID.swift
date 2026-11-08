@@ -96,6 +96,9 @@ public enum AccessibilityID {
         }
     }
 
+    /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
+    public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
+
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.

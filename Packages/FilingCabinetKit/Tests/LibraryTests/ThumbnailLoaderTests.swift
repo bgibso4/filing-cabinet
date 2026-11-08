@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Library
+import Synchronization
 import TestSupport
 import Testing
 
@@ -144,4 +145,68 @@ private func longEdge(_ image: CGImage) -> Int { max(image.width, image.height) 
 
     #expect(await load.value == nil)
     #expect(loader.cachedPage(for: id, index: 0) == nil)
+}
+
+/// A local file system that counts the existence checks of each file: a loader checks a file once per decode.
+private final class CountingFileSystem: FileSystem {
+    private let local = LocalFileSystem()
+    private let checks = Mutex<[URL: Int]>([:])
+
+    func checks(of url: URL) -> Int { checks.withLock { $0[url, default: 0] } }
+
+    func createDirectory(at url: URL) throws { try local.createDirectory(at: url) }
+    func write(_ data: Data, to url: URL) throws { try local.write(data, to: url) }
+    func removeItem(at url: URL) throws { try local.removeItem(at: url) }
+    func contentsOfDirectory(at url: URL) throws -> [URL] { try local.contentsOfDirectory(at: url) }
+
+    func fileExists(at url: URL) -> Bool {
+        checks.withLock { $0[url, default: 0] += 1 }
+        return local.fileExists(at: url)
+    }
+}
+
+/// Regression: concurrent loads of the same page used to decode it once per caller, blocking that many cooperative
+/// threads, which deadlocked the viewer on CI's few-core virtual Mac. Now each page is decoded once.
+@Test func concurrentPageLoadsDecodeEachPageOnce() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    let pages = (0..<2).map { _ in SyntheticPages.page(lines: [], size: CGSize(width: 1000, height: 1400)) }
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem()).write(pages, for: id)
+    let files = CountingFileSystem()
+    let loader = PageImageLoader(location: location, fileSystem: files)
+
+    let heights = await withTaskGroup(of: Int?.self) { group in
+        for _ in 0..<6 {
+            for index in 0..<2 { group.addTask { await loader.page(for: id, index: index)?.height } }
+        }
+        return await group.reduce(into: [Int?]()) { $0.append($1) }
+    }
+
+    #expect(heights.count == 12)
+    #expect(heights.allSatisfy { $0 == 1400 })
+    for page in 1...2 {
+        #expect(files.checks(of: location.originals(for: id).appending(path: "page-\(page).heic")) == 1)
+    }
+}
+
+@Test func concurrentThumbnailLoadsDecodeEachPageOnce() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    let pages = (0..<2).map { _ in SyntheticPages.page(lines: [], size: CGSize(width: 200, height: 300)) }
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem()).write(pages, for: id)
+    let files = CountingFileSystem()
+    let loader = ThumbnailLoader(location: location, fileSystem: files)
+
+    let loaded = await withTaskGroup(of: Bool.self) { group in
+        for _ in 0..<6 {
+            for index in 0..<2 { group.addTask { await loader.thumbnail(for: id, page: index) != nil } }
+        }
+        return await group.reduce(into: [Bool]()) { $0.append($1) }
+    }
+
+    #expect(loaded.count == 12)
+    #expect(loaded.allSatisfy { $0 })
+    for page in 1...2 {
+        #expect(files.checks(of: location.thumbnails(for: id).appending(path: "page-\(page).jpg")) == 1)
+    }
 }

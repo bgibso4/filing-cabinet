@@ -22,6 +22,16 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return sheetText.contains(element.identifier)
     },
+    // In dark mode the audit misreads the viewer header's white text on dark Liquid Glass and reports low contrast,
+    // though the text is the primary colour and its element screenshot reads clearly (on file in Task 20's reports).
+    // Ben accepted this on 2026-11-07. Only contrast, only while the device is in dark mode, and only the header's title
+    // line (the audit reports it on its own, inside the combined header); the time-left line still fails.
+    { _, issue in
+        guard issue.auditType == .contrast, XCUIDevice.shared.appearance == .dark, let element = issue.element else {
+            return false
+        }
+        return element.identifier == AccessibilityID.pillTitle(AccessibilityID.Viewer.header)
+    },
 ]
 
 /// The only call site of `performAccessibilityAudit`. Audit types are listed explicitly, not left to the default.

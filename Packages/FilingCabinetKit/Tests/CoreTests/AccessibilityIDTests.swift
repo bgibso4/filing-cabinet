@@ -44,3 +44,9 @@ import Testing
     #expect(AccessibilityID.Grid.tile(id).hasPrefix(AccessibilityID.Grid.tilePrefix))
     #expect(AccessibilityID.Grid.tile(id) != AccessibilityID.Grid.tile(ScanID()))
 }
+
+@Test func aPillTitleIsNamedAfterItsPillAndClashesWithNothing() {
+    let titles = [AccessibilityID.Viewer.header, AccessibilityID.Review.pagePill].map(AccessibilityID.pillTitle)
+    #expect(titles == ["viewer.header.title", "review.pagePill.title"])
+    #expect(Set(titles).isDisjoint(with: AccessibilityID.all))
+}

@@ -103,6 +103,24 @@ private let other = SyntheticPages.page(lines: [("TWO", 40)], size: CGSize(width
             == ReviewInput(pages: [receipt, other], preselected: .receipts, scannedAt: Harness.now, source: .grid))
 }
 
+/// A camera result with no usable pages is a failure: review never opens with nothing to show (M3).
+@Test func finishingWithNoPagesFailsInsteadOfOpeningReview() async {
+    let harness = Harness(.authorized)
+    await harness.reachReview([])
+    #expect(harness.model.phase == .idle)
+    #expect(harness.model.review == nil)
+    #expect(harness.analytics.events == [.scanStarted(source: .home), .cameraFailed])
+}
+
+@Test func rescanWithNoPagesKeepsTheOldPages() async {
+    let harness = Harness(.authorized)
+    await harness.reachReview([receipt])
+    harness.model.rescan()
+    harness.model.cameraFinished([])
+    #expect(harness.model.phase == .review)
+    #expect(harness.model.reviewInput?.pages == [receipt])
+}
+
 @Test func finishedRescanReplacesTheInput() async {
     let harness = Harness(.authorized)
     await harness.reachReview([receipt])

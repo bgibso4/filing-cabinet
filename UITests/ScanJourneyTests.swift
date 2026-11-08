@@ -94,6 +94,29 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome()
     }
 
+    /// Under Reduce Motion the layer fades rather than slides, and the fade's end is what ends it: until then Home is
+    /// out of the tree and the invisible layer takes every touch.
+    func testSaveReturnsHomeWithReduceMotion() {
+        saveReceiptFromHome(flags: ["-ReduceMotion"])
+    }
+
+    /// Guards that a second scan after a save opens a camera on screen, so the slide-away never carries over to the
+    /// next layer.
+    func testSecondScanAfterASaveShowsTheCamera() {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+        scanOnePage(in: app)
+        chooseReceipts(in: app)
+        let save = app.buttons[Review.save]
+        save.tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
+        waitForSaveToReturnHome(in: app)
+
+        app.buttons[AccessibilityID.Home.scan].tap()
+        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
+        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(finish.isHittable, "the second camera is off screen")
+    }
+
     /// Saved inside Receipts, the layer slides back to the grid, which shows the new tile.
     func testSaveInsideItsCollectionEndsOnTheGrid() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
@@ -254,8 +277,8 @@ final class ScanJourneyTests: XCTestCase {
 
 /// Kept out of the class body so it stays under the type length limit.
 extension ScanJourneyTests {
-    private func saveReceiptFromHome() {
-        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+    private func saveReceiptFromHome(flags: [String] = []) {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"] + flags)
         scanOnePage(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
@@ -319,18 +342,6 @@ extension ScanJourneyTests {
             predicate: NSPredicate(format: "exists == true AND label CONTAINS '1'"), object: row)
         XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, row.label, line: line)
         XCTAssertTrue(row.isHittable, line: line)
-    }
-
-    /// Taps Scan once launch has enabled it, then Finish on the fake camera, and waits for review.
-    func scanOnePage(in app: XCUIApplication) {
-        let scan = app.buttons[AccessibilityID.Home.scan]
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
-        scan.tap()
-        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
-        finish.tap()
-        XCTAssertTrue(app.buttons[Review.save].waitForExistence(timeout: 5))
     }
 
     /// Opens Expiry, then "Choose a date…", and waits for the calendar.

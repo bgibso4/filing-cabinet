@@ -32,7 +32,7 @@ struct ZoomablePage: View {
 
     var body: some View {
         let key = Key(id: id, index: index)
-        Representable(
+        ZoomablePageView(
             image: image(for: key),
             pageKey: key,
             isCurrent: isCurrent,
@@ -63,31 +63,5 @@ struct ZoomablePage: View {
     private func image(for key: Key) -> CGImage? {
         guard holdsImage else { return nil }
         return provider.cachedPage(for: id, index: index) ?? (loaded?.key == key ? loaded?.image : nil)
-    }
-
-    private struct Representable: UIViewRepresentable {
-        let image: CGImage?
-        let pageKey: Key
-        let isCurrent: Bool
-        let label: String
-        let fitInsets: UIEdgeInsets
-        let onZoomChange: (Bool) -> Void
-
-        func makeUIView(context: Context) -> ZoomableScrollView {
-            let view = ZoomableScrollView()
-            view.isAccessibilityElement = true
-            view.accessibilityTraits = .image
-            view.accessibilityIdentifier = AccessibilityID.Viewer.page
-            return view
-        }
-
-        func updateUIView(_ view: ZoomableScrollView, context: Context) {
-            view.fitInsets = fitInsets
-            view.onZoomChange = onZoomChange
-            view.accessibilityLabel = label
-            view.show(image, pageKey: pageKey)
-            // Coming back to a page finds it whole.
-            if !isCurrent { view.resetZoom() }
-        }
     }
 }

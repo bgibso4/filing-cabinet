@@ -22,7 +22,7 @@
 |---|---|---|
 | A1 | **Scope:** capture, the review full sheet (manual pick only), the library and save, Home with scans, collection grids (each collection, Recent, All), the read-only viewer, expiry maths, analytics for these flows. The Apple Intelligence card is Plan 3. | whole plan |
 | A2 | **Controls for later plans are hidden** until their plan builds them: Home's Search field and Settings gear, Home's Trash row, the grid's sort button, the viewer's More menu and bottom bar (Share, Favorite, Details, Trash). Snapshots differ from the mocks only there. | Tasks 12, 16, 17 |
-| A3 | **The full save moment** is in Plan 1: the page flies into its collection's badge on Home (the count ticks up) or into its tile when you scanned inside a collection; success haptic; VoiceOver announcement; Reduce Motion cross-fade. | Task 18 |
+| A3 | **The full save moment** is in Plan 1: review slides down, then the collection's count on Home pops as it ticks up; success haptic; VoiceOver announcement; Reduce Motion is a quick fade with no pop. *(Changed 2026-11-07: the page no longer flies into its collection, B5 and B6.)* | Tasks 18, 20 |
 | A4 | **"Scan saved" carries its collection** (as a token) and its page count. | Task 13 |
 | A5 | **No-text title:** `Scan · Oct 31` (the word Scan, a middot, the scan date). | Task 14 |
 | A6 | **Empty states for Notes and Documents:** "No notes yet" / "Handwritten and class notes go here. They’re kept forever." and "No documents yet" / "Forms, letters and anything else go here. They’re kept forever." | Task 11 |
@@ -35,6 +35,23 @@
 | A13 | **Foundation follow-ups folded in:** #6 (lint rule gaps, approved lint-config change), #24 (drift check), #22 (snapshot window teardown), #12 (audit at the largest text), #7 (hairline). | Tasks 1, 2 |
 | A14 | **OCR cold start is measured on the iPhone before Save's behaviour is fixed.** Vision's first read took 14–26 s on a Mac (warm: ~0.2 s). Task 6 measures cold and warm reads per reader on Ben's phone and stops for Ben; he sets `readingWaitLimit` (M2) from the numbers before Task 14 starts. | Tasks 6, 14 |
 | A15 | **Task 6's checkpoint (2026-11-03).** On Ben's iPhone 16 Pro: `text` reads 447 ms cold and 151 ms per page warm; `documents` 553 ms cold and 194 ms per page. Both got 19/25 titles and 99% recall on the synthetic scans. **`readingWaitLimit` is 1 s.** **The default reader is not decided:** Ben wants more testing first, so `text` stays the provisional default (A12) and the `-TextReader` flag / `READER=` keep both available. | Tasks 10, 14, 19 |
+
+### Decided with Ben during execution (2026-11-05 to 2026-11-07)
+
+These came up while the plan was being built, most at the 2026-11-07 phone check. Where one changes a row above, that row says so.
+
+| # | Decision | Where it lands |
+|---|---|---|
+| B1 | **The grid prefetches** beyond the visible tiles (the visible ones first, then the next batches up to a bound) rather than lowering the first-screen bound of 18. (2026-11-05) | Task 16 |
+| B2 | **Camera off is the mock's compact sheet**, with a `textClipped` audit exemption scoped to that sheet only. (2026-11-06) | Task 18 |
+| B3 | **An empty Recent or All shows a neutral badge.** (2026-11-06) | Task 12 |
+| B4 | **Discard and the camera's Cancel** first cut straight back (2026-11-06); since B6 they slide down like Save. | Tasks 18, 20 |
+| B5 | **No save flight** (P1). The page doesn't fly into its collection; Save closes review like Discard. The haptic and the announcement stay. Replaces A3's flight and M13. (2026-11-07) | Task 20 |
+| B6 | **Save feedback is a slide and a pop** (P5). Save, Discard and the first camera's Cancel slide the capture layer down like a closing sheet (about 0.3 s), revealing where you were; then the collection's count on Home pops as it ticks up. Reduce Motion: a quick cross-fade and no pop (`-ReduceMotion` forces it in UI tests). (2026-11-07) | Task 20 |
+| B7 | **Zoom fills the whole screen** (P2): a zoomed page runs under the header and the strip, and the glass controls float over it. Viewer only for now. (2026-11-07) | Task 20 |
+| B8 | **A multi-page scan's page strip sits on a glass bar** (P3), more prominent, and readable over a zoomed page. (2026-11-07) | Task 20 |
+| B9 | **Pages swipe like Photos** (P4): the page follows the finger, a quick flick goes to the next page, and at a zoomed page's edge a swipe goes on to the next page. (2026-11-07) | Task 20 |
+| B10 | **In dark mode the header pill's detail line is `textPrimary`**, all of it (a soon expiry keeps its orange). The title still leads by weight and size. (2026-11-07) | Task 20 |
 
 ### My calls (not discussed; veto any before its task starts)
 
@@ -50,9 +67,9 @@
 | M8 | **No `CollectionRef` yet.** The foundations spec puts it in Core, but with no custom collections it would have one case. `BuiltInCollection` becomes the analytics token; `.custom` arrives with custom collections (#29). | 13 |
 | M9 | **Test doubles are Debug-only.** `TestSupport` is linked into the app, but every launch flag is parsed only in Debug builds and every use of `TestSupport` in the app is inside `#if DEBUG`. A Release build ignores all test flags. | 10 |
 | M10 | **The viewer header uses the requirements' time-left text** ("5 days left"), not the mock's "Expires in 5 days". The requirements win (story 7). | 17 |
-| M11 | **The VoiceOver announcement** after a save is "Saved to Receipts", posted after the flight ends. | 18 |
+| M11 | **The VoiceOver announcement** after a save is "Saved to Receipts", posted once review has slid away. | 18, 20 |
 | M12 | **Originals are HEIC at quality 0.8.** Thumbnails are JPEG at quality 0.8, 400px on the long edge. | 7 |
-| M13 | **The save flight falls back to a fade** when its target isn't on screen (e.g. you scanned inside Receipts but saved to Wallet). | 18 |
+| M13 | ~~The save flight falls back to a fade when its target isn't on screen.~~ Withdrawn 2026-11-07: there is no flight (B5). | 18 |
 | M14 | **Home shows the first-launch rows** (descriptions, no Recent/All) whenever no scan is visible, not only on first launch. | 12 |
 | M15 | **All Scans subtitle:** "91 scans", "1 scan", "No scans". **Recent** is scans whose scan day is within the last 30 days, today included. | 11 |
 | M16 | **UI tests use a fake camera screen** (Finish and Cancel buttons that return injected synthetic pages) and, except in one opt-in journey, a fake reader (`-FakeReader`), so cold Vision never times a journey out. | 10, 13, 15 |

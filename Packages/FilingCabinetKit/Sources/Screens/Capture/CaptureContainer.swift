@@ -14,7 +14,7 @@ struct CaptureContainer: View {
     // Task 20 Part C: "a quick cross-fade" under Reduce Motion. My call: 0.2 s.
     private static let fade = Animation.easeOut(duration: 0.2)
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.reducesMotion) private var reduceMotion
     /// True from the tap that ends the scan until the layer has slid away; the phase stays put meanwhile, so the
     /// cover keeps drawing this screen and Home stays out of the accessibility tree.
     @State private var isLeaving = false
