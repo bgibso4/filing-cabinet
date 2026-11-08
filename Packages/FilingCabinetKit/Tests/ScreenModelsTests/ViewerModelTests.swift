@@ -32,14 +32,28 @@ private func model(
     _ scan: ScanSummary,
     library: FakeLibrary? = nil,
     today: Today? = nil,
-    analytics: RecordingAnalytics = RecordingAnalytics()
+    analytics: RecordingAnalytics = RecordingAnalytics(),
+    mode: ViewerModel.Mode = .library
 ) -> ViewerModel {
     ViewerModel(
         id: scan.id,
         library: library ?? FakeLibrary(scans: [scan], clock: clock),
         today: today ?? Today(clock: clock),
         calendar: utc,
-        analytics: analytics)
+        analytics: analytics,
+        mode: mode)
+}
+
+/// In Trash since `daysAgo` days before Oct 12: `30 - daysAgo` days left.
+private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaways, daysAgo: Int) -> ScanSummary {
+    ScanSummary(
+        id: ScanID(),
+        title: title,
+        collection: collection,
+        scannedAt: noon.addingTimeInterval(-90 * 86_400),
+        expiryOverride: nil,
+        pageCount: 1,
+        trashedDay: CalendarDay(year: 2026, month: 10, day: 12).adding(days: -daysAgo, in: utc))
 }
 
 @Test func leaseHeaderReadsKeptForever() {
@@ -182,4 +196,71 @@ private func model(
     #expect(analytics.events.isEmpty)
     viewer.dismissEditAlert()
     #expect(viewer.editAlert == nil)
+}
+
+// MARK: - Trash mode (09-04)
+
+@Test func trashModeReadsDaysLeftInTrash() {
+    let viewer = model(trashed("Coat check", daysAgo: 25), mode: .trash)
+    #expect(viewer.title == "Coat check")
+    #expect(viewer.timeLeftText == "5 days left")
+    #expect(viewer.isSoon)
+    #expect(!viewer.isMissing)
+
+    let fresh = model(trashed("Parking stub", daysAgo: 1), mode: .trash)
+    #expect(fresh.timeLeftText == "29 days left")
+    #expect(!fresh.isSoon)
+}
+
+@Test func aLibraryScanIsMissingInTrashModeAndATrashedOneInLibraryMode() {
+    #expect(model(summary("Lease 2026", .documents), mode: .trash).isMissing)
+    #expect(model(trashed("Coat check", daysAgo: 25)).isMissing)
+}
+
+@Test func restoreLeavesTrashMode() {
+    let scan = trashed("Coat check", daysAgo: 25)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, library: library, analytics: analytics, mode: .trash)
+    #expect(viewer.restore() == "Restored to Throwaways")
+    #expect(viewer.isMissing)
+    #expect(library.scans.first?.trashedDay == nil)
+    #expect(analytics.events == [.scansRestored(count: 1)])
+}
+
+@Test func aFailedRestoreShowsTheAlertAndKeepsTheScanInTrash() {
+    let scan = trashed("Coat check", daysAgo: 25)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    library.failNextEdit = .diskFull
+    let viewer = model(scan, library: library, mode: .trash)
+    #expect(viewer.restore() == nil)
+    #expect(!viewer.isMissing)
+    #expect(viewer.editAlert != nil)
+    viewer.dismissEditAlert()
+    #expect(viewer.editAlert == nil)
+}
+
+@Test func deleteNowAsksWithTheTitle() async {
+    let scan = trashed("Coat check", daysAgo: 25)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let viewer = model(scan, library: library, mode: .trash)
+    viewer.deleteNow()
+    #expect(viewer.confirmation?.title == "Delete permanently?")
+    #expect(viewer.confirmation?.message == "Coat check will be deleted. This can’t be undone.")
+    #expect(viewer.confirmation?.confirmTitle == "Delete")
+    #expect(!library.scans.isEmpty, "nothing goes before the confirmation")
+
+    #expect(await viewer.performConfirmation() == "Deleted")
+    #expect(viewer.confirmation == nil)
+    #expect(library.scans.isEmpty)
+    #expect(viewer.isMissing)
+}
+
+@Test func cancellingDeleteNowKeepsTheScan() {
+    let scan = trashed("Coat check", daysAgo: 25)
+    let viewer = model(scan, mode: .trash)
+    viewer.deleteNow()
+    viewer.cancelConfirmation()
+    #expect(viewer.confirmation == nil)
+    #expect(!viewer.isMissing)
 }

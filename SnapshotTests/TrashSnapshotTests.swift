@@ -26,7 +26,7 @@ final class TrashSnapshotTests: XCTestCase {
         let model = TrashModel(
             library: library,
             today: Today(clock: Fixtures.clock),
-            clock: Fixtures.clock,
+            calendar: Fixtures.clock.calendar,
             analytics: RecordingAnalytics())
         change(model)
         return TrashScreen(model: model)

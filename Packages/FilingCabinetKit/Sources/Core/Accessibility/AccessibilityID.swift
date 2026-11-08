@@ -144,6 +144,18 @@ public enum AccessibilityID {
         }
     }
 
+    /// A scan opened from Trash (09-04). Its pages and strip are the viewer's.
+    public enum TrashViewer {
+        public static let close = "trashViewer.close"
+        public static let header = "trashViewer.header"
+        public static let deleteNow = "trashViewer.deleteNow"
+        public static let restore = "trashViewer.restore"
+
+        public static var all: [String] {
+            [close, header, deleteNow, restore]
+        }
+    }
+
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
 
@@ -153,6 +165,6 @@ public enum AccessibilityID {
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
-            ] + Trash.all
+            ] + Trash.all + TrashViewer.all
     }
 }

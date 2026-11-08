@@ -4,9 +4,16 @@ import Library
 import Observation
 
 /// One scan on screen: its header and which page is showing. Everything but the page is read from the library and
-/// from `Today`, so the header moves when either does and the view pops when the scan goes away (M5).
+/// from `Today`, so the header moves when either does and the view pops when the scan goes away (M5). A scan opened
+/// from Trash (09-04) reads its days left in Trash and offers Restore and Delete now, which Trash's own model runs.
 @Observable
 public final class ViewerModel {
+    /// Where the scan was opened from.
+    public enum Mode {
+        case library
+        case trash
+    }
+
     /// 0-based. The pager writes it. Another page starts unzoomed.
     public var currentPage = 0 {
         didSet {
@@ -18,32 +25,67 @@ public final class ViewerModel {
     package var isPageZoomed = false
 
     /// Set when Move to Trash fails to save; the scan stays (M18).
-    package private(set) var editAlert: EditAlert?
+    private var moveAlert: EditAlert?
 
     package let id: ScanID
+    package let mode: Mode
 
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
     private let analytics: any Analytics
+    /// Runs Restore and Delete now in Trash mode, with Trash's confirmation and announcements; nil in the library.
+    private let trash: TrashModel?
 
-    public init(id: ScanID, library: any ScanLibrary, today: Today, calendar: Calendar, analytics: any Analytics) {
+    public init(
+        id: ScanID,
+        library: any ScanLibrary,
+        today: Today,
+        calendar: Calendar,
+        analytics: any Analytics,
+        mode: Mode = .library
+    ) {
         self.id = id
         self.library = library
         self.today = today
         self.calendar = calendar
         self.analytics = analytics
+        self.mode = mode
+        trash =
+            mode == .trash ? TrashModel(library: library, today: today, calendar: calendar, analytics: analytics) : nil
     }
 
     package var title: String { scan?.title ?? "" }
     package var collection: BuiltInCollection? { scan?.collection }
     package var collectionName: String { scan.map { CollectionText.name($0.collection) } ?? "" }
-    package var timeLeftText: String { scan.map { TimeLeftText.text(shelf.timeLeft($0)) } ?? "" }
-    package var isSoon: Bool { scan.map(shelf.isSoon) ?? false }
+    /// "5 days left": of its life in the library, or of its days in Trash.
+    package var timeLeftText: String {
+        guard let scan else { return "" }
+        switch mode {
+        case .library: return TimeLeftText.text(shelf.timeLeft(scan))
+        case .trash: return TimeLeftText.text(.days(shelf.trashDaysLeft(scan)))
+        }
+    }
+    /// Orange: the library's rule, or Trash's last 7 days.
+    package var isSoon: Bool {
+        guard let scan else { return false }
+        switch mode {
+        case .library: return shelf.isSoon(scan)
+        case .trash: return !isMissing && Lifecycle.isTrashSoon(daysLeft: shelf.trashDaysLeft(scan))
+        }
+    }
     package var pageCount: Int { scan?.pageCount ?? 0 }
     package var showsStrip: Bool { pageCount > 1 }
-    /// Gone or expired: the view pops.
-    package var isMissing: Bool { shelf.visible.isEmpty }
+    /// No longer where it was opened from (gone, expired, restored or moved to Trash): the view pops.
+    package var isMissing: Bool {
+        switch mode {
+        case .library: shelf.visible.isEmpty
+        case .trash: shelf.trash.isEmpty
+        }
+    }
+
+    /// Set when an edit fails to save; the scan stays where it is (M18).
+    package var editAlert: EditAlert? { moveAlert ?? trash?.editAlert }
 
     package var pageLabel: String {
         String(localized: "Page \(currentPage + 1) of \(pageCount)", bundle: #bundle)
@@ -83,7 +125,7 @@ public final class ViewerModel {
         do {
             try library.moveToTrash([id])
         } catch {
-            editAlert = EditAlert()
+            moveAlert = EditAlert()
             return false
         }
         analytics.send(.scanMovedToTrash(collection: scan.collection))
@@ -92,7 +134,35 @@ public final class ViewerModel {
 
     /// The edit alert's OK.
     package func dismissEditAlert() {
-        editAlert = nil
+        moveAlert = nil
+        trash?.dismissEditAlert()
+    }
+
+    // MARK: Opened from Trash
+
+    /// Delete now's confirmation, naming the scan (09-06); nil until Delete now.
+    package var confirmation: TrashConfirmation? { trash?.confirmation }
+
+    /// Back to its collection, kept forever, without asking (M10). Returns the announcement (M19), or nil when the
+    /// write failed (the alert shows).
+    @discardableResult
+    package func restore() -> String? {
+        trash?.restore([id])
+    }
+
+    /// Asks before deleting the scan for good.
+    package func deleteNow() {
+        trash?.confirmDelete([id])
+    }
+
+    package func cancelConfirmation() {
+        trash?.cancelConfirmation()
+    }
+
+    /// The confirmation's Delete. Returns the announcement, or nil when the write failed.
+    @discardableResult
+    package func performConfirmation() async -> String? {
+        await trash?.performConfirmation()
     }
 
     private var scan: ScanSummary? { library.scans.first { $0.id == id } }

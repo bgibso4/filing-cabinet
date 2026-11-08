@@ -1,8 +1,8 @@
 import Core
 import XCTest
 
-/// Trash from Home's Trash row: a long press restores one, Select deletes two, Empty Trash deletes the rest. Menus and
-/// alerts are never snapshotted, so they are attached as screenshots.
+/// Trash from Home's Trash row: a long press restores one, Select deletes two, Empty Trash deletes the rest, and a scan
+/// opened from Trash restores itself. Menus and alerts are never snapshotted, so they are attached as screenshots.
 @MainActor
 final class TrashJourneyTests: XCTestCase {
     override func setUp() {
@@ -44,6 +44,51 @@ final class TrashJourneyTests: XCTestCase {
         openTrash(in: app)
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         try audit(app)
+    }
+
+    func testAuditAtLargestTextTrashViewer() throws {
+        let app = seededApp(largestText: true)
+        openTrash(in: app)
+        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
+        openFirstTile(in: app)
+        try audit(app)
+    }
+
+    /// 09-04: a tile opens the scan with Close, its days left in Trash, Delete now and Restore. Delete now asks first
+    /// (09-06); Restore asks nothing and goes back to Trash with one tile fewer, and the scan is in Throwaways again.
+    func testOpenATrashedScanAndRestoreIt() throws {
+        let app = seededApp()
+        let throwaways = app.buttons[AccessibilityID.Home.collectionRow(.throwaways)]
+        XCTAssertTrue(throwaways.waitForExistence(timeout: 5))
+        XCTAssertEqual(throwaways.label, "Throwaways, 1")
+        openTrash(in: app)
+        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
+
+        openFirstTile(in: app)
+        let header = app.descendants(matching: .any)[AccessibilityID.TrashViewer.header]
+        XCTAssertEqual(header.label, "Trashed scan 5")
+        XCTAssertEqual(header.value as? String, "26 days left")
+        XCTAssertFalse(app.buttons[AccessibilityID.Viewer.details].exists)
+        try audit(app)
+
+        app.buttons[AccessibilityID.TrashViewer.deleteNow].tap()
+        let deleteOne = app.alerts["Delete permanently?"]
+        XCTAssertTrue(deleteOne.waitForExistence(timeout: 5))
+        XCTAssertTrue(deleteOne.staticTexts["Trashed scan 5 will be deleted. This can’t be undone."].exists)
+        attachScreenshot("trash-viewer-delete-now", of: app)
+        deleteOne.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.TrashViewer.restore].waitForExistence(timeout: 5))
+
+        app.buttons[AccessibilityID.TrashViewer.restore].tap()
+        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(waitFor(tiles(in: app), count: 4))
+        XCTAssertFalse(
+            tiles(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "Trashed scan 5,")).firstMatch
+                .exists)
+
+        app.buttons[AccessibilityID.Grid.back].tap()
+        XCTAssertTrue(throwaways.waitForExistence(timeout: 5))
+        XCTAssertEqual(throwaways.label, "Throwaways, 2")
     }
 
     // MARK: Steps
@@ -104,6 +149,12 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(row.label.contains("Trash") && row.label.contains("5"), row.label)
         row.tap()
         XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].waitForExistence(timeout: 5))
+    }
+
+    /// The soonest-gone tile opens the Trash viewer.
+    private func openFirstTile(in app: XCUIApplication) {
+        tiles(in: app).firstMatch.tap()
+        assertIdentifiers(AccessibilityID.TrashViewer.all, in: app)
     }
 
     private func tiles(in app: XCUIApplication) -> XCUIElementQuery {

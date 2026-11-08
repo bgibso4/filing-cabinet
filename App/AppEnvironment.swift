@@ -78,12 +78,11 @@ final class AppEnvironment {
                     )
                 }
             ),
-            makeGrid: { kind in
-                CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar)
-            },
-            makeTrash: { TrashModel(library: store, today: today, clock: clock, analytics: analytics) },
-            makeViewer: { id in
-                ViewerModel(id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics)
+            makeGrid: { CollectionGridModel(kind: $0, library: store, today: today, calendar: clock.calendar) },
+            makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
+            makeViewer: { id, mode in
+                ViewerModel(
+                    id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics, mode: mode)
             },
             makeDetails: { id in
                 DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)

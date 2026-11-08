@@ -19,13 +19,13 @@ public final class TrashModel {
 
     @ObservationIgnored private let library: any ScanLibrary
     @ObservationIgnored private let today: Today
-    @ObservationIgnored private let clock: AppClock
+    @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let analytics: any Analytics
 
-    public init(library: any ScanLibrary, today: Today, clock: AppClock, analytics: any Analytics) {
+    public init(library: any ScanLibrary, today: Today, calendar: Calendar, analytics: any Analytics) {
         self.library = library
         self.today = today
-        self.clock = clock
+        self.calendar = calendar
         self.analytics = analytics
     }
 
@@ -169,7 +169,7 @@ public final class TrashModel {
 
     private var shelf: LibraryShelf {
         LibraryShelf(
-            scans: library.scans, lifespans: library.lifespans, today: today.day, calendar: clock.calendar)
+            scans: library.scans, lifespans: library.lifespans, today: today.day, calendar: calendar)
     }
 
     /// An action ends select mode.

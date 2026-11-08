@@ -59,3 +59,8 @@ import Testing
     #expect(AccessibilityID.Trash.tile(id).hasPrefix(AccessibilityID.Trash.tilePrefix))
     #expect(AccessibilityID.Trash.tile(id) != AccessibilityID.Grid.tile(id))
 }
+
+@Test func trashViewerIdentifiersArePrefixedAndListed() {
+    #expect(AccessibilityID.TrashViewer.all.allSatisfy { $0.hasPrefix("trashViewer.") })
+    #expect(Set(AccessibilityID.TrashViewer.all).isSubset(of: AccessibilityID.all))
+}

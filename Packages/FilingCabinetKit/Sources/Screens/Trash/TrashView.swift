@@ -30,9 +30,7 @@ public struct TrashView: View {
     // Trash.dc.html line 126: Empty Trash is 52 pt tall with 28 pt either side of its label.
     private static let emptyTrashHeight: CGFloat = 52
     private static let emptyTrashPadding: CGFloat = 28
-    // Trash.dc.html lines 120-122: Delete and Restore are 54 pt tall, 10 pt apart and 20 pt in from the sides.
-    private static let selectionButtonHeight: CGFloat = 54
-    private static let selectionButtonGap: CGFloat = 10
+    // Trash.dc.html line 120: Delete and Restore are 20 pt in from the sides.
     private static let selectionBarInset: CGFloat = 20
 
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -52,17 +50,9 @@ public struct TrashView: View {
                     ToolbarItem(placement: .topBarTrailing) { selectButton }
                 }
             }
-            .sensoryFeedback(.warning, trigger: model.confirmation) { _, confirmation in confirmation != nil }
-            .alert(
-                model.confirmation?.title ?? "",
-                isPresented: isConfirming,
-                presenting: model.confirmation
-            ) { confirmation in
-                Button(role: .cancel, action: model.cancelConfirmation) { Text("Cancel", bundle: #bundle) }
-                Button(role: .destructive, action: performConfirmation) { Text(confirmation.confirmTitle) }
-            } message: { confirmation in
-                Text(confirmation.message)
-            }
+            .trashConfirmationAlert(
+                model.confirmation, cancel: model.cancelConfirmation, perform: performConfirmation
+            )
             .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
     }
 
@@ -155,44 +145,18 @@ public struct TrashView: View {
         .accessibilityIdentifier(AccessibilityID.Trash.emptyTrash)
     }
 
-    /// Delete N in glass and Restore N filled (09-02). Both are off until a scan is ticked. At accessibility sizes they
-    /// stack, so each label keeps the full width and never breaks mid-word.
+    /// Delete N and Restore N (09-02), both off until a scan is ticked.
     private var selectionBar: some View {
-        let layout =
-            typeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: Self.selectionButtonGap))
-            : AnyLayout(HStackLayout(spacing: Self.selectionButtonGap))
-        return layout {
-            Button(action: deleteSelected) {
-                Text(model.deleteTitle)
-                    .font(Tokens.Typography.headline)
-                    .foregroundStyle(model.canAct ? Tokens.Color.destructive : Tokens.Color.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: Self.selectionButtonHeight)
-                    .glassEffect(.regular.interactive(), in: .capsule)
-                    .contentShape(.capsule)
-                    .accessibilityElement(children: .combine)
-            }
-            .accessibilityIdentifier(AccessibilityID.Trash.deleteSelected)
-            Button(action: restoreSelected) {
-                Text(model.restoreTitle)
-                    .font(Tokens.Typography.headline)
-                    .foregroundStyle(model.canAct ? Tokens.Color.bgGrouped : Tokens.Color.textSecondary)
-                    .frame(maxWidth: .infinity, minHeight: Self.selectionButtonHeight)
-                    .background(model.canAct ? Tokens.Color.textPrimary : Tokens.Color.bgWell, in: .capsule)
-                    .contentShape(.capsule)
-                    .accessibilityElement(children: .combine)
-            }
-            .accessibilityIdentifier(AccessibilityID.Trash.restoreSelected)
-        }
-        // Not .plain, which fades a disabled button below AA contrast; the labels' own colours say they are off.
-        .buttonStyle(UnfadedButtonStyle())
-        .disabled(!model.canAct)
+        TrashActionBar(
+            deleteTitle: model.deleteTitle,
+            restoreTitle: model.restoreTitle,
+            deleteIdentifier: AccessibilityID.Trash.deleteSelected,
+            restoreIdentifier: AccessibilityID.Trash.restoreSelected,
+            canAct: model.canAct,
+            onDelete: deleteSelected,
+            onRestore: restoreSelected
+        )
         .padding(.horizontal, Self.selectionBarInset)
-    }
-
-    /// The alert's buttons say what happens; dismissing it is only ever one of them, so the binding never clears it.
-    private var isConfirming: Binding<Bool> {
-        Binding(get: { model.confirmation != nil }, set: { _ in })
     }
 
     private func performConfirmation() {

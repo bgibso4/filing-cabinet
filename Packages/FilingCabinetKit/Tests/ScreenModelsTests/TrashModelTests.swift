@@ -45,7 +45,7 @@ private struct TrashHarness {
         let now = now
         let clock = AppClock(now: { now.now }, calendar: utc, locale: Locale(identifier: "en_US"))
         today = Today(clock: clock)
-        model = TrashModel(library: library, today: today, clock: clock, analytics: analytics)
+        model = TrashModel(library: library, today: today, calendar: utc, analytics: analytics)
     }
 }
 

@@ -1,3 +1,4 @@
+import Core
 import ScreenModels
 import SwiftUI
 
@@ -94,18 +95,24 @@ public struct RootView: View {
         case .all:
             grid(.all)
         case .trash:
-            // Opening a scan from Trash comes with the Trash viewer (Task 10).
             GridRoute(makeModel: dependencies.makeTrash) { model in
-                TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { _ in })
+                TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.trashedScan($0)) })
             }
         case .scan(let id):
-            ViewerRoute(
-                makeModel: { dependencies.makeViewer(id) },
-                makeDetails: { dependencies.makeDetails(id) },
-                pages: dependencies.pages,
-                thumbnails: dependencies.thumbnails
-            )
+            viewer(id, .library)
+        case .trashedScan(let id):
+            viewer(id, .trash)
         }
+    }
+
+    /// Opened from Trash, the viewer never opens Details.
+    private func viewer(_ id: ScanID, _ mode: ViewerModel.Mode) -> some View {
+        ViewerRoute(
+            makeModel: { dependencies.makeViewer(id, mode) },
+            makeDetails: { dependencies.makeDetails(id) },
+            pages: dependencies.pages,
+            thumbnails: dependencies.thumbnails
+        )
     }
 
     private func grid(_ kind: GridKind) -> some View {

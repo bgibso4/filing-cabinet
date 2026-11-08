@@ -37,6 +37,9 @@ enum Fixtures {
     /// ScanView.dc.html line 330: added Jul 19, 2026, so 5 days left of its 90 on Oct 12.
     static let receipt = viewerScan("Corner Market", .receipts, daysAgo: 85, pageCount: 1)
 
+    /// Trash 09-04: Coat check, opened from Trash with 5 days left. One of the `.trash` set, so it has its image.
+    static var trashedCoatCheck: ScanSummary { coatCheckEntry.summary }
+
     /// The named sample scans (design/prototype/scans), in order; a missing one is left out.
     static func scans(_ names: String...) -> [CGImage] {
         names.compactMap(loadImage)
@@ -116,13 +119,15 @@ enum Fixtures {
     // Trash.dc.html lines 207-215: title, image, collection and days left in Trash.
     private static let trashEntries: [Entry] = [
         trashed("Parking stub", "scan-throw-park", .throwaways, daysLeft: 2),
-        trashed("Coat check", "scan-throw-coat", .throwaways, daysLeft: 5),
+        coatCheckEntry,
         trashed("City Pharmacy", "scan-r-pharmacy", .receipts, daysLeft: 11),
         trashed("Bluebird Café", "scan-r-bluebird", .receipts, daysLeft: 16),
         trashed("Old wifi password", "scan-wifi", .notes, daysLeft: 24),
         trashed("Corner Market", "scan-r-corner", .throwaways, daysLeft: 27),
         trashed("Gym membership", "scan-gym", .wallet, daysLeft: 29),
     ]
+
+    private static let coatCheckEntry = trashed("Coat check", "scan-throw-coat", .throwaways, daysLeft: 5)
 
     private static func entry(
         _ title: String,
