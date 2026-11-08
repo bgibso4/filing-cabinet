@@ -97,6 +97,11 @@ From the execution ledger. B rows are Ben's; E rows are my calls (executor).
 | E13 | Trash redesign fix round: the long-press Delete now proven, stale confirmations, VoiceOver anchoring; the Trash viewer's page stops above the bar at rest, as in Photos. | my call (executor) | 9, 10 |
 | E14 | `trash.select` joins the named Trash glass exemption (same misread, same screen) and #59. | my call (executor) | 9 |
 | E15 | Task 14's Minors 1, 4, 5 and 6 fixed: notes re-plan on a time-zone change and today refreshes before the first frame back. | my call (executor) | 14 |
+| E16 | Pre-flight R2: Task 12, not 13 and 14, creates `SystemNotificationCenter` and the `-Notifications` flag, since its screen and UI test need both. No behaviour change. | my call (executor) | 12, 13, 14 |
+| E17 | Pre-flight R3: `-SeedTrash` seeds through a `package` `ScanStore.moveToTrash(_:on:)`, which the public `moveToTrash` calls with today, so the `ScanLibrary` seam stays as planned. | my call (executor) | 9 |
+| E18 | Pre-flight R4: M1 covers `setExpiry` too, not only `move` and `setLifespan`. An expiry change that expires a library scan stores today as its Trash day (full 30 days); a scan already in Trash keeps its entry day. One shared rule serves all three edits. | my call (executor) | 3, 4, 5 |
+| E19 | Any Trash action (Restore, Delete) ends select mode. | my call (executor) | 8 |
+| E20 | Empty Trash acts on what is in Trash when it runs, not on the ids captured at confirm time; a confirmation whose scans have all left Trash shows nothing. | my call (executor) | 8 |
 
 ### Expected differences from the mocks
 

@@ -55,6 +55,9 @@ public final class SettingsModel {
             _ = await notifications.requestAuthorization()
             await refreshAuthorization()
         }
+        // The person's wish is on even if they just refused iOS's ask, as it is by default: the switch still shows
+        // off (notes don't reach them), and if they later allow notes in iPhone Settings, notes start without
+        // another tap here.
         preferences.notificationsOn = true
         return nil
     }

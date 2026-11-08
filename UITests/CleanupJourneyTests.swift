@@ -10,8 +10,6 @@ final class CleanupJourneyTests: XCTestCase {
     }
 
     /// Seeding 12 scans takes a few seconds after the launch returns, longer on a CI runner (see TrashJourneyTests).
-    private static let seedingTimeout: TimeInterval = 15
-
     /// Twelve seeded scans on Oct 25, 2026, notes blocked. Under `-UITest` Home was last seen 14 days before, so
     /// "Sample scan 10" (a Throwaway scanned Oct 16, kept a week) went to Trash on its own since then, on Oct 23.
     /// The banner shows only once seeding has finished, so waiting for it also waits for every count.
@@ -19,7 +17,7 @@ final class CleanupJourneyTests: XCTestCase {
         let app = launchApp(
             ["-SeedScans", "12", "-FixedDate", "2026-10-25", "-Notifications", "denied"], largestText: largestText)
         XCTAssertTrue(
-            app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: Self.seedingTimeout),
+            app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout),
             "Home never showed the cleanup banner")
         return app
     }

@@ -11,12 +11,15 @@ final class SettingsJourneyTests: XCTestCase {
     }
 
     /// Twelve scans dated 0 to 11 days ago, three of them Receipts (1, 6 and 11 days old). iOS has blocked notifications.
+    /// Seeding ends after Home shows, so this waits for all three Receipts before a test reads a count.
     ///
     /// Receipts, not Throwaways: a seeded throwaway older than a week is already in Trash at launch, and a scan in
     /// Trash stays there whatever the lifespan (M1), so no Throwaways change could ask.
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        launchApp(
+        let app = launchApp(
             ["-SeedScans", "12", "-FixedDate", "2026-10-12", "-Notifications", "denied"], largestText: largestText)
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
+        return app
     }
 
     func testShorteningAsksThenSendsToTrash() throws {

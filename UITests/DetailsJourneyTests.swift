@@ -9,8 +9,12 @@ final class DetailsJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Twelve scans dated 0 to 11 days ago, three of them Receipts (1, 6 and 11 days old). Seeding ends after Home
+    /// shows, so this waits for all three before a test counts the Receipts grid.
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12", "-FakeReader"], largestText: largestText)
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12", "-FakeReader"], largestText: largestText)
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
+        return app
     }
 
     func testRenameMoveUndoAndExpiry() throws {
