@@ -6,19 +6,19 @@ import Observation
 /// One collection's screen (10-03): its count and "Keep scans for". Shortening the lifespan asks first when it
 /// would send scans to Trash now (10-04).
 @Observable
-package final class CollectionSettingsModel {
+public final class CollectionSettingsModel {
     /// Set by a shortening that expires scans; nothing changes until `confirm()`.
     package private(set) var confirmation: LifespanConfirmation?
     /// Set when a write fails; the change did nothing (M18).
     package private(set) var editAlert: EditAlert?
 
-    @ObservationIgnored private let collection: BuiltInCollection
+    @ObservationIgnored package let collection: BuiltInCollection
     @ObservationIgnored private let library: any ScanLibrary
     @ObservationIgnored private let today: Today
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let analytics: any Analytics
 
-    package init(
+    public init(
         collection: BuiltInCollection,
         library: any ScanLibrary,
         today: Today,
@@ -76,7 +76,6 @@ package final class CollectionSettingsModel {
 
     package func cancel() { confirmation = nil }
 
-    // periphery:ignore - first used by Task 12 (Settings screens, notification scheduling)
     package func dismissEditAlert() { editAlert = nil }
 
     private func apply(_ lifespan: Lifespan) {

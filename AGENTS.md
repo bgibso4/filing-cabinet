@@ -76,6 +76,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-CameraDenied` | camera access reports denied |
 | `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
 | `-TextReader text\|documents` | which Vision reader understands pages |
+| `-Notifications authorized\|denied\|notDetermined` | a fake notification center answers with that authorization |
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-FailSave` | the next page write fails with a full disk |

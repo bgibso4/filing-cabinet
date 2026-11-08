@@ -106,6 +106,17 @@ public struct RootView: View {
             viewer(id, .library)
         case .trashedScan(let id):
             viewer(id, .trash)
+        case .settings:
+            GridRoute(makeModel: dependencies.makeSettings) { model in
+                SettingsView(model: model, onOpenCollections: { path.append(.collections) })
+            }
+        case .collections:
+            GridRoute(makeModel: dependencies.makeCollections) { model in
+                CollectionsView(model: model, onOpen: { path.append(.collectionSettings($0)) })
+            }
+        case .collectionSettings(let collection):
+            GridRoute(
+                makeModel: { dependencies.makeCollectionSettings(collection) }, content: CollectionSettingsView.init)
         }
     }
 

@@ -4,14 +4,14 @@ import Observation
 
 /// The Settings screen (10-01): the collections count, the Notifications switch and the footer.
 @Observable
-package final class SettingsModel {
+public final class SettingsModel {
     package private(set) var authorization = NotificationAuthorization.notDetermined
 
     @ObservationIgnored private let preferences: AppPreferences
     @ObservationIgnored private let notifications: any CleanupNotifying
     @ObservationIgnored private let version: String
 
-    package init(
+    public init(
         preferences: AppPreferences,
         notifications: any CleanupNotifying,
         version: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
@@ -37,7 +37,7 @@ package final class SettingsModel {
     }
 
     /// Reads what iOS currently allows; the screen calls it as it appears and when the app comes back.
-    package func refreshAuthorization() async {
+    public func refreshAuthorization() async {
         authorization = await notifications.authorization()
     }
 

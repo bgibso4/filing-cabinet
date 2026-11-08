@@ -5,7 +5,7 @@ import Observation
 /// The settings kept on this phone, in `UserDefaults`.
 @MainActor
 @Observable
-package final class AppPreferences {
+public final class AppPreferences {
     /// The person's wish for cleanup notes. Whether iOS allows them is separate (`SettingsModel`).
     package var notificationsOn: Bool {
         didSet { defaults.set(notificationsOn, forKey: Key.notificationsOn) }
@@ -18,7 +18,7 @@ package final class AppPreferences {
 
     @ObservationIgnored private let defaults: UserDefaults
 
-    package init(defaults: UserDefaults) {
+    public init(defaults: UserDefaults) {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {

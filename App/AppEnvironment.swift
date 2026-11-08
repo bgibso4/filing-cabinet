@@ -58,26 +58,12 @@ final class AppEnvironment {
         let today = Today(clock: clock)
         self.today = today
         self.store = store
-        // Built here so the reader flags apply from launch.
-        let scanReader = Self.makeScanReader(options: options)
         lifecycle = AppLifecycleModel(analytics: analytics)
+        let preferences = AppPreferences(defaults: Self.preferencesDefaults(isUITest: options.isUITest))
+        let notifications = Self.notificationCenter(options: options)
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar),
-            flow: ScanFlowModel(
-                cameraAccess: Self.cameraAccess(options: options),
-                clock: clock,
-                analytics: analytics,
-                makeReview: { input in
-                    ReviewModel(
-                        input: input,
-                        reader: scanReader,
-                        library: store,
-                        clock: clock,
-                        analytics: analytics,
-                        readingWaitLimit: Self.readingWaitLimit
-                    )
-                }
-            ),
+            flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
             makeGrid: { CollectionGridModel(kind: $0, library: store, today: today, calendar: clock.calendar) },
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
             makeViewer: { id, mode in
@@ -87,10 +73,43 @@ final class AppEnvironment {
             makeDetails: { id in
                 DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
             },
+            makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
+            makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
+            makeCollectionSettings: { collection in
+                CollectionSettingsModel(
+                    collection: collection,
+                    library: store,
+                    today: today,
+                    calendar: clock.calendar,
+                    analytics: analytics
+                )
+            },
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion
+        )
+    }
+
+    /// The scan flow, with its reader built here so the reader flags apply from launch.
+    private static func makeFlow(
+        options: LaunchOptions, store: ScanStore, clock: AppClock, analytics: any Analytics
+    ) -> ScanFlowModel {
+        let scanReader = makeScanReader(options: options)
+        return ScanFlowModel(
+            cameraAccess: cameraAccess(options: options),
+            clock: clock,
+            analytics: analytics,
+            makeReview: { input in
+                ReviewModel(
+                    input: input,
+                    reader: scanReader,
+                    library: store,
+                    clock: clock,
+                    analytics: analytics,
+                    readingWaitLimit: readingWaitLimit
+                )
+            }
         )
     }
 
@@ -153,6 +172,28 @@ final class AppEnvironment {
             logger.fault("No Application Support folder: \(error.localizedDescription, privacy: .private)")
             fatalError("Filing Cabinet cannot find its library folder")
         }
+    }
+
+    /// The phone's preferences, or for UI tests a suite emptied at each launch, so no run reads or leaves real ones.
+    private static func preferencesDefaults(isUITest: Bool) -> UserDefaults {
+        guard isUITest else { return .standard }
+        let suite = "com.cadre.filingcabinet.UITest"
+        guard let defaults = UserDefaults(suiteName: suite) else {
+            logger.fault("The UI-test preferences suite could not be made")
+            fatalError("Filing Cabinet cannot keep UI-test preferences apart")
+        }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
+    /// The system's notifications, or a scripted answer for `-Notifications`.
+    private static func notificationCenter(options: LaunchOptions) -> any CleanupNotifying {
+        #if DEBUG
+            if let authorization = options.notifications {
+                return FakeNotificationCenter(authorization: authorization)
+            }
+        #endif
+        return SystemNotificationCenter()
     }
 
     /// On disk, or in memory for UI tests.

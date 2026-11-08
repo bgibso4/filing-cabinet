@@ -1,5 +1,5 @@
 /// The seam to iOS notifications: the system implementation and `FakeNotificationCenter` stand behind it.
-package protocol CleanupNotifying: Sendable {
+public protocol CleanupNotifying: Sendable {
     func authorization() async -> NotificationAuthorization
 
     /// Asks iOS once; true when the person allowed notes.

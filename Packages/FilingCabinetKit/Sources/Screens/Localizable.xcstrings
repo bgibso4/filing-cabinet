@@ -41,7 +41,10 @@
     "Scans land here when they expire or you move them here. Each one stays %lld days, then it’s deleted." : {},
     "Open" : {},
     "Restore" : {},
-    "Delete now" : {}
+    "Delete now" : {},
+    "Settings" : {},
+    "Notifications" : {},
+    "Keep scans for" : {}
   },
   "version" : "1.0"
 }

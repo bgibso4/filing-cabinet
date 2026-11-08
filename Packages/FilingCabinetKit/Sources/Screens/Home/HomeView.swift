@@ -3,8 +3,8 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// Home: the five collections with their counts, the Recent, All Scans and Trash views, and the Scan button. Before the
-/// first scan it shows the collections' descriptions instead.
+/// Home: the title with the Settings gear, the five collections with their counts, the Recent, All Scans and Trash
+/// views, and the Scan button. Before the first scan it shows the collections' descriptions instead.
 public struct HomeView: View {
     private let model: HomeModel
     private let canScan: Bool
@@ -18,6 +18,8 @@ public struct HomeView: View {
     private static let collectionsTopGap: CGFloat = 6
     // Home.dc.html line 175: the views card sits 16 pt below the collections.
     private static let viewsTopGap: CGFloat = 16
+    // 02-04 (Home.dc.html's after-a-cleanup state): the gear is a 44 pt glass circle at the title's right.
+    private static let gearDiameter: CGFloat = 44
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -38,12 +40,24 @@ public struct HomeView: View {
     private var scrolling: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Filing Cabinet", bundle: #bundle)
-                    .font(Tokens.Typography.largeTitle)
-                    .tracking(Tokens.Typography.largeTitleTracking)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .frame(minHeight: Self.headerMinHeight)
-                    .accessibilityAddTraits(.isHeader)
+                HStack(spacing: Tokens.Spacing.s3) {
+                    Text("Filing Cabinet", bundle: #bundle)
+                        .font(Tokens.Typography.largeTitle)
+                        .tracking(Tokens.Typography.largeTitleTracking)
+                        .foregroundStyle(Tokens.Color.textPrimary)
+                        .frame(minHeight: Self.headerMinHeight)
+                        .accessibilityAddTraits(.isHeader)
+                    Spacer(minLength: 0)
+                    GlassCircleButton(
+                        systemImage: "gearshape",
+                        font: Tokens.Typography.title2.weight(.regular),
+                        label: Text("Settings", bundle: #bundle),
+                        identifier: AccessibilityID.Home.settings,
+                        diameter: Self.gearDiameter
+                    ) {
+                        onOpen(.settings)
+                    }
+                }
                 Text("Collections", bundle: #bundle)
                     .font(Tokens.Typography.title2)
                     .foregroundStyle(Tokens.Color.textPrimary)

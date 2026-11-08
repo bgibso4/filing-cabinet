@@ -2,7 +2,7 @@ import Core
 import Synchronization
 
 /// Test double for `CleanupNotifying`: answers with a scripted authorization and records every replacement.
-package final class FakeNotificationCenter: CleanupNotifying {
+public final class FakeNotificationCenter: CleanupNotifying {
     private struct State {
         var authorization: NotificationAuthorization
         var requestCount = 0
@@ -13,7 +13,7 @@ package final class FakeNotificationCenter: CleanupNotifying {
     private let grantsRequest: Bool
 
     /// `grantsRequest` is what the person answers when asked while `.notDetermined`.
-    package init(authorization: NotificationAuthorization, grantsRequest: Bool = true) {
+    public init(authorization: NotificationAuthorization, grantsRequest: Bool = true) {
         state = Mutex(State(authorization: authorization))
         self.grantsRequest = grantsRequest
     }
@@ -24,9 +24,9 @@ package final class FakeNotificationCenter: CleanupNotifying {
     /// Every `replacePending` argument, in call order.
     package var replacements: [[ScheduledNotice]] { state.withLock { $0.replacements } }
 
-    package func authorization() async -> NotificationAuthorization { state.withLock { $0.authorization } }
+    public func authorization() async -> NotificationAuthorization { state.withLock { $0.authorization } }
 
-    package func requestAuthorization() async -> Bool {
+    public func requestAuthorization() async -> Bool {
         let granted = grantsRequest
         return state.withLock {
             $0.requestCount += 1
@@ -37,7 +37,7 @@ package final class FakeNotificationCenter: CleanupNotifying {
     }
 
     // periphery:ignore - first used by Task 14 (CleanupNotifier tests)
-    package func replacePending(with notices: [ScheduledNotice]) async {
+    public func replacePending(with notices: [ScheduledNotice]) async {
         state.withLock { $0.replacements.append(notices) }
     }
 }

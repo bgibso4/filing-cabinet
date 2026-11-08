@@ -9,4 +9,7 @@ public enum AppRoute: Hashable {
     case scan(ScanID)
     /// A scan opened from Trash, with Restore and Delete now.
     case trashedScan(ScanID)
+    case settings
+    case collections
+    case collectionSettings(BuiltInCollection)
 }

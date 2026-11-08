@@ -10,6 +10,9 @@ public struct RootDependencies {
     let makeTrash: () -> TrashModel
     let makeViewer: (ScanID, ViewerModel.Mode) -> ViewerModel
     let makeDetails: (ScanID) -> DetailsModel
+    let makeSettings: () -> SettingsModel
+    let makeCollections: () -> CollectionsModel
+    let makeCollectionSettings: (BuiltInCollection) -> CollectionSettingsModel
     let thumbnails: any ThumbnailProviding
     let pages: any PageImageProviding
     let cameraMode: CameraMode
@@ -23,6 +26,9 @@ public struct RootDependencies {
         makeTrash: @escaping () -> TrashModel,
         makeViewer: @escaping (ScanID, ViewerModel.Mode) -> ViewerModel,
         makeDetails: @escaping (ScanID) -> DetailsModel,
+        makeSettings: @escaping () -> SettingsModel,
+        makeCollections: @escaping () -> CollectionsModel,
+        makeCollectionSettings: @escaping (BuiltInCollection) -> CollectionSettingsModel,
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
         cameraMode: CameraMode,
@@ -34,6 +40,9 @@ public struct RootDependencies {
         self.makeTrash = makeTrash
         self.makeViewer = makeViewer
         self.makeDetails = makeDetails
+        self.makeSettings = makeSettings
+        self.makeCollections = makeCollections
+        self.makeCollectionSettings = makeCollectionSettings
         self.thumbnails = thumbnails
         self.pages = pages
         self.cameraMode = cameraMode

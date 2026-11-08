@@ -69,10 +69,7 @@ struct HomeViewRowView: View {
         if let count = row.count {
             HomeCount(count: count)
         }
-        Image(systemName: "chevron.right")
-            .font(Tokens.Typography.footnote.weight(.semibold))
-            .foregroundStyle(Tokens.Color.chevron)
-            .accessibilityHidden(true)
+        DisclosureChevron()
     }
 
     @ViewBuilder

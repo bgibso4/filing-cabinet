@@ -64,3 +64,15 @@ import Testing
     #expect(AccessibilityID.TrashViewer.all.allSatisfy { $0.hasPrefix("trashViewer.") })
     #expect(Set(AccessibilityID.TrashViewer.all).isSubset(of: AccessibilityID.all))
 }
+
+@Test func settingsIdentifiersArePrefixedAndListed() {
+    #expect(AccessibilityID.Home.settings == "home.settings")
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.settings))
+    #expect(AccessibilityID.Settings.all.allSatisfy { $0.hasPrefix("settings.") })
+    #expect(AccessibilityID.Collections.all.allSatisfy { $0.hasPrefix("collections.") })
+    #expect(AccessibilityID.CollectionSettings.all.allSatisfy { $0.hasPrefix("collectionSettings.") })
+    #expect(AccessibilityID.Collections.row(.receipts) == "collections.receipts")
+    let settings =
+        AccessibilityID.Settings.all + AccessibilityID.Collections.all + AccessibilityID.CollectionSettings.all
+    #expect(Set(settings).isSubset(of: AccessibilityID.all))
+}

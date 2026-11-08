@@ -5,12 +5,12 @@ import Observation
 
 /// The Collections screen (10-02): each collection with how long it keeps scans and how many it holds.
 @Observable
-package final class CollectionsModel {
+public final class CollectionsModel {
     @ObservationIgnored private let library: any ScanLibrary
     @ObservationIgnored private let today: Today
     @ObservationIgnored private let calendar: Calendar
 
-    package init(library: any ScanLibrary, today: Today, calendar: Calendar) {
+    public init(library: any ScanLibrary, today: Today, calendar: Calendar) {
         self.library = library
         self.today = today
         self.calendar = calendar

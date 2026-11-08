@@ -24,6 +24,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var reduceMotion = false
     /// `-TextReader text|documents`: which Vision reader understands pages (A12, A15).
     public private(set) var reader = ReaderKind.text
+    /// `-Notifications authorized|denied|notDetermined`: a fake notification center answers with this authorization.
+    public private(set) var notifications: NotificationAuthorization?
 
     private static let fakeCameraRange = 1...3
 
@@ -58,6 +60,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-SeedScans": seedScans = Self.count(value)
         case "-SeedTrash": seedTrash = Self.count(value)
         case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
+        case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
         default: break
         }
     }

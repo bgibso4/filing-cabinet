@@ -7,13 +7,15 @@ public enum AccessibilityID {
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
         public static let trashRow = "home.trash"
+        /// The gear beside the title.
+        public static let settings = "home.settings"
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow] + BuiltInCollection.allCases.map(collectionRow)
+            [scan, recentRow, allRow, trashRow, settings] + BuiltInCollection.allCases.map(collectionRow)
         }
     }
 
@@ -156,6 +158,36 @@ public enum AccessibilityID {
         }
     }
 
+    /// Settings from Home's gear (10-01).
+    public enum Settings {
+        public static let collections = "settings.collections"
+        public static let notifications = "settings.notifications"
+
+        public static var all: [String] {
+            [collections, notifications]
+        }
+    }
+
+    /// Settings › Collections (10-02): one row per collection.
+    public enum Collections {
+        public static func row(_ collection: BuiltInCollection) -> String {
+            "collections.\(collection.rawValue)"
+        }
+
+        public static var all: [String] {
+            BuiltInCollection.allCases.map(row)
+        }
+    }
+
+    /// One collection's settings (10-03).
+    public enum CollectionSettings {
+        public static let keepScansFor = "collectionSettings.keepScansFor"
+
+        public static var all: [String] {
+            [keepScansFor]
+        }
+    }
+
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
 
@@ -165,6 +197,6 @@ public enum AccessibilityID {
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
-            ] + Trash.all + TrashViewer.all
+            ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all
     }
 }

@@ -35,7 +35,7 @@ struct ReviewRow<Icon: View>: View {
             icon
                 .accessibilityHidden(true)
             texts
-            chevrons
+            MenuChevrons()
         }
     }
 
@@ -47,7 +47,7 @@ struct ReviewRow<Icon: View>: View {
                 icon
                     .accessibilityHidden(true)
                 Spacer(minLength: Self.gap)
-                chevrons
+                MenuChevrons()
             }
             texts
         }
@@ -70,12 +70,5 @@ struct ReviewRow<Icon: View>: View {
     private var valueColor: Color {
         if !isEnabled { return Tokens.Color.textSecondary }
         return isSoon ? Tokens.Color.expirySoon : Tokens.Color.textPrimary
-    }
-
-    private var chevrons: some View {
-        Image(systemName: "chevron.up.chevron.down")
-            .font(Tokens.Typography.footnote.weight(.semibold))
-            .foregroundStyle(Tokens.Color.textSecondary)
-            .accessibilityHidden(true)
     }
 }
