@@ -10,10 +10,12 @@ private let everyFlag = [
     "-CameraDenied",
     "-FixedDate", "2026-10-12",
     "-SeedScans", "12",
+    "-SeedTrash", "5",
     "-FailSave",
     "-FakeReader",
     "-ReduceMotion",
     "-TextReader", "documents",
+    "-Notifications", "denied",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -26,10 +28,12 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.cameraDenied)
     #expect(options.fixedDate == octoberTwelfthNoonUTC)
     #expect(options.seedScans == 12)
+    #expect(options.seedTrash == 5)
     #expect(options.failNextSave)
     #expect(options.fakeReader)
     #expect(options.reduceMotion)
     #expect(options.reader == .documents)
+    #expect(options.notifications == .denied)
 }
 
 @Test func releaseIgnoresEveryFlag() {
@@ -40,10 +44,12 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(!options.cameraDenied)
     #expect(options.fixedDate == nil)
     #expect(options.seedScans == nil)
+    #expect(options.seedTrash == nil)
     #expect(!options.failNextSave)
     #expect(!options.fakeReader)
     #expect(!options.reduceMotion)
     #expect(options.reader == .text)
+    #expect(options.notifications == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -61,6 +67,17 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
 @Test(arguments: ["2026-13-01", "2026-02-30", "12/10/2026", "tomorrow"])
 func invalidFixedDateIsIgnored(_ value: String) {
     #expect(LaunchOptions(arguments: ["-FixedDate", value], isDebugBuild: true).fixedDate == nil)
+}
+
+@Test(arguments: [
+    ("authorized", NotificationAuthorization.authorized), ("denied", .denied), ("notDetermined", .notDetermined),
+])
+func notificationsFlagScriptsAuthorization(_ value: String, _ expected: NotificationAuthorization) {
+    #expect(LaunchOptions(arguments: ["-Notifications", value], isDebugBuild: true).notifications == expected)
+}
+
+@Test func unknownNotificationsValueIsIgnored() {
+    #expect(LaunchOptions(arguments: ["-Notifications", "maybe"], isDebugBuild: true).notifications == nil)
 }
 
 @Test func readerDefaultsToText() {
@@ -88,4 +105,12 @@ func fakeCameraOutsideOneToThreeIsIgnored(_ value: String) {
 @Test(arguments: ["-3", "many"])
 func invalidSeedCountIsIgnored(_ value: String) {
     #expect(LaunchOptions(arguments: ["-SeedScans", value], isDebugBuild: true).seedScans == nil)
+}
+
+@Test func parsesSeedTrash() {
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "7"], isDebugBuild: true).seedTrash == 7)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "0"], isDebugBuild: true).seedTrash == 0)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "-2"], isDebugBuild: true).seedTrash == nil)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "some"], isDebugBuild: true).seedTrash == nil)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "3"], isDebugBuild: false).seedTrash == nil)
 }

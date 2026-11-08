@@ -12,6 +12,7 @@ import Testing
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.scan))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.recentRow))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.allRow))
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.cleanupBanner))
 }
 
 @Test func cameraIdentifiersArePrefixedAndInAll() {
@@ -49,4 +50,30 @@ import Testing
     let titles = [AccessibilityID.Viewer.header, AccessibilityID.Review.pagePill].map(AccessibilityID.pillTitle)
     #expect(titles == ["viewer.header.title", "review.pagePill.title"])
     #expect(Set(titles).isDisjoint(with: AccessibilityID.all))
+}
+
+@Test func trashIdentifiersArePrefixedAndTilesAreCheckedByPrefix() {
+    #expect(AccessibilityID.Trash.all.allSatisfy { $0.hasPrefix("trash.") })
+    #expect(Set(AccessibilityID.Trash.all).isSubset(of: AccessibilityID.all))
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.trashRow))
+    let id = ScanID()
+    #expect(AccessibilityID.Trash.tile(id).hasPrefix(AccessibilityID.Trash.tilePrefix))
+    #expect(AccessibilityID.Trash.tile(id) != AccessibilityID.Grid.tile(id))
+}
+
+@Test func trashViewerIdentifiersArePrefixedAndListed() {
+    #expect(AccessibilityID.TrashViewer.all.allSatisfy { $0.hasPrefix("trashViewer.") })
+    #expect(Set(AccessibilityID.TrashViewer.all).isSubset(of: AccessibilityID.all))
+}
+
+@Test func settingsIdentifiersArePrefixedAndListed() {
+    #expect(AccessibilityID.Home.settings == "home.settings")
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.settings))
+    #expect(AccessibilityID.Settings.all.allSatisfy { $0.hasPrefix("settings.") })
+    #expect(AccessibilityID.Collections.all.allSatisfy { $0.hasPrefix("collections.") })
+    #expect(AccessibilityID.CollectionSettings.all.allSatisfy { $0.hasPrefix("collectionSettings.") })
+    #expect(AccessibilityID.Collections.row(.receipts) == "collections.receipts")
+    let settings =
+        AccessibilityID.Settings.all + AccessibilityID.Collections.all + AccessibilityID.CollectionSettings.all
+    #expect(Set(settings).isSubset(of: AccessibilityID.all))
 }

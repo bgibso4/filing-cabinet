@@ -10,6 +10,19 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case scanSaved(pageCount: Int, collection: BuiltInCollection)
     case saveFailed(reason: FailureReason)
     case textReadingFailed(failedPages: Int)
+    case scanEdited(field: EditedField)
+    /// The viewer's Trash button; a collection move into Trash reports `scanEdited` instead.
+    case scanMovedToTrash(collection: BuiltInCollection)
+    /// Trash's Restore, from a selection or one scan.
+    case scansRestored(count: Int)
+    /// Trash's Delete now, from a selection or one scan.
+    case scansDeleted(count: Int)
+    /// Trash's Empty Trash.
+    case trashEmptied(count: Int)
+    /// A cleanup pass (at launch or on return) deleted this many scans past their 30 days in Trash.
+    case cleanupRan(deleted: Int)
+    /// Settings › Collections › a collection's "Keep scans for".
+    case lifespanChanged(collection: BuiltInCollection, lifespan: Lifespan)
 
     public var name: String {
         switch self {
@@ -21,6 +34,13 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .scanSaved: "scanSaved"
         case .saveFailed: "saveFailed"
         case .textReadingFailed: "textReadingFailed"
+        case .scanEdited: "scanEdited"
+        case .scanMovedToTrash: "scanMovedToTrash"
+        case .scansRestored: "scansRestored"
+        case .scansDeleted: "scansDeleted"
+        case .trashEmptied: "trashEmptied"
+        case .cleanupRan: "cleanupRan"
+        case .lifespanChanged: "lifespanChanged"
         }
     }
 
@@ -33,6 +53,13 @@ public enum AnalyticsEvent: Sendable, Equatable {
             [.pageCount: .int(pageCount), .collection: .token(.init(collection))]
         case .saveFailed(let reason): [.reason: .token(.init(reason))]
         case .textReadingFailed(let failedPages): [.failedPages: .int(failedPages)]
+        case .scanEdited(let field): [.field: .token(.init(field))]
+        case .scanMovedToTrash(let collection): [.collection: .token(.init(collection))]
+        case .scansRestored(let count), .scansDeleted(let count), .trashEmptied(let count),
+            .cleanupRan(let count):
+            [.count: .int(count)]
+        case .lifespanChanged(let collection, let lifespan):
+            [.collection: .token(.init(collection)), .lifespan: .token(.init(lifespan))]
         }
     }
 }

@@ -16,6 +16,7 @@ public final class CollectionGridModel {
     /// The shelf and what it was built from.
     private struct BuiltShelf {
         let scans: [ScanSummary]
+        let lifespans: CollectionLifespans
         let day: CalendarDay
         let shelf: LibraryShelf
     }
@@ -45,7 +46,7 @@ public final class CollectionGridModel {
     package var subtitle: String {
         switch kind {
         case .collection(let collection):
-            CollectionText.scanCountAndKept(scans(on: shelf).count, collection.lifespan)
+            CollectionText.scanCountAndKept(scans(on: shelf).count, shelf.lifespans[collection])
         case .recent:
             CollectionText.lastThirtyDays
         case .all:
@@ -95,13 +96,16 @@ public final class CollectionGridModel {
     }
 
     /// Built once per update: a body reads the model several times, and the library and day only change between
-    /// updates. Reading both here is what keeps the observation.
+    /// updates. Reading them all here is what keeps the observation.
     private var shelf: LibraryShelf {
         let scans = library.scans
+        let lifespans = library.lifespans
         let day = today.day
-        if let builtShelf, builtShelf.scans == scans, builtShelf.day == day { return builtShelf.shelf }
-        let shelf = LibraryShelf(scans: scans, today: day, calendar: calendar)
-        builtShelf = BuiltShelf(scans: scans, day: day, shelf: shelf)
+        if let builtShelf, builtShelf.scans == scans, builtShelf.lifespans == lifespans, builtShelf.day == day {
+            return builtShelf.shelf
+        }
+        let shelf = LibraryShelf(scans: scans, lifespans: lifespans, today: day, calendar: calendar)
+        builtShelf = BuiltShelf(scans: scans, lifespans: lifespans, day: day, shelf: shelf)
         return shelf
     }
 

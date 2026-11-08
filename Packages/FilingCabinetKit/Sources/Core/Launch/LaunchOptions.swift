@@ -14,6 +14,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var fixedDate: Date?
     /// `-SeedScans <n>`: saves `n` synthetic scans at launch.
     public private(set) var seedScans: Int?
+    /// `-SeedTrash <n>`: saves `n` synthetic scans at launch, already moved to Trash on staggered days.
+    public private(set) var seedTrash: Int?
     /// `-FailSave`: the next page write fails with a full disk.
     public private(set) var failNextSave = false
     /// `-FakeReader`: every page reads as the synthetic City Pharmacy receipt (M16).
@@ -22,6 +24,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var reduceMotion = false
     /// `-TextReader text|documents`: which Vision reader understands pages (A12, A15).
     public private(set) var reader = ReaderKind.text
+    /// `-Notifications authorized|denied|notDetermined`: a fake notification center answers with this authorization.
+    public private(set) var notifications: NotificationAuthorization?
 
     private static let fakeCameraRange = 1...3
 
@@ -53,10 +57,17 @@ public struct LaunchOptions: Sendable, Equatable {
         switch flag {
         case "-FakeCamera": fakeCameraPages = Int(value).flatMap { Self.fakeCameraRange ~= $0 ? $0 : nil }
         case "-FixedDate": fixedDate = Self.noonUTC(value)
-        case "-SeedScans": seedScans = Int(value).flatMap { $0 >= 0 ? $0 : nil }
+        case "-SeedScans": seedScans = Self.count(value)
+        case "-SeedTrash": seedTrash = Self.count(value)
         case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
+        case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
         default: break
         }
+    }
+
+    /// A seed count: zero or more.
+    private static func count(_ text: String) -> Int? {
+        Int(text).flatMap { $0 >= 0 ? $0 : nil }
     }
 
     /// `yyyy-MM-dd` at 12:00 UTC, or nil when it is not a real day.

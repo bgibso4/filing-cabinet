@@ -1,6 +1,6 @@
 /// How long a scan stays in a collection before cleanup considers it. `allCases` is the order of the
 /// "Keep scans for" choices: shortest first, Forever last.
-public enum Lifespan: String, Sendable, CaseIterable {
+public enum Lifespan: String, Sendable, CaseIterable, AnalyticsToken {
     case week
     case month
     case threeMonths

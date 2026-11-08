@@ -3,15 +3,23 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// A scan, like Photos: its pages, a back button, a header pill and the page strip. Per A2 there is no More button and
-/// no bottom bar yet.
+/// A scan, like Photos: its pages, a back button, a header pill, the page strip and the bottom bar. Per A2 there is no
+/// More button. The pill and Info open Details; while it is up (`detailsHeight`) the pill, strip and bar make way and
+/// the page fits above the sheet (07-01). Opened from Trash (09-04) it has Close for back, a pill with the days left in
+/// Trash that opens nothing (a scan in Trash is read-only until restored), and Delete now and Restore for the bar.
 public struct ViewerView: View {
     @Bindable private var model: ViewerModel
     private let pages: any PageImageProviding
     private let thumbnails: any ThumbnailProviding
+    /// The Details sheet's height while it is up, nil while it is closed.
+    private let detailsHeight: CGFloat?
+    private let onDetails: () -> Void
+    /// After Restore, opened from Trash.
+    private let onRestored: () -> Void
 
-    // ScanView.dc.html line 221: the pill is at most 240 pt wide.
+    // ScanView.dc.html line 221: the pill is at most 240 pt wide; Trash.dc.html line 164: 250 pt opened from Trash.
     private static let headerMaxWidth: CGFloat = 240
+    private static let trashHeaderMaxWidth: CGFloat = 250
     // ScanView.dc.html line 223: 5 pt between the dot and the text.
     private static let dotGap: CGFloat = 5
     // ScanView.dc.html lines 367-368: at rest a page fits from 14 pt under the header's row (top 120, the row ending at
@@ -19,9 +27,23 @@ public struct ViewerView: View {
     // area, which holds the bar.
     private static let pageFitTopGap: CGFloat = 14
     private static let pageFitBottomGap: CGFloat = 130
-    // ScanView.dc.html line 254: the strip's 44 pt ends 108 pt above the screen's bottom edge (top 692 of 844), 34 of
-    // them the safe area. The strip's glass bar reaches below its pages by its padding.
-    private static let stripBottomGap: CGFloat = 74 - PageStripTile.barPadding
+    // ScanView.dc.html lines 254 and 261: the strip's 44 pt ends 22 pt above the bottom bar's 56 (top 692 and 758 of
+    // 844). The strip's glass bar reaches below its pages by its padding.
+    private static let stripBarGap: CGFloat = 22 - PageStripTile.barPadding
+    // ScanView.dc.html lines 254 and 367: a page at rest ends 12 pt above the strip (164 and 152 pt above the screen's
+    // bottom edge). Above the default size the controls grow, and the page keeps that gap above them.
+    private static let pageControlsGap: CGFloat = 12
+    // ScanView.dc.html line 261 and Trash.dc.html line 167: the bottom bar is 20 pt in from the sides and 30 pt above
+    // the screen's bottom edge.
+    private static let barSideInset: CGFloat = 20
+    private static let barBottomInset: CGFloat = 30
+    // ScanDetails.dc.html lines 18 and 34: with Details up the page fits above the sheet, which floats 8 pt above the
+    // screen's bottom edge, with 8 pt between them.
+    private static let sheetBottomInset: CGFloat = 8
+    private static let pageSheetGap: CGFloat = 8
+
+    /// The strip and bar's height, which grows with Dynamic Type.
+    @State private var bottomControlsHeight: CGFloat = 0
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -30,44 +52,51 @@ public struct ViewerView: View {
     public init(
         model: ViewerModel,
         pages: any PageImageProviding,
-        thumbnails: any ThumbnailProviding
+        thumbnails: any ThumbnailProviding,
+        detailsHeight: CGFloat? = nil,
+        onDetails: @escaping () -> Void = {},
+        onRestored: @escaping () -> Void = {}
     ) {
         self.model = model
         self.pages = pages
         self.thumbnails = thumbnails
+        self.detailsHeight = detailsHeight
+        self.onDetails = onDetails
+        self.onRestored = onRestored
     }
 
     public var body: some View {
         pager
             .background { Tokens.Color.bgGrouped.ignoresSafeArea() }
             .overlay(alignment: .bottom) {
-                if model.showsStrip {
-                    ViewerPageStrip(
-                        id: model.id,
-                        pageCount: model.pageCount,
-                        currentPage: $model.currentPage,
-                        label: model.pageLabel,
-                        thumbnails: thumbnails
-                    )
-                    .padding(.horizontal, Tokens.Spacing.s4)
-                    .padding(.bottom, Self.stripBottomGap)
-                    .environment(\.colorScheme, controlsScheme ?? colorScheme)
+                if !isShowingDetails {
+                    bottomControls
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { bottomControlsHeight = $0 }
+                        .padding(.bottom, Self.barBottomInset)
+                        .ignoresSafeArea(edges: .bottom)
+                        .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
-            // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works.
+            // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works,
+            // except from Trash, which has Close and no swipe back.
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbarColorScheme(controlsScheme, for: .navigationBar)
+            // Trash.dc.html line 163: Close rather than back, in the system's glass.
+            .navigationBarBackButtonHidden(isFromTrash)
             .toolbar {
-                if !headerIsBelowTheBar {
+                if isFromTrash {
+                    ToolbarItem(placement: .topBarLeading) { closeButton }
+                }
+                if !headerIsBelowTheBar && !isShowingDetails {
                     ToolbarItem(placement: .principal) {
-                        header.frame(maxWidth: Self.headerMaxWidth)
+                        header.frame(maxWidth: isFromTrash ? Self.trashHeaderMaxWidth : Self.headerMaxWidth)
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
             }
             // The bar can't hold the pill above the default text size, which wraps instead of cutting off (requirements 06 · Accessibility).
             .safeAreaInset(edge: .top) {
-                if headerIsBelowTheBar {
+                if headerIsBelowTheBar && !isShowingDetails {
                     header.padding(.horizontal, Tokens.Spacing.s4)
                         .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
@@ -75,6 +104,7 @@ public struct ViewerView: View {
             .onChange(of: model.isMissing, initial: true) { _, isMissing in
                 if isMissing { dismiss() }
             }
+            .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
             // Ready before the swipe: a page's first frame reads the cache.
             .task(id: model.currentPage) {
                 for page in model.neighbouringPages {
@@ -88,6 +118,11 @@ public struct ViewerView: View {
     /// light appearance: dark mode's white text would fade into glass over white (the strip's ring has the same reason).
     private var controlsScheme: ColorScheme? { model.isPageZoomed ? .light : nil }
 
+    private var isFromTrash: Bool { model.mode == .trash }
+
+    /// The sheet shows the title, so the pill makes way (07-01).
+    private var isShowingDetails: Bool { detailsHeight != nil }
+
     /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
     private var headerIsBelowTheBar: Bool { typeSize > .large }
 
@@ -98,7 +133,7 @@ public struct ViewerView: View {
             let fitInsets = UIEdgeInsets(
                 top: proxy.safeAreaInsets.top + Self.pageFitTopGap,
                 left: proxy.safeAreaInsets.leading,
-                bottom: proxy.safeAreaInsets.bottom + Self.pageFitBottomGap,
+                bottom: pageFitBottom(safeArea: proxy.safeAreaInsets.bottom),
                 right: proxy.safeAreaInsets.trailing)
             Pager(count: model.pageCount, selection: $model.currentPage) { page in
                 ZoomablePage(
@@ -118,17 +153,91 @@ public struct ViewerView: View {
         }
     }
 
-    private var header: some View {
-        PagePill(title: Text(model.title), identifier: AccessibilityID.Viewer.header, shape: headerShape) {
-            // At large text the line wraps, and the dot stays with its first line.
-            HStack(alignment: headerIsBelowTheBar ? .firstTextBaseline : .center, spacing: Self.dotGap) {
-                if let collection = model.collection { CollectionDot(collection: collection) }
-                Text("\(model.collectionName) · \(timeLeft)", bundle: #bundle)
-            }
+    /// Above the bar at rest, or above the Details sheet while it is up.
+    private func pageFitBottom(safeArea: CGFloat) -> CGFloat {
+        guard let detailsHeight else {
+            return max(
+                safeArea + Self.pageFitBottomGap, Self.barBottomInset + bottomControlsHeight + Self.pageControlsGap)
         }
-        // ScanView.dc.html line 222: one line with an ellipsis; above the default size it wraps rather than cutting off.
+        return Self.sheetBottomInset + detailsHeight + Self.pageSheetGap
+    }
+
+    /// The page strip (with more than one page) above the bottom bar.
+    private var bottomControls: some View {
+        VStack(spacing: Self.stripBarGap) {
+            if model.showsStrip {
+                ViewerPageStrip(
+                    id: model.id,
+                    pageCount: model.pageCount,
+                    currentPage: $model.currentPage,
+                    label: model.pageLabel,
+                    thumbnails: thumbnails
+                )
+                .padding(.horizontal, Tokens.Spacing.s4)
+            }
+            Group {
+                switch model.mode {
+                case .library:
+                    ViewerBottomBar(onDetails: onDetails, trashMessage: model.trashMessage, onTrash: moveToTrash)
+                case .trash:
+                    TrashViewerChrome(model: model, onRestored: onRestored)
+                }
+            }
+            .padding(.horizontal, Self.barSideInset)
+        }
+    }
+
+    /// Trash's confirmed move: the view pops as the scan leaves the library.
+    private func moveToTrash() {
+        if model.moveToTrash() { MovedToTrash.announce() }
+    }
+
+    /// Back to Trash.
+    private var closeButton: some View {
+        Button(
+            action: { dismiss() },
+            label: { Image(systemName: "xmark") }
+        )
+        .accessibilityLabel(Text("Close", bundle: #bundle))
+        .accessibilityIdentifier(AccessibilityID.TrashViewer.close)
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        switch model.mode {
+        case .library: libraryHeader
+        case .trash: trashHeader
+        }
+    }
+
+    /// The title over the days left in Trash (09-04). It opens nothing: Details edits a library scan.
+    private var trashHeader: some View {
+        PagePill(title: Text(model.title), identifier: AccessibilityID.TrashViewer.header, shape: headerShape) {
+            timeLeft
+        }
         .lineLimit(typeSize <= .large ? 1 : nil)
-        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel(Text(model.title))
+        .accessibilityValue(Text(model.timeLeftText))
+    }
+
+    /// A button that opens Details (M13).
+    private var libraryHeader: some View {
+        Button(action: onDetails) {
+            PagePill(title: Text(model.title), identifier: AccessibilityID.Viewer.header, shape: headerShape) {
+                // At large text the line wraps, and the dot stays with its first line.
+                HStack(alignment: headerIsBelowTheBar ? .firstTextBaseline : .center, spacing: Self.dotGap) {
+                    if let collection = model.collection { CollectionDot(collection: collection) }
+                    Text("\(model.collectionName) · \(timeLeft)", bundle: #bundle)
+                }
+            }
+            // ScanView.dc.html line 222: one line with an ellipsis; above the default size it wraps rather than cutting
+            // off.
+            .lineLimit(typeSize <= .large ? 1 : nil)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("\(model.title), details", bundle: #bundle))
+        .accessibilityValue(Text("\(model.collectionName) · \(model.timeLeftText)", bundle: #bundle))
+        .accessibilityIdentifier(AccessibilityID.Viewer.header)
     }
 
     /// A scan's own title can wrap to many lines at large text, where a capsule's ends would cut into it.

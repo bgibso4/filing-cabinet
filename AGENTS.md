@@ -8,9 +8,12 @@ A private, Photos-style library for personal documents (IDs, receipts, notes, ca
 App/                         app target: entry point, environment wiring, Info.plist, privacy manifest
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
+    Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
-  Sources/Library/           persistence, files, thumbnails. Mac-buildable
-  Sources/ScreenModels/      per-screen models and strings. Mac-buildable, tested in Fast
+  Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
+  Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
+                             tested in Fast
+    Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/Generated/  generated tokens (never hand-edit)
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
@@ -76,8 +79,10 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-CameraDenied` | camera access reports denied |
 | `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
 | `-TextReader text\|documents` | which Vision reader understands pages |
+| `-Notifications authorized\|denied\|notDetermined` | a fake notification center answers with that authorization |
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
+| `-SeedTrash <n>` | saves `n` synthetic scans at launch and moves scan `i` to Trash on today − `i` |
 | `-FailSave` | the next page write fails with a full disk |
 | `-ReduceMotion` | the capture layer fades rather than slides, and Home's count doesn't pop |
 

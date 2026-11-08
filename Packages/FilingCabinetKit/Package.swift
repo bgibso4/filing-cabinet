@@ -51,6 +51,7 @@ let package = Package(
         .testTarget(
             name: "LibraryTests",
             dependencies: ["Core", "Library", "TestSupport"],
+            resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings
         ),
         // The reader bake-off (A12): a report, not a gate. Runs only in the ReaderComparison scheme on macOS.

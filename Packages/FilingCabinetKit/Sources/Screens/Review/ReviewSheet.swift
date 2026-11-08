@@ -118,9 +118,17 @@ struct ReviewSheet: View {
 
     private var rows: some View {
         VStack(spacing: 0) {
-            CollectionMenu(model: model)
+            CollectionMenu(
+                label: model.collectionLabel,
+                value: model.collectionValue,
+                collection: model.collection,
+                options: model.collectionOptions,
+                identifier: AccessibilityID.Review.collection,
+                choose: model.choose)
             Hairline()
-            ExpiryMenu(model: model)
+            ExpiryMenu(model: model, identifier: AccessibilityID.Review.expiry)
+                // Off, with secondary text, until a collection is chosen.
+                .disabled(!model.isExpiryEnabled)
         }
         // The save has already taken the choices.
         .disabled(model.isSaving)

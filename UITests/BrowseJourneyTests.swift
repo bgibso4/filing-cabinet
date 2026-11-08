@@ -7,8 +7,13 @@ final class BrowseJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Waits for seeding to finish: Home's cleanup banner comes in as the last seeded scan lands, and an audit taken
+    /// mid-way caught it half drawn (CI run 42500722527, "Contrast failed" on the banner).
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout))
+        return app
     }
 
     func testHomeRowsOpenTheirDestinations() throws {
@@ -146,7 +151,9 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
-    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() {
+    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() throws {
+        // Flaky on CI's slow runners; Ben chose to skip it until a dedicated fix (2026-11-08, #64).
+        try XCTSkipIf(true, "Flaky zoom-then-swipe timing on CI (#64)")
         let app = seededApp()
         openThreePageScan(in: app)
         zoomTheFirstPage(in: app)
