@@ -1,5 +1,7 @@
-# The one pinned simulator. Snapshot tests render on this device too.
-SIM_DEVICE ?= iPhone 17
+# The pinned simulator: an iPhone 17 on iOS 27.0, named for this project so other projects' runs never share it.
+# Snapshot tests render on it too (any iPhone 17 on iOS 27.0 renders the same). CI uses the image's `iPhone 17`.
+SIM_DEVICE ?= FC iPhone 17
+SIM_MODEL  := iPhone 17
 SIM_OS     ?= 27.0
 
 PROJECT     := FilingCabinet.xcodeproj
@@ -13,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci full-run unused-run check-resolved compare-readers device-perf
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci ci-checks ci-sim full-run unused-run check-resolved compare-readers device-perf
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -22,7 +24,16 @@ setup:
 	done; [ $$missing -eq 0 ] || exit 1
 	@hooks="$$(git rev-parse --path-format=absolute --git-path hooks)"; mkdir -p "$$hooks" && rm -f "$$hooks/pre-commit" && \
 		printf '#!/bin/sh\nexec "$$(git rev-parse --show-toplevel)/scripts/pre-commit" "$$@"\n' > "$$hooks/pre-commit" && chmod +x "$$hooks/pre-commit"
-	@$(MAKE) --no-print-directory generate
+	@$(MAKE) --no-print-directory sim generate
+
+# Create the pinned simulator when it is missing.
+sim:
+	@xcrun simctl list devices 'iOS $(SIM_OS)' | grep -qF '    $(SIM_DEVICE) (' || \
+		xcrun simctl create '$(SIM_DEVICE)' '$(SIM_MODEL)' com.apple.CoreSimulator.SimRuntime.iOS-$(subst .,-,$(SIM_OS))
+
+# Narrow a simulator test run: ONLY and SKIP take test identifiers (Target, Target/Class or Target/Class/test).
+#   make full ONLY="FilingCabinetUITests/ScanJourneyTests FilingCabinetSnapshotTests/ReviewSnapshotTests"
+TEST_ARGS = $(strip $(addprefix -only-testing:,$(ONLY)) $(addprefix -skip-testing:,$(SKIP)))
 
 # The generated project is gitignored, so the pins for the app's packages (swift-snapshot-testing and its
 # dependencies) live in the tracked ./Package.resolved. XcodeGen cannot carry that file, so generate copies it to
@@ -37,7 +48,7 @@ generate:
 	xcodegen generate --quiet
 	mkdir -p $(RESOLVED_DEST) && cp Package.resolved $(RESOLVED_DEST)/Package.resolved
 
-build: generate
+build: sim generate
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
@@ -59,16 +70,18 @@ format:
 
 # Record snapshot references on the pinned simulator. Review the diff before committing.
 # A non-zero exit is expected: the library reports recording as a failure. Re-run `make full` to confirm green.
-snapshots-record: generate
+# ONLY narrows it to some snapshot classes.
+snapshots-record: sim generate
 	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=all xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) -only-testing:FilingCabinetSnapshotTests | $(BEAUTIFY)
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(or $(TEST_ARGS),-only-testing:FilingCabinetSnapshotTests) \
+		| $(BEAUTIFY)
 
-# Everything on the simulator: package tests, snapshot tests and UI tests.
+# Everything on the simulator: package tests, snapshot tests and UI tests. ONLY and SKIP narrow it (TEST_ARGS).
 full: generate full-run
 
-full-run:
+full-run: sim
 	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(TEST_ARGS) | $(BEAUTIFY)
 
 # Side by side: SCREEN=<design/screens stem> REF=<snapshot png> -> build/compare/<stem>.png
 compare:
@@ -132,26 +145,52 @@ test-lint:
 # Dead-code scan (.periphery.yml, strict). Builds with its own derived data, on the pinned simulator.
 unused: generate unused-run
 
-unused-run:
+unused-run: sim
 	periphery scan -- -destination '$(SIM_DEST)' $(XCB_FLAGS)
 
 # Snapshot references to compare against: origin/main when the remote exists, else the local main.
 BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && echo origin/main || echo main)
 
-# Everything CI runs, in order. CI invokes exactly this.
+# Everything CI runs. CI runs the same parts as parallel jobs: `ci-checks`, and `ci-sim` once per shard.
+ci: ci-checks ci-sim
+
+# Everything except the simulator tests.
 # The macOS slice step is build-for-testing: the Fast scheme's only build target is an empty aggregate, so a plain
 # `build` has no macOS destination to build for. build-for-testing compiles Core, ScreenModels and their tests.
 # Periphery 3.8.0 supports Xcode 27 / this project (verified locally); if a future Xcode breaks it, drop
-# `unused` from this list, record it as deferred in AGENTS.md and keep the target.
-ci: generate
+# `unused-run` from this list, record it as deferred in AGENTS.md and keep the target.
+ci-checks: generate
 	@test -z "$$(git status --porcelain -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets)" || { \
 		echo "error: generated files differ from the committed ones: run make generate and commit." >&2; exit 1; }
 	$(MAKE) --no-print-directory lint test-hooks test-lint
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) | $(BEAUTIFY)
-	$(MAKE) --no-print-directory full-run unused-run
+	$(MAKE) --no-print-directory unused-run
 	@echo "Snapshot references changed vs $(BASE_REF):"
 	scripts/changed-snapshots.sh $(BASE_REF)
+	$(MAKE) --no-print-directory check-resolved
+
+# The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
+# longest UI classes. main skips them rather than listing the rest, so a new test class always lands in main.
+# CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
+# The scan shard first flaked (4 of 10 CI runs): each read of the screen took 1 to 4 s there, and waits of 2 to 5 s
+# ran out. One launch per class (Launch.swift) and one read per check in the tight waits address that (#43).
+SHARD             ?= all
+SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests
+SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests
+SHARD_ONLY_scan   := $(SHARD_SCAN)
+SHARD_ONLY_browse := $(SHARD_BROWSE)
+SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
+
+ci-sim: generate
+	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
+	# Boot the simulator and wait until it has finished booting. Left to xcodebuild on a slow CI runner, the UI test
+	# runner once started before accessibility had loaded and failed before any test ran (#43).
+	# By ID: the CI image has an iPhone 17 for more than one iOS version.
+	udid="$$(xcrun simctl list devices 'iOS $(SIM_OS)' | grep -F '    $(SIM_DEVICE) (' | head -1 | grep -oE '[0-9A-F-]{36}')"; \
+		[ -n "$$udid" ] || { echo "error: no $(SIM_DEVICE) on iOS $(SIM_OS)" >&2; exit 1; }; \
+		xcrun simctl bootstatus "$$udid" -b
+	$(MAKE) --no-print-directory full-run ONLY='$(SHARD_ONLY_$(SHARD))' SKIP='$(SHARD_SKIP_$(SHARD))'
 	$(MAKE) --no-print-directory check-resolved
 
 # Fails when Xcode rewrote the resolved packages during the builds (run after them; never depends on generate).

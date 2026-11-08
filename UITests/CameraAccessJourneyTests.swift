@@ -24,7 +24,7 @@ final class CameraAccessJourneyTests: XCTestCase {
         XCTAssertTrue(scan.isHittable)
     }
 
-    func testDeniedCameraSheetAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfTheCameraOffSheet() throws {
         let app = launchApp(["-CameraDenied"], largestText: true)
         tapScan(in: app)
         XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].waitForExistence(timeout: 5))

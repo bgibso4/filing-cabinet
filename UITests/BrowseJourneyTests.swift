@@ -56,7 +56,7 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [saveEnabled], timeout: 5), .completed)
     }
 
-    func testGridAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfAGrid() throws {
         let app = seededApp(largestText: true)
         openReceipts(in: app)
         XCTAssertGreaterThan(tiles(in: app).count, 0)
@@ -109,7 +109,7 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
     }
 
-    func testViewerAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfTheViewer() throws {
         let app = seededApp(largestText: true)
         openThreePageScan(in: app)
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
@@ -216,14 +216,14 @@ final class BrowseJourneyTests: XCTestCase {
 
     /// Scan stays disabled until seeding ends. No launch option holds seeding open, so this checks the state the moment
     /// Scan exists, with nothing else waited on first, and audits straight after.
-    func testDisabledScanAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfDisabledScan() throws {
         let app = launchApp(["-SeedScans", "60", "-FixedDate", "2026-10-12"], largestText: true)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 30))
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isEnabled)
         try audit(app)
     }
 
-    func testHomeWithScansAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfHomeWithScans() throws {
         let app = seededApp(largestText: true)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.allRow].waitForExistence(timeout: 5))
         try audit(app)

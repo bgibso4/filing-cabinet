@@ -198,7 +198,7 @@ final class ScanJourneyTests: XCTestCase {
         waitForValue("Until Oct 20", of: expiry)
     }
 
-    func testReviewAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfReview() throws {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"], largestText: true)
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app)
@@ -265,7 +265,8 @@ final class ScanJourneyTests: XCTestCase {
     /// The real Vision reader on the synthetic receipt. 90 s covers Vision's cold start on a CI simulator; if this
     /// proves flaky, raise it rather than widening the wait.
     func testRealVisionReadsTheTitle() {
-        let app = launchApp(["-FakeCamera", "1"])
+        // A real launch: Vision's first read in a fresh process is the slow one this checks.
+        let app = launchApp(["-FakeCamera", "1"], fresh: true)
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app, timeout: 90)
     }
@@ -335,9 +336,10 @@ extension ScanJourneyTests {
     ) {
         // Home stays in the tree under the capture layer, so its own elements say nothing about the layer being gone.
         XCTAssertTrue(app.buttons[Review.save].waitForNonExistence(timeout: 10), line: line)
+        // One wait for both, so each check is one read of the screen: a read alone can take 2 s on CI.
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
-        XCTAssertTrue(row.waitForExistence(timeout: 5), line: line)
-        let counted = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS '1'"), object: row)
+        let counted = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true AND label CONTAINS '1'"), object: row)
         XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, row.label, line: line)
         XCTAssertTrue(row.isHittable, line: line)
     }

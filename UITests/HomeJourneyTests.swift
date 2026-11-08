@@ -22,7 +22,7 @@ final class HomeJourneyTests: XCTestCase {
         try audit(app)
     }
 
-    func testHomeAuditAtLargestText() throws {
+    func testAuditAtLargestTextOfHome() throws {
         let app = launchApp(largestText: true)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].isHittable)

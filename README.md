@@ -16,10 +16,10 @@ Requires Xcode 27, XcodeGen, SwiftLint and Periphery (`make setup` checks for th
 
 ```sh
 make setup   # install the pre-commit hook, generate the project
-make build   # build for the pinned simulator (iPhone 17, iOS 27.0)
+make build   # build for the pinned simulator (FC iPhone 17: iPhone 17, iOS 27.0)
 make fast    # unit tests on macOS, no simulator
 make full    # everything on the simulator: package, snapshot and UI tests
-make ci      # exactly what CI runs
+make ci      # everything CI runs
 ```
 
 `AGENTS.md` has the full command list, the architecture and the project's rules.

@@ -99,6 +99,16 @@ final class AppEnvironment {
         return AppEnvironment(options: options)
     }
 
+    /// A UI test's next test in the running app (`RelaunchURL`): a new environment built from the URL's flags.
+    /// Nil unless this environment is a UI test's (so never in Release) and the URL relaunches with `-UITest`,
+    /// which keeps the new one off the real library too.
+    func relaunched(by url: URL) -> AppEnvironment? {
+        guard options.isUITest, let arguments = RelaunchURL.arguments(from: url),
+            LaunchOptions(arguments: arguments, isDebugBuild: Self.isDebugBuild).isUITest
+        else { return nil }
+        return Self.make(arguments: arguments)
+    }
+
     /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`) and enables Scan.
     func launch() async {
         guard !hasLaunched else { return }

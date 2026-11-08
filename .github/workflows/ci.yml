@@ -14,11 +14,28 @@ permissions:
 
 jobs:
   ci:
+    # The parts of `make ci`, side by side. SHARD=main skips the classes the other shards run, so together the three
+    # simulator jobs run the whole suite, and a new test class lands in main by default.
+    name: ${{ matrix.job }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job: checks
+            target: ci-checks
+          - job: sim-main
+            target: ci-sim SHARD=main
+          - job: sim-scan
+            target: ci-sim SHARD=scan
+          - job: sim-browse
+            target: ci-sim SHARD=browse
     # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
     runs-on: xcode-27
     timeout-minutes: 60
     env:
       CODE_SIGNING_ALLOWED: "NO"
+      # The image's simulator. Locally the Makefile defaults to this project's own `FC iPhone 17`.
+      SIM_DEVICE: iPhone 17
       # swift-snapshot-testing writes failed/diff images here (xcodebuild forwards TEST_RUNNER_ vars to the tests).
       TEST_RUNNER_SNAPSHOT_ARTIFACTS: ${{ github.workspace }}/.build/snapshot-artifacts
     steps:
@@ -30,11 +47,13 @@ jobs:
       # The xcode-27 runner image ships Xcode 27.x; pick it explicitly (newest 27.x app) so a second Xcode on the
       # image can never be used by accident, and log what we got.
       - name: Select Xcode 27
+        id: xcode
         run: |
           app="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
           [ -n "$app" ] || { echo "error: no Xcode 27 on this image" >&2; exit 1; }
           sudo xcode-select -s "$app/Contents/Developer"
           xcodebuild -version
+          echo "version=$(xcodebuild -version | head -1 | tr -cd '0-9.')" >> "$GITHUB_OUTPUT"
           xcrun simctl list runtimes
 
       - name: Install tools
@@ -45,27 +64,25 @@ jobs:
         run: |
           [ "$(swiftlint version)" = "0.65.1" ] || { echo "error: SwiftLint $(swiftlint version), expected 0.65.1 (update ci.yml and local together)" >&2; exit 1; }
 
-      - name: Cache DerivedData and SwiftPM
+      # Package checkouts only. A fresh checkout gives every source file a new modification time, so cached build
+      # products are never reused; caching them only cost a 1.4 GB upload per push and stale test results.
+      - name: Cache Swift packages
         uses: actions/cache@v6
         with:
           path: |
-            .build/DerivedData
-            ~/Library/Developer/Xcode/DerivedData
+            .build/DerivedData/SourcePackages
+            ~/Library/Caches/com.github.peripheryapp/*/SourcePackages
             ~/Library/Caches/org.swift.swiftpm
-            ~/Library/Caches/com.github.peripheryapp
-          key: ${{ runner.os }}-xcode27-${{ hashFiles('Package.resolved', 'project.yml', '**/*.swift') }}
-          restore-keys: |
-            ${{ runner.os }}-xcode27-${{ hashFiles('Package.resolved', 'project.yml') }}-
-            ${{ runner.os }}-xcode27-
+          key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-${{ matrix.job == 'checks' && 'checks' || 'sim' }}-${{ hashFiles('Package.resolved', 'Packages/FilingCabinetKit/Package.swift', 'project.yml') }}
 
-      - name: make ci
-        run: make ci
+      - name: make ${{ matrix.target }}
+        run: make ${{ matrix.target }}
 
       - name: Upload snapshot failures
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: snapshot-failures
+          name: failures-${{ matrix.job }}
           if-no-files-found: ignore
           path: |
             .build/snapshot-artifacts
