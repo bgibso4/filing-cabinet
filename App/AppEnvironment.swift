@@ -30,13 +30,21 @@ final class AppEnvironment {
     @ObservationIgnored let today: Today
     @ObservationIgnored let store: ScanStore
     @ObservationIgnored let lifecycle: AppLifecycleModel
+    @ObservationIgnored let banner: CleanupBanner
+    @ObservationIgnored let notifier: CleanupNotifier
     @ObservationIgnored let root: RootDependencies
     @ObservationIgnored private let options: LaunchOptions
+    @ObservationIgnored private let preferences: AppPreferences
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
     /// Set by the first `launch()`, so a rebuilt scene doesn't clean up or seed again.
     @ObservationIgnored private var hasLaunched = false
+
+    #if DEBUG
+        /// Under `-UITest`, `-SeedScans` makes Home's banner count what expired in this many days before today.
+        private static let uiTestDaysSinceSeen = 14
+    #endif
 
     /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
     private static let readingWaitLimit = Duration.seconds(1)
@@ -60,9 +68,15 @@ final class AppEnvironment {
         self.store = store
         lifecycle = AppLifecycleModel(analytics: analytics)
         let preferences = AppPreferences(defaults: Self.preferencesDefaults(isUITest: options.isUITest))
+        self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
+        let banner = CleanupBanner(
+            library: store, today: today, preferences: preferences, notifications: notifications)
+        self.banner = banner
+        notifier = CleanupNotifier(
+            library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         root = RootDependencies(
-            home: HomeModel(library: store, today: today, calendar: clock.calendar),
+            home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
             flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
             makeGrid: { CollectionGridModel(kind: $0, library: store, today: today, calendar: clock.calendar) },
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
@@ -75,14 +89,9 @@ final class AppEnvironment {
             },
             makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
-            makeCollectionSettings: { collection in
+            makeCollectionSettings: {
                 CollectionSettingsModel(
-                    collection: collection,
-                    library: store,
-                    today: today,
-                    calendar: clock.calendar,
-                    analytics: analytics
-                )
+                    collection: $0, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
@@ -132,11 +141,13 @@ final class AppEnvironment {
         return Self.make(arguments: arguments)
     }
 
-    /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`, `-SeedTrash`) and enables Scan.
+    /// Clears what an interrupted save left behind, deletes what has had its 30 days in Trash, and only then seeds
+    /// (`-SeedScans`, `-SeedTrash`) and enables Scan.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
         await store.removeOrphanedFiles()
+        await purgeTrash()
         #if DEBUG
             if let count = options.seedScans {
                 do {
@@ -145,6 +156,11 @@ final class AppEnvironment {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
                     )
+                }
+                if options.isUITest {
+                    // As if Home was last seen two weeks ago, so seeded scans that expired since then make a banner.
+                    preferences.cleanupSeenThrough = clock.today.adding(
+                        days: -Self.uiTestDaysSinceSeen, in: clock.calendar)
                 }
             }
             if let count = options.seedTrash {
@@ -157,7 +173,24 @@ final class AppEnvironment {
                 }
             }
         #endif
+        await banner.refreshAuthorization()
         isReady = true
+    }
+
+    /// Back in the app: a new day, a new time zone or a new answer in iPhone Settings may have come meanwhile. Once
+    /// launch has finished, Trash is purged again.
+    func becameActive() async {
+        today.refresh()
+        notifier.reschedule()
+        await banner.refreshAuthorization()
+        guard isReady else { return }
+        await purgeTrash()
+    }
+
+    /// Deletes every scan past its 30 days in Trash, and reports a pass that deleted any.
+    private func purgeTrash() async {
+        let deleted = await store.purgeTrash()
+        if deleted > 0 { analytics.send(.cleanupRan(deleted: deleted)) }
     }
 
     /// The real library, or a fresh temporary one for UI tests so runs never see each other's files.

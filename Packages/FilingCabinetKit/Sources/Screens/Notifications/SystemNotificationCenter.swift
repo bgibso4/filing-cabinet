@@ -21,7 +21,6 @@ public struct SystemNotificationCenter: CleanupNotifying {
         }
     }
 
-    // periphery:ignore - first called by Task 14 (CleanupNotifier)
     public func replacePending(with notices: [ScheduledNotice]) async {
         let center = UNUserNotificationCenter.current()
         let stale = await center.pendingNotificationRequests().map(\.identifier).filter(Self.isCleanup)

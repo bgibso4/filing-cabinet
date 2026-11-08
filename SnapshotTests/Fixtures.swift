@@ -13,6 +13,8 @@ enum Fixtures {
     enum FixtureSet {
         /// Home 02-02: Wallet 6, Receipts 23, Notes 41, Documents 18, Throwaways 3 (91 in all).
         case home
+        /// Home 02-04: the `home` library and four Throwaways that went to Trash on their own 2 to 5 days ago.
+        case afterCleanup
         /// Trash 09-01: seven scans with 2 to 29 days left.
         case trash
         /// Trash 09-01 and three more, so the last row rests under Empty Trash.
@@ -129,6 +131,14 @@ enum Fixtures {
         trashed("Gym membership", "scan-gym", .wallet, daysLeft: 29),
     ]
 
+    /// Throwaways keep a week, so one scanned `n` days ago entered Trash on its own `n - 7` days ago.
+    private static let afterCleanupEntries: [Entry] =
+        homeEntries
+        + [9, 10, 11, 12].enumerated().map { index, daysAgo in
+            let sample = throwaways[index % throwaways.count]
+            return entry(sample.title, sample.image, .throwaways, daysAgo)
+        }
+
     private static let coatCheckEntry = trashed("Coat check", "scan-throw-coat", .throwaways, daysLeft: 5)
 
     private static let fullTrashEntries: [Entry] =
@@ -168,6 +178,7 @@ enum Fixtures {
     private static func entries(_ set: FixtureSet) -> [Entry] {
         switch set {
         case .home: homeEntries
+        case .afterCleanup: afterCleanupEntries
         case .trash: trashEntries
         case .fullTrash: fullTrashEntries
         }

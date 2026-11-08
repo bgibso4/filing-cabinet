@@ -25,6 +25,18 @@
         }
       }
     },
+    "%lld scans moved to Trash" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan moved to Trash" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans moved to Trash" } }
+            }
+          }
+        }
+      }
+    },
     "%lld years" : {
       "localizations" : {
         "en" : {

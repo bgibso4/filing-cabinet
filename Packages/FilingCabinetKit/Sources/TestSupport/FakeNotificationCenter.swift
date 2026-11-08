@@ -20,7 +20,6 @@ public final class FakeNotificationCenter: CleanupNotifying {
 
     package var requestCount: Int { state.withLock { $0.requestCount } }
 
-    // periphery:ignore - first used by Task 14 (CleanupNotifier tests)
     /// Every `replacePending` argument, in call order.
     package var replacements: [[ScheduledNotice]] { state.withLock { $0.replacements } }
 
@@ -36,7 +35,6 @@ public final class FakeNotificationCenter: CleanupNotifying {
         }
     }
 
-    // periphery:ignore - first used by Task 14 (CleanupNotifier tests)
     public func replacePending(with notices: [ScheduledNotice]) async {
         state.withLock { $0.replacements.append(notices) }
     }

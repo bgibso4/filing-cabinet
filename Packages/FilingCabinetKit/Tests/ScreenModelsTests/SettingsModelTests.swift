@@ -25,19 +25,6 @@ private func scan(_ collection: BuiltInCollection, daysOld: Int) -> ScanSummary 
         pageCount: 1)
 }
 
-/// Defaults no other test sees. They are emptied when made and on `cleanUp()`, so no file stays behind.
-private struct FreshDefaults {
-    let suite = "SettingsModelTests-\(UUID().uuidString)"
-    let defaults: UserDefaults
-
-    init() throws {
-        defaults = try #require(UserDefaults(suiteName: suite))
-        defaults.removePersistentDomain(forName: suite)
-    }
-
-    func cleanUp() { defaults.removePersistentDomain(forName: suite) }
-}
-
 @MainActor
 private struct SettingsHarness {
     let preferences: AppPreferences

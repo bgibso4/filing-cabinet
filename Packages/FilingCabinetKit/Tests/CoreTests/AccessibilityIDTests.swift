@@ -12,6 +12,7 @@ import Testing
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.scan))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.recentRow))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.allRow))
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.cleanupBanner))
 }
 
 @Test func cameraIdentifiersArePrefixedAndInAll() {

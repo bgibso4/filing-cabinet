@@ -12,15 +12,26 @@ public final class HomeModel {
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
+    private let cleanupBanner: CleanupBanner?
     /// The scans Home shows while held; nil when it follows the library.
     private var heldScans: [ScanSummary]?
     /// Per collection, how many times a release found its count higher: each row's pop trigger.
     private var pulses: [BuiltInCollection: Int] = [:]
 
-    public init(library: any ScanLibrary, today: Today, calendar: Calendar) {
+    /// `banner` is the line after a cleanup; nil leaves Home without one.
+    public init(library: any ScanLibrary, today: Today, calendar: Calendar, banner: CleanupBanner? = nil) {
         self.library = library
         self.today = today
         self.calendar = calendar
+        cleanupBanner = banner
+    }
+
+    /// "4 scans moved to Trash" under the title (02-04), or nil.
+    package var banner: String? { cleanupBanner?.text }
+
+    /// The banner's View: Trash is about to show what it reported.
+    package func clearBanner() {
+        cleanupBanner?.clear()
     }
 
     /// True when no scan is visible: Home shows descriptions and no views.

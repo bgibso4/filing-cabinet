@@ -12,11 +12,16 @@ public final class AppPreferences {
     }
 
     /// The last day whose cleanup Home's banner has already reported (Task 14), so it counts only what is new.
-    package var cleanupSeenThrough: CalendarDay? {
+    public var cleanupSeenThrough: CalendarDay? {
         didSet { defaults.set(cleanupSeenThrough?.storageValue, forKey: Key.cleanupSeenThrough) }
     }
 
     @ObservationIgnored private let defaults: UserDefaults
+
+    /// Whether cleanup notes reach the person: they want them and iOS allows them.
+    package func notesReach(given authorization: NotificationAuthorization) -> Bool {
+        notificationsOn && authorization == .authorized
+    }
 
     public init(defaults: UserDefaults) {
         self.defaults = defaults

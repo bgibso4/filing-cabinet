@@ -9,13 +9,15 @@ public enum AccessibilityID {
         public static let trashRow = "home.trash"
         /// The gear beside the title.
         public static let settings = "home.settings"
+        /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
+        public static let cleanupBanner = "home.cleanupBanner"
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings] + BuiltInCollection.allCases.map(collectionRow)
+            [scan, recentRow, allRow, trashRow, settings, cleanupBanner] + BuiltInCollection.allCases.map(collectionRow)
         }
     }
 

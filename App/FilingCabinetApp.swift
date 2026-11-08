@@ -13,10 +13,13 @@ struct FilingCabinetApp: App {
         WindowGroup {
             RootView(dependencies: environment.root, canScan: environment.isReady)
                 .task { await environment.launch() }
+                .task { await environment.notifier.run() }
                 .task {
-                    // Midnight, a time zone change or a clock change: the system posts a day change (M5).
+                    // Midnight, a time zone change or a clock change: the system posts a day change (M5). A zone
+                    // change can move the day a scan enters Trash even when today stays, so notes are planned again.
                     for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {
                         environment.today.refresh()
+                        environment.notifier.reschedule()
                     }
                 }
                 .id(generation)
@@ -27,9 +30,15 @@ struct FilingCabinetApp: App {
                 }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                environment.today.refresh()
+            switch phase {
+            case .active:
                 environment.lifecycle.sceneBecameActive()
+                Task { await environment.becameActive() }
+            case .background:
+                // Leaving the app clears Home's cleanup banner (M4).
+                environment.banner.clear()
+            default:
+                break
             }
         }
     }

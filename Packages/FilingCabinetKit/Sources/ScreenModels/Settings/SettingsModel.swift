@@ -24,7 +24,7 @@ public final class SettingsModel {
     package var collectionsCount: Int { BuiltInCollection.allCases.count }
 
     /// On only when the person wants notes and iOS allows them.
-    package var notificationsSwitchIsOn: Bool { preferences.notificationsOn && authorization == .authorized }
+    package var notificationsSwitchIsOn: Bool { preferences.notesReach(given: authorization) }
 
     package var notificationsNote: String {
         authorization == .denied

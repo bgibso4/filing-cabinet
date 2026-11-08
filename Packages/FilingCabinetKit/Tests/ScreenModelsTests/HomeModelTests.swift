@@ -195,3 +195,30 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     #expect(home.rows[1].detail == .count(2))
     #expect(home.rows.map(\.pulse) == [0, 1, 0, 0, 0])
 }
+
+@Test func noBannerWithoutACleanup() {
+    #expect(model(scans(.receipts, 1)).banner == nil)
+}
+
+@Test func theBannerShowsUntilCleared() async throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let preferences = AppPreferences(defaults: fresh.defaults)
+    let oct12 = CalendarDay(noon, in: utc)
+    preferences.cleanupSeenThrough = oct12.adding(days: -14, in: utc)
+    // Throwaways last a week: one scanned 9 days ago entered Trash on its own 2 days ago.
+    let library = FakeLibrary(scans: scans(.throwaways, 1, daysAgo: 9) + scans(.wallet, 1))
+    let today = Today(clock: AppClock.fixed(noon, calendar: utc))
+    let banner = CleanupBanner(
+        library: library,
+        today: today,
+        preferences: preferences,
+        notifications: FakeNotificationCenter(authorization: .denied))
+    await banner.refreshAuthorization()
+    let home = HomeModel(library: library, today: today, calendar: utc, banner: banner)
+    #expect(home.banner == "1 scan moved to Trash")
+
+    home.clearBanner()
+
+    #expect(home.banner == nil)
+}

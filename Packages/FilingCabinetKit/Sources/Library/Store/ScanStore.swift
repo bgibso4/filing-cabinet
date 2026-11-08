@@ -352,7 +352,7 @@ extension ScanStore {
     /// Deletes every scan past its 30 days in Trash, as `deleteNow` does, and returns how many. Run after
     /// `removeOrphanedFiles()`: an interrupted purge leaves only orphaned files. A failure is logged and
     /// deletes nothing.
-    package func purgeTrash() async -> Int {
+    public func purgeTrash() async -> Int {
         let signpost = LibraryLog.signposter.beginInterval("Purge", id: LibraryLog.signposter.makeSignpostID())
         defer { LibraryLog.signposter.endInterval("Purge", signpost) }
         do {

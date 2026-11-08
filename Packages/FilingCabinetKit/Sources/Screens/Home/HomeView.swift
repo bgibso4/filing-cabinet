@@ -20,6 +20,11 @@ public struct HomeView: View {
     private static let viewsTopGap: CGFloat = 16
     // 02-04 (Home.dc.html's after-a-cleanup state): the gear is a 44 pt glass circle at the title's right.
     private static let gearDiameter: CGFloat = 44
+    // Home.dc.html line 27: the cleanup banner is a 44 pt link tucked 8 pt up under the title and 6 pt over what
+    // follows.
+    private static let bannerMinHeight: CGFloat = 44
+    private static let bannerTopOverlap: CGFloat = -8
+    private static let bannerBottomOverlap: CGFloat = -6
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -58,6 +63,9 @@ public struct HomeView: View {
                         onOpen(.settings)
                     }
                 }
+                if let banner = model.banner {
+                    cleanupBanner(banner)
+                }
                 Text("Collections", bundle: #bundle)
                     .font(Tokens.Typography.title2)
                     .foregroundStyle(Tokens.Color.textPrimary)
@@ -69,6 +77,25 @@ public struct HomeView: View {
             }
             .padding(.horizontal, Tokens.Spacing.s4)
         }
+    }
+
+    /// 02-04: "4 scans moved to Trash · View" under the title. View opens Trash and clears it.
+    private func cleanupBanner(_ text: String) -> some View {
+        Button {
+            model.clearBanner()
+            onOpen(.trash)
+        } label: {
+            let view = Text("View", bundle: #bundle).fontWeight(.semibold).foregroundStyle(Tokens.Color.textPrimary)
+            Text("\(text) · \(view)", bundle: #bundle)
+                .font(Tokens.Typography.subheadline)
+                .foregroundStyle(Tokens.Color.textSecondary)
+                .frame(minHeight: Self.bannerMinHeight, alignment: .leading)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(AccessibilityID.Home.cleanupBanner)
+        .padding(.top, Self.bannerTopOverlap)
+        .padding(.bottom, Self.bannerBottomOverlap)
     }
 
     private var collections: some View {
