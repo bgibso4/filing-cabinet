@@ -184,6 +184,12 @@ SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
 
 ci-sim: generate
 	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
+	# Boot the simulator and wait until it has finished booting. Left to xcodebuild on a slow CI runner, the UI test
+	# runner once started before accessibility had loaded and failed before any test ran (#43).
+	# By ID: the CI image has an iPhone 17 for more than one iOS version.
+	udid="$$(xcrun simctl list devices 'iOS $(SIM_OS)' | grep -F '    $(SIM_DEVICE) (' | head -1 | grep -oE '[0-9A-F-]{36}')"; \
+		[ -n "$$udid" ] || { echo "error: no $(SIM_DEVICE) on iOS $(SIM_OS)" >&2; exit 1; }; \
+		xcrun simctl bootstatus "$$udid" -b
 	$(MAKE) --no-print-directory full-run ONLY='$(SHARD_ONLY_$(SHARD))' SKIP='$(SHARD_SKIP_$(SHARD))'
 	$(MAKE) --no-print-directory check-resolved
 
