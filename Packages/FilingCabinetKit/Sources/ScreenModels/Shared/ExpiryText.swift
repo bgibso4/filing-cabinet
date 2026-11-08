@@ -10,7 +10,7 @@ enum ExpiryText {
 
     /// The Review row's value: "3 months · until Jan 9", "Kept forever" or, for a chosen date, "Until Mar 3".
     static func reviewValue(
-        collection: BuiltInCollection,
+        collectionLifespan: Lifespan,
         override: ExpiryOverride?,
         scanDay: CalendarDay,
         today: CalendarDay,
@@ -24,10 +24,10 @@ enum ExpiryText {
         case .lifespan(let chosen):
             lifespan = chosen
         case nil:
-            lifespan = collection.lifespan
+            lifespan = collectionLifespan
         }
         let lastDay = Expiry.lastDay(
-            scanDay: scanDay, collectionLifespan: collection.lifespan, override: override, in: clock.calendar)
+            scanDay: scanDay, collectionLifespan: collectionLifespan, override: override, in: clock.calendar)
         guard let lastDay else { return CollectionText.lifespanShort(.forever) }
         let date = untilDate(lastDay, today: today, clock: clock)
         return String(

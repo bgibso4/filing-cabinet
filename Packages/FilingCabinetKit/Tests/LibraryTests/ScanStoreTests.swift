@@ -9,38 +9,6 @@ import Testing
 
 @testable import Library
 
-/// A fresh, empty library location under the temporary directory.
-private func temporaryLocation() -> LibraryLocation {
-    let base = FileManager.default.temporaryDirectory.appending(path: "ScanStoreTests-\(UUID().uuidString)")
-    return LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
-}
-
-/// A small page, so encoding stays quick.
-private func smallPage() -> CGImage {
-    SyntheticPages.page(lines: [], size: CGSize(width: 120, height: 160))
-}
-
-private func draft(
-    _ title: String = "City Pharmacy",
-    scannedAt: Date = Date(timeIntervalSince1970: 1_000),
-    pages: Int = 1,
-    searchText: String? = nil
-) -> ScanDraft {
-    ScanDraft(
-        id: ScanID(),
-        title: title,
-        collection: .receipts,
-        scannedAt: scannedAt,
-        expiryOverride: nil,
-        pages: Array(repeating: smallPage(), count: pages),
-        searchText: searchText
-    )
-}
-
-private func exists(_ url: URL) -> Bool {
-    FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
-}
-
 /// The real disk, recording every file written.
 private struct RecordingFileSystem: FileSystem {
     final class Log: Sendable {
@@ -96,9 +64,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
 @MainActor
 @Test func savedScanAppearsNewestFirst() async throws {
     let location = temporaryLocation()
-    let store = ScanStore(
-        container: try ScanStore.makeContainer(storeURL: nil),
-        files: PageFileStore(location: location, fileSystem: LocalFileSystem()))
+    let store = try makeStore(location: location)
     let older = draft("Older", scannedAt: Date(timeIntervalSince1970: 1_000), pages: 2)
     let newer = draft("Newer", scannedAt: Date(timeIntervalSince1970: 2_000))
 
@@ -127,6 +93,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
     let store = ScanStore(
         container: try ScanStore.makeContainer(storeURL: nil),
         files: PageFileStore(location: location, fileSystem: fileSystem),
+        clock: octoberTwelfth,
         persist: { context in
             writesAtPersist = fileSystem.log.writes.withLock { $0 }
             insertedAtPersist = context.insertedModelsArray.count
@@ -149,6 +116,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
     let store = ScanStore(
         container: container,
         files: PageFileStore(location: location, fileSystem: FailOnceFileSystem(LocalFileSystem())),
+        clock: octoberTwelfth,
         persist: { context in
             persisted = true
             try context.save()
@@ -173,6 +141,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
     let store = ScanStore(
         container: container,
         files: PageFileStore(location: location, fileSystem: LocalFileSystem()),
+        clock: octoberTwelfth,
         persist: { _ in throw PersistFailed() })
     let scan = draft(pages: 2)
 
@@ -191,9 +160,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
 @MainActor
 @Test func orphanedFoldersAreRemovedAtLaunch() async throws {
     let location = temporaryLocation()
-    let store = ScanStore(
-        container: try ScanStore.makeContainer(storeURL: nil),
-        files: PageFileStore(location: location, fileSystem: LocalFileSystem()))
+    let store = try makeStore(location: location)
     let real = draft()
     try await store.save(real)
     // Killed between writing files and inserting the record: originals and thumbnails with no record.
@@ -217,6 +184,35 @@ private func persistedCount(in container: ModelContainer) -> Int {
 }
 
 @MainActor
+@Test func orphanCleanupFetchesOnce() async throws {
+    let location = temporaryLocation()
+    var fetches = 0
+    let store = ScanStore(
+        container: try ScanStore.makeContainer(storeURL: nil),
+        files: PageFileStore(location: location, fileSystem: LocalFileSystem()),
+        clock: octoberTwelfth,
+        persist: nil,
+        fetch: { context, descriptor in
+            fetches += 1
+            return try context.fetch(descriptor)
+        })
+    let real = draft()
+    try await store.save(real)
+    let orphans = (1...99).map { _ in ScanID() }
+    for orphan in orphans {
+        try FileManager.default.createDirectory(at: location.originals(for: orphan), withIntermediateDirectories: true)
+    }
+    let fetchesBefore = fetches
+
+    await store.removeOrphanedFiles()
+
+    #expect(fetches - fetchesBefore == 1)
+    #expect(!orphans.contains { exists(location.originals(for: $0)) })
+    #expect(exists(location.originals(for: real.id).appending(path: "page-1.heic")))
+    #expect(store.scans.map(\.id) == [real.id])
+}
+
+@MainActor
 @Test func cleanupSkipsASaveInFlight() async throws {
     let location = temporaryLocation()
     let (written, writtenContinuation) = AsyncStream.makeStream(of: Void.self)
@@ -225,7 +221,8 @@ private func persistedCount(in container: ModelContainer) -> Int {
         container: try ScanStore.makeContainer(storeURL: nil),
         files: PageFileStore(
             location: location,
-            fileSystem: HoldingFileSystem(holdAfter: "page-1.jpg", written: writtenContinuation, release: release)))
+            fileSystem: HoldingFileSystem(holdAfter: "page-1.jpg", written: writtenContinuation, release: release)),
+        clock: octoberTwelfth)
     let scan = draft()
 
     let saving = Task { try await store.save(scan) }
@@ -243,9 +240,7 @@ private func persistedCount(in container: ModelContainer) -> Int {
 @MainActor
 @Test func searchTextCanArriveAfterSave() async throws {
     let container = try ScanStore.makeContainer(storeURL: nil)
-    let store = ScanStore(
-        container: container,
-        files: PageFileStore(location: temporaryLocation(), fileSystem: LocalFileSystem()))
+    let store = try makeStore(container: container)
     let scan = draft(searchText: nil)
     try await store.save(scan)
 
@@ -262,11 +257,13 @@ private func persistedCount(in container: ModelContainer) -> Int {
     let files = PageFileStore(location: location, fileSystem: LocalFileSystem())
     let scan = draft("Bluebird Café", searchText: "bluebird")
     do {
-        let store = ScanStore(container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files)
+        let store = ScanStore(
+            container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files, clock: octoberTwelfth)
         try await store.save(scan)
     }
 
-    let reopened = ScanStore(container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files)
+    let reopened = ScanStore(
+        container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files, clock: octoberTwelfth)
 
     #expect(reopened.scans.map(\.id) == [scan.id])
     #expect(reopened.scans.first?.title == "Bluebird Café")

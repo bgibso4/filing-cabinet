@@ -18,21 +18,26 @@ private let oct12 = CalendarDay(year: 2026, month: 10, day: 12)
 
 @Test func reviewValueForAReceiptScannedOct12() {
     let value = ExpiryText.reviewValue(
-        collection: .receipts, override: nil, scanDay: oct12, today: oct12, clock: clock())
+        collectionLifespan: .threeMonths, override: nil, scanDay: oct12, today: oct12, clock: clock())
     #expect(value == "3 months · until Jan 9, 2027")
 }
 
 @Test func reviewValueForForeverAndLifespanOverride() {
     #expect(
-        ExpiryText.reviewValue(collection: .wallet, override: nil, scanDay: oct12, today: oct12, clock: clock())
+        ExpiryText.reviewValue(
+            collectionLifespan: .forever, override: nil, scanDay: oct12, today: oct12, clock: clock())
             == "Kept forever")
     #expect(
         ExpiryText.reviewValue(
-            collection: .receipts, override: .lifespan(.forever), scanDay: oct12, today: oct12, clock: clock())
+            collectionLifespan: .threeMonths,
+            override: .lifespan(.forever),
+            scanDay: oct12,
+            today: oct12,
+            clock: clock())
             == "Kept forever")
     #expect(
         ExpiryText.reviewValue(
-            collection: .wallet, override: .lifespan(.week), scanDay: oct12, today: oct12, clock: clock())
+            collectionLifespan: .forever, override: .lifespan(.week), scanDay: oct12, today: oct12, clock: clock())
             == "1 week · until Oct 18")
 }
 
@@ -45,7 +50,7 @@ private let oct12 = CalendarDay(year: 2026, month: 10, day: 12)
 @Test func customDateReadsUntil() {
     let mar3 = CalendarDay(year: 2027, month: 3, day: 3)
     let value = ExpiryText.reviewValue(
-        collection: .receipts,
+        collectionLifespan: .threeMonths,
         override: .lastDay(mar3),
         scanDay: oct12,
         today: CalendarDay(year: 2027, month: 1, day: 1),

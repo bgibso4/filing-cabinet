@@ -98,10 +98,7 @@ struct HomeRowView: View {
             HomeCount(count: count)
                 .scaleEffect(isPopped ? Self.popScale : 1)
         }
-        Image(systemName: "chevron.right")
-            .font(Tokens.Typography.footnote.weight(.semibold))
-            .foregroundStyle(Tokens.Color.chevron)
-            .accessibilityHidden(true)
+        DisclosureChevron()
     }
 
     @ViewBuilder

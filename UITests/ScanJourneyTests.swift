@@ -262,6 +262,25 @@ final class ScanJourneyTests: XCTestCase {
         waitForSaveToReturnHome(in: app)
     }
 
+    /// Plan 2 end to end: a saved receipt is renamed in Details, moved to Trash from the viewer, restored from Trash's
+    /// viewer, and is back in Receipts kept forever (M10).
+    func testScanEditTrashRestore() {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+        scanOnePage(in: app)
+        waitForTitle("City Pharmacy", in: app)
+        chooseReceipts(in: app)
+        app.buttons[Review.save].tap()
+        waitForSaveToReturnHome(in: app)
+
+        openOnlyTile(of: .receipts, in: app)
+        renameInDetails(to: "Groceries", in: app)
+        moveToTrashFromTheViewer(in: app)
+        restoreFromTrash("Groceries", in: app)
+
+        // Back in Receipts, and the restore made it Forever.
+        openOnlyTile(of: .receipts, in: app, label: "Groceries, Receipts, Kept forever")
+    }
+
     /// The real Vision reader on the synthetic receipt. 90 s covers Vision's cold start on a CI simulator; if this
     /// proves flaky, raise it rather than widening the wait.
     func testRealVisionReadsTheTitle() {

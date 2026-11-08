@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plan 1 (scan to library) is built on branch `plan-1`; PR #39 is open.** The foundation is merged (PR #1). The plan is `docs/superpowers/plans/2026-11-02-01-scan-to-library.md` (reading copy: https://claude.ai/artifact/KMWMTBS6gjiAHLs9S1M8be). What is left: a local `make ci`, the phone check with Ben (Task 19), CI's Full suite and the whole-branch review. Then merge.
+**Phase: Plan 2 (editing and self-cleaning) is built on branch `plan-2`; PR #57 is open.** Plan 1 is merged (PR #39). The plan is `docs/superpowers/plans/2026-11-07-02-editing-and-self-cleaning.md`. What is left: the phone check with Ben, the whole-branch review and CI's Full suite. Then merge.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.

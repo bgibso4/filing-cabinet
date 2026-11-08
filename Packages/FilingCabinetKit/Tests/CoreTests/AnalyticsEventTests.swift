@@ -46,6 +46,24 @@ private struct Expected {
             payload: [.reason: .token(.init(FailureReason.diskFull))]),
         Expected(
             event: .textReadingFailed(failedPages: 2), name: "textReadingFailed", payload: [.failedPages: .int(2)]),
+        Expected(
+            event: .scanEdited(field: .collection),
+            name: "scanEdited",
+            payload: [.field: .token(.init(EditedField.collection))]),
+        Expected(
+            event: .scanMovedToTrash(collection: .receipts),
+            name: "scanMovedToTrash",
+            payload: [.collection: .token(.init(BuiltInCollection.receipts))]),
+        Expected(event: .scansRestored(count: 2), name: "scansRestored", payload: [.count: .int(2)]),
+        Expected(event: .scansDeleted(count: 3), name: "scansDeleted", payload: [.count: .int(3)]),
+        Expected(event: .trashEmptied(count: 7), name: "trashEmptied", payload: [.count: .int(7)]),
+        Expected(event: .cleanupRan(deleted: 4), name: "cleanupRan", payload: [.count: .int(4)]),
+        Expected(
+            event: .lifespanChanged(collection: .receipts, lifespan: .month),
+            name: "lifespanChanged",
+            payload: [
+                .collection: .token(.init(BuiltInCollection.receipts)), .lifespan: .token(.init(Lifespan.month)),
+            ]),
     ]
     for item in expected {
         #expect(item.event.name == item.name)
@@ -57,4 +75,5 @@ private struct Expected {
     #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])
     #expect(FailureReason.allCases.map(\.rawValue) == ["diskFull", "writeFailed"])
+    #expect(EditedField.allCases.map(\.rawValue) == ["title", "collection", "expiry"])
 }

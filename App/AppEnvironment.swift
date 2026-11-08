@@ -30,13 +30,21 @@ final class AppEnvironment {
     @ObservationIgnored let today: Today
     @ObservationIgnored let store: ScanStore
     @ObservationIgnored let lifecycle: AppLifecycleModel
+    @ObservationIgnored let banner: CleanupBanner
+    @ObservationIgnored let notifier: CleanupNotifier
     @ObservationIgnored let root: RootDependencies
     @ObservationIgnored private let options: LaunchOptions
+    @ObservationIgnored private let preferences: AppPreferences
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
     /// Set by the first `launch()`, so a rebuilt scene doesn't clean up or seed again.
     @ObservationIgnored private var hasLaunched = false
+
+    #if DEBUG
+        /// Under `-UITest`, `-SeedScans` makes Home's banner count what expired in this many days before today.
+        private static let uiTestDaysSinceSeen = 14
+    #endif
 
     /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
     private static let readingWaitLimit = Duration.seconds(1)
@@ -50,43 +58,67 @@ final class AppEnvironment {
         let store = Self.makeStore(
             location: location,
             inMemory: options.isUITest,
-            pageFileSystem: Self.pageFileSystem(fileSystem, options: options)
+            pageFileSystem: Self.pageFileSystem(fileSystem, options: options),
+            clock: clock
         )
         self.analytics = analytics
         self.clock = clock
         let today = Today(clock: clock)
         self.today = today
         self.store = store
-        // Built here so the reader flags apply from launch.
-        let scanReader = Self.makeScanReader(options: options)
         lifecycle = AppLifecycleModel(analytics: analytics)
+        let preferences = AppPreferences(defaults: Self.preferencesDefaults(isUITest: options.isUITest))
+        self.preferences = preferences
+        let notifications = Self.notificationCenter(options: options)
+        let banner = CleanupBanner(
+            library: store, today: today, preferences: preferences, notifications: notifications)
+        self.banner = banner
+        notifier = CleanupNotifier(
+            library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         root = RootDependencies(
-            home: HomeModel(library: store, today: today, calendar: clock.calendar),
-            flow: ScanFlowModel(
-                cameraAccess: Self.cameraAccess(options: options),
-                clock: clock,
-                analytics: analytics,
-                makeReview: { input in
-                    ReviewModel(
-                        input: input,
-                        reader: scanReader,
-                        library: store,
-                        clock: clock,
-                        analytics: analytics,
-                        readingWaitLimit: Self.readingWaitLimit
-                    )
-                }
-            ),
-            makeGrid: { kind in
-                CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar)
+            home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
+            flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
+            makeGrid: { CollectionGridModel(kind: $0, library: store, today: today, calendar: clock.calendar) },
+            makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
+            makeViewer: { id, mode in
+                ViewerModel(
+                    id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics, mode: mode)
             },
-            makeViewer: { id in
-                ViewerModel(id: id, library: store, today: today, calendar: clock.calendar)
+            makeDetails: { id in
+                DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
+            },
+            makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
+            makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
+            makeCollectionSettings: {
+                CollectionSettingsModel(
+                    collection: $0, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion
+        )
+    }
+
+    /// The scan flow, with its reader built here so the reader flags apply from launch.
+    private static func makeFlow(
+        options: LaunchOptions, store: ScanStore, clock: AppClock, analytics: any Analytics
+    ) -> ScanFlowModel {
+        let scanReader = makeScanReader(options: options)
+        return ScanFlowModel(
+            cameraAccess: cameraAccess(options: options),
+            clock: clock,
+            analytics: analytics,
+            makeReview: { input in
+                ReviewModel(
+                    input: input,
+                    reader: scanReader,
+                    library: store,
+                    clock: clock,
+                    analytics: analytics,
+                    readingWaitLimit: readingWaitLimit
+                )
+            }
         )
     }
 
@@ -109,11 +141,13 @@ final class AppEnvironment {
         return Self.make(arguments: arguments)
     }
 
-    /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`) and enables Scan.
+    /// Clears what an interrupted save left behind, deletes what has had its 30 days in Trash, and only then seeds
+    /// (`-SeedScans`, `-SeedTrash`) and enables Scan.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
         await store.removeOrphanedFiles()
+        await purgeTrash()
         #if DEBUG
             if let count = options.seedScans {
                 do {
@@ -123,9 +157,39 @@ final class AppEnvironment {
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
                     )
                 }
+                if options.isUITest {
+                    // As if Home was last seen two weeks ago, so seeded scans that expired since then make a banner.
+                    preferences.cleanupSeenThrough = clock.today.adding(
+                        days: -Self.uiTestDaysSinceSeen, in: clock.calendar)
+                }
+            }
+            if let count = options.seedTrash {
+                do {
+                    try await LibrarySeed.seedTrash(store, count: count, clock: clock)
+                } catch {
+                    Self.logger.error(
+                        "Seeding \(count, privacy: .public) scans in Trash failed: \(error.localizedDescription, privacy: .private)"
+                    )
+                }
             }
         #endif
+        await banner.refreshAuthorization()
         isReady = true
+    }
+
+    /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
+    /// have come meanwhile. Once launch has finished, Trash is purged again.
+    func becameActive() async {
+        notifier.reschedule()
+        await banner.refreshAuthorization()
+        guard isReady else { return }
+        await purgeTrash()
+    }
+
+    /// Deletes every scan past its 30 days in Trash, and reports a pass that deleted any.
+    private func purgeTrash() async {
+        let deleted = await store.purgeTrash()
+        if deleted > 0 { analytics.send(.cleanupRan(deleted: deleted)) }
     }
 
     /// The real library, or a fresh temporary one for UI tests so runs never see each other's files.
@@ -142,13 +206,37 @@ final class AppEnvironment {
         }
     }
 
+    /// The phone's preferences, or for UI tests a suite emptied at each launch, so no run reads or leaves real ones.
+    private static func preferencesDefaults(isUITest: Bool) -> UserDefaults {
+        guard isUITest else { return .standard }
+        let suite = "com.cadre.filingcabinet.UITest"
+        guard let defaults = UserDefaults(suiteName: suite) else {
+            logger.fault("The UI-test preferences suite could not be made")
+            fatalError("Filing Cabinet cannot keep UI-test preferences apart")
+        }
+        defaults.removePersistentDomain(forName: suite)
+        return defaults
+    }
+
+    /// The system's notifications, or a scripted answer for `-Notifications`.
+    private static func notificationCenter(options: LaunchOptions) -> any CleanupNotifying {
+        #if DEBUG
+            if let authorization = options.notifications {
+                return FakeNotificationCenter(authorization: authorization)
+            }
+        #endif
+        return SystemNotificationCenter()
+    }
+
     /// On disk, or in memory for UI tests.
-    private static func makeStore(location: LibraryLocation, inMemory: Bool, pageFileSystem: any FileSystem)
-        -> ScanStore
-    {
+    private static func makeStore(
+        location: LibraryLocation, inMemory: Bool, pageFileSystem: any FileSystem, clock: AppClock
+    ) -> ScanStore {
         do {
             let container = try ScanStore.makeContainer(storeURL: inMemory ? nil : location.storeURL)
-            return ScanStore(container: container, files: PageFileStore(location: location, fileSystem: pageFileSystem))
+            return ScanStore(
+                container: container, files: PageFileStore(location: location, fileSystem: pageFileSystem), clock: clock
+            )
         } catch {
             // Running on without the store would lose every scan saved this session.
             logger.fault("The library store could not be opened: \(error.localizedDescription, privacy: .private)")
