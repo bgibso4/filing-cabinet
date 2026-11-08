@@ -33,6 +33,7 @@ private func expired(entering entry: CalendarDay, trashedDay: CalendarDay? = nil
 @MainActor
 private struct BannerHarness {
     let preferences: AppPreferences
+    let library: FakeLibrary
     let banner: CleanupBanner
     private let fresh: FreshDefaults
 
@@ -47,8 +48,9 @@ private struct BannerHarness {
         preferences = AppPreferences(defaults: fresh.defaults)
         preferences.cleanupSeenThrough = seenThrough
         preferences.notificationsOn = notesOn
+        library = FakeLibrary(scans: scans, clock: clock)
         banner = CleanupBanner(
-            library: FakeLibrary(scans: scans, clock: clock),
+            library: library,
             today: Today(clock: clock),
             preferences: preferences,
             notifications: FakeNotificationCenter(authorization: authorization))
@@ -151,4 +153,17 @@ private struct BannerHarness {
     let harness = try await BannerHarness([expired(entering: day(-30))], seenThrough: day(-40))
     defer { harness.cleanUp() }
     #expect(harness.banner.text == nil)
+}
+
+@MainActor
+@Test func lifespanChangeThatLeavesTheEntryDayStillCounts() async throws {
+    // Its own last day sent it to Trash, so no lifespan moves its entry day: it is still news.
+    let harness = try await BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
+    defer { harness.cleanUp() }
+
+    try harness.library.setLifespan(.year, for: .throwaways)
+    try harness.library.setLifespan(.week, for: .receipts)
+
+    #expect(harness.library.scans.first?.trashedDay == nil)
+    #expect(harness.banner.text == "1 scan moved to Trash")
 }

@@ -21,6 +21,20 @@ import Testing
 }
 
 @MainActor
+@Test func anotherCollectionsChangeLeavesNaturalTrashUnmarked() async throws {
+    let store = try makeStore()
+    // A week from Oct 3: in Trash on its own since Oct 10. A Receipts change doesn't move that day, so nothing is
+    // stored and the scan still counts as having entered on its own (M4, M9).
+    let throwaway = draft("Parking stub", collection: .throwaways, scannedAt: noon(10, 3))
+    try await store.save(throwaway)
+
+    try store.setLifespan(.month, for: .receipts)
+
+    #expect(store.scans.first?.trashedDay == nil)
+    #expect(place(of: throwaway.id, in: store) == .trash(daysLeft: 28, entered: day(10, 10)))
+}
+
+@MainActor
 @Test func shorteningSendsOldScansToTrashToday() async throws {
     let store = try makeStore()
     let old = draft("Corner Market", scannedAt: noon(9, 2))

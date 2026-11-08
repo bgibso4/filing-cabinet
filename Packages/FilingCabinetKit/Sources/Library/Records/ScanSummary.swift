@@ -34,8 +34,9 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
 
 extension ScanSummary {
     /// The Trash day to store when a change (collection, expiry or lifespan) moves the scan's last day to
-    /// `newLastDay` (M1). `lifespans` are the ones before the change. A scan already in Trash keeps its entry day;
-    /// one the change expires enters Trash today, with the full 30 days; any other keeps what it has.
+    /// `newLastDay` (M1). `lifespans` are the ones before the change. A scan already in Trash keeps its entry day,
+    /// stored only when the change would move it, so one that entered on its own still reads that way (M4, M9); one
+    /// the change expires enters Trash today, with the full 30 days; any other keeps what it has.
     package func trashedDay(
         afterLastDayChangesTo newLastDay: CalendarDay?,
         lifespans: CollectionLifespans,
@@ -45,7 +46,9 @@ extension ScanSummary {
         let lastDayNow = lastDay(lifespans: lifespans, in: calendar)
         guard case .library = Lifecycle.place(lastDay: lastDayNow, trashedDay: trashedDay, today: today, in: calendar)
         else {
-            return Lifecycle.entryDay(lastDay: lastDayNow, trashedDay: trashedDay, in: calendar)
+            let entryDay = Lifecycle.entryDay(lastDay: lastDayNow, trashedDay: trashedDay, in: calendar)
+            let entryDayAfter = Lifecycle.entryDay(lastDay: newLastDay, trashedDay: trashedDay, in: calendar)
+            return entryDayAfter == entryDay ? trashedDay : entryDay
         }
         guard case .library = Lifecycle.place(lastDay: newLastDay, trashedDay: trashedDay, today: today, in: calendar)
         else { return today }
