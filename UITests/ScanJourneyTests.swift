@@ -94,6 +94,23 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome()
     }
 
+    /// A second scan after a save opens a camera on screen (regression: the slide-away stayed applied, so the next
+    /// camera opened off screen, a black screen on Ben's phone).
+    func testSecondScanAfterASaveShowsTheCamera() {
+        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
+        scanOnePage(in: app)
+        chooseReceipts(in: app)
+        let save = app.buttons[Review.save]
+        save.tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
+        waitForSaveToReturnHome(in: app)
+
+        app.buttons[AccessibilityID.Home.scan].tap()
+        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
+        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(finish.isHittable, "the second camera is off screen")
+    }
+
     /// Saved inside Receipts, the layer slides back to the grid, which shows the new tile.
     func testSaveInsideItsCollectionEndsOnTheGrid() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
