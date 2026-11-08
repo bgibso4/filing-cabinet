@@ -36,10 +36,10 @@ private func expiring(
         trashedDay: trashedDay)
 }
 
-private func plan(_ scans: [ScanSummary], lifespans: CollectionLifespans = .defaults, limit: Int = 64)
-    -> [ScheduledNotice]
-{
-    CleanupNotices.plan(scans: scans, lifespans: lifespans, today: today, clock: clock, limit: limit)
+private func plan(
+    _ scans: [ScanSummary], lifespans: CollectionLifespans = .defaults, clock: AppClock = clock
+) -> [ScheduledNotice] {
+    CleanupNotices.plan(scans: scans, lifespans: lifespans, today: today, clock: clock)
 }
 
 @Test func oneScanNamesItWithItsNoun() {
@@ -125,8 +125,22 @@ private func plan(_ scans: [ScanSummary], lifespans: CollectionLifespans = .defa
 
 @Test func manualTrashAndRestoredScansAreNotAnnounced() {
     let trashed = expiring("Moved by hand", entering: day(3), trashedDay: day(-1))
-    let expiredAlready = expiring("Already out", entering: today)
-    #expect(plan([trashed, expiredAlready]).isEmpty)
+    // Restore sets the forever override and clears the Trash day.
+    let restored = expiring("Restored", entering: day(3), override: .lifespan(.forever))
+    #expect(plan([trashed, restored]).isEmpty)
+}
+
+@Test func aScanThatEntersTrashTodayIsNotAnnounced() {
+    #expect(plan([expiring("Already out", entering: today)]).isEmpty)
+}
+
+@Test func fireDateIsGregorianAtLocalNineWhateverTheDeviceCalendar() {
+    var buddhist = Calendar(identifier: .buddhist)
+    buddhist.timeZone = utc.timeZone
+    let notices = plan([expiring("City Pharmacy", entering: day(3))], clock: .fixed(noon, calendar: buddhist))
+    #expect(notices[0].fireDate.calendar?.identifier == .gregorian)
+    #expect(notices[0].fireDate.calendar?.timeZone == utc.timeZone)
+    #expect(notices[0].fireDate.year == 2026)
 }
 
 @Test func foreverScansNeverNotify() {

@@ -17,26 +17,30 @@ package enum CleanupNotices {
         limit: Int = defaultLimit
     ) -> [ScheduledNotice] {
         let calendar = clock.calendar
+        // The day's year, month and day are Gregorian (as `CalendarDay` is), whatever the device calendar;
+        // the zone follows the device so 9:00 is local.
+        var gregorian = Calendar(identifier: .gregorian)
+        gregorian.timeZone = calendar.timeZone
         var byEntryDay: [CalendarDay: [ScanSummary]] = [:]
         for scan in scans where scan.trashedDay == nil {
-            guard
-                let entry = Lifecycle.entryDay(
-                    lastDay: scan.lastDay(lifespans: lifespans, in: calendar), trashedDay: nil, in: calendar),
-                entry > today
+            let lastDay = scan.lastDay(lifespans: lifespans, in: calendar)
+            guard case .library = scan.place(lifespans: lifespans, today: today, in: calendar),
+                let entry = Lifecycle.entryDay(lastDay: lastDay, trashedDay: nil, in: calendar)
             else { continue }
             byEntryDay[entry, default: []].append(scan)
         }
         return byEntryDay.keys.sorted().prefix(limit).map { entry in
             let scans = (byEntryDay[entry] ?? []).sorted { ($0.scannedAt, $0.title) < ($1.scannedAt, $1.title) }
-            return notice(for: scans, on: entry)
+            return notice(for: scans, on: entry, calendar: gregorian)
         }
     }
 
-    private static func notice(for scans: [ScanSummary], on entry: CalendarDay) -> ScheduledNotice {
+    private static func notice(for scans: [ScanSummary], on entry: CalendarDay, calendar: Calendar) -> ScheduledNotice {
         let (title, body) = text(for: scans)
         return ScheduledNotice(
             id: "\(ScheduledNotice.idPrefix)\(entry.storageValue)",
-            fireDate: DateComponents(year: entry.year, month: entry.month, day: entry.day, hour: 9, minute: 0),
+            fireDate: DateComponents(
+                calendar: calendar, year: entry.year, month: entry.month, day: entry.day, hour: 9, minute: 0),
             title: title,
             body: body)
     }
