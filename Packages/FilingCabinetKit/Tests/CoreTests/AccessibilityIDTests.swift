@@ -50,3 +50,12 @@ import Testing
     #expect(titles == ["viewer.header.title", "review.pagePill.title"])
     #expect(Set(titles).isDisjoint(with: AccessibilityID.all))
 }
+
+@Test func trashIdentifiersArePrefixedAndTilesAreCheckedByPrefix() {
+    #expect(AccessibilityID.Trash.all.allSatisfy { $0.hasPrefix("trash.") })
+    #expect(Set(AccessibilityID.Trash.all).isSubset(of: AccessibilityID.all))
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.trashRow))
+    let id = ScanID()
+    #expect(AccessibilityID.Trash.tile(id).hasPrefix(AccessibilityID.Trash.tilePrefix))
+    #expect(AccessibilityID.Trash.tile(id) != AccessibilityID.Grid.tile(id))
+}

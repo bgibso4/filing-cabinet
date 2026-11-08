@@ -33,7 +33,15 @@
     "Undo" : {},
     "Zoomed" : {},
     "Move" : {},
-    "Moved to Trash" : {}
+    "Moved to Trash" : {},
+    "Trash" : {},
+    "Select" : {},
+    "Empty Trash" : {},
+    "Trash is empty" : {},
+    "Scans land here when they expire or you move them here. Each one stays %lld days, then it’s deleted." : {},
+    "Open" : {},
+    "Restore" : {},
+    "Delete now" : {}
   },
   "version" : "1.0"
 }

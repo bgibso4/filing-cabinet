@@ -1,9 +1,9 @@
 import Foundation
 
 /// The one rule for where a scan is (library, Trash or gone), from its dates alone.
-package enum Lifecycle {
+public enum Lifecycle {
     /// Days a scan stays in Trash, counting the day it enters.
-    package static let trashDays = 30
+    public static let trashDays = 30
 
     /// The day a scan enters Trash: the stored `trashedDay`, else the day after its last day, else nil
     /// (forever and never trashed).

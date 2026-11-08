@@ -51,6 +51,18 @@ private struct ObservedRemovalFileSystem: FileSystem {
 }
 
 @MainActor
+@Test func moveToTrashOnADayStampsThatDay() async throws {
+    let store = try makeStore()
+    let scan = draft("Corner Market", collection: .documents, scannedAt: noon(10, 6))
+    try await store.save(scan)
+
+    try store.moveToTrash([scan.id], on: day(10, 9))
+
+    #expect(store.scans.first?.trashedDay == day(10, 9))
+    #expect(place(of: scan.id, in: store) == .trash(daysLeft: 27, entered: day(10, 9)))
+}
+
+@MainActor
 @Test func restoreKeepsForeverAndClearsTrash() async throws {
     let store = try makeStore()
     let scan = draft(collection: .receipts, scannedAt: noon(7, 19), expiryOverride: .lifespan(.week))

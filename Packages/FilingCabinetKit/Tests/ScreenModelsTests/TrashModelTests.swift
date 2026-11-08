@@ -65,6 +65,12 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
     #expect(model.tiles.map(\.collection) == [.receipts, .documents, .throwaways])
 }
 
+/// Requirements 06 · Accessibility: a tile reads as one line.
+@Test func aTileReadsTitleCollectionAndDaysLeft() {
+    let model = TrashHarness([coatCheck]).model
+    #expect(model.tiles[0].accessibilityLabel == "Coat check, Throwaways, 28 days left")
+}
+
 @Test func subtitleCountsScans() {
     #expect(TrashHarness(three).model.subtitle == "3 scans · each is deleted after 30 days here")
     #expect(TrashHarness([coatCheck]).model.subtitle == "1 scan · each is deleted after 30 days here")

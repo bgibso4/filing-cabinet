@@ -93,6 +93,11 @@ public struct RootView: View {
             grid(.recent)
         case .all:
             grid(.all)
+        case .trash:
+            // Opening a scan from Trash comes with the Trash viewer (Task 10).
+            GridRoute(makeModel: dependencies.makeTrash) { model in
+                TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { _ in })
+            }
         case .scan(let id):
             ViewerRoute(
                 makeModel: { dependencies.makeViewer(id) },
@@ -104,12 +109,16 @@ public struct RootView: View {
     }
 
     private func grid(_ kind: GridKind) -> some View {
-        CollectionGridView(
-            model: dependencies.makeGrid(kind),
-            thumbnails: dependencies.thumbnails,
-            canScan: canScan,
-            onOpen: { path.append(.scan($0)) },
-            onScan: { Task { await flow.scan(from: .grid, preselected: kind.preselection) } }
-        )
+        GridRoute(
+            makeModel: { dependencies.makeGrid(kind) },
+            content: { model in
+                CollectionGridView(
+                    model: model,
+                    thumbnails: dependencies.thumbnails,
+                    canScan: canScan,
+                    onOpen: { path.append(.scan($0)) },
+                    onScan: { Task { await flow.scan(from: .grid, preselected: kind.preselection) } }
+                )
+            })
     }
 }

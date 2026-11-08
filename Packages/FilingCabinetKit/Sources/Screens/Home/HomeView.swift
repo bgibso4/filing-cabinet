@@ -3,7 +3,7 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// Home: the five collections with their counts, the Recent and All Scans views, and the Scan button. Before the
+/// Home: the five collections with their counts, the Recent, All Scans and Trash views, and the Scan button. Before the
 /// first scan it shows the collections' descriptions instead.
 public struct HomeView: View {
     private let model: HomeModel
@@ -84,6 +84,7 @@ public struct HomeView: View {
         switch row.kind {
         case .recent: .recent
         case .all: .all
+        case .trash: .trash
         }
     }
 }

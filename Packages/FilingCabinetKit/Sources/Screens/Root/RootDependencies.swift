@@ -7,6 +7,7 @@ public struct RootDependencies {
     let home: HomeModel
     let flow: ScanFlowModel
     let makeGrid: (GridKind) -> CollectionGridModel
+    let makeTrash: () -> TrashModel
     let makeViewer: (ScanID) -> ViewerModel
     let makeDetails: (ScanID) -> DetailsModel
     let thumbnails: any ThumbnailProviding
@@ -19,6 +20,7 @@ public struct RootDependencies {
         home: HomeModel,
         flow: ScanFlowModel,
         makeGrid: @escaping (GridKind) -> CollectionGridModel,
+        makeTrash: @escaping () -> TrashModel,
         makeViewer: @escaping (ScanID) -> ViewerModel,
         makeDetails: @escaping (ScanID) -> DetailsModel,
         thumbnails: any ThumbnailProviding,
@@ -29,6 +31,7 @@ public struct RootDependencies {
         self.home = home
         self.flow = flow
         self.makeGrid = makeGrid
+        self.makeTrash = makeTrash
         self.makeViewer = makeViewer
         self.makeDetails = makeDetails
         self.thumbnails = thumbnails

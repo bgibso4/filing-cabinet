@@ -7,7 +7,7 @@ import Observation
 /// Trash. Everything is read from the library and from `Today`, so a scan that leaves Trash overnight leaves the
 /// tiles and the selection with it.
 @Observable
-package final class TrashModel {
+public final class TrashModel {
     /// Set by Delete and Empty Trash; nothing is removed until `performConfirmation()`.
     package private(set) var confirmation: TrashConfirmation?
     /// Set when a write fails; the action changed nothing (M18).
@@ -22,7 +22,7 @@ package final class TrashModel {
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
 
-    package init(library: any ScanLibrary, today: Today, clock: AppClock, analytics: any Analytics) {
+    public init(library: any ScanLibrary, today: Today, clock: AppClock, analytics: any Analytics) {
         self.library = library
         self.today = today
         self.clock = clock
@@ -84,12 +84,12 @@ package final class TrashModel {
     // MARK: Select
 
     /// Select / Cancel. Leaving select mode forgets the ticks.
-    package func toggleSelecting() {
+    public func toggleSelecting() {
         isSelecting.toggle()
         ticked = []
     }
 
-    package func toggle(_ id: ScanID) {
+    public func toggle(_ id: ScanID) {
         guard isSelecting else { return }
         if ticked.contains(id) { ticked.remove(id) } else { ticked.insert(id) }
     }

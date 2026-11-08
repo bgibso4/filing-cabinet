@@ -3,9 +3,10 @@ import Foundation
 
 /// Every collection string: names, descriptions, lifespans and empty states.
 package enum CollectionText {
-    /// The names of Home's two views.
+    /// The names of Home's views.
     package static var recent: String { String(localized: "Recent", bundle: #bundle) }
     package static var allScans: String { String(localized: "All Scans", bundle: #bundle) }
+    package static var trash: String { String(localized: "Trash", bundle: #bundle) }
 
     /// Recent's subtitle.
     static var lastThirtyDays: String { String(localized: "Last 30 days", bundle: #bundle) }

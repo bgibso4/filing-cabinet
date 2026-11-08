@@ -13,6 +13,8 @@ enum Fixtures {
     enum FixtureSet {
         /// Home 02-02: Wallet 6, Receipts 23, Notes 41, Documents 18, Throwaways 3 (91 in all).
         case home
+        /// Trash 09-01: seven scans with 2 to 29 days left.
+        case trash
     }
 
     /// Oct 12, 2026, `en_US`, in GMT so the day never depends on the machine's time zone.
@@ -111,18 +113,48 @@ enum Fixtures {
         }
     }
 
-    private static func entry(_ title: String, _ image: String, _ collection: BuiltInCollection, _ daysAgo: Int)
-        -> Entry
-    {
+    // Trash.dc.html lines 207-215: title, image, collection and days left in Trash.
+    private static let trashEntries: [Entry] = [
+        trashed("Parking stub", "scan-throw-park", .throwaways, daysLeft: 2),
+        trashed("Coat check", "scan-throw-coat", .throwaways, daysLeft: 5),
+        trashed("City Pharmacy", "scan-r-pharmacy", .receipts, daysLeft: 11),
+        trashed("Bluebird Café", "scan-r-bluebird", .receipts, daysLeft: 16),
+        trashed("Old wifi password", "scan-wifi", .notes, daysLeft: 24),
+        trashed("Corner Market", "scan-r-corner", .throwaways, daysLeft: 27),
+        trashed("Gym membership", "scan-gym", .wallet, daysLeft: 29),
+    ]
+
+    private static func entry(
+        _ title: String,
+        _ image: String,
+        _ collection: BuiltInCollection,
+        _ daysAgo: Int,
+        trashedDay: CalendarDay? = nil
+    ) -> Entry {
         let scannedAt = clock.calendar.date(byAdding: .day, value: -daysAgo, to: clock.now()) ?? clock.now()
         let summary = ScanSummary(
-            id: ScanID(), title: title, collection: collection, scannedAt: scannedAt, expiryOverride: nil, pageCount: 1)
+            id: ScanID(),
+            title: title,
+            collection: collection,
+            scannedAt: scannedAt,
+            expiryOverride: nil,
+            pageCount: 1,
+            trashedDay: trashedDay)
         return Entry(summary: summary, image: image)
+    }
+
+    /// Moved to Trash `30 - daysLeft` days ago, from a scan made a while before.
+    private static func trashed(_ title: String, _ image: String, _ collection: BuiltInCollection, daysLeft: Int)
+        -> Entry
+    {
+        let trashedDay = clock.today.adding(days: daysLeft - Lifecycle.trashDays, in: clock.calendar)
+        return entry(title, image, collection, Lifecycle.trashDays + 1, trashedDay: trashedDay)
     }
 
     private static func entries(_ set: FixtureSet) -> [Entry] {
         switch set {
         case .home: homeEntries
+        case .trash: trashEntries
         }
     }
 
@@ -141,7 +173,7 @@ enum Fixtures {
     // MARK: Images
 
     private static let allImages: [ScanID: [Int: CGImage]] = {
-        var all = images(for: .home)
+        var all = images(for: .home).merging(images(for: .trash)) { home, _ in home }
         all[lease.id] = byIndex(scans("scan-lease", "scan-lease-p2", "scan-lease-p3"))
         all[receipt.id] = byIndex(scans("scan-r-corner"))
         return all

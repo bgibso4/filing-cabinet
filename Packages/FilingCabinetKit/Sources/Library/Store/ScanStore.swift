@@ -145,10 +145,14 @@ public final class ScanStore: ScanLibrary {
     }
 
     public func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {
+        try moveToTrash(ids, on: clock.today)
+    }
+
+    /// Moves the scans to Trash as if on `day`: `-SeedTrash` staggers them, so Trash shows a spread of days left.
+    package func moveToTrash(_ ids: [ScanID], on day: CalendarDay) throws(LibraryError) {
         LibraryLog.logger.info(
             "Moving \(ids.count, privacy: .public) scans to Trash: \(Self.list(ids), privacy: .public)")
-        let today = clock.today.storageValue
-        try edit(ids) { $0.trashedDay = today }
+        try edit(ids) { $0.trashedDay = day.storageValue }
     }
 
     public func restore(_ ids: [ScanID]) throws(LibraryError) {

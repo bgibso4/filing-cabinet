@@ -81,6 +81,7 @@ final class AppEnvironment {
             makeGrid: { kind in
                 CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar)
             },
+            makeTrash: { TrashModel(library: store, today: today, clock: clock, analytics: analytics) },
             makeViewer: { id in
                 ViewerModel(id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
@@ -113,7 +114,7 @@ final class AppEnvironment {
         return Self.make(arguments: arguments)
     }
 
-    /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`) and enables Scan.
+    /// Clears what an interrupted save left behind, and only then seeds (`-SeedScans`, `-SeedTrash`) and enables Scan.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
@@ -125,6 +126,15 @@ final class AppEnvironment {
                 } catch {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
+                    )
+                }
+            }
+            if let count = options.seedTrash {
+                do {
+                    try await LibrarySeed.seedTrash(store, count: count, clock: clock)
+                } catch {
+                    Self.logger.error(
+                        "Seeding \(count, privacy: .public) scans in Trash failed: \(error.localizedDescription, privacy: .private)"
                     )
                 }
             }

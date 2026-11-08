@@ -30,3 +30,24 @@ import Testing
     #expect(Set(store.scans.map(\.title)).count == 7)
     #expect(store.scans.allSatisfy { store.pageFileURLs(for: $0.id).count == $0.pageCount })
 }
+
+@MainActor
+@Test func seedTrashMovesEachScanToTrashADayEarlierThanTheLast() async throws {
+    let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
+    let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
+    let store = try makeStore(location: location)
+    let clock = octoberTwelfth
+
+    try await LibrarySeed.seed(store, count: 2, clock: clock)
+    try await LibrarySeed.seedTrash(store, count: 3, clock: clock)
+
+    let trashed = store.scans.filter { $0.trashedDay != nil }
+    #expect(store.scans.count == 5)
+    #expect(
+        Set(trashed.map(\.trashedDay)) == Set((0..<3).map { CalendarDay(year: 2026, month: 10, day: 12 - $0) }))
+    // Every trashed scan was scanned on the day it went to Trash.
+    #expect(trashed.allSatisfy { CalendarDay($0.scannedAt, in: utc) == $0.trashedDay })
+    // Titles never repeat across the two seeds, so a journey can find each scan by its title.
+    #expect(Set(store.scans.map(\.title)).count == 5)
+    #expect(store.scans.allSatisfy { store.pageFileURLs(for: $0.id).count == $0.pageCount })
+}

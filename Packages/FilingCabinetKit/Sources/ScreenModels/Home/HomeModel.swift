@@ -43,12 +43,16 @@ public final class HomeModel {
         }
     }
 
+    /// Recent, All Scans and Trash. With no visible scan only Trash shows, and only while something is in it (M7).
     public var viewRows: [HomeViewRow] {
         let shelf = shelf
-        guard !shelf.visible.isEmpty else { return [] }
+        let trash = HomeViewRow(
+            kind: .trash, name: CollectionText.trash, count: shelf.trash.isEmpty ? nil : shelf.trash.count)
+        guard !shelf.visible.isEmpty else { return shelf.trash.isEmpty ? [] : [trash] }
         return [
             HomeViewRow(kind: .recent, name: CollectionText.recent, count: nil),
             HomeViewRow(kind: .all, name: CollectionText.allScans, count: shelf.visible.count),
+            trash,
         ]
     }
 

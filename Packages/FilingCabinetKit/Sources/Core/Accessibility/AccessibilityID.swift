@@ -5,13 +5,15 @@ public enum AccessibilityID {
         public static let scan = "home.scan"
         public static let recentRow = "home.recent"
         public static let allRow = "home.all"
+        /// Only while the views card shows, or while something is in Trash.
+        public static let trashRow = "home.trash"
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow] + BuiltInCollection.allCases.map(collectionRow)
+            [scan, recentRow, allRow, trashRow] + BuiltInCollection.allCases.map(collectionRow)
         }
     }
 
@@ -121,6 +123,27 @@ public enum AccessibilityID {
         }
     }
 
+    public enum Trash {
+        public static let header = "trash.header"
+        /// Select, or Cancel while selecting; not while Trash is empty.
+        public static let select = "trash.select"
+        /// Only while not selecting and Trash has scans.
+        public static let emptyTrash = "trash.emptyTrash"
+        /// Only while selecting.
+        public static let deleteSelected = "trash.deleteSelected"
+        public static let restoreSelected = "trash.restoreSelected"
+        /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
+        public static let tilePrefix = "trash.tile."
+
+        public static func tile(_ id: ScanID) -> String {
+            tilePrefix + id.uuid.uuidString
+        }
+
+        public static var all: [String] {
+            [header, select, emptyTrash, deleteSelected, restoreSelected]
+        }
+    }
+
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
 
@@ -130,6 +153,6 @@ public enum AccessibilityID {
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
-            ]
+            ] + Trash.all
     }
 }

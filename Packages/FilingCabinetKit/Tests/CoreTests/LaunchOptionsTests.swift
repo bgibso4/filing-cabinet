@@ -10,6 +10,7 @@ private let everyFlag = [
     "-CameraDenied",
     "-FixedDate", "2026-10-12",
     "-SeedScans", "12",
+    "-SeedTrash", "5",
     "-FailSave",
     "-FakeReader",
     "-ReduceMotion",
@@ -26,6 +27,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.cameraDenied)
     #expect(options.fixedDate == octoberTwelfthNoonUTC)
     #expect(options.seedScans == 12)
+    #expect(options.seedTrash == 5)
     #expect(options.failNextSave)
     #expect(options.fakeReader)
     #expect(options.reduceMotion)
@@ -40,6 +42,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(!options.cameraDenied)
     #expect(options.fixedDate == nil)
     #expect(options.seedScans == nil)
+    #expect(options.seedTrash == nil)
     #expect(!options.failNextSave)
     #expect(!options.fakeReader)
     #expect(!options.reduceMotion)
@@ -88,4 +91,12 @@ func fakeCameraOutsideOneToThreeIsIgnored(_ value: String) {
 @Test(arguments: ["-3", "many"])
 func invalidSeedCountIsIgnored(_ value: String) {
     #expect(LaunchOptions(arguments: ["-SeedScans", value], isDebugBuild: true).seedScans == nil)
+}
+
+@Test func parsesSeedTrash() {
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "7"], isDebugBuild: true).seedTrash == 7)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "0"], isDebugBuild: true).seedTrash == 0)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "-2"], isDebugBuild: true).seedTrash == nil)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "some"], isDebugBuild: true).seedTrash == nil)
+    #expect(LaunchOptions(arguments: ["-SeedTrash", "3"], isDebugBuild: false).seedTrash == nil)
 }
