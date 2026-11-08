@@ -24,7 +24,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 Use the `ios-verifier` agent for build/test evidence (see the definition of done in AGENTS.md).
 
-For a task, run the snapshot and UI tests for the screens it touched with `make full ONLY="FilingCabinetUITests/<Class> FilingCabinetSnapshotTests/<Class>"`. CI runs the whole suite on every push.
+For a task, run the snapshot and UI tests for the screens it touched with `make full ONLY="FilingCabinetUITests/<Class> FilingCabinetSnapshotTests/<Class>"`. CI runs `checks` on every push; the simulator suite runs on `main` and once a PR is ready for review (not on drafts, and not when a PR changes only `docs/` and Markdown).
 
 ## Workspace
 
