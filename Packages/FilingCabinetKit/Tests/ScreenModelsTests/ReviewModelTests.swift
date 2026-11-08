@@ -56,6 +56,18 @@ func noReadableTextKeepsFallback() async {
     #expect(harness.model.pageAccessibilityLabel == "Page 2 of 3")
 }
 
+@Test func anotherReviewPageStartsUnzoomed() {
+    let harness = ReviewHarness(pages: [ReviewHarness.page1, ReviewHarness.page2, ReviewHarness.page3])
+    harness.model.isPageZoomed = true
+    harness.model.currentPage = 0
+    #expect(harness.model.isPageZoomed, "the same page stays zoomed")
+    harness.model.currentPage = 1
+    #expect(!harness.model.isPageZoomed)
+    harness.model.isPageZoomed = true
+    harness.model.replacePages([ReviewHarness.page1])
+    #expect(!harness.model.isPageZoomed, "a rescan starts unzoomed")
+}
+
 // MARK: - Collection and expiry
 
 @Test func saveIsOffUntilACollectionIsChosen() {

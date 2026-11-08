@@ -11,8 +11,14 @@ import Understanding
 @Observable
 public final class ReviewModel {
     package private(set) var pages: [CGImage]
-    /// 0-based.
-    package var currentPage = 0
+    /// 0-based. The pager writes it. Another page starts unzoomed.
+    package var currentPage = 0 {
+        didSet {
+            if currentPage != oldValue { isPageZoomed = false }
+        }
+    }
+    /// Whether the current page is zoomed past 1×; the page writes it.
+    package var isPageZoomed = false
     package private(set) var title: String
     /// "Scan · Oct 12": what a scan with no readable title, or a cleared one, is called (A5, M3).
     package let fallbackTitle: String
@@ -248,6 +254,7 @@ public final class ReviewModel {
         reading?.cancel()
         self.pages = pages
         currentPage = 0
+        isPageZoomed = false
         finishedReading = nil
         if !isTitleEdited { title = fallbackTitle }
         beginReading()

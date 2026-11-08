@@ -12,7 +12,10 @@ public struct ReviewView: View {
     private let onSaved: (SavedScan) -> Void
 
     @State private var isConfirmingDiscard = false
+    /// Where a page fits at rest, in global coordinates.
+    @State private var pageRegion = CGRect.zero
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.colorScheme) private var colorScheme
 
     // Review.dc.html lines 211-212: the page is at most 358 pt wide (16 pt in from each side) and, in the sheet state,
     // 332 pt tall, 16 pt below the top buttons.
@@ -38,9 +41,17 @@ public struct ReviewView: View {
         ReviewLayout {
             VStack(spacing: 0) {
                 topBar
-                pages
+                    .environment(\.colorScheme, controlsScheme ?? colorScheme)
+                // Where a page fits at rest; the pager behind everything draws it.
+                Color.clear
                     .frame(maxWidth: Self.pageMaxWidth)
                     .frame(minHeight: Self.pageMinHeight, maxHeight: Self.pageMaxHeight)
+                    // Measured inside the padding: the page fits the region itself.
+                    .onGeometryChange(for: CGRect.self) {
+                        $0.frame(in: .global)
+                    } action: {
+                        pageRegion = $0
+                    }
                     .padding(.top, Tokens.Spacing.s4)
                     .padding(.horizontal, Tokens.Spacing.s4)
                 Spacer(minLength: 0)
@@ -50,6 +61,7 @@ public struct ReviewView: View {
                         pages: model.pages, currentPage: $model.currentPage, label: model.pageAccessibilityLabel
                     )
                     .padding(.vertical, Tokens.Spacing.s3 - PageStripTile.barPadding)
+                    .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
             ReviewSheet(model: model, onSave: save)
@@ -57,6 +69,7 @@ public struct ReviewView: View {
         // The sheet sits 8 pt above the screen's bottom edge, over the home indicator's strip, as in the mock.
         // The keyboard still pushes it up.
         .ignoresSafeArea(.container, edges: .bottom)
+        .background { pager }
         .background(Tokens.Color.bgGrouped)
         // Reading starts as review opens, once per page set (a rescan's pages start their own).
         .task { await model.startReading() }
@@ -84,6 +97,10 @@ public struct ReviewView: View {
             Text(alert.message)
         }
     }
+
+    /// A zoomed page fills the screen with paper, white in both appearances, so the glass controls over it take the
+    /// light appearance, as the viewer's do.
+    private var controlsScheme: ColorScheme? { model.isPageZoomed ? .light : nil }
 
     // MARK: Top
 
@@ -144,23 +161,35 @@ public struct ReviewView: View {
 
     // MARK: Pages
 
-    @ViewBuilder
-    private var pages: some View {
-        if model.pages.count > 1 {
+    /// Full screen behind everything, as in the viewer, so a zoomed page fills the screen under the glass controls (the
+    /// sheet stays on top). At rest each page fits the region the layout keeps for it (`pageRegion`).
+    private var pager: some View {
+        GeometryReader { proxy in
+            let fitInsets = fitInsets(in: proxy.frame(in: .global))
             Pager(count: model.pages.count, selection: $model.currentPage) { index in
-                page(at: index)
+                // The pill says which page this is, so the image itself is not an accessibility element.
+                ZoomablePageView(
+                    image: model.pages[index],
+                    pageKey: index,
+                    isCurrent: index == model.currentPage,
+                    label: nil,
+                    fitInsets: fitInsets
+                ) { isZoomed in
+                    if index == model.currentPage { model.isPageZoomed = isZoomed }
+                }
             }
-        } else {
-            page(at: 0)
         }
+        .ignoresSafeArea()
     }
 
-    /// The pill says which page this is, so the image itself is not an accessibility element.
-    private func page(at index: Int) -> some View {
-        Image(decorative: model.pages[index], scale: 1)
-            .resizable()
-            .scaledToFit()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    /// The page region as insets from the screen's edges.
+    private func fitInsets(in screen: CGRect) -> UIEdgeInsets {
+        guard !pageRegion.isEmpty else { return .zero }
+        return UIEdgeInsets(
+            top: pageRegion.minY - screen.minY,
+            left: pageRegion.minX - screen.minX,
+            bottom: screen.maxY - pageRegion.maxY,
+            right: screen.maxX - pageRegion.maxX)
     }
 
     // MARK: Actions

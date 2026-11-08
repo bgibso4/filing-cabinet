@@ -342,18 +342,6 @@ extension ScanJourneyTests {
         XCTAssertTrue(row.isHittable, line: line)
     }
 
-    /// Taps Scan once launch has enabled it, then Finish on the fake camera, and waits for review.
-    func scanOnePage(in app: XCUIApplication) {
-        let scan = app.buttons[AccessibilityID.Home.scan]
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
-        scan.tap()
-        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
-        finish.tap()
-        XCTAssertTrue(app.buttons[Review.save].waitForExistence(timeout: 5))
-    }
-
     /// Opens Expiry, then "Choose a date…", and waits for the calendar.
     private func openChooseADate(in app: XCUIApplication) {
         app.descendants(matching: .any)[Review.expiry].tap()
