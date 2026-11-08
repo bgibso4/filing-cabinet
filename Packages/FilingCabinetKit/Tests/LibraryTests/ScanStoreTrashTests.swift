@@ -134,3 +134,77 @@ private struct ObservedRemovalFileSystem: FileSystem {
     #expect(store.scans.map(\.id) == [scan.id])
     #expect(exists(location.originals(for: scan.id)))
 }
+
+@MainActor
+@Test func purgeDeletesOnlyGoneScans() async throws {
+    let container = try ScanStore.makeContainer(storeURL: nil)
+    let location = temporaryLocation()
+    let fileSystem = ObservedRemovalFileSystem(container: container)
+    let store = try makeStore(container: container, location: location, fileSystem: fileSystem)
+    // A week from Aug 1: in Trash Aug 8 to Sep 6, so gone by Oct 12.
+    let gone = draft("Parking stub", collection: .throwaways, scannedAt: noon(8, 1))
+    // A week from Oct 3: in Trash since Oct 10.
+    let inTrash = draft("Coat check", collection: .throwaways, scannedAt: noon(10, 3))
+    let kept = draft("Lease 2026", collection: .documents, scannedAt: noon(8, 1))
+    for scan in [gone, inTrash, kept] { try await store.save(scan) }
+
+    let purged = await store.purgeTrash()
+
+    #expect(purged == 1)
+    #expect(Set(store.scans.map(\.id)) == [inTrash.id, kept.id])
+    // Both of the gone scan's folders went after its record was persisted gone.
+    #expect(fileSystem.log.recordsAtRemoval.withLock { $0 } == [2, 2])
+    #expect(!exists(location.originals(for: gone.id)))
+    #expect(exists(location.originals(for: inTrash.id)))
+    #expect(exists(location.originals(for: kept.id)))
+}
+
+@MainActor
+@Test func purgeWithNothingGoneDeletesNothing() async throws {
+    let store = try makeStore()
+    try await store.save(draft("Coat check", collection: .throwaways, scannedAt: noon(10, 3)))
+
+    #expect(await store.purgeTrash() == 0)
+    #expect(store.scans.count == 1)
+}
+
+@MainActor
+@Test func emptyTrashDeletesEveryTrashedScan() async throws {
+    let location = temporaryLocation()
+    let store = try makeStore(location: location)
+    let moved = draft("Lease 2025", collection: .documents, scannedAt: noon(10, 1))
+    let expired = draft("Coat check", collection: .throwaways, scannedAt: noon(10, 3))
+    let kept = draft("Lease 2026", collection: .documents, scannedAt: noon(10, 2))
+    for scan in [moved, expired, kept] { try await store.save(scan) }
+    try store.moveToTrash([moved.id])
+
+    let deleted = try await store.emptyTrash()
+
+    #expect(deleted == 2)
+    #expect(store.scans.map(\.id) == [kept.id])
+    #expect(!exists(location.originals(for: moved.id)))
+    #expect(!exists(location.originals(for: expired.id)))
+    #expect(exists(location.originals(for: kept.id)))
+}
+
+@MainActor
+@Test func failedEmptyTrashKeepsEverything() async throws {
+    var failPersist = false
+    let location = temporaryLocation()
+    let store = try makeStore(
+        location: location,
+        persist: { context in
+            if failPersist { throw CocoaError(.fileWriteUnknown) }
+            try context.save()
+        })
+    let expired = draft("Coat check", collection: .throwaways, scannedAt: noon(10, 3))
+    try await store.save(expired)
+    failPersist = true
+
+    await #expect(throws: LibraryError.writeFailed) {
+        try await store.emptyTrash()
+    }
+
+    #expect(store.scans.map(\.id) == [expired.id])
+    #expect(exists(location.originals(for: expired.id)))
+}

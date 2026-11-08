@@ -11,7 +11,7 @@ public final class FakeLibrary: ScanLibrary {
     public private(set) var scans: [ScanSummary]
     /// Thrown by the next `save`, which then keeps nothing, as the real store does.
     package var failNextSave: LibraryError?
-    /// Thrown by the next edit (rename to Delete now), which then changes nothing, as the real store does.
+    /// Thrown by the next edit (rename to Delete now, Empty Trash, a lifespan), which then changes nothing, as the real store does.
     package var failNextEdit: LibraryError?
     /// How long each `save` takes before its record exists, so a test can finish reading mid-save.
     package var saveDelay = Duration.zero
@@ -33,7 +33,7 @@ public final class FakeLibrary: ScanLibrary {
         self.clock = clock
     }
 
-    public var lifespans: CollectionLifespans { .defaults }
+    public private(set) var lifespans: CollectionLifespans = .defaults
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
         if saveDelay > .zero {
@@ -90,6 +90,33 @@ public final class FakeLibrary: ScanLibrary {
     public func deleteNow(_ ids: [ScanID]) async throws(LibraryError) {
         try spendFailure()
         scans.removeAll { ids.contains($0.id) }
+    }
+
+    public func emptyTrash() async throws(LibraryError) -> Int {
+        try spendFailure()
+        let before = scans.count
+        scans.removeAll { scan in
+            if case .library = scan.place(lifespans: lifespans, today: clock.today, in: clock.calendar) { return false }
+            return true
+        }
+        return before - scans.count
+    }
+
+    public func setLifespan(_ lifespan: Lifespan, for collection: BuiltInCollection) throws(LibraryError) {
+        try spendFailure()
+        let changed = lifespans.setting(lifespan, for: collection)
+        for index in scans.indices {
+            scans[index].trashedDay = scans[index].trashedDay(
+                afterLifespansChangeTo: changed, from: lifespans, today: clock.today, in: clock.calendar)
+        }
+        lifespans = changed
+    }
+
+    public func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int {
+        let changed = lifespans.setting(lifespan, for: collection)
+        return scans.count {
+            $0.entersTrash(ifLifespansChangeTo: changed, from: lifespans, today: clock.today, in: clock.calendar)
+        }
     }
 
     /// Changes each listed scan, unless `failNextEdit` fails it first.

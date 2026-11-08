@@ -52,6 +52,38 @@ extension ScanSummary {
         return trashedDay
     }
 
+    /// The Trash day to store when the collection lifespans change from `lifespans` to `newLifespans` (M1).
+    package func trashedDay(
+        afterLifespansChangeTo newLifespans: CollectionLifespans,
+        from lifespans: CollectionLifespans,
+        today: CalendarDay,
+        in calendar: Calendar
+    ) -> CalendarDay? {
+        trashedDay(
+            afterLastDayChangesTo: lastDay(lifespans: newLifespans, in: calendar),
+            lifespans: lifespans,
+            today: today,
+            in: calendar)
+    }
+
+    /// Whether changing the collection lifespans from `lifespans` to `newLifespans` sends this scan from the
+    /// library to Trash today (M1).
+    package func entersTrash(
+        ifLifespansChangeTo newLifespans: CollectionLifespans,
+        from lifespans: CollectionLifespans,
+        today: CalendarDay,
+        in calendar: Calendar
+    ) -> Bool {
+        guard case .library = place(lifespans: lifespans, today: today, in: calendar) else { return false }
+        return trashedDay(afterLifespansChangeTo: newLifespans, from: lifespans, today: today, in: calendar) == today
+    }
+
+    /// Where the scan is on `today` under `lifespans`.
+    package func place(lifespans: CollectionLifespans, today: CalendarDay, in calendar: Calendar) -> ScanPlace {
+        Lifecycle.place(
+            lastDay: lastDay(lifespans: lifespans, in: calendar), trashedDay: trashedDay, today: today, in: calendar)
+    }
+
     /// The scan's last day under `lifespans`; nil when it is kept forever.
     package func lastDay(lifespans: CollectionLifespans, in calendar: Calendar) -> CalendarDay? {
         Expiry.lastDay(

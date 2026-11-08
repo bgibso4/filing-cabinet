@@ -101,6 +101,9 @@ private final class PreviewLibrary: ScanLibrary {
     func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {}
     func restore(_ ids: [ScanID]) throws(LibraryError) {}
     func deleteNow(_ ids: [ScanID]) async throws(LibraryError) {}
+    func emptyTrash() async throws(LibraryError) -> Int { 0 }
+    func setLifespan(_ lifespan: Lifespan, for collection: BuiltInCollection) throws(LibraryError) {}
+    func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int { 0 }
 }
 
 @MainActor

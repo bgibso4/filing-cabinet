@@ -40,4 +40,17 @@ public protocol ScanLibrary: AnyObject {
     /// Removes the records, then the files (M11): a failure after the records are gone leaves only orphaned
     /// files, which launch cleanup removes.
     func deleteNow(_ ids: [ScanID]) async throws(LibraryError)
+
+    // periphery:ignore - first called by Task 8 (Trash model); the Library tests exercise it now
+    /// Deletes every scan in Trash, as `deleteNow` does, and returns how many.
+    func emptyTrash() async throws(LibraryError) -> Int
+
+    // periphery:ignore - first called by Task 11 (Settings › Collections); the Library tests exercise it now
+    /// Gives the collection a new lifespan (M1): scans already in Trash keep their entry day, and scans on the
+    /// collection's lifespan that the change expires enter Trash today. Scans with their own expiry keep it.
+    func setLifespan(_ lifespan: Lifespan, for collection: BuiltInCollection) throws(LibraryError)
+
+    // periphery:ignore - first called by Task 11 (Settings › Collections); the Library tests exercise it now
+    /// How many scans in the library `setLifespan` would send to Trash today.
+    func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int
 }
