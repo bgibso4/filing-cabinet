@@ -13,6 +13,12 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case scanEdited(field: EditedField)
     /// The viewer's Trash button; a collection move into Trash reports `scanEdited` instead.
     case scanMovedToTrash(collection: BuiltInCollection)
+    /// Trash's Restore, from a selection or one scan.
+    case scansRestored(count: Int)
+    /// Trash's Delete now, from a selection or one scan.
+    case scansDeleted(count: Int)
+    /// Trash's Empty Trash.
+    case trashEmptied(count: Int)
 
     public var name: String {
         switch self {
@@ -26,6 +32,9 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .textReadingFailed: "textReadingFailed"
         case .scanEdited: "scanEdited"
         case .scanMovedToTrash: "scanMovedToTrash"
+        case .scansRestored: "scansRestored"
+        case .scansDeleted: "scansDeleted"
+        case .trashEmptied: "trashEmptied"
         }
     }
 
@@ -40,6 +49,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .textReadingFailed(let failedPages): [.failedPages: .int(failedPages)]
         case .scanEdited(let field): [.field: .token(.init(field))]
         case .scanMovedToTrash(let collection): [.collection: .token(.init(collection))]
+        case .scansRestored(let count), .scansDeleted(let count), .trashEmptied(let count): [.count: .int(count)]
         }
     }
 }

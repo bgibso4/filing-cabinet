@@ -54,6 +54,9 @@ private struct Expected {
             event: .scanMovedToTrash(collection: .receipts),
             name: "scanMovedToTrash",
             payload: [.collection: .token(.init(BuiltInCollection.receipts))]),
+        Expected(event: .scansRestored(count: 2), name: "scansRestored", payload: [.count: .int(2)]),
+        Expected(event: .scansDeleted(count: 3), name: "scansDeleted", payload: [.count: .int(3)]),
+        Expected(event: .trashEmptied(count: 7), name: "trashEmptied", payload: [.count: .int(7)]),
     ]
     for item in expected {
         #expect(item.event.name == item.name)

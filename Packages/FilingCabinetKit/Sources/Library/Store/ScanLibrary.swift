@@ -29,16 +29,13 @@ public protocol ScanLibrary: AnyObject {
     /// The scans enter Trash today.
     func moveToTrash(_ ids: [ScanID]) throws(LibraryError)
 
-    // periphery:ignore - first called by Task 8 (Trash model); the Library tests exercise it now
     /// Back to the library, kept forever, in the same collection (M10).
     func restore(_ ids: [ScanID]) throws(LibraryError)
 
-    // periphery:ignore - first called by Task 8 (Trash model); the Library tests exercise it now
     /// Removes the records, then the files (M11): a failure after the records are gone leaves only orphaned
     /// files, which launch cleanup removes.
     func deleteNow(_ ids: [ScanID]) async throws(LibraryError)
 
-    // periphery:ignore - first called by Task 8 (Trash model); the Library tests exercise it now
     /// Deletes every scan in Trash, as `deleteNow` does, and returns how many.
     func emptyTrash() async throws(LibraryError) -> Int
 

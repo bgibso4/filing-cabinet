@@ -179,7 +179,25 @@
     "throwaways" : {},
     "scan" : {},
     "scans" : {},
-    "This %@ moves to Trash. You can restore it for %lld days." : {}
+    "This %@ moves to Trash. You can restore it for %lld days." : {},
+    "%lld selected" : {},
+    "Delete %lld" : {},
+    "Delete" : {},
+    "Restore %lld" : {},
+    "Restore" : {},
+    "To %@, kept forever" : {},
+    "Restored to %@" : {},
+    "Restored %lld scans" : {},
+    "Deleted" : {},
+    "Deleted %lld scans" : {},
+    "Delete permanently?" : {},
+    "Delete %lld scans permanently?" : {},
+    "%@ will be deleted. This can’t be undone." : {},
+    "They’ll be deleted. This can’t be undone." : {},
+    "Empty Trash?" : {},
+    "Deletes %@ permanently. This can’t be undone." : {},
+    "Empty Trash" : {},
+    "%@ · each is deleted after %lld days here" : {}
   },
   "version" : "1.0"
 }
