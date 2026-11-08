@@ -13,6 +13,8 @@ struct PagePill<Detail: View>: View {
     private static var bottomPadding: CGFloat { 6 }
     private static var sidePadding: CGFloat { 20 }
 
+    @Environment(\.colorScheme) private var colorScheme
+
     init(
         title: Text,
         identifier: String,
@@ -32,7 +34,9 @@ struct PagePill<Detail: View>: View {
                 .foregroundStyle(Tokens.Color.textPrimary)
             detail
                 .font(Tokens.Typography.footnote)
-                .foregroundStyle(Tokens.Color.textSecondary)
+                // On dark glass the secondary colour falls under AA (Ben, 2026-11-07): the line takes the primary
+                // colour in dark mode, and the title still leads by weight and size.
+                .foregroundStyle(colorScheme == .dark ? Tokens.Color.textPrimary : Tokens.Color.textSecondary)
         }
         .multilineTextAlignment(.center)
         // Wraps rather than truncates at large sizes.
