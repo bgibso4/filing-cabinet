@@ -114,6 +114,16 @@ final class BrowseJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// In dark mode the pill's whole detail line, time left included, is the primary colour (Ben, 2026-11-07).
+    func testViewerAuditInDarkMode() throws {
+        XCUIDevice.shared.appearance = .dark
+        // A teardown block, not `defer`: a failure stops the test with an exception that skips `defer`.
+        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
+        let app = seededApp()
+        openThreePageScan(in: app)
+        try audit(app)
+    }
+
     func testEdgeSwipeGoesBackFromTheViewer() {
         let app = seededApp()
         openThreePageScan(in: app)
