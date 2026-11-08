@@ -54,11 +54,14 @@ public final class HomeModel {
 
     /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
     package func hold() {
+        // A second hold keeps the first snapshot, so a save made under the layer still counts as new on release.
+        guard heldScans == nil else { return }
         heldScans = library.scans
     }
 
     /// Catches up with the library, and pulses each collection whose count went up while Home was held. Without a
-    /// hold it does nothing.
+    /// hold it does nothing. It compares net counts: a save and an expiry in the same collection while held cancel
+    /// out and pulse nothing.
     package func release() {
         guard let heldScans else { return }
         let before = LibraryShelf(scans: heldScans, today: today.day, calendar: calendar)

@@ -18,6 +18,10 @@ struct CaptureContainer: View {
     /// True from the tap that ends the scan until the layer has slid away; the phase stays put meanwhile, so the
     /// cover keeps drawing this screen and Home stays out of the accessibility tree.
     @State private var isLeaving = false
+    /// What ends the layer once the slide is over; taken by whichever comes first, the slide's completion or the app
+    /// becoming active again (a slide interrupted by backgrounding may never complete), so the layer ends once.
+    @State private var pendingEnd: (() -> Void)?
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         screen
@@ -27,6 +31,9 @@ struct CaptureContainer: View {
                 content.offset(y: slides ? proxy.frame(in: .global).maxY : 0)
             }
             .allowsHitTesting(!isLeaving)
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { finishLeaving() }
+            }
     }
 
     @ViewBuilder
@@ -73,12 +80,21 @@ struct CaptureContainer: View {
     /// Slides the layer away, then ends it. The cover then goes without its own animation: a clear cover's dismissal
     /// doesn't animate anyway (recorded, Task 20 Part C), and this screen is already off it.
     private func leave(then end: @escaping () -> Void) {
+        guard !isLeaving else { return }
+        pendingEnd = end
         withAnimation(reduceMotion ? Self.fade : Self.slide) {
             isLeaving = true
         } completion: {
-            var cut = Transaction()
-            cut.disablesAnimations = true
-            withTransaction(cut, end)
+            finishLeaving()
         }
+    }
+
+    /// Ends the layer if a slide is waiting to; does nothing otherwise, so a second caller can't end it twice.
+    private func finishLeaving() {
+        guard let end = pendingEnd else { return }
+        pendingEnd = nil
+        var cut = Transaction()
+        cut.disablesAnimations = true
+        withTransaction(cut, end)
     }
 }

@@ -172,3 +172,16 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     #expect(home.rows[1].detail == .count(2))
     #expect(home.rows.map(\.pulse) == [0, 0, 0, 0, 0])
 }
+
+@Test func aSecondHoldKeepsTheFirstSnapshot() async throws {
+    let library = FakeLibrary(scans: scans(.receipts, 1))
+    let home = model(library)
+    home.hold()
+    try await save(.receipts, to: library)
+    home.hold()
+    #expect(home.rows[1].detail == .count(1))
+
+    home.release()
+    #expect(home.rows[1].detail == .count(2))
+    #expect(home.rows.map(\.pulse) == [0, 1, 0, 0, 0])
+}

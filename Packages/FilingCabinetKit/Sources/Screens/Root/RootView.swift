@@ -29,6 +29,8 @@ public struct RootView: View {
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
+        // `hold()` runs just after the render in which the layer appears; that is fine, because nothing can be saved
+        // until the camera has finished.
         .onChange(of: isCapturing.wrappedValue) { _, isUp in
             if isUp {
                 dependencies.home.hold()
