@@ -185,6 +185,8 @@ SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
 # Xcode's compilation cache: keyed on each compilation's inputs (not file dates), so CI restores it from earlier runs
 # and skips compiling what a change did not touch. ci.yml caches this folder.
 CAS_PATH      := $(CURDIR)/.build/CompilationCache
+# Diagnosis: xcodebuild's raw output, each line stamped with the time it appeared (xcbeautify buffers its own).
+STAMP         := perl -MPOSIX -e 'open(my $$log, ">", shift) or die; $$log->autoflush(1); while (<STDIN>) { print $$log strftime("%H:%M:%S ", gmtime), $$_; print }'
 CI_SIM_FLAGS   = $(XCB_FLAGS) -project $(PROJECT) -scheme FilingCabinet -destination '$(SIM_DEST)' \
 	-derivedDataPath $(DERIVED) COMPILATION_CACHE_ENABLE_CACHING=YES COMPILATION_CACHE_CAS_PATH=$(CAS_PATH) $(TEST_ARGS)
 
@@ -198,7 +200,7 @@ ci-sim: generate
 	udid="$$(xcrun simctl list devices 'iOS $(SIM_OS)' | grep -F '    $(SIM_DEVICE) (' | head -1 | grep -oE '[0-9A-F-]{36}')"; \
 		[ -n "$$udid" ] || { echo "error: no $(SIM_DEVICE) on iOS $(SIM_OS)" >&2; exit 1; }; \
 		mkdir -p .build; xcrun simctl bootstatus "$$udid" -b > .build/boot.log 2>&1 & boot=$$!; \
-		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
+		set -o pipefail; xcodebuild build-for-testing -showBuildTimingSummary $(CI_SIM_FLAGS) | $(STAMP) .build/build-for-testing.log | $(BEAUTIFY) || { kill $$boot; exit 1; }; \
 		wait $$boot || { tail -20 .build/boot.log >&2; echo "error: the simulator did not boot" >&2; exit 1; }; \
 		xcodebuild test-without-building $(CI_SIM_FLAGS) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory check-resolved

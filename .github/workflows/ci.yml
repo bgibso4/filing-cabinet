@@ -105,4 +105,6 @@ jobs:
         with:
           name: build-log-${{ matrix.job }}
           if-no-files-found: ignore
-          path: .build/DerivedData/Logs/Build/*.xcactivitylog
+          path: |
+            .build/DerivedData/Logs/Build/*.xcactivitylog
+            .build/build-for-testing.log
