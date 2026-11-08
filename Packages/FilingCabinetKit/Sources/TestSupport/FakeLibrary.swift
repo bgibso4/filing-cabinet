@@ -68,17 +68,11 @@ public final class FakeLibrary: ScanLibrary {
     }
 
     public func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError) {
-        let today = clock.today
-        let lifespans = lifespans
-        try edit([id]) { scan in
-            scan.trashedDay = scan.trashedDayAfterMoving(
-                to: collection, lifespans: lifespans, today: today, in: clock.calendar)
-            scan.collection = collection
-        }
+        try edit([id]) { scan in change(&scan) { $0.collection = collection } }
     }
 
     public func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError) {
-        try edit([id]) { $0.expiryOverride = override }
+        try edit([id]) { scan in change(&scan) { $0.expiryOverride = override } }
     }
 
     public func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {
@@ -104,6 +98,18 @@ public final class FakeLibrary: ScanLibrary {
         for index in scans.indices where ids.contains(scans[index].id) {
             change(&scans[index])
         }
+    }
+
+    /// Applies a change to the scan's collection or expiry, stamping the Trash day it brings (M1).
+    private func change(_ scan: inout ScanSummary, _ apply: (inout ScanSummary) -> Void) {
+        var changed = scan
+        apply(&changed)
+        changed.trashedDay = scan.trashedDay(
+            afterLastDayChangesTo: changed.lastDay(lifespans: lifespans, in: clock.calendar),
+            lifespans: lifespans,
+            today: clock.today,
+            in: clock.calendar)
+        scan = changed
     }
 
     private func spendFailure() throws(LibraryError) {

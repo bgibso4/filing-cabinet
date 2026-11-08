@@ -130,21 +130,18 @@ public final class ScanStore: ScanLibrary {
     public func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError) {
         LibraryLog.logger.info(
             "Moving scan \(id.uuid.uuidString, privacy: .public) to \(collection.rawValue, privacy: .public)")
-        let today = clock.today
-        let lifespans = lifespans
         try edit([id]) { record in
-            if let scan = record.summary {
-                let trashedDay = scan.trashedDayAfterMoving(
-                    to: collection, lifespans: lifespans, today: today, in: clock.calendar)
-                record.trashedDay = trashedDay?.storageValue
-            }
+            stampTrashedDay(on: record) { $0.collection = collection }
             record.collectionKey = collection.rawValue
         }
     }
 
     public func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError) {
         LibraryLog.logger.info("Setting the expiry of scan \(id.uuid.uuidString, privacy: .public)")
-        try edit([id]) { $0.expiryOverride = override }
+        try edit([id]) { record in
+            stampTrashedDay(on: record) { $0.expiryOverride = override }
+            record.expiryOverride = override
+        }
     }
 
     public func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {
@@ -199,6 +196,19 @@ public final class ScanStore: ScanLibrary {
     private func edit(_ ids: [ScanID], _ change: (ScanRecord) -> Void) throws(LibraryError) {
         try records(for: ids).forEach(change)
         try persistEdit()
+    }
+
+    /// Stores the Trash day the change brings (M1); call it before applying the change to the record.
+    private func stampTrashedDay(on record: ScanRecord, _ change: (inout ScanSummary) -> Void) {
+        guard let scan = record.summary else { return }
+        var changed = scan
+        change(&changed)
+        let trashedDay = scan.trashedDay(
+            afterLastDayChangesTo: changed.lastDay(lifespans: lifespans, in: clock.calendar),
+            lifespans: lifespans,
+            today: clock.today,
+            in: clock.calendar)
+        record.trashedDay = trashedDay?.storageValue
     }
 
     /// Persists the pending edits and reloads `scans`; on failure discards them and throws `.writeFailed`.

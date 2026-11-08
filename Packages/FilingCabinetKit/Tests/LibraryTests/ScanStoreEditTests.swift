@@ -102,6 +102,34 @@ private let julyNineteenth = noon(7, 19)
 }
 
 @MainActor
+@Test func expiryThatHasPassedTrashesTodayWithThirtyDays() async throws {
+    let store = try makeStore()
+    let scan = draft(collection: .receipts, scannedAt: julyNineteenth)
+    try await store.save(scan)
+
+    // A week from Jul 19 ended Jul 25: without M1 the scan would skip Trash altogether.
+    try store.setExpiry(.lifespan(.week), for: scan.id)
+
+    #expect(store.scans.first?.expiryOverride == .lifespan(.week))
+    #expect(store.scans.first?.trashedDay == day(10, 12))
+    #expect(place(of: scan.id, in: store) == .trash(daysLeft: 30, entered: day(10, 12)))
+}
+
+/// M1: a scan already in Trash stays there with its entry day, whatever its new expiry says.
+@MainActor
+@Test func changingTheExpiryOfAScanInTrashKeepsItsEntryDay() async throws {
+    let store = try makeStore()
+    // A Throwaway scanned Oct 1 lasts through Oct 7 and entered Trash on Oct 8.
+    let scan = draft(collection: .throwaways, scannedAt: noon(10, 1))
+    try await store.save(scan)
+
+    try store.setExpiry(.lifespan(.forever), for: scan.id)
+
+    #expect(store.scans.first?.trashedDay == day(10, 8))
+    #expect(place(of: scan.id, in: store) == .trash(daysLeft: 26, entered: day(10, 8)))
+}
+
+@MainActor
 @Test func failedPersistRollsBack() async throws {
     var failPersist = false
     let container = try ScanStore.makeContainer(storeURL: nil)

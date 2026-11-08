@@ -83,6 +83,19 @@ private func summary(_ title: String, _ collection: BuiltInCollection, scannedAt
 }
 
 @MainActor
+@Test func fakeTrashesAPassedExpiryLikeTheStore() throws {
+    // A receipt scanned Jul 19 given a week on Oct 12, as in the store's test.
+    let receipt = summary("Corner Market", .receipts, scannedAt: noon(7, 19))
+    let library = FakeLibrary(scans: [receipt], clock: octoberTwelfth)
+
+    try library.setExpiry(.lifespan(.week), for: receipt.id)
+
+    #expect(library.scans.first?.expiryOverride == .lifespan(.week))
+    #expect(library.scans.first?.trashedDay == day(10, 12))
+    #expect(place(of: receipt.id, in: library) == .trash(daysLeft: 30, entered: day(10, 12)))
+}
+
+@MainActor
 @Test func fakeEditsLikeTheStore() async throws {
     let scans = (0..<3).map { summary("Scan \($0)", .documents, scannedAt: noon(10, 10 - $0)) }
     let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
