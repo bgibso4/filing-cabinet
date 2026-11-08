@@ -75,6 +75,16 @@ jobs:
             ~/Library/Caches/org.swift.swiftpm
           key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-${{ matrix.job == 'checks' && 'checks' || 'sim' }}-${{ hashFiles('Package.resolved', 'Packages/FilingCabinetKit/Package.swift', 'project.yml') }}
 
+      # Xcode's compilation cache (Makefile CAS_PATH). Its entries are keyed on what was compiled, not file dates, so
+      # unlike build products it survives a fresh checkout. Each run saves a new entry and restores the newest one.
+      - name: Cache compilations
+        if: matrix.job != 'checks'
+        uses: actions/cache@v6
+        with:
+          path: .build/CompilationCache
+          key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-
+
       - name: make ${{ matrix.target }}
         run: make ${{ matrix.target }}
 
