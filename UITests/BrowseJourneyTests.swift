@@ -7,8 +7,13 @@ final class BrowseJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Waits for seeding to finish: Home's cleanup banner comes in as the last seeded scan lands, and an audit taken
+    /// mid-way caught it half drawn (CI run 42500722527, "Contrast failed" on the banner).
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout))
+        return app
     }
 
     func testHomeRowsOpenTheirDestinations() throws {
