@@ -151,7 +151,7 @@ unused-run: sim
 # Snapshot references to compare against: origin/main when the remote exists, else the local main.
 BASE_REF := $(shell git rev-parse --verify --quiet origin/main >/dev/null && echo origin/main || echo main)
 
-# Everything CI runs. CI runs the same parts as parallel jobs: `ci-checks`, and `ci-sim` once per shard.
+# Everything CI runs. CI runs the two parts as parallel jobs.
 ci: ci-checks ci-sim
 
 # Everything except the simulator tests.
@@ -170,22 +170,9 @@ ci-checks: generate
 	scripts/changed-snapshots.sh $(BASE_REF)
 	$(MAKE) --no-print-directory check-resolved
 
-# The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
-# longest UI classes. main skips them rather than listing the rest, so a new test class always lands in main.
-# CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
-# The scan shard runs the package tests first. Alone on a cold simulator, the scan journeys ran slow enough to fail
-# their waits in 3 of 6 CI runs; in the single job, where the package tests warmed the simulator first, never (#43).
-SHARD             ?= all
-SHARD_PACKAGES    := CoreTests UnderstandingTests LibraryTests ScreenModelsTests ScreensTests
-SHARD_SCAN        := $(SHARD_PACKAGES) FilingCabinetUITests/ScanJourneyTests
-SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests
-SHARD_ONLY_scan   := $(SHARD_SCAN)
-SHARD_ONLY_browse := $(SHARD_BROWSE)
-SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
-
-ci-sim: generate
-	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
-	$(MAKE) --no-print-directory full-run ONLY='$(SHARD_ONLY_$(SHARD))' SKIP='$(SHARD_SKIP_$(SHARD))'
+# The whole simulator suite, as one run. Splitting it across CI jobs left the scan journeys flaky on a colder,
+# slower simulator (4 of 10 CI runs, #43), so it stays one job until those journeys are fixed.
+ci-sim: generate full-run
 	$(MAKE) --no-print-directory check-resolved
 
 # Fails when Xcode rewrote the resolved packages during the builds (run after them; never depends on generate).

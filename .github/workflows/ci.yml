@@ -14,8 +14,7 @@ permissions:
 
 jobs:
   ci:
-    # The parts of `make ci`, side by side. SHARD=main skips the classes the other shards run, so together the three
-    # simulator jobs run the whole suite, and a new test class lands in main by default.
+    # The two parts of `make ci`, side by side.
     name: ${{ matrix.job }}
     strategy:
       fail-fast: false
@@ -23,12 +22,8 @@ jobs:
         include:
           - job: checks
             target: ci-checks
-          - job: sim-main
-            target: ci-sim SHARD=main
-          - job: sim-scan
-            target: ci-sim SHARD=scan
-          - job: sim-browse
-            target: ci-sim SHARD=browse
+          - job: sim
+            target: ci-sim
     # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
     runs-on: xcode-27
     timeout-minutes: 60
