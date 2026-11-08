@@ -9,9 +9,25 @@ final class TrashJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Seeding 11 scans takes about 3.1 s on a Mac after the launch returns (measured 2026-11-08); a CI runner is
+    /// several times slower, so the usual 5 s is not enough to wait for it.
+    private static let seedingTimeout: TimeInterval = 15
+
     /// Six scans in the library and five in Trash, moved there 0 to 4 days ago.
+    ///
+    /// Home shows before seeding ends: the Trash row is there once the library has scans, and reads "Trash" with no
+    /// number until the last seeded scan has moved to Trash. So this waits for the 5, which also means every other row
+    /// has its final count. Reading the label as soon as the row exists raced the seeding (CI, run 42479032879).
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        launchApp(["-SeedScans", "6", "-SeedTrash", "5", "-FixedDate", "2026-10-12"], largestText: largestText)
+        let app = launchApp(
+            ["-SeedScans", "6", "-SeedTrash", "5", "-FixedDate", "2026-10-12"], largestText: largestText)
+        let trashRow = app.buttons[AccessibilityID.Home.trashRow]
+        // "Trash, 5"; at accessibility sizes the count sits above the name and reads first.
+        let seeded = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true AND label CONTAINS %@", "5"), object: trashRow)
+        let result = XCTWaiter.wait(for: [seeded], timeout: Self.seedingTimeout)
+        XCTAssertEqual(result, .completed, "Trash never showed its 5 seeded scans")
+        return app
     }
 
     func testRestoreSelectDeleteAndEmpty() throws {
@@ -144,8 +160,6 @@ final class TrashJourneyTests: XCTestCase {
     /// Home's Trash row, with its count.
     private func openTrash(in app: XCUIApplication) {
         let row = app.buttons[AccessibilityID.Home.trashRow]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
-        // "Trash, 5"; at accessibility sizes the count sits above the name and reads first.
         XCTAssertTrue(row.label.contains("Trash") && row.label.contains("5"), row.label)
         row.tap()
         XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].waitForExistence(timeout: 5))
