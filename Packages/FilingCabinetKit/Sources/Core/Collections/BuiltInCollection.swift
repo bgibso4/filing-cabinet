@@ -1,5 +1,5 @@
 /// The five collections every library starts with. `allCases` is display order.
-public enum BuiltInCollection: String, Sendable, CaseIterable {
+public enum BuiltInCollection: String, Sendable, CaseIterable, AnalyticsToken {
     case wallet
     case receipts
     case notes

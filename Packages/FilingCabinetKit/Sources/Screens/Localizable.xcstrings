@@ -1,9 +1,28 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ · %@" : {},
+    "Camera access is off" : {},
+    "Cancel" : {},
+    "Choose a date…" : {},
+    "Close" : {},
     "Collections" : {},
+    "Discard" : {},
+    "Discard this scan?" : {},
+    "Done" : {},
+    "Expiry" : {},
     "Filing Cabinet" : {},
-    "Scan" : {}
+    "Filing Cabinet needs the camera to scan documents. Tap Open Settings, turn on Camera, then come back." : {},
+    "Finish" : {},
+    "Keep editing" : {},
+    "New scan" : {},
+    "Not now" : {},
+    "Open Settings" : {},
+    "Rescan" : {},
+    "Scan" : {},
+    "Title" : {},
+    "Try again" : {},
+    "Zoomed" : {}
   },
   "version" : "1.0"
 }

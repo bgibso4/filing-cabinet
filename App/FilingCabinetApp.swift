@@ -1,3 +1,4 @@
+import Foundation
 import Screens
 import SwiftUI
 
@@ -8,10 +9,18 @@ struct FilingCabinetApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView(model: environment.home, onScan: {})
+            RootView(dependencies: environment.root, canScan: environment.isReady)
+                .task { await environment.launch() }
+                .task {
+                    // Midnight, a time zone change or a clock change: the system posts a day change (M5).
+                    for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {
+                        environment.today.refresh()
+                    }
+                }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
+                environment.today.refresh()
                 environment.lifecycle.sceneBecameActive()
             }
         }

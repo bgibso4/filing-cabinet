@@ -17,6 +17,7 @@ enum Tokens {
         static let bgFill = SwiftUI.Color("bg-fill", bundle: .module)
         static let bgGrouped = SwiftUI.Color("bg-grouped", bundle: .module)
         static let bgSurface = SwiftUI.Color("bg-surface", bundle: .module)
+        static let bgWell = SwiftUI.Color("bg-well", bundle: .module)
         static let chevron = SwiftUI.Color("chevron", bundle: .module)
         static let collDocuments = SwiftUI.Color("coll-documents", bundle: .module)
         static let collNotes = SwiftUI.Color("coll-notes", bundle: .module)

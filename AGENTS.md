@@ -8,13 +8,17 @@ A private, Photos-style library for personal documents (IDs, receipts, notes, ca
 App/                         app target: entry point, environment wiring, Info.plist, privacy manifest
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
+  Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
+  Sources/Library/           persistence, files, thumbnails. Mac-buildable
   Sources/ScreenModels/      per-screen models and strings. Mac-buildable, tested in Fast
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/Generated/  generated tokens (never hand-edit)
-  Sources/TestSupport/       test doubles (RecordingAnalytics)
-  Tests/                     CoreTests, ScreenModelsTests, ScreensTests
+  Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
+  Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
+                             ReaderComparisonTests (the bake-off report, not a gate)
 SnapshotTests/               app-hosted snapshot tests; references live beside the tests
 UITests/                     journey and accessibility-coverage UI tests
+DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
 scripts/                     token generator, compare, pre-commit, lint-rule tests
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
 design/                      design handoff and tokens.json (source of the generated tokens)
@@ -41,11 +45,39 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make unused` | Periphery dead-code scan |
 | `make snapshots-record` | re-record snapshot references on the pinned simulator |
 | `make compare SCREEN=<design png stem> REF=<snapshot png>` | side by side, written to `build/compare/` |
-| `make run` / `make run-fake` | launch in the simulator / with UI-test flags |
-| `make device` | build and install on a connected iPhone (`DEVICE=<name>`) |
+| `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
+| `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |
+| `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
+| `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
 | `make test-lint` | fixture tests for the SwiftLint custom rules |
 | `make check-resolved` | fail if Xcode rewrote the resolved packages |
+
+## Module dependencies
+
+| Module | Depends on |
+|---|---|
+| `Core` | nothing |
+| `Understanding`, `Library` | `Core` |
+| `ScreenModels` | `Core`, `Understanding`, `Library` |
+| `Screens` | `Core`, `ScreenModels`, `Library` |
+| `TestSupport` | `Core`, `Understanding`, `Library` |
+
+## Launch flags
+
+Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOptions.swift`.
+
+| Flag | Does |
+|---|---|
+| `-UITest` | in-memory store, temporary library folder, no animations |
+| `-FakeCamera <1…3>` | the fake camera returns that many synthetic pages |
+| `-CameraDenied` | camera access reports denied |
+| `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
+| `-TextReader text\|documents` | which Vision reader understands pages |
+| `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
+| `-SeedScans <n>` | saves `n` synthetic scans at launch |
+| `-FailSave` | the next page write fails with a full disk |
+| `-ReduceMotion` | the capture layer fades rather than slides, and Home's count doesn't pop |
 
 ## Import line
 

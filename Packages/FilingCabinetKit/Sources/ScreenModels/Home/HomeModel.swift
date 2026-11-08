@@ -1,47 +1,79 @@
 import Core
 import Foundation
+import Library
 import Observation
 
-/// What Home shows on first launch: the five built-in collections with their lifespans.
+/// What Home shows: the collections with their counts, and the Recent and All Scans views. With no visible scan
+/// it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read from the
+/// library and from `Today`, so the numbers move when either does, except while held: under the capture layer Home
+/// keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
 @Observable
 public final class HomeModel {
-    public let rows: [HomeRow]
+    private let library: any ScanLibrary
+    private let today: Today
+    private let calendar: Calendar
+    /// The scans Home shows while held; nil when it follows the library.
+    private var heldScans: [ScanSummary]?
+    /// Per collection, how many times a release found its count higher: each row's pop trigger.
+    private var pulses: [BuiltInCollection: Int] = [:]
 
-    public init() {
-        rows = BuiltInCollection.allCases.map { collection in
+    public init(library: any ScanLibrary, today: Today, calendar: Calendar) {
+        self.library = library
+        self.today = today
+        self.calendar = calendar
+    }
+
+    /// True when no scan is visible: Home shows descriptions and no views.
+    public var isEmpty: Bool { shelf.visible.isEmpty }
+
+    public var rows: [HomeRow] {
+        let shelf = shelf
+        let showsCounts = !shelf.visible.isEmpty
+        return BuiltInCollection.allCases.map { collection in
             HomeRow(
                 collection: collection,
-                name: Self.name(of: collection),
-                subtitle: Self.description(of: collection) + " · " + Self.text(for: collection.lifespan)
+                name: CollectionText.name(collection),
+                detail: showsCounts
+                    ? .count(shelf.count(in: collection))
+                    : .subtitle(
+                        CollectionText.description(collection) + " · "
+                            + CollectionText.lifespanShort(collection.lifespan)),
+                pulse: pulses[collection, default: 0]
             )
         }
     }
 
-    private static func name(of collection: BuiltInCollection) -> String {
-        switch collection {
-        case .wallet: String(localized: "Wallet", bundle: #bundle)
-        case .receipts: String(localized: "Receipts", bundle: #bundle)
-        case .notes: String(localized: "Notes", bundle: #bundle)
-        case .documents: String(localized: "Documents", bundle: #bundle)
-        case .throwaways: String(localized: "Throwaways", bundle: #bundle)
+    public var viewRows: [HomeViewRow] {
+        let shelf = shelf
+        guard !shelf.visible.isEmpty else { return [] }
+        return [
+            HomeViewRow(kind: .recent, name: CollectionText.recent, count: nil),
+            HomeViewRow(kind: .all, name: CollectionText.allScans, count: shelf.visible.count),
+        ]
+    }
+
+    /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
+    package func hold() {
+        // A second hold keeps the first snapshot, so a save made under the layer still counts as new on release.
+        guard heldScans == nil else { return }
+        heldScans = library.scans
+    }
+
+    /// Catches up with the library, and pulses each collection whose count went up while Home was held. Without a
+    /// hold it does nothing. It compares net counts: a save and an expiry in the same collection while held cancel
+    /// out and pulse nothing.
+    package func release() {
+        guard let heldScans else { return }
+        let before = LibraryShelf(scans: heldScans, today: today.day, calendar: calendar)
+        self.heldScans = nil
+        let after = shelf
+        for collection in BuiltInCollection.allCases
+        where after.count(in: collection) > before.count(in: collection) {
+            pulses[collection, default: 0] += 1
         }
     }
 
-    private static func description(of collection: BuiltInCollection) -> String {
-        switch collection {
-        case .wallet: String(localized: "IDs and cards", bundle: #bundle)
-        case .receipts: String(localized: "Purchase receipts", bundle: #bundle)
-        case .notes: String(localized: "Handwritten notes", bundle: #bundle)
-        case .documents: String(localized: "Forms and letters", bundle: #bundle)
-        case .throwaways: String(localized: "Short-lived scraps", bundle: #bundle)
-        }
-    }
-
-    private static func text(for lifespan: Lifespan) -> String {
-        switch lifespan {
-        case .forever: String(localized: "Kept forever", bundle: #bundle)
-        case .week: String(localized: "\(1) weeks", bundle: #bundle)
-        case .threeMonths: String(localized: "\(3) months", bundle: #bundle)
-        }
+    private var shelf: LibraryShelf {
+        LibraryShelf(scans: heldScans ?? library.scans, today: today.day, calendar: calendar)
     }
 }
