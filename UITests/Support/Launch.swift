@@ -14,9 +14,9 @@ extension XCTestCase {
     @MainActor
     func launchApp(_ flags: [String] = [], largestText: Bool = false, fresh: Bool = false) -> XCUIApplication {
         let arguments = ["-UITest"] + flags
-        let launch = RunningApp.Launch(testClass: ObjectIdentifier(type(of: self)), largestText: largestText)
-        if !fresh, let app = RunningApp.app, RunningApp.launch == launch, app.state == .runningForeground,
-            let url = RelaunchURL.make(arguments: arguments)
+        let testClass = ObjectIdentifier(type(of: self))
+        if !fresh, let app = RunningApp.app, RunningApp.testClass == testClass, RunningApp.largestText == largestText,
+            app.state == .runningForeground, let url = RelaunchURL.make(arguments: arguments)
         {
             // The system opens it in the running app. `app.open(url)` would set up a new automation session, which
             // costs as much as a launch.
@@ -29,19 +29,17 @@ extension XCTestCase {
         app.launchArguments = arguments + text
         app.launch()
         RunningApp.app = app
-        RunningApp.launch = launch
+        RunningApp.testClass = testClass
+        RunningApp.largestText = largestText
         return app
     }
 }
 
-/// The app the last test launched, and what can only change with a new launch.
+/// The app the last test launched, and what can only change with a new launch: the test class that launched it
+/// and its text size.
 @MainActor
 private enum RunningApp {
-    struct Launch: Equatable {
-        let testClass: ObjectIdentifier
-        let largestText: Bool
-    }
-
     static var app: XCUIApplication?
-    static var launch: Launch?
+    static var testClass: ObjectIdentifier?
+    static var largestText = false
 }
