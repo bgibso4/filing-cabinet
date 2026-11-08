@@ -12,7 +12,7 @@ final class BrowseJourneyTests: XCTestCase {
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
         let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout))
         return app
     }
 

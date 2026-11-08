@@ -16,7 +16,7 @@ final class CleanupJourneyTests: XCTestCase {
         let app = launchApp(
             ["-SeedScans", "12", "-FixedDate", "2026-10-25", "-Notifications", "denied"], largestText: largestText)
         XCTAssertTrue(
-            app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout),
+            app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout),
             "Home never showed the cleanup banner")
         return app
     }
@@ -30,17 +30,17 @@ final class CleanupJourneyTests: XCTestCase {
         try audit(app)
 
         banner.tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
         let tiles = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Trash.tilePrefix))
-        XCTAssertTrue(tiles.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(tiles.firstMatch.appears(within: 5))
         XCTAssertEqual(tiles.count, 1)
         // Entered Oct 23, so 28 of its 30 days are left.
         XCTAssertEqual(tiles.firstMatch.label, "Sample scan 10, Throwaways, 28 days left")
 
         // Back on Home the banner is gone: View cleared it.
         app.buttons[AccessibilityID.Grid.back].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.trashRow].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.trashRow].appears(within: 5))
         XCTAssertFalse(app.buttons[AccessibilityID.Home.cleanupBanner].exists)
     }
 

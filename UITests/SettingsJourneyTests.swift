@@ -40,13 +40,13 @@ final class SettingsJourneyTests: XCTestCase {
 
         app.buttons[AccessibilityID.Collections.row(.receipts)].tap()
         let keepScansFor = app.buttons[AccessibilityID.CollectionSettings.keepScansFor]
-        XCTAssertTrue(keepScansFor.waitForExistence(timeout: 5))
+        XCTAssertTrue(keepScansFor.appears(within: 5))
         XCTAssertEqual(keepScansFor.value as? String, "3 months")
         try audit(app)
 
         // Longer asks nothing.
         keepScansFor.tap()
-        XCTAssertTrue(menuItem("1 year", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(menuItem("1 year", in: app).appears(within: 5))
         XCTAssertTrue(menuItem("3 months", in: app).isSelected)
         XCTAssertFalse(menuItem("1 year", in: app).isSelected)
         attachScreenshot("keep-scans-for-menu", of: app)
@@ -57,10 +57,10 @@ final class SettingsJourneyTests: XCTestCase {
 
         // A week: the 11-day-old receipt would go to Trash now, so it asks first.
         keepScansFor.tap()
-        XCTAssertTrue(menuItem("1 week", in: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(menuItem("1 week", in: app).appears(within: 5))
         menuItem("1 week", in: app).tap()
         let ask = app.alerts["Keep receipts 1 week?"]
-        XCTAssertTrue(ask.waitForExistence(timeout: 5))
+        XCTAssertTrue(ask.appears(within: 5))
         XCTAssertTrue(
             ask.staticTexts[
                 "1 receipt is older than a week and will go to Trash now. You can restore them for 30 days."
@@ -86,7 +86,7 @@ final class SettingsJourneyTests: XCTestCase {
 
         app.activate()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
-        XCTAssertTrue(notifications.waitForExistence(timeout: 5))
+        XCTAssertTrue(notifications.appears(within: 5))
         XCTAssertEqual(notifications.value as? String, "0")
         // The value is what VoiceOver reads; the screenshot shows the switch is drawn off too.
         attachScreenshot("notifications-back-from-iphone-settings", of: app)
@@ -97,10 +97,10 @@ final class SettingsJourneyTests: XCTestCase {
         openSettings(in: app)
         try audit(app)
         app.buttons[AccessibilityID.Settings.collections].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Collections.row(.throwaways)].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Collections.row(.throwaways)].appears(within: 5))
         try audit(app)
         app.buttons[AccessibilityID.Collections.row(.throwaways)].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.CollectionSettings.keepScansFor].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.CollectionSettings.keepScansFor].appears(within: 5))
         try audit(app)
     }
 
@@ -108,7 +108,7 @@ final class SettingsJourneyTests: XCTestCase {
 
     private func openSettings(in app: XCUIApplication) {
         let gear = app.buttons[AccessibilityID.Home.settings]
-        XCTAssertTrue(gear.waitForExistence(timeout: 5))
+        XCTAssertTrue(gear.appears(within: 5))
         XCTAssertEqual(gear.label, "Settings")
         gear.tap()
         assertIdentifiers(AccessibilityID.Settings.all + [AccessibilityID.Grid.back], in: app)
@@ -119,13 +119,13 @@ final class SettingsJourneyTests: XCTestCase {
         let back = app.buttons[AccessibilityID.Grid.back]
         for _ in 0..<3 { back.tap() }
         let trashRow = app.buttons[AccessibilityID.Home.trashRow]
-        XCTAssertTrue(trashRow.waitForExistence(timeout: 5))
+        XCTAssertTrue(trashRow.appears(within: 5))
         // "Trash, 2"; an empty Trash shows no number.
         let count = Int(trashRow.label.filter(\.isNumber)) ?? 0
         app.buttons[AccessibilityID.Home.settings].tap()
         app.buttons[AccessibilityID.Settings.collections].tap()
         app.buttons[AccessibilityID.Collections.row(.receipts)].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.CollectionSettings.keepScansFor].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.CollectionSettings.keepScansFor].appears(within: 5))
         return count
     }
 
@@ -134,8 +134,7 @@ final class SettingsJourneyTests: XCTestCase {
     }
 
     private func waitFor(_ element: XCUIElement, value: String) -> Bool {
-        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
-        return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
+        element.satisfies("value == %@", value, within: 5)
     }
 
     /// Menus and alerts are never snapshotted: a screenshot is kept for review instead.

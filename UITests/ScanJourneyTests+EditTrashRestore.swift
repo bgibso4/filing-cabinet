@@ -10,18 +10,16 @@ extension ScanJourneyTests {
         of collection: BuiltInCollection, in app: XCUIApplication, label: String? = nil, line: UInt = #line
     ) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
-        let counted = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == true AND label CONTAINS '1'"), object: row)
-        XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, row.label, line: line)
+        XCTAssertTrue(row.satisfies("exists == true AND label CONTAINS '1'", within: 5), row.label, line: line)
         row.tap()
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
         ).firstMatch
-        XCTAssertTrue(tile.waitForExistence(timeout: 5), line: line)
+        XCTAssertTrue(tile.appears(within: 5), line: line)
         if let label { XCTAssertEqual(tile.label, label, line: line) }
         tile.tap()
         XCTAssertTrue(
-            app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5), line: line)
+            app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5), line: line)
     }
 
     /// The header pill opens Details; the new title is typed over the old one and the sheet closes.
@@ -29,17 +27,17 @@ extension ScanJourneyTests {
         let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
         header.tap()
         let rename = app.buttons[AccessibilityID.Details.title]
-        XCTAssertTrue(rename.waitForExistence(timeout: 5))
+        XCTAssertTrue(rename.appears(within: 5))
         rename.tap()
         let field = app.textFields[AccessibilityID.Details.titleField]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.appears(within: 5))
         app.buttons[AccessibilityID.Details.clearTitle].tap()
         field.typeText("\(title)\n")
-        XCTAssertTrue(rename.waitForExistence(timeout: 5))
+        XCTAssertTrue(rename.appears(within: 5))
         XCTAssertEqual(rename.label, "Rename \(title)")
         app.swipeDownOnSheet()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].disappears(within: 5))
+        XCTAssertTrue(header.appears(within: 5))
         XCTAssertEqual(header.label, "\(title), details")
     }
 
@@ -49,35 +47,33 @@ extension ScanJourneyTests {
         let confirm = app.buttons.matching(
             NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Viewer.trash)
         ).firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirm.appears(within: 5))
         confirm.tap()
         XCTAssertTrue(
-            app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForNonExistence(timeout: 5))
+            app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
         let back = app.buttons[AccessibilityID.Grid.back]
-        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        XCTAssertTrue(back.appears(within: 5))
         back.tap()
     }
 
     /// Home's Trash row opens Trash; the scan has its full 30 days (M8), and its viewer's Restore empties Trash.
     func restoreFromTrash(_ title: String, in app: XCUIApplication) {
         let trashRow = app.buttons[AccessibilityID.Home.trashRow]
-        let counted = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == true AND label == %@", "Trash, 1"), object: trashRow)
-        XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, trashRow.label)
+        XCTAssertTrue(trashRow.satisfies("exists == true AND label == %@", "Trash, 1", within: 5), trashRow.label)
         trashRow.tap()
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Trash.tilePrefix)
         ).firstMatch
-        XCTAssertTrue(tile.waitForExistence(timeout: 5))
+        XCTAssertTrue(tile.appears(within: 5))
         XCTAssertEqual(tile.label, "\(title), Receipts, 30 days left")
         tile.tap()
         let restore = app.buttons[AccessibilityID.TrashViewer.restore]
-        XCTAssertTrue(restore.waitForExistence(timeout: 5))
+        XCTAssertTrue(restore.appears(within: 5))
         restore.tap()
-        XCTAssertTrue(app.staticTexts["Trash is empty"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Trash is empty"].appears(within: 5))
         let back = app.buttons[AccessibilityID.Grid.back]
-        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        XCTAssertTrue(back.appears(within: 5))
         back.tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5))
     }
 }
