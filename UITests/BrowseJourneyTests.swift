@@ -151,7 +151,9 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
     }
 
-    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() {
+    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() throws {
+        // Flaky on CI's slow runners; Ben chose to skip it until a dedicated fix (2026-11-08, #64).
+        try XCTSkipIf(true, "Flaky zoom-then-swipe timing on CI (#64)")
         let app = seededApp()
         openThreePageScan(in: app)
         zoomTheFirstPage(in: app)

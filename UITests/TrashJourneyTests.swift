@@ -10,8 +10,6 @@ final class TrashJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// Seeding 11 scans takes about 3.1 s on a Mac after the launch returns (measured 2026-11-08); a CI runner is
-    /// several times slower, so the usual 5 s is not enough to wait for it.
     /// Six scans in the library and five in Trash, moved there 0 to 4 days ago.
     ///
     /// Home shows before seeding ends: the Trash row is there once the library has scans, and reads "Trash" with no

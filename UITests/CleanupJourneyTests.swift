@@ -9,7 +9,6 @@ final class CleanupJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// Seeding 12 scans takes a few seconds after the launch returns, longer on a CI runner (see TrashJourneyTests).
     /// Twelve seeded scans on Oct 25, 2026, notes blocked. Under `-UITest` Home was last seen 14 days before, so
     /// "Sample scan 10" (a Throwaway scanned Oct 16, kept a week) went to Trash on its own since then, on Oct 23.
     /// The banner shows only once seeding has finished, so waiting for it also waits for every count.
