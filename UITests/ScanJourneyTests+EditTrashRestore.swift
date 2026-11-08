@@ -38,6 +38,7 @@ extension ScanJourneyTests {
         XCTAssertTrue(rename.waitForExistence(timeout: 5))
         XCTAssertEqual(rename.label, "Rename \(title)")
         app.swipeDownOnSheet()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].waitForNonExistence(timeout: 5))
         XCTAssertTrue(header.waitForExistence(timeout: 5))
         XCTAssertEqual(header.label, "\(title), details")
     }
@@ -74,7 +75,9 @@ extension ScanJourneyTests {
         XCTAssertTrue(restore.waitForExistence(timeout: 5))
         restore.tap()
         XCTAssertTrue(app.staticTexts["Trash is empty"].waitForExistence(timeout: 5))
-        app.buttons[AccessibilityID.Grid.back].tap()
+        let back = app.buttons[AccessibilityID.Grid.back]
+        XCTAssertTrue(back.waitForExistence(timeout: 5))
+        back.tap()
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
     }
 }

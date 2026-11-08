@@ -81,7 +81,7 @@ From the execution ledger. B rows are Ben's; E rows are my calls (executor).
 | B4 | **Custom black-and-white switch** per 10-01 / 10-07 (dark knob in dark mode); the system switch is unusable in dark mode. | Ben | 12 |
 | B5 | **Deeper red for destructive text on light glass** (new token). Superseded by B6: the audit still failed at 5.89:1. | Ben | 9, 10 |
 | B6 | **Trash's delete buttons follow Photos:** Empty Trash, Delete N and Delete now are neutral glass buttons; each confirmation comes up from the tapped button with the red action inside; the grid and page run under the bar. Departs from 09-01 / 09-02 / 09-04. | Ben | 9, 10 |
-| B7 | **Trash audit exemptions, tracked in #59:** contrast on `trash.emptyTrash`, `trash.deleteSelected`, `trash.select` and `trashViewer.deleteNow`, and element-less contrast only while the Trash screen shows; revisit on newer Xcode. | Ben | 9, 10 |
+| B7 | **Trash audit exemptions, tracked in #59:** contrast on `trash.emptyTrash`, `trash.deleteSelected` and `trashViewer.deleteNow`, and element-less contrast only while the Trash screen shows; standing call: exempt to unblock as long as it is tracked; revisit on newer Xcode. | Ben | 9, 10 |
 | E1 | Undo of a collection move counts as a `.scanEdited(.collection)` edit. | my call (executor) | 5 |
 | E2 | Details' red journeys stay parked until Ben rules on the exemption (test tolerances need his OK). | my call (executor) | 6 |
 | E3 | No warning haptic on Details' "Move to Throwaways?" alert: M19 names it only for Move to Trash from the viewer. | my call (executor) | 6, 7 |
