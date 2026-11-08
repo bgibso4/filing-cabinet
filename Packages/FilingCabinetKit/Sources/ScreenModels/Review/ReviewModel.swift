@@ -99,7 +99,9 @@ public final class ReviewModel {
     package var collectionOptions: [CollectionOption] {
         BuiltInCollection.allCases.map {
             CollectionOption(
-                collection: $0, name: CollectionText.name($0), lifespan: CollectionText.lifespanShort($0.lifespan))
+                collection: $0,
+                name: CollectionText.name($0),
+                lifespan: CollectionText.lifespanShort(CollectionLifespans.defaults[$0]))
         }
     }
 
@@ -277,8 +279,9 @@ public final class ReviewModel {
 
     /// The until-date an expiry choice gives, or "Never expires".
     private func expiryDetail(collection: BuiltInCollection, override: ExpiryOverride?) -> String {
+        let collectionLifespan = CollectionLifespans.defaults[collection]
         let lastDay = Expiry.lastDay(
-            scanDay: scanDay, collectionLifespan: collection.lifespan, override: override, in: clock.calendar)
+            scanDay: scanDay, collectionLifespan: collectionLifespan, override: override, in: clock.calendar)
         guard let lastDay else { return String(localized: "Never expires", bundle: #bundle) }
         return ExpiryText.untilDate(lastDay, today: clock.today, clock: clock)
     }

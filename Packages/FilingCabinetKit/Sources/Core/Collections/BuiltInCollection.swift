@@ -6,7 +6,8 @@ public enum BuiltInCollection: String, Sendable, CaseIterable, AnalyticsToken {
     case documents
     case throwaways
 
-    public var lifespan: Lifespan {
+    /// Read only by `CollectionLifespans`.
+    package var defaultLifespan: Lifespan {
         switch self {
         case .wallet, .notes, .documents: .forever
         case .receipts: .threeMonths

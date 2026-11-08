@@ -37,7 +37,7 @@ public final class HomeModel {
                     ? .count(shelf.count(in: collection))
                     : .subtitle(
                         CollectionText.description(collection) + " · "
-                            + CollectionText.lifespanShort(collection.lifespan)),
+                            + CollectionText.lifespanShort(CollectionLifespans.defaults[collection])),
                 pulse: pulses[collection, default: 0]
             )
         }

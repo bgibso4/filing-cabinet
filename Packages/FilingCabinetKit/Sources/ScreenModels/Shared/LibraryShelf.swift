@@ -58,7 +58,7 @@ struct LibraryShelf {
     private static func lastDay(_ scan: ScanSummary, calendar: Calendar) -> CalendarDay? {
         Expiry.lastDay(
             scanDay: scanDay(scan, calendar: calendar),
-            collectionLifespan: scan.collection.lifespan,
+            collectionLifespan: CollectionLifespans.defaults[scan.collection],
             override: scan.expiryOverride,
             in: calendar)
     }

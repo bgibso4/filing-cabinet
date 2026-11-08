@@ -45,7 +45,7 @@ public final class CollectionGridModel {
     package var subtitle: String {
         switch kind {
         case .collection(let collection):
-            CollectionText.scanCountAndKept(scans(on: shelf).count, collection.lifespan)
+            CollectionText.scanCountAndKept(scans(on: shelf).count, CollectionLifespans.defaults[collection])
         case .recent:
             CollectionText.lastThirtyDays
         case .all:

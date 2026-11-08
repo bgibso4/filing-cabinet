@@ -24,10 +24,11 @@ enum ExpiryText {
         case .lifespan(let chosen):
             lifespan = chosen
         case nil:
-            lifespan = collection.lifespan
+            lifespan = CollectionLifespans.defaults[collection]
         }
+        let collectionLifespan = CollectionLifespans.defaults[collection]
         let lastDay = Expiry.lastDay(
-            scanDay: scanDay, collectionLifespan: collection.lifespan, override: override, in: clock.calendar)
+            scanDay: scanDay, collectionLifespan: collectionLifespan, override: override, in: clock.calendar)
         guard let lastDay else { return CollectionText.lifespanShort(.forever) }
         let date = untilDate(lastDay, today: today, clock: clock)
         return String(
