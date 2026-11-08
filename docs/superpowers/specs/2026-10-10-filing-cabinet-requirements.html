@@ -259,6 +259,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <div class="stage"><b>Deleted</b><small>Permanently. Files are removed the next time the app runs</small></div>
     </div>
     <p class="note">There is no archive in v1. Being in Trash is worked out from dates, not done by a background job: a scan past its expiry <b>is</b> in Trash, and a Trash item past its 30 days is gone from view, whether or not the app has run. iOS background time is unpredictable, so nothing the person sees depends on it. Removing the files themselves happens when the app next opens or gets background time.</p>
+    <p class="note">A scan already in Trash stays there when a lifespan or its collection changes; a scan a change sends to Trash gets the full 30 days from that day.</p>
   </div>
 </section>
 

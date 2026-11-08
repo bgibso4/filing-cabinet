@@ -69,6 +69,35 @@ Each has my recommendation, and the plan is drafted as if he accepts it (marked 
 | M24 | **Select mode with nothing selected** reads "0 selected" and shows "Delete" and "Restore" disabled. | 9 |
 | M25 | **Notification lists join without an Oxford comma** ("City Pharmacy, Bluebird Café and Corner Market"), as the mocks write them, so they don't use `ListFormatter` (en_US adds the comma). | 13 |
 
+### Decided during execution
+
+From the execution ledger. B rows are Ben's; E rows are my calls (executor).
+
+| # | Decision | Whose | Task |
+|---|---|---|---|
+| B1 | **Details audit exemption:** `textClipped` on `details.titleText` and `details.scannedLine` only (iOS 27 floating-sheet false positive), dated 2026-11-08. | Ben | 6 |
+| B2 | **R4 kept:** a plan-`public` declaration stays `package` until a task's app or test code first uses it. | Ben | all |
+| B3 | **Glass contrast:** CI on Xcode 27.2 decides; a local-only Xcode 27.1 failure changes nothing. | Ben | 9, 10 |
+| B4 | **Custom black-and-white switch** per 10-01 / 10-07 (dark knob in dark mode); the system switch is unusable in dark mode. | Ben | 12 |
+| B5 | **Deeper red for destructive text on light glass** (new token). Superseded by B6: the audit still failed at 5.89:1. | Ben | 9, 10 |
+| B6 | **Trash's delete buttons follow Photos:** Empty Trash, Delete N and Delete now are neutral glass buttons; each confirmation comes up from the tapped button with the red action inside; the grid and page run under the bar. Departs from 09-01 / 09-02 / 09-04. | Ben | 9, 10 |
+| B7 | **Trash audit exemptions, tracked in #59:** contrast on `trash.emptyTrash`, `trash.deleteSelected`, `trash.select` and `trashViewer.deleteNow`, and element-less contrast only while the Trash screen shows; revisit on newer Xcode. | Ben | 9, 10 |
+| E1 | Undo of a collection move counts as a `.scanEdited(.collection)` edit. | my call (executor) | 5 |
+| E2 | Details' red journeys stay parked until Ben rules on the exemption (test tolerances need his OK). | my call (executor) | 6 |
+| E3 | No warning haptic on Details' "Move to Throwaways?" alert: M19 names it only for Move to Trash from the viewer. | my call (executor) | 6, 7 |
+| E4 | Task 9 commits with its Trash audits on, parked red for Ben, rather than adding an unapproved exemption. | my call (executor) | 9 |
+| E5 | `BrowseJourneyTests.testViewerAuditInDarkMode` is not a Plan 2 regression: it fails on `main` with local Xcode 27.1 and passes on CI's 27.2. | my call (executor) | 9 |
+| E6 | In the Trash viewer the header pill doesn't open Details: a trashed scan is read-only until restored. | my call (executor) | 10 |
+| E7 | Task 10's Minors 1–4 fixed at once: the Restore haptic sat on chrome that left in the same update, so it never played. | my call (executor) | 10 |
+| E8 | Under `-UITest`, `AppPreferences` uses a volatile defaults suite, so UI tests never read or leak real preferences. | my call (executor) | 12 |
+| E9 | Task 12's journey shortens Receipts, not Throwaways: with `-SeedScans 12` the only old Throwaway is already in Trash (M1). | my call (executor) | 12 |
+| E10 | At accessibility sizes a Settings row puts its value or switch on its own line, so names don't break mid-word. | my call (executor) | 12 |
+| E11 | Ben's decisions (switch, red, the CI-only Trash viewer failure) go to one fix job after Task 13. | my call (executor) | 12, 13 |
+| E12 | Task 13's Minors 1, 2, 4 and 5 fixed (a repeated `Lifecycle` boundary; notes now fire on non-Gregorian calendars). | my call (executor) | 13 |
+| E13 | Trash redesign fix round: the long-press Delete now proven, stale confirmations, VoiceOver anchoring; the Trash viewer's page stops above the bar at rest, as in Photos. | my call (executor) | 9, 10 |
+| E14 | `trash.select` joins the named Trash glass exemption (same misread, same screen) and #59. | my call (executor) | 9 |
+| E15 | Task 14's Minors 1, 4, 5 and 6 fixed: notes re-plan on a time-zone change and today refreshes before the first frame back. | my call (executor) | 14 |
+
 ### Expected differences from the mocks
 
 - Hidden controls for later plans (Plan 1 A2): Search, Favorites, Share, Favorite, More, the Apple Intelligence row, Send feedback, favourite hearts on Trash tiles.

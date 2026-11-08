@@ -8,9 +8,12 @@ A private, Photos-style library for personal documents (IDs, receipts, notes, ca
 App/                         app target: entry point, environment wiring, Info.plist, privacy manifest
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
+    Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
-  Sources/Library/           persistence, files, thumbnails. Mac-buildable
-  Sources/ScreenModels/      per-screen models and strings. Mac-buildable, tested in Fast
+  Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
+  Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
+                             tested in Fast
+    Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/Generated/  generated tokens (never hand-edit)
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
