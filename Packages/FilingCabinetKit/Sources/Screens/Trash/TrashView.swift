@@ -155,9 +155,14 @@ public struct TrashView: View {
         .accessibilityIdentifier(AccessibilityID.Trash.emptyTrash)
     }
 
-    /// Delete N in glass and Restore N filled (09-02). Both are off until a scan is ticked.
+    /// Delete N in glass and Restore N filled (09-02). Both are off until a scan is ticked. At accessibility sizes they
+    /// stack, so each label keeps the full width and never breaks mid-word.
     private var selectionBar: some View {
-        HStack(spacing: Self.selectionButtonGap) {
+        let layout =
+            typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: Self.selectionButtonGap))
+            : AnyLayout(HStackLayout(spacing: Self.selectionButtonGap))
+        return layout {
             Button(action: deleteSelected) {
                 Text(model.deleteTitle)
                     .font(Tokens.Typography.headline)
@@ -175,6 +180,7 @@ public struct TrashView: View {
                     .frame(maxWidth: .infinity, minHeight: Self.selectionButtonHeight)
                     .background(model.canAct ? Tokens.Color.textPrimary : Tokens.Color.bgWell, in: .capsule)
                     .contentShape(.capsule)
+                    .accessibilityElement(children: .combine)
             }
             .accessibilityIdentifier(AccessibilityID.Trash.restoreSelected)
         }
