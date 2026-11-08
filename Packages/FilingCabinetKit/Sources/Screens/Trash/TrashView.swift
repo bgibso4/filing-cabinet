@@ -4,7 +4,7 @@ import ScreenModels
 import SwiftUI
 
 /// Trash (09-01 … 09-11): the scans soonest gone first, with Select for several at once, a long press for one, and Empty
-/// Trash. Deleting asks first; restoring doesn't (M10).
+/// Trash. Deleting asks first, from the button that asked; restoring doesn't (M10).
 public struct TrashView: View {
     private let model: TrashModel
     private let thumbnails: any ThumbnailProviding
@@ -50,9 +50,6 @@ public struct TrashView: View {
                     ToolbarItem(placement: .topBarTrailing) { selectButton }
                 }
             }
-            .trashConfirmationAlert(
-                model.confirmation, cancel: model.cancelConfirmation, perform: model.performConfirmation
-            )
             .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
     }
 
@@ -133,7 +130,8 @@ public struct TrashView: View {
         Button(action: model.confirmEmpty) {
             Text("Empty Trash", bundle: #bundle)
                 .font(Tokens.Typography.headline)
-                .foregroundStyle(Tokens.Color.destructive)
+                // Neutral, like Select; the confirmation's action is the red one (Ben, 2026-11-08, after Photos).
+                .foregroundStyle(Tokens.Color.textPrimary)
                 .padding(.horizontal, Self.emptyTrashPadding)
                 .frame(minHeight: Self.emptyTrashHeight)
                 .glassEffect(.regular.interactive(), in: .capsule)
@@ -143,6 +141,8 @@ public struct TrashView: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(AccessibilityID.Trash.emptyTrash)
+        .trashConfirmationDialog(
+            model.emptyConfirmation, cancel: model.cancelConfirmation, perform: model.performConfirmation)
     }
 
     /// Delete N and Restore N (09-02), both off until a scan is ticked.
@@ -154,7 +154,10 @@ public struct TrashView: View {
             restoreIdentifier: AccessibilityID.Trash.restoreSelected,
             canAct: model.canAct,
             onDelete: deleteSelected,
-            onRestore: restoreSelected
+            onRestore: restoreSelected,
+            confirmation: model.selectionConfirmation,
+            onCancel: model.cancelConfirmation,
+            onConfirm: model.performConfirmation
         )
         .padding(.horizontal, Self.selectionBarInset)
     }

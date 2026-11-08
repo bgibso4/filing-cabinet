@@ -48,6 +48,16 @@ final class TrashSnapshotTests: XCTestCase {
         try assertScreens(Fixtures.library(.trash), testName: "trash_list")
     }
 
+    /// Ten scans: the last row rests under Empty Trash, behind its fade, and scrolls clear of it (Ben, 2026-11-08). The
+    /// large-text layout ends the grid above the bar, so only light and dark.
+    @MainActor
+    func testUnderTheBar() throws {
+        for variant in SnapshotConfig.variants where !variant.size.isAccessibilitySize {
+            try SnapshotHost.assertScreen(
+                screen(Fixtures.library(.fullTrash)) { _ in }, testName: "trash_under_bar", variants: [variant])
+        }
+    }
+
     /// Parking stub and Coat check ticked, as in the mock.
     @MainActor
     func testSelect() throws {

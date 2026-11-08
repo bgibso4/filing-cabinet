@@ -2,7 +2,8 @@ import Core
 import XCTest
 
 /// Trash from Home's Trash row: a long press restores one, Select deletes two, Empty Trash deletes the rest, and a scan
-/// opened from Trash restores itself. Menus and alerts are never snapshotted, so they are attached as screenshots.
+/// opened from Trash restores itself. Each confirmation comes up from the button that asked, as a popover (Ben,
+/// 2026-11-08). Menus and confirmations are never snapshotted, so they are attached as screenshots.
 @MainActor
 final class TrashJourneyTests: XCTestCase {
     override func setUp() {
@@ -71,7 +72,8 @@ final class TrashJourneyTests: XCTestCase {
     }
 
     /// 09-04: a tile opens the scan with Close, its days left in Trash, Delete now and Restore. Delete now asks first
-    /// (09-06); Restore asks nothing and goes back to Trash with one tile fewer, and the scan is in Throwaways again.
+    /// (09-06), and tapping away dismisses it so it can ask again; Restore asks nothing and goes back to Trash with one
+    /// tile fewer, and the scan is in Throwaways again.
     func testOpenATrashedScanAndRestoreIt() throws {
         let app = seededApp()
         let throwaways = app.buttons[AccessibilityID.Home.collectionRow(.throwaways)]
@@ -87,12 +89,20 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertFalse(app.buttons[AccessibilityID.Viewer.details].exists)
         try audit(app)
 
-        app.buttons[AccessibilityID.TrashViewer.deleteNow].tap()
-        let deleteOne = app.alerts["Delete permanently?"]
+        let deleteNow = app.buttons[AccessibilityID.TrashViewer.deleteNow]
+        deleteNow.tap()
+        let deleteOne = app.staticTexts["Delete permanently?"]
         XCTAssertTrue(deleteOne.waitForExistence(timeout: 5))
-        XCTAssertTrue(deleteOne.staticTexts["Trashed scan 5 will be deleted. This can’t be undone."].exists)
+        XCTAssertTrue(app.staticTexts["Trashed scan 5 will be deleted. This can’t be undone."].exists)
+        XCTAssertTrue(confirmButton("Delete", besides: AccessibilityID.TrashViewer.deleteNow, in: app).exists)
         attachScreenshot("trash-viewer-delete-now", of: app)
-        deleteOne.buttons["Cancel"].tap()
+        dismissPopover(in: app)
+        XCTAssertTrue(deleteOne.waitForNonExistence(timeout: 5))
+        // Dismissed, it asks again.
+        deleteNow.tap()
+        XCTAssertTrue(deleteOne.waitForExistence(timeout: 5))
+        dismissPopover(in: app)
+        XCTAssertTrue(deleteOne.waitForNonExistence(timeout: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.TrashViewer.restore].waitForExistence(timeout: 5))
 
         app.buttons[AccessibilityID.TrashViewer.restore].tap()
@@ -119,7 +129,7 @@ final class TrashJourneyTests: XCTestCase {
         attachScreenshot("trash-long-press", of: app)
         restore.tap()
         XCTAssertTrue(waitFor(tiles(in: app), count: 4))
-        XCTAssertFalse(app.alerts.firstMatch.exists)
+        XCTAssertFalse(app.staticTexts["Delete permanently?"].exists)
     }
 
     /// Select two, then Delete 2 asks first; deleting ends select mode.
@@ -134,11 +144,11 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertEqual(app.buttons[AccessibilityID.Trash.restoreSelected].label, "Restore 2")
         try audit(app)
         app.buttons[AccessibilityID.Trash.deleteSelected].tap()
-        let deleteTwo = app.alerts["Delete 2 scans permanently?"]
+        let deleteTwo = app.staticTexts["Delete 2 scans permanently?"]
         XCTAssertTrue(deleteTwo.waitForExistence(timeout: 5))
-        XCTAssertTrue(deleteTwo.staticTexts["They’ll be deleted. This can’t be undone."].exists)
+        XCTAssertTrue(app.staticTexts["They’ll be deleted. This can’t be undone."].exists)
         attachScreenshot("trash-delete-2", of: app)
-        deleteTwo.buttons["Delete"].tap()
+        confirmButton("Delete", besides: AccessibilityID.Trash.deleteSelected, in: app).tap()
         XCTAssertTrue(waitFor(tiles(in: app), count: 2))
         XCTAssertTrue(app.buttons[AccessibilityID.Trash.emptyTrash].waitForExistence(timeout: 5))
     }
@@ -146,11 +156,11 @@ final class TrashJourneyTests: XCTestCase {
     /// Empty Trash asks first, then the empty state shows.
     private func emptyTrash(in app: XCUIApplication) throws {
         app.buttons[AccessibilityID.Trash.emptyTrash].tap()
-        let empty = app.alerts["Empty Trash?"]
+        let empty = app.staticTexts["Empty Trash?"]
         XCTAssertTrue(empty.waitForExistence(timeout: 5))
-        XCTAssertTrue(empty.staticTexts["Deletes 2 scans permanently. This can’t be undone."].exists)
+        XCTAssertTrue(app.staticTexts["Deletes 2 scans permanently. This can’t be undone."].exists)
         attachScreenshot("trash-empty-trash", of: app)
-        empty.buttons["Empty Trash"].tap()
+        confirmButton("Empty Trash", besides: AccessibilityID.Trash.emptyTrash, in: app).tap()
         XCTAssertTrue(app.staticTexts["Trash is empty"].waitForExistence(timeout: 5))
         XCTAssertEqual(tiles(in: app).count, 0)
         XCTAssertFalse(app.buttons[AccessibilityID.Trash.select].exists)
@@ -180,7 +190,17 @@ final class TrashJourneyTests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch
     }
 
-    /// Menus and alerts are never snapshotted: a screenshot is kept for review instead.
+    /// The confirmation's action, which has the label of the button that asked.
+    private func confirmButton(_ label: String, besides identifier: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@", label, identifier)).firstMatch
+    }
+
+    /// A tap away from the popover, which is how it is dismissed: a popover shows no Cancel.
+    private func dismissPopover(in app: XCUIApplication) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+    }
+
+    /// Menus and confirmations are never snapshotted: a screenshot is kept for review instead.
     private func attachScreenshot(_ name: String, of app: XCUIApplication) {
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = name

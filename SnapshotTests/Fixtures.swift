@@ -15,6 +15,8 @@ enum Fixtures {
         case home
         /// Trash 09-01: seven scans with 2 to 29 days left.
         case trash
+        /// Trash 09-01 and three more, so the last row rests under Empty Trash.
+        case fullTrash
     }
 
     /// Oct 12, 2026, `en_US`, in GMT so the day never depends on the machine's time zone.
@@ -129,6 +131,13 @@ enum Fixtures {
 
     private static let coatCheckEntry = trashed("Coat check", "scan-throw-coat", .throwaways, daysLeft: 5)
 
+    private static let fullTrashEntries: [Entry] =
+        trashEntries + [
+            trashed("Valet ticket", "scan-throw-valet", .throwaways, daysLeft: 29),
+            trashed("Harbor Gas", "scan-r-gas", .receipts, daysLeft: 30),
+            trashed("Library card", "scan-library", .wallet, daysLeft: 30),
+        ]
+
     private static func entry(
         _ title: String,
         _ image: String,
@@ -160,6 +169,7 @@ enum Fixtures {
         switch set {
         case .home: homeEntries
         case .trash: trashEntries
+        case .fullTrash: fullTrashEntries
         }
     }
 
@@ -178,7 +188,7 @@ enum Fixtures {
     // MARK: Images
 
     private static let allImages: [ScanID: [Int: CGImage]] = {
-        var all = images(for: .home).merging(images(for: .trash)) { home, _ in home }
+        var all = images(for: .home).merging(images(for: .fullTrash)) { home, _ in home }
         all[lease.id] = byIndex(scans("scan-lease", "scan-lease-p2", "scan-lease-p3"))
         all[receipt.id] = byIndex(scans("scan-r-corner"))
         return all

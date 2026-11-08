@@ -65,6 +65,9 @@ struct TrashTileView: View {
         } preview: {
             thumbnail.frame(width: thumbnailSize.width)
         }
+        // Delete now asks from the tile it deletes.
+        .trashConfirmationDialog(
+            model.tileConfirmation(tile.id), cancel: model.cancelConfirmation, perform: model.performConfirmation)
     }
 
     private var isSelected: Bool { model.selected.contains(tile.id) }

@@ -161,8 +161,8 @@ public final class ViewerModel {
 
     /// The confirmation's Delete. Returns the announcement, or nil when the write failed.
     @discardableResult
-    package func performConfirmation() async -> String? {
-        await trash?.performConfirmation()
+    package func performConfirmation(_ asked: TrashConfirmation) async -> String? {
+        await trash?.performConfirmation(asked)
     }
 
     private var scan: ScanSummary? { library.scans.first { $0.id == id } }

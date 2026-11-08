@@ -196,51 +196,94 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
     #expect(model.confirmation == nil)
 }
 
-@Test func confirmedDeleteRemovesOnlyThoseScans() async {
+/// Each confirmation comes up from the button that asked (Ben, 2026-11-08): Empty Trash's from Empty Trash, a
+/// selection's from Delete N, a long-pressed tile's from that tile, and only from there.
+@Test func eachConfirmationHasOnePlaceItComesUpFrom() {
+    let model = TrashHarness(three).model
+    let first = model.tiles[0].id
+    let second = model.tiles[1].id
+
+    model.confirmEmpty()
+    #expect(model.emptyConfirmation == model.confirmation)
+    #expect(model.selectionConfirmation == nil)
+    #expect(model.tileConfirmation(first) == nil)
+
+    model.confirmDelete([first])
+    #expect(model.emptyConfirmation == nil)
+    #expect(model.selectionConfirmation == nil)
+    #expect(model.tileConfirmation(first) == model.confirmation)
+    #expect(model.tileConfirmation(second) == nil)
+
+    model.cancelConfirmation()
+    model.toggleSelecting()
+    model.toggle(first)
+    model.confirmDelete([first])
+    #expect(model.emptyConfirmation == nil)
+    #expect(model.selectionConfirmation == model.confirmation)
+    #expect(model.tileConfirmation(first) == nil)
+
+    model.cancelConfirmation()
+    #expect(model.emptyConfirmation == nil)
+    #expect(model.selectionConfirmation == nil)
+    #expect(model.tileConfirmation(first) == nil)
+}
+
+@Test func confirmedDeleteRemovesOnlyThoseScans() async throws {
     let harness = TrashHarness(three)
     let model = harness.model
     let ids = [model.tiles[0].id, model.tiles[1].id]
     model.confirmDelete(ids)
     #expect(harness.library.scans.count == 3)  // nothing happens until confirmed
-    let announcement = await model.performConfirmation()
+    let announcement = try await model.performConfirmation(#require(model.confirmation))
     #expect(announcement == "Deleted 2 scans")
     #expect(model.confirmation == nil)
     #expect(model.tiles.map(\.title) == ["Coat check"])
     #expect(harness.analytics.events == [.scansDeleted(count: 2)])
 }
 
-@Test func deletingOneAnnouncesDeleted() async {
-    let model = TrashHarness(three).model
-    model.confirmDelete([model.tiles[0].id])
-    #expect(await model.performConfirmation() == "Deleted")
-}
-
-@Test func emptyTrashDeletesAll() async {
+/// The dialog clears the confirmation as it goes, which may be before its button's action runs: the action still
+/// performs what was confirmed.
+@Test func aConfirmationClearedByItsDialogStillPerforms() async throws {
     let harness = TrashHarness(three)
     harness.model.confirmEmpty()
-    #expect(await harness.model.performConfirmation() == "Deleted 3 scans")
+    let confirmation = try #require(harness.model.confirmation)
+    harness.model.cancelConfirmation()
+    #expect(await harness.model.performConfirmation(confirmation) == "Deleted 3 scans")
+    #expect(harness.library.scans.isEmpty)
+}
+
+@Test func deletingOneAnnouncesDeleted() async throws {
+    let model = TrashHarness(three).model
+    model.confirmDelete([model.tiles[0].id])
+    #expect(try await model.performConfirmation(#require(model.confirmation)) == "Deleted")
+}
+
+@Test func emptyTrashDeletesAll() async throws {
+    let harness = TrashHarness(three)
+    harness.model.confirmEmpty()
+    #expect(try await harness.model.performConfirmation(#require(harness.model.confirmation)) == "Deleted 3 scans")
     #expect(harness.model.isEmpty)
     #expect(harness.library.scans.isEmpty)
     #expect(harness.analytics.events == [.trashEmptied(count: 3)])
 }
 
-@Test func aFailedDeleteAlertsAndKeepsTheScans() async {
+@Test func aFailedDeleteAlertsAndKeepsTheScans() async throws {
     let harness = TrashHarness(three)
     harness.library.failNextEdit = .writeFailed
     harness.model.confirmEmpty()
-    #expect(await harness.model.performConfirmation() == nil)
+    #expect(try await harness.model.performConfirmation(#require(harness.model.confirmation)) == nil)
     #expect(harness.model.editAlert == EditAlert())
     #expect(harness.model.confirmation == nil)
     #expect(harness.model.tiles.count == 3)
     #expect(harness.analytics.events.isEmpty)
 }
 
-@Test func analyticsCounts() async {
+@Test func analyticsCounts() async throws {
     let harness = TrashHarness(three)
     let model = harness.model
     _ = model.restore([model.tiles[0].id])
     model.confirmDelete([model.tiles[0].id, model.tiles[1].id])
-    _ = await model.performConfirmation()
+    _ = try await model.performConfirmation(#require(model.confirmation))
     #expect(harness.analytics.events == [.scansRestored(count: 1), .scansDeleted(count: 2)])
     #expect(harness.analytics.events.allSatisfy { Set($0.payload.keys) == [.count] })
 }

@@ -240,7 +240,7 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
     #expect(viewer.editAlert == nil)
 }
 
-@Test func deleteNowAsksWithTheTitle() async {
+@Test func deleteNowAsksWithTheTitle() async throws {
     let scan = trashed("Coat check", daysAgo: 25)
     let library = FakeLibrary(scans: [scan], clock: clock)
     let viewer = model(scan, library: library, mode: .trash)
@@ -250,7 +250,7 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
     #expect(viewer.confirmation?.confirmTitle == "Delete")
     #expect(!library.scans.isEmpty, "nothing goes before the confirmation")
 
-    #expect(await viewer.performConfirmation() == "Deleted")
+    #expect(try await viewer.performConfirmation(#require(viewer.confirmation)) == "Deleted")
     #expect(viewer.confirmation == nil)
     #expect(library.scans.isEmpty)
     #expect(viewer.isMissing)

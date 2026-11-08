@@ -17,10 +17,11 @@ struct TrashViewerChrome: View {
             deleteIdentifier: AccessibilityID.TrashViewer.deleteNow,
             restoreIdentifier: AccessibilityID.TrashViewer.restore,
             onDelete: model.deleteNow,
-            onRestore: restore
+            onRestore: restore,
+            confirmation: model.confirmation,
+            onCancel: model.cancelConfirmation,
+            onConfirm: model.performConfirmation
         )
-        .trashConfirmationAlert(
-            model.confirmation, cancel: model.cancelConfirmation, perform: model.performConfirmation)
     }
 
     private func restore() {

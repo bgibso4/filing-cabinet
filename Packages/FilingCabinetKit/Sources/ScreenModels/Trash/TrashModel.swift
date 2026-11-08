@@ -8,7 +8,7 @@ import Observation
 /// tiles and the selection with it.
 @Observable
 public final class TrashModel {
-    /// Set by Delete and Empty Trash; nothing is removed until `performConfirmation()`.
+    /// Set by Delete and Empty Trash; nothing is removed until `performConfirmation(_:)`.
     package private(set) var confirmation: TrashConfirmation?
     /// Set when a write fails; the action changed nothing (M18).
     package private(set) var editAlert: EditAlert?
@@ -130,14 +130,33 @@ public final class TrashModel {
         confirmation = TrashConfirmation(emptying: count)
     }
 
+    // Where the confirmation comes up from: the button that asked (Ben, 2026-11-08), and nowhere else.
+
+    /// Empty Trash's, from Empty Trash.
+    package var emptyConfirmation: TrashConfirmation? {
+        confirmation?.action == .empty ? confirmation : nil
+    }
+
+    /// Delete N's, from Delete N while selecting (a tile's accessibility action asks from there too).
+    package var selectionConfirmation: TrashConfirmation? {
+        isSelecting && confirmation?.action != .empty ? confirmation : nil
+    }
+
+    /// A long-pressed tile's Delete now, from that tile.
+    package func tileConfirmation(_ id: ScanID) -> TrashConfirmation? {
+        !isSelecting && confirmation?.action == .delete([id]) ? confirmation : nil
+    }
+
     package func cancelConfirmation() {
         confirmation = nil
     }
 
-    /// Runs what the confirmation asked. Returns the announcement (M19), or nil when the write failed.
+    /// Runs what this confirmation asked. It is the one the dialog presented, not `confirmation`: the dialog may clear
+    /// that (`cancelConfirmation()`) as it goes, before its button's action runs. Returns the announcement (M19), or nil
+    /// when the write failed.
     @discardableResult
-    package func performConfirmation() async -> String? {
-        guard let action = confirmation?.action else { return nil }
+    package func performConfirmation(_ asked: TrashConfirmation) async -> String? {
+        let action = asked.action
         confirmation = nil
         let count: Int
         do {
