@@ -9,6 +9,8 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
     package let scannedAt: Date
     package let expiryOverride: ExpiryOverride?
     package let pageCount: Int
+    /// The day the scan went to Trash; nil while it is in the library.
+    package let trashedDay: CalendarDay?
 
     public init(
         id: ScanID,
@@ -16,7 +18,8 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
         collection: BuiltInCollection,
         scannedAt: Date,
         expiryOverride: ExpiryOverride?,
-        pageCount: Int
+        pageCount: Int,
+        trashedDay: CalendarDay? = nil
     ) {
         self.id = id
         self.title = title
@@ -24,5 +27,6 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
         self.scannedAt = scannedAt
         self.expiryOverride = expiryOverride
         self.pageCount = pageCount
+        self.trashedDay = trashedDay
     }
 }

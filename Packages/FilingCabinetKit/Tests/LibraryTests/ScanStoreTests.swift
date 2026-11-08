@@ -217,6 +217,34 @@ private func persistedCount(in container: ModelContainer) -> Int {
 }
 
 @MainActor
+@Test func orphanCleanupFetchesOnce() async throws {
+    let location = temporaryLocation()
+    var fetches = 0
+    let store = ScanStore(
+        container: try ScanStore.makeContainer(storeURL: nil),
+        files: PageFileStore(location: location, fileSystem: LocalFileSystem()),
+        persist: nil,
+        fetch: { context, descriptor in
+            fetches += 1
+            return try context.fetch(descriptor)
+        })
+    let real = draft()
+    try await store.save(real)
+    let orphans = (1...99).map { _ in ScanID() }
+    for orphan in orphans {
+        try FileManager.default.createDirectory(at: location.originals(for: orphan), withIntermediateDirectories: true)
+    }
+    let fetchesBefore = fetches
+
+    await store.removeOrphanedFiles()
+
+    #expect(fetches - fetchesBefore == 1)
+    #expect(!orphans.contains { exists(location.originals(for: $0)) })
+    #expect(exists(location.originals(for: real.id).appending(path: "page-1.heic")))
+    #expect(store.scans.map(\.id) == [real.id])
+}
+
+@MainActor
 @Test func cleanupSkipsASaveInFlight() async throws {
     let location = temporaryLocation()
     let (written, writtenContinuation) = AsyncStream.makeStream(of: Void.self)

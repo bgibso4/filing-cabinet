@@ -18,29 +18,46 @@ public final class ScanStore: ScanLibrary {
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let files: PageFileStore
     @ObservationIgnored private let persist: (ModelContext) throws -> Void
+    /// Every fetch of scan records goes through here.
+    @ObservationIgnored private let fetch: (ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord]
     /// Scans whose files may be on disk before their record is: orphan cleanup must leave them alone.
     @ObservationIgnored private var inFlight: Set<ScanID> = []
 
     /// `persist` defaults to `context.save()`; tests inject a failure.
-    public init(container: ModelContainer, files: PageFileStore, persist: ((ModelContext) throws -> Void)? = nil) {
+    public convenience init(
+        container: ModelContainer, files: PageFileStore, persist: ((ModelContext) throws -> Void)? = nil
+    ) {
+        self.init(container: container, files: files, persist: persist, fetch: nil)
+    }
+
+    /// `fetch` defaults to `context.fetch(_:)`; tests count fetches.
+    init(
+        container: ModelContainer,
+        files: PageFileStore,
+        persist: ((ModelContext) throws -> Void)?,
+        fetch: ((ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord])?
+    ) {
         self.container = container
         // Every write is persisted explicitly, so a failed save can be rolled back before autosave sees it.
         container.mainContext.autosaveEnabled = false
         self.files = files
         self.persist = persist ?? { try $0.save() }
+        self.fetch = fetch ?? { try $0.fetch($1) }
         reloadScans()
     }
 
-    /// The SwiftData container for the library. A nil `storeURL` keeps the store in memory.
+    /// The SwiftData container for the library, migrating an older store to the current schema. A nil
+    /// `storeURL` keeps the store in memory.
     public static func makeContainer(storeURL: URL?) throws -> ModelContainer {
-        let schema = Schema([ScanRecord.self])
+        let schema = Schema(versionedSchema: SchemaV2.self)
         let configuration =
             if let storeURL {
                 ModelConfiguration(schema: schema, url: storeURL)
             } else {
                 ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             }
-        return try ModelContainer(for: schema, configurations: configuration)
+        return try ModelContainer(
+            for: schema, migrationPlan: LibraryMigrationPlan.self, configurations: configuration)
     }
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
@@ -99,11 +116,12 @@ public final class ScanStore: ScanLibrary {
     /// writing files and inserting the record leaves behind. Anything it cannot confirm is kept.
     public func removeOrphanedFiles() async {
         let stored = await files.storedScanIDs()
+        // Read once, after the listing: a listed folder's scan is then either recorded or still saving. A save
+        // in flight now may finish during the removals, so it is kept by this snapshot, not a later check.
+        guard let recorded = recordedScanIDs() else { return }
+        let keep = recorded.union(inFlight.map(\.uuid))
         var removed = 0
-        for id in stored {
-            // Checked on the main actor right before each removal, after the listing and any earlier
-            // removal, so a save that finished or started meanwhile is seen.
-            guard !inFlight.contains(id), isOrphan(id) else { continue }
+        for id in stored where !keep.contains(id.uuid) {
             await files.remove(id)
             removed += 1
         }
@@ -119,16 +137,15 @@ public final class ScanStore: ScanLibrary {
     /// The one context every SwiftData read and write goes through.
     private var context: ModelContext { container.mainContext }
 
-    private func isOrphan(_ id: ScanID) -> Bool {
-        let uuid = id.uuid
+    /// Every recorded scan, in one fetch; nil when the fetch fails.
+    private func recordedScanIDs() -> Set<UUID>? {
+        var descriptor = FetchDescriptor<ScanRecord>()
+        descriptor.propertiesToFetch = [\.scanID]
         do {
-            return try context.fetchCount(FetchDescriptor<ScanRecord>(predicate: #Predicate { $0.scanID == uuid }))
-                == 0
+            return Set(try fetch(context, descriptor).map(\.scanID))
         } catch {
-            LibraryLog.logger.error(
-                "Checking scan \(uuid.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .private)"
-            )
-            return false
+            LibraryLog.logger.error("Listing recorded scans failed: \(error.localizedDescription, privacy: .private)")
+            return nil
         }
     }
 
@@ -137,7 +154,7 @@ public final class ScanStore: ScanLibrary {
         var descriptor = FetchDescriptor<ScanRecord>(predicate: #Predicate { $0.scanID == uuid })
         descriptor.fetchLimit = 1
         do {
-            return try context.fetch(descriptor).first
+            return try fetch(context, descriptor).first
         } catch {
             LibraryLog.logger.error(
                 "Fetching scan \(uuid.uuidString, privacy: .public) failed: \(error.localizedDescription, privacy: .private)"
@@ -149,7 +166,7 @@ public final class ScanStore: ScanLibrary {
     private func reloadScans() {
         let descriptor = FetchDescriptor<ScanRecord>(sortBy: [SortDescriptor(\.scannedAt, order: .reverse)])
         do {
-            scans = try context.fetch(descriptor).compactMap(\.summary)
+            scans = try fetch(context, descriptor).compactMap(\.summary)
         } catch {
             LibraryLog.logger.error("Loading scans failed: \(error.localizedDescription, privacy: .private)")
         }
