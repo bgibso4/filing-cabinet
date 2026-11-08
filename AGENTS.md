@@ -42,7 +42,7 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make full` | everything on the simulator: package, snapshot and UI tests. `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out) |
 | `make ci` | everything CI runs: `ci-checks`, then `ci-sim` |
 | `make ci-checks` | generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, Periphery, changed snapshots, `check-resolved` |
-| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs `ci-checks` and `ci-sim` as two parallel jobs |
+| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` and `SHARD=browse` (the two longest UI classes) and `SHARD=main` (everything else) |
 | `make lint` / `make format` | SwiftLint + swift-format strict lint / apply swift-format |
 | `make unused` | Periphery dead-code scan |
 | `make snapshots-record` | re-record snapshot references on the pinned simulator (`ONLY=` for some classes) |
@@ -79,6 +79,8 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-FailSave` | the next page write fails with a full disk |
+
+UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.
 
 ## Import line
 
