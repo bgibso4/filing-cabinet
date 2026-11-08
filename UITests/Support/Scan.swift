@@ -5,11 +5,10 @@ import XCTest
 @MainActor
 func scanOnePage(in app: XCUIApplication) {
     let scan = app.buttons[AccessibilityID.Home.scan]
-    let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
-    XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+    XCTAssertTrue(scan.satisfies("isEnabled == true", within: 5))
     scan.tap()
     let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-    XCTAssertTrue(finish.waitForExistence(timeout: 5))
+    XCTAssertTrue(finish.appears(within: 5))
     finish.tap()
-    XCTAssertTrue(app.buttons[AccessibilityID.Review.save].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons[AccessibilityID.Review.save].appears(within: 5))
 }

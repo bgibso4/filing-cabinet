@@ -12,7 +12,7 @@ final class BrowseJourneyTests: XCTestCase {
     private func seededApp(largestText: Bool = false) -> XCUIApplication {
         let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].waitForExistence(timeout: seedingTimeout))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout))
         return app
     }
 
@@ -27,12 +27,12 @@ final class BrowseJourneyTests: XCTestCase {
             + [AccessibilityID.Home.recentRow, AccessibilityID.Home.allRow]
         for row in rows {
             let button = app.buttons[row]
-            XCTAssertTrue(button.waitForExistence(timeout: 5), row)
+            XCTAssertTrue(button.appears(within: 5), row)
             button.tap()
             XCTAssertTrue(
-                app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5), row)
+                app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5), row)
             app.buttons[AccessibilityID.Grid.back].tap()
-            XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5), row)
+            XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5), row)
         }
     }
 
@@ -44,21 +44,19 @@ final class BrowseJourneyTests: XCTestCase {
         try audit(app)
 
         let scan = app.buttons[AccessibilityID.Grid.scan]
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        XCTAssertTrue(scan.satisfies("isEnabled == true", within: 5))
         scan.tap()
         let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(finish.appears(within: 5))
         finish.tap()
 
         let save = app.buttons[AccessibilityID.Review.save]
-        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        XCTAssertTrue(save.appears(within: 5))
         let collection = app.descendants(matching: .any)[AccessibilityID.Review.collection]
-        XCTAssertTrue(collection.waitForExistence(timeout: 5))
+        XCTAssertTrue(collection.appears(within: 5))
         XCTAssertEqual(collection.label, "Collection")
         XCTAssertEqual(collection.value as? String, "Receipts")
-        let saveEnabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: save)
-        XCTAssertEqual(XCTWaiter.wait(for: [saveEnabled], timeout: 5), .completed)
+        XCTAssertTrue(save.satisfies("isEnabled == true", within: 5))
     }
 
     func testAuditAtLargestTextOfAGrid() throws {
@@ -72,18 +70,15 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp()
         openReceipts(in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5))
     }
 
     func testTileOpensAScan() {
         let app = seededApp()
         openReceipts(in: app)
         tiles(in: app).firstMatch.tap()
-        let gone = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == false"),
-            object: app.descendants(matching: .any)[AccessibilityID.Grid.header])
-        XCTAssertEqual(XCTWaiter.wait(for: [gone], timeout: 5), .completed)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].disappears(within: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
         // One page: no strip.
         XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Viewer.strip].exists)
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.page].exists)
@@ -111,7 +106,7 @@ final class BrowseJourneyTests: XCTestCase {
         assertPageLabel("Page 2 of 3", in: app)
 
         app.buttons[AccessibilityID.Viewer.back].tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
     func testAuditAtLargestTextOfTheViewer() throws {
@@ -135,7 +130,7 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp()
         openThreePageScan(in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
     func testEdgeSwipeGoesBackFromALaterPage() {
@@ -144,7 +139,7 @@ final class BrowseJourneyTests: XCTestCase {
         app.windows.firstMatch.swipeLeft()
         assertPageLabel("Page 2 of 3", in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
     func testEdgeSwipeGoesBackFromAZoomedPage() {
@@ -153,7 +148,7 @@ final class BrowseJourneyTests: XCTestCase {
         // The page says it is zoomed once the zoom has finished; only then is the swipe a test of a zoomed page.
         zoomTheFirstPage(in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
     func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() throws {
@@ -164,13 +159,11 @@ final class BrowseJourneyTests: XCTestCase {
         zoomTheFirstPage(in: app)
         // The first swipes pan the zoomed page to its edge; the one after that pages, as in Photos.
         let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
-        let second = NSPredicate(format: "label == %@", "Page 2 of 3")
         var swipes = 0
         while swipes < 4 {
             app.windows.firstMatch.swipeLeft()
             swipes += 1
-            let paged = XCTNSPredicateExpectation(predicate: second, object: strip)
-            if XCTWaiter.wait(for: [paged], timeout: 2) == .completed { break }
+            if strip.satisfies("label == %@", "Page 2 of 3", within: 2) { break }
         }
         assertPageLabel("Page 2 of 3", in: app)
     }
@@ -178,8 +171,7 @@ final class BrowseJourneyTests: XCTestCase {
     private func zoomTheFirstPage(in app: XCUIApplication) {
         let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
         page.doubleTap()
-        let zoomed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "Zoomed"), object: page)
-        XCTAssertEqual(XCTWaiter.wait(for: [zoomed], timeout: 5), .completed, "The page never reported being zoomed")
+        XCTAssertTrue(page.satisfies("value == %@", "Zoomed", within: 5), "The page never reported being zoomed")
     }
 
     private func openReceipts(in app: XCUIApplication) {
@@ -188,22 +180,21 @@ final class BrowseJourneyTests: XCTestCase {
 
     private func open(_ collection: BuiltInCollection, in app: XCUIApplication) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.appears(within: 5))
         row.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
     }
 
     /// The seed's Documents scans have three pages.
     private func openThreePageScan(in app: XCUIApplication) {
         open(.documents, in: app)
         tiles(in: app).firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
     }
 
     private func assertPageLabel(_ label: String, in app: XCUIApplication, line: UInt = #line) {
         let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
-        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: strip)
-        XCTAssertEqual(XCTWaiter.wait(for: [matches], timeout: 5), .completed, label, line: line)
+        XCTAssertTrue(strip.satisfies("label == %@", label, within: 5), label, line: line)
     }
 
     private func edgeSwipeBack(in app: XCUIApplication) {
@@ -225,14 +216,14 @@ final class BrowseJourneyTests: XCTestCase {
     /// Scan exists, with nothing else waited on first, and audits straight after.
     func testAuditAtLargestTextOfDisabledScan() throws {
         let app = launchApp(["-SeedScans", "60", "-FixedDate", "2026-10-12"], largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 30))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 30))
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isEnabled)
         try audit(app)
     }
 
     func testAuditAtLargestTextOfHomeWithScans() throws {
         let app = seededApp(largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.allRow].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.allRow].appears(within: 5))
         try audit(app)
     }
 }

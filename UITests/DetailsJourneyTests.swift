@@ -27,21 +27,21 @@ final class DetailsJourneyTests: XCTestCase {
         // Rename: tap the title, clear it, type, Return.
         app.buttons[AccessibilityID.Details.title].tap()
         let field = app.textFields[AccessibilityID.Details.titleField]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(field.appears(within: 5))
         // Not `assertIdentifiers`: with the keyboard up the tree holds the system keyboard's own buttons, which have no
         // identifiers ("Continue" on its first-use tip).
         XCTAssertTrue(app.buttons[AccessibilityID.Details.clearTitle].exists)
         app.buttons[AccessibilityID.Details.clearTitle].tap()
         field.typeText("Groceries\n")
         let title = app.buttons[AccessibilityID.Details.title]
-        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.appears(within: 5))
         XCTAssertEqual(title.label, "Rename Groceries")
 
         // Move to Documents: the note and Undo.
         choose("Documents", from: AccessibilityID.Details.collection, in: app)
         let collection = app.descendants(matching: .any)[AccessibilityID.Details.collection]
         XCTAssertTrue(waitFor(collection, value: "Documents"))
-        XCTAssertTrue(app.staticTexts["Expiry now follows Documents."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Expiry now follows Documents."].appears(within: 5))
         assertIdentifiers(
             AccessibilityID.Details.all.filter { $0 != AccessibilityID.Details.titleField }, in: app)
         app.buttons[AccessibilityID.Details.undo].tap()
@@ -52,7 +52,7 @@ final class DetailsJourneyTests: XCTestCase {
         let expiry = app.descendants(matching: .any)[AccessibilityID.Details.expiry]
         expiry.tap()
         let year = menuItem("1 year", in: app)
-        XCTAssertTrue(year.waitForExistence(timeout: 5))
+        XCTAssertTrue(year.appears(within: 5))
         attachScreenshot("details-expiry-menu", of: app)
         year.tap()
         XCTAssertTrue(waitFor(expiry, valuePrefix: "Oct "))
@@ -60,7 +60,7 @@ final class DetailsJourneyTests: XCTestCase {
         // Close: the pill comes back with the new title.
         app.swipeDownOnSheet()
         let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(header.appears(within: 5))
         XCTAssertEqual(header.label, "Groceries, details")
     }
 
@@ -71,19 +71,19 @@ final class DetailsJourneyTests: XCTestCase {
         let before = tiles(in: app).count
         tiles(in: app).firstMatch.tap()
         let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(header.appears(within: 5))
 
         app.buttons[AccessibilityID.Viewer.trash].tap()
         // The Trash button is labelled Move to Trash too.
         let confirm = app.buttons.matching(
             NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Viewer.trash)
         ).firstMatch
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirm.appears(within: 5))
         XCTAssertTrue(app.staticTexts["This receipt moves to Trash. You can restore it for 30 days."].exists)
         attachScreenshot("viewer-move-to-trash", of: app)
         confirm.tap()
 
-        XCTAssertTrue(header.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(header.disappears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
     }
 
@@ -94,22 +94,22 @@ final class DetailsJourneyTests: XCTestCase {
         let before = tiles(in: app).count
         // Seed index 11: the oldest receipt.
         let old = tiles(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "Sample scan 12,")).firstMatch
-        XCTAssertTrue(old.waitForExistence(timeout: 5))
+        XCTAssertTrue(old.appears(within: 5))
         old.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
         openDetails(in: app)
 
         choose("Throwaways", from: AccessibilityID.Details.collection, in: app)
         let alert = app.alerts["Move to Throwaways?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.appears(within: 5))
         attachScreenshot("details-move-to-throwaways", of: app)
         alert.buttons["Move"].tap()
 
         let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
-        XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(sheet.disappears(within: 5))
         XCTAssertTrue(
-            app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+            app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
     }
 
@@ -126,15 +126,15 @@ final class DetailsJourneyTests: XCTestCase {
     private func openAReceipt(in app: XCUIApplication) {
         openReceipts(in: app)
         tiles(in: app).firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
     }
 
     /// The Receipts grid, newest first.
     private func openReceipts(in app: XCUIApplication) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.appears(within: 5))
         row.tap()
-        XCTAssertTrue(tiles(in: app).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(tiles(in: app).firstMatch.appears(within: 5))
     }
 
     private func tiles(in app: XCUIApplication) -> XCUIElementQuery {
@@ -152,7 +152,7 @@ final class DetailsJourneyTests: XCTestCase {
     /// The header pill opens Details, and the pill makes way for it.
     private func openDetails(in app: XCUIApplication) {
         app.descendants(matching: .any)[AccessibilityID.Viewer.header].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Details.title].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Details.title].appears(within: 5))
         assertIdentifiers(
             [
                 AccessibilityID.Details.sheet, AccessibilityID.Details.title, AccessibilityID.Details.collection,
@@ -164,7 +164,7 @@ final class DetailsJourneyTests: XCTestCase {
     private func choose(_ item: String, from menu: String, in app: XCUIApplication) {
         app.descendants(matching: .any)[menu].tap()
         let button = menuItem(item, in: app)
-        XCTAssertTrue(button.waitForExistence(timeout: 5), item)
+        XCTAssertTrue(button.appears(within: 5), item)
         button.tap()
     }
 
@@ -174,18 +174,14 @@ final class DetailsJourneyTests: XCTestCase {
     }
 
     private func waitFor(_ element: XCUIElement, value: String) -> Bool {
-        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
-        return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
+        element.satisfies("value == %@", value, within: 5)
     }
 
     private func waitFor(_ query: XCUIElementQuery, count: Int) -> Bool {
-        let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "count == %d", count), object: query)
-        return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
+        query.satisfies("count == %d", count, within: 5)
     }
 
     private func waitFor(_ element: XCUIElement, valuePrefix: String) -> Bool {
-        let matches = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value BEGINSWITH %@", valuePrefix), object: element)
-        return XCTWaiter.wait(for: [matches], timeout: 5) == .completed
+        element.satisfies("value BEGINSWITH %@", valuePrefix, within: 5)
     }
 }

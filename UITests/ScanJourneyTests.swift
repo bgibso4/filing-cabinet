@@ -21,18 +21,18 @@ final class ScanJourneyTests: XCTestCase {
 
         app.descendants(matching: .any)[Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
-        XCTAssertTrue(receipts.waitForExistence(timeout: 5))
+        XCTAssertTrue(receipts.appears(within: 5))
         attachScreenshot(of: app, named: "collection-menu")
         receipts.tap()
 
         let expiry = app.descendants(matching: .any)[Review.expiry]
-        let filledIn = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == %@", "3 months · until Jan 9, 2027"), object: expiry)
-        XCTAssertEqual(XCTWaiter.wait(for: [filledIn], timeout: 5), .completed, String(describing: expiry.value))
+        XCTAssertTrue(
+            expiry.satisfies("value == %@", "3 months · until Jan 9, 2027", within: 5), String(describing: expiry.value)
+        )
         expiry.tap()
         let collectionDefault = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts default'"))
             .firstMatch
-        XCTAssertTrue(collectionDefault.waitForExistence(timeout: 5))
+        XCTAssertTrue(collectionDefault.appears(within: 5))
         attachScreenshot(of: app, named: "expiry-menu")
         collectionDefault.tap()
 
@@ -62,31 +62,29 @@ final class ScanJourneyTests: XCTestCase {
         let row = app.buttons[AccessibilityID.Home.collectionRow(.documents)]
         row.tap()
         let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(header.appears(within: 5))
         assertIdentifiers(AccessibilityID.Grid.all, in: app)
         try audit(app)
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
         ).firstMatch
-        XCTAssertTrue(tile.waitForExistence(timeout: 5))
+        XCTAssertTrue(tile.appears(within: 5))
         tile.tap()
 
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
         try audit(app)
         let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
         for page in 2...3 {
             app.windows.firstMatch.swipeLeft()
-            let shown = XCTNSPredicateExpectation(
-                predicate: NSPredicate(format: "label == %@", "Page \(page) of 3"), object: strip)
-            XCTAssertEqual(
-                XCTWaiter.wait(for: [shown], timeout: 5), .completed, String(describing: strip.label))
+            XCTAssertTrue(
+                strip.satisfies("label == %@", "Page \(page) of 3", within: 5), String(describing: strip.label))
         }
 
         app.buttons[AccessibilityID.Viewer.back].tap()
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(header.appears(within: 5))
         app.buttons[AccessibilityID.Grid.back].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.Home.collectionRow(.documents)].isHittable)
     }
 
@@ -108,12 +106,12 @@ final class ScanJourneyTests: XCTestCase {
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
-        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(save.disappears(within: 10))
         waitForSaveToReturnHome(in: app)
 
         app.buttons[AccessibilityID.Home.scan].tap()
         let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(finish.appears(within: 5))
         XCTAssertTrue(finish.isHittable, "the second camera is off screen")
     }
 
@@ -123,12 +121,12 @@ final class ScanJourneyTests: XCTestCase {
         saveFromInsideReceipts(in: app, choosing: nil)
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
-        XCTAssertTrue(tile.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(tile.firstMatch.appears(within: 5))
         // Scan answers again, on the same grid.
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
         app.buttons[AccessibilityID.Grid.back].tap()
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.appears(within: 5))
         XCTAssertTrue(row.label.contains("1"), row.label)
     }
 
@@ -136,7 +134,7 @@ final class ScanJourneyTests: XCTestCase {
     func testSaveToAnotherCollectionFromAGridCountsOnHome() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: "Wallet")
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
         app.buttons[AccessibilityID.Grid.back].tap()
         waitForSaveToReturnHome(in: app, collection: .wallet)
     }
@@ -147,14 +145,12 @@ final class ScanJourneyTests: XCTestCase {
         let app = launchApp(["-SeedScans", "60", "-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         // Scan stays disabled until all sixty are saved, which takes most of a minute on a busy machine. Waiting here
         // also means the grid has stopped growing before it is scrolled.
-        let enabled = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "isEnabled == true"), object: app.buttons[AccessibilityID.Home.scan])
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 120), .completed)
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isEnabled == true", within: 120))
         let all = app.buttons[AccessibilityID.Home.allRow]
-        XCTAssertTrue(all.waitForExistence(timeout: 30))
+        XCTAssertTrue(all.appears(within: 30))
         all.tap()
         let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
-        XCTAssertTrue(header.waitForExistence(timeout: 5))
+        XCTAssertTrue(header.appears(within: 5))
         app.swipeUp(velocity: .fast)
         app.swipeUp(velocity: .fast)
         XCTAssertFalse(header.isHittable)
@@ -162,8 +158,8 @@ final class ScanJourneyTests: XCTestCase {
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
-        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
-        XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].waitForExistence(timeout: 5))
+        XCTAssertTrue(save.disappears(within: 10))
+        XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].appears(within: 5))
         XCTAssertFalse(header.isHittable)
     }
 
@@ -172,7 +168,7 @@ final class ScanJourneyTests: XCTestCase {
         scanOnePage(in: app)
         app.descendants(matching: .any)[Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
-        XCTAssertTrue(receipts.waitForExistence(timeout: 5))
+        XCTAssertTrue(receipts.appears(within: 5))
         receipts.tap()
         let expiry = app.descendants(matching: .any)[Review.expiry]
         let collectionDefault = "3 months · until Jan 9, 2027"
@@ -192,7 +188,7 @@ final class ScanJourneyTests: XCTestCase {
         openChooseADate(in: app)
         let day = app.descendants(matching: .any)[AccessibilityID.ExpiryDate.picker]
             .buttons.matching(NSPredicate(format: "label CONTAINS 'October 20'")).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5))
+        XCTAssertTrue(day.appears(within: 5))
         day.tap()
         app.buttons[AccessibilityID.ExpiryDate.done].tap()
         waitForValue("Until Oct 20", of: expiry)
@@ -213,20 +209,20 @@ final class ScanJourneyTests: XCTestCase {
 
         app.buttons[Review.close].tap()
         let alert = app.alerts["Discard this scan?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.appears(within: 5))
         XCTAssertTrue(alert.staticTexts["The page you just scanned won’t be saved."].exists)
         attachScreenshot(of: app, named: "discard-alert")
 
         alert.buttons["Keep editing"].tap()
-        XCTAssertTrue(alert.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(alert.disappears(within: 5))
         XCTAssertTrue(app.buttons[Review.save].exists)
 
         app.buttons[Review.close].tap()
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(alert.appears(within: 5))
         alert.buttons["Discard"].tap()
-        XCTAssertTrue(app.buttons[Review.save].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[Review.save].disappears(within: 5))
         let scan = app.buttons[AccessibilityID.Home.scan]
-        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.appears(within: 5))
         XCTAssertTrue(scan.isHittable)
     }
 
@@ -237,7 +233,7 @@ final class ScanJourneyTests: XCTestCase {
 
         app.buttons[Review.rescan].tap()
         let cancel = app.buttons[AccessibilityID.Camera.fakeCancel]
-        XCTAssertTrue(cancel.waitForExistence(timeout: 5))
+        XCTAssertTrue(cancel.appears(within: 5))
         cancel.tap()
         waitForTitle("City Pharmacy", in: app)
         XCTAssertEqual(app.descendants(matching: .any)[Review.pagePill].label, "New scan, 1 page")
@@ -249,12 +245,12 @@ final class ScanJourneyTests: XCTestCase {
         waitForTitle("City Pharmacy", in: app)
         app.descendants(matching: .any)[Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
-        XCTAssertTrue(receipts.waitForExistence(timeout: 5))
+        XCTAssertTrue(receipts.appears(within: 5))
         receipts.tap()
         app.buttons[Review.save].tap()
 
         let alert = app.alerts["Couldn’t save this scan"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 10))
+        XCTAssertTrue(alert.appears(within: 10))
         XCTAssertTrue(alert.buttons["Not now"].exists)
         attachScreenshot(of: app, named: "save-failed-alert")
         alert.buttons["Try again"].tap()
@@ -302,39 +298,39 @@ extension ScanJourneyTests {
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
-        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(save.disappears(within: 10))
         waitForSaveToReturnHome(in: app)
     }
 
     /// Opens Receipts, scans there and saves, optionally to another collection.
     private func saveFromInsideReceipts(in app: XCUIApplication, choosing other: String?) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        XCTAssertTrue(row.appears(within: 5))
         row.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
         finishCameraFromGrid(in: app)
         if let other {
             app.descendants(matching: .any)[Review.collection].tap()
             let option = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", other)).firstMatch
-            XCTAssertTrue(option.waitForExistence(timeout: 5))
+            XCTAssertTrue(option.appears(within: 5))
             option.tap()
         }
         let save = app.buttons[Review.save]
         save.tap()
-        XCTAssertTrue(save.waitForNonExistence(timeout: 10))
+        XCTAssertTrue(save.disappears(within: 10))
     }
 
     private func finishCameraFromGrid(in app: XCUIApplication) {
         let scan = app.buttons[AccessibilityID.Grid.scan]
-        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.appears(within: 5))
         scan.tap()
         let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(finish.appears(within: 5))
         // The grid under the camera is out of the tree too, its Scan bar included.
-        XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].waitForNonExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].disappears(within: 5))
         XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
         finish.tap()
-        XCTAssertTrue(app.buttons[Review.save].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[Review.save].appears(within: 5))
     }
 
     func chooseReceipts(in app: XCUIApplication) {
@@ -345,7 +341,7 @@ extension ScanJourneyTests {
     private func choose(_ collection: String, in app: XCUIApplication) {
         app.descendants(matching: .any)[Review.collection].tap()
         let option = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", collection)).firstMatch
-        XCTAssertTrue(option.waitForExistence(timeout: 5))
+        XCTAssertTrue(option.appears(within: 5))
         option.tap()
     }
 
@@ -354,12 +350,10 @@ extension ScanJourneyTests {
         in app: XCUIApplication, collection: BuiltInCollection = .receipts, line: UInt = #line
     ) {
         // Home stays in the tree under the capture layer, so its own elements say nothing about the layer being gone.
-        XCTAssertTrue(app.buttons[Review.save].waitForNonExistence(timeout: 10), line: line)
-        // One wait for both, so each check is one read of the screen: a read alone can take 2 s on CI.
+        XCTAssertTrue(app.buttons[Review.save].disappears(within: 10), line: line)
+        // One predicate for both, so each check is one read of the screen: a read alone can take 4 s on CI.
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
-        let counted = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "exists == true AND label CONTAINS '1'"), object: row)
-        XCTAssertEqual(XCTWaiter.wait(for: [counted], timeout: 5), .completed, row.label, line: line)
+        XCTAssertTrue(row.satisfies("exists == true AND label CONTAINS '1'", within: 5), row.label, line: line)
         XCTAssertTrue(row.isHittable, line: line)
     }
 
@@ -367,23 +361,20 @@ extension ScanJourneyTests {
     private func openChooseADate(in app: XCUIApplication) {
         app.descendants(matching: .any)[Review.expiry].tap()
         let chooseDate = app.buttons["Choose a date…"]
-        XCTAssertTrue(chooseDate.waitForExistence(timeout: 5))
+        XCTAssertTrue(chooseDate.appears(within: 5))
         chooseDate.tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.ExpiryDate.done].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.ExpiryDate.done].appears(within: 5))
     }
 
     private func waitForValue(_ value: String, of element: XCUIElement, line: UInt = #line) {
-        let shown = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [shown], timeout: 5), .completed, String(describing: element.value), line: line)
+        XCTAssertTrue(element.satisfies("value == %@", value, within: 5), String(describing: element.value), line: line)
     }
 
     private func waitForTitle(
         _ title: String, in app: XCUIApplication, timeout: TimeInterval = 10, line: UInt = #line
     ) {
         let field = app.descendants(matching: .any)[Review.titleField]
-        let read = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", title), object: field)
-        XCTAssertEqual(XCTWaiter.wait(for: [read], timeout: timeout), .completed, "title", line: line)
+        XCTAssertTrue(field.satisfies("value == %@", title, within: timeout), "title", line: line)
     }
 
     private func attachScreenshot(of app: XCUIApplication, named name: String) {

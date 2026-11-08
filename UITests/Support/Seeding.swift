@@ -9,10 +9,7 @@ let seedingTimeout: TimeInterval = 15
 /// sizes, where the count sits above the name; the first-launch subtitle ("… · 3 mo") matches neither.
 @MainActor
 func waitForSeeding(of row: XCUIElement, count: Int, file: StaticString = #filePath, line: UInt = #line) {
-    let seeded = XCTNSPredicateExpectation(
-        predicate: NSPredicate(
-            format: "exists == true AND (label ENDSWITH %@ OR label BEGINSWITH %@)", ", \(count)", "\(count), "),
-        object: row)
-    let result = XCTWaiter.wait(for: [seeded], timeout: seedingTimeout)
-    XCTAssertEqual(result, .completed, "\(row) never showed its \(count) seeded scans", file: file, line: line)
+    let format = "exists == true AND (label ENDSWITH %@ OR label BEGINSWITH %@)"
+    let seeded = row.satisfies(format, ", \(count)", "\(count), ", within: seedingTimeout)
+    XCTAssertTrue(seeded, "\(row) never showed its \(count) seeded scans", file: file, line: line)
 }

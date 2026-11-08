@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # ready_for_review: marking a draft ready starts the simulator jobs (see plan).
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -13,22 +15,49 @@ permissions:
   contents: read
 
 jobs:
+  # Which jobs to run. checks always runs. The simulator suite (about 15 min on 3 runners) runs on main, and on a PR
+  # once it is ready for review, unless the PR changes only docs/ and Markdown. While a PR is a draft, run the touched
+  # tests locally: make full ONLY="<Target/Class> ...". design/ is code: design/tokens.json generates the tokens.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          sim=true
+          if [ "$EVENT" = pull_request ]; then
+            if [ "$DRAFT" = true ]; then
+              sim=false; echo "Draft PR: checks only."
+            elif ! git diff --name-only "$BASE...$HEAD" | grep -qvE '^docs/|\.md$'; then
+              sim=false; echo "Only docs/ and Markdown changed: checks only."
+            fi
+          fi
+          jobs='[{"job":"checks","target":"ci-checks"}]'
+          if [ "$sim" = true ]; then
+            jobs='[{"job":"checks","target":"ci-checks"},
+              {"job":"sim-main","target":"ci-sim SHARD=main"},
+              {"job":"sim-scan","target":"ci-sim SHARD=scan"},
+              {"job":"sim-browse","target":"ci-sim SHARD=browse"}]'
+          fi
+          echo "matrix=$(jq -c '{include: .}' <<< "$jobs")" >> "$GITHUB_OUTPUT"
+
   ci:
     # The parts of `make ci`, side by side. SHARD=main skips the classes the other shards run, so together the three
     # simulator jobs run the whole suite, and a new test class lands in main by default.
+    needs: plan
     name: ${{ matrix.job }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - job: checks
-            target: ci-checks
-          - job: sim-main
-            target: ci-sim SHARD=main
-          - job: sim-scan
-            target: ci-sim SHARD=scan
-          - job: sim-browse
-            target: ci-sim SHARD=browse
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
     runs-on: xcode-27
     timeout-minutes: 60
@@ -75,6 +104,16 @@ jobs:
             ~/Library/Caches/org.swift.swiftpm
           key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-${{ matrix.job == 'checks' && 'checks' || 'sim' }}-${{ hashFiles('Package.resolved', 'Packages/FilingCabinetKit/Package.swift', 'project.yml') }}
 
+      # Xcode's compilation cache (Makefile CAS_PATH). Its entries are keyed on what was compiled, not file dates, so
+      # unlike build products it survives a fresh checkout. Each run saves a new entry and restores the newest one.
+      - name: Cache compilations
+        if: matrix.job != 'checks'
+        uses: actions/cache@v6
+        with:
+          path: .build/CompilationCache
+          key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-
+
       - name: make ${{ matrix.target }}
         run: make ${{ matrix.target }}
 
@@ -86,4 +125,18 @@ jobs:
           if-no-files-found: ignore
           path: |
             .build/snapshot-artifacts
+            .build/DerivedData/Logs/Test/*.xcresult
+
+      # Where the time goes: xcodebuild's stamped output (Makefile STAMP), Xcode's build log (per target and file) and
+      # the test results (per test and step).
+      - name: Upload timing evidence
+        if: always() && matrix.job != 'checks'
+        uses: actions/upload-artifact@v7
+        with:
+          name: timing-${{ matrix.job }}
+          if-no-files-found: ignore
+          path: |
+            .build/xcodebuild.log
+            .build/boot.log
+            .build/DerivedData/Logs/Build/*.xcactivitylog
             .build/DerivedData/Logs/Test/*.xcresult
