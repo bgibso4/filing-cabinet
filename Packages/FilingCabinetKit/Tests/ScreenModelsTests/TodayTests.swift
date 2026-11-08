@@ -1,24 +1,9 @@
 import Core
 import Foundation
-import Synchronization
 import Testing
 
 @testable import ScreenModels
-
-/// A clock the test moves by hand.
-nonisolated private final class MovableNow: Sendable {
-    private let date: Mutex<Date>
-
-    init(_ date: Date) {
-        self.date = Mutex(date)
-    }
-
-    var now: Date { date.withLock { $0 } }
-
-    func set(_ newDate: Date) {
-        date.withLock { $0 = newDate }
-    }
-}
+@testable import TestSupport
 
 private let utc: Calendar = {
     var calendar = Calendar(identifier: .gregorian)

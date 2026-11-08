@@ -30,7 +30,8 @@ struct ViewerBehaviourTests {
             id: scan.id,
             library: FakeLibrary(scans: [scan]),
             today: Today(clock: Fixtures.clock),
-            calendar: Fixtures.clock.calendar)
+            calendar: Fixtures.clock.calendar,
+            analytics: RecordingAnalytics())
     }
 
     private func host(_ view: some View) throws -> UIWindow {
@@ -80,11 +81,27 @@ struct ViewerBehaviourTests {
         let ticks = Ticks()
         let made = MadeModels()
         let view = ReevaluatedRoute(ticks: ticks) {
-            let model = ViewerModel(id: scan.id, library: library, today: today, calendar: Fixtures.clock.calendar)
+            let model = ViewerModel(
+                id: scan.id,
+                library: library,
+                today: today,
+                calendar: Fixtures.clock.calendar,
+                analytics: RecordingAnalytics())
             made.models.append(model)
             return model
         } content: { makeModel in
-            ViewerRoute(makeModel: makeModel, pages: pages, thumbnails: FakeThumbnails())
+            ViewerRoute(
+                makeModel: makeModel,
+                makeDetails: {
+                    DetailsModel(
+                        id: scan.id,
+                        library: library,
+                        today: today,
+                        clock: Fixtures.clock,
+                        analytics: RecordingAnalytics())
+                },
+                pages: pages,
+                thumbnails: FakeThumbnails())
         }
         let window = try host(view)
         defer { close(window) }

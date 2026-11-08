@@ -1,4 +1,5 @@
 import Core
+import Foundation
 import Library
 import Observation
 
@@ -10,6 +11,8 @@ public final class FakeLibrary: ScanLibrary {
     public private(set) var scans: [ScanSummary]
     /// Thrown by the next `save`, which then keeps nothing, as the real store does.
     package var failNextSave: LibraryError?
+    /// Thrown by the next edit (rename to Delete now, Empty Trash, a lifespan), which then changes nothing, as the real store does.
+    package var failNextEdit: LibraryError?
     /// How long each `save` takes before its record exists, so a test can finish reading mid-save.
     package var saveDelay = Duration.zero
     /// Every successfully saved draft, in save order.
@@ -17,9 +20,20 @@ public final class FakeLibrary: ScanLibrary {
     /// The latest search text per saved scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
 
-    public init(scans: [ScanSummary] = []) {
-        self.scans = scans.sorted { $0.scannedAt > $1.scannedAt }
+    /// Today, for Trash days.
+    private let clock: AppClock
+
+    /// Lives on Oct 12, 2026 in GMT, the snapshot fixtures' day.
+    public convenience init(scans: [ScanSummary] = []) {
+        self.init(scans: scans, clock: Self.octoberTwelfth)
     }
+
+    package init(scans: [ScanSummary], clock: AppClock) {
+        self.scans = scans.sorted { $0.scannedAt > $1.scannedAt }
+        self.clock = clock
+    }
+
+    public private(set) var lifespans: CollectionLifespans = .defaults
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
         if saveDelay > .zero {
@@ -48,4 +62,95 @@ public final class FakeLibrary: ScanLibrary {
         guard scans.contains(where: { $0.id == id }) else { return }
         searchTextUpdates[id] = text
     }
+
+    public func rename(_ id: ScanID, to title: String) throws(LibraryError) {
+        try edit([id]) { $0.title = title }
+    }
+
+    public func move(_ id: ScanID, to collection: BuiltInCollection) throws(LibraryError) {
+        try edit([id]) { scan in change(&scan) { $0.collection = collection } }
+    }
+
+    public func setExpiry(_ override: ExpiryOverride?, for id: ScanID) throws(LibraryError) {
+        try edit([id]) { scan in change(&scan) { $0.expiryOverride = override } }
+    }
+
+    public func moveToTrash(_ ids: [ScanID]) throws(LibraryError) {
+        let today = clock.today
+        try edit(ids) { $0.trashedDay = today }
+    }
+
+    public func restore(_ ids: [ScanID]) throws(LibraryError) {
+        try edit(ids) { scan in
+            scan.trashedDay = nil
+            scan.expiryOverride = .lifespan(.forever)
+        }
+    }
+
+    public func deleteNow(_ ids: [ScanID]) async throws(LibraryError) {
+        try spendFailure()
+        scans.removeAll { ids.contains($0.id) }
+    }
+
+    public func emptyTrash() async throws(LibraryError) -> Int {
+        try spendFailure()
+        let before = scans.count
+        scans.removeAll { scan in
+            if case .library = scan.place(lifespans: lifespans, today: clock.today, in: clock.calendar) { return false }
+            return true
+        }
+        return before - scans.count
+    }
+
+    public func setLifespan(_ lifespan: Lifespan, for collection: BuiltInCollection) throws(LibraryError) {
+        try spendFailure()
+        let changed = lifespans.setting(lifespan, for: collection)
+        for index in scans.indices {
+            scans[index].trashedDay = scans[index].trashedDay(
+                afterLifespansChangeTo: changed, from: lifespans, today: clock.today, in: clock.calendar)
+        }
+        lifespans = changed
+    }
+
+    public func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int {
+        let changed = lifespans.setting(lifespan, for: collection)
+        return scans.count {
+            $0.entersTrash(ifLifespansChangeTo: changed, from: lifespans, today: clock.today, in: clock.calendar)
+        }
+    }
+
+    /// Changes each listed scan, unless `failNextEdit` fails it first.
+    private func edit(_ ids: [ScanID], _ change: (inout ScanSummary) -> Void) throws(LibraryError) {
+        try spendFailure()
+        for index in scans.indices where ids.contains(scans[index].id) {
+            change(&scans[index])
+        }
+    }
+
+    /// Applies a change to the scan's collection or expiry, stamping the Trash day it brings (M1).
+    private func change(_ scan: inout ScanSummary, _ apply: (inout ScanSummary) -> Void) {
+        var changed = scan
+        apply(&changed)
+        changed.trashedDay = scan.trashedDay(
+            afterLastDayChangesTo: changed.lastDay(lifespans: lifespans, in: clock.calendar),
+            lifespans: lifespans,
+            today: clock.today,
+            in: clock.calendar)
+        scan = changed
+    }
+
+    private func spendFailure() throws(LibraryError) {
+        if let failure = failNextEdit {
+            failNextEdit = nil
+            throw failure
+        }
+    }
+
+    private static let octoberTwelfth: AppClock = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        let noon = DateComponents(calendar: calendar, timeZone: .gmt, year: 2026, month: 10, day: 12, hour: 12)
+        // The components always make a date; the fallback only satisfies the optional.
+        return AppClock.fixed(noon.date ?? Date(timeIntervalSince1970: 0), calendar: calendar)
+    }()
 }

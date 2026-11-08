@@ -145,21 +145,6 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     }
 }
 
-/// A day the test moves by hand.
-nonisolated private final class MovableNow: Sendable {
-    private let date: Mutex<Date>
-
-    init(_ date: Date) {
-        self.date = Mutex(date)
-    }
-
-    var now: Date { date.withLock { $0 } }
-
-    func advance(days: Int) {
-        date.withLock { $0 = $0.addingTimeInterval(Double(days) * 86_400) }
-    }
-}
-
 @Test func gridFollowsANewDay() {
     let now = MovableNow(noon)
     let clock = AppClock(now: { now.now }, calendar: utc, locale: Locale(identifier: "en_US"))
@@ -168,10 +153,10 @@ nonisolated private final class MovableNow: Sendable {
     let grid = CollectionGridModel(kind: .collection(.throwaways), library: library, today: today, calendar: utc)
     #expect(grid.tiles.map(\.timeLeft) == ["2 days left"])
 
-    now.advance(days: 1)
+    now.set(noon.addingTimeInterval(86_400))
     today.refresh()
     #expect(grid.tiles.map(\.timeLeft) == ["1 day left"])
-    now.advance(days: 1)
+    now.set(noon.addingTimeInterval(2 * 86_400))
     today.refresh()
     #expect(grid.isEmpty)
 }

@@ -4,6 +4,7 @@ import Library
 import Testing
 
 @testable import ScreenModels
+@testable import TestSupport
 
 private var newYork: Calendar {
     var calendar = Calendar(identifier: .gregorian)
@@ -18,7 +19,8 @@ private let today = CalendarDay(year: 2026, month: 11, day: 2)
 private func scan(
     _ collection: BuiltInCollection,
     daysAgo: Int,
-    override: ExpiryOverride? = nil
+    override: ExpiryOverride? = nil,
+    trashedDaysAgo: Int? = nil
 ) -> ScanSummary {
     ScanSummary(
         id: ScanID(),
@@ -26,11 +28,12 @@ private func scan(
         collection: collection,
         scannedAt: at(today.adding(days: -daysAgo, in: newYork)),
         expiryOverride: override,
-        pageCount: 1)
+        pageCount: 1,
+        trashedDay: trashedDaysAgo.map { today.adding(days: -$0, in: newYork) })
 }
 
-private func shelf(_ scans: [ScanSummary]) -> LibraryShelf {
-    LibraryShelf(scans: scans, today: today, calendar: newYork)
+private func shelf(_ scans: [ScanSummary], lifespans: CollectionLifespans = .defaults) -> LibraryShelf {
+    LibraryShelf(scans: scans, lifespans: lifespans, today: today, calendar: newYork)
 }
 
 @Test func shelfHidesExpiredAndCountsPerCollection() {
@@ -104,4 +107,51 @@ private func shelf(_ scans: [ScanSummary]) -> LibraryShelf {
     #expect(CollectionText.lifespanShort(.year) == "1 year")
     #expect(CollectionText.kept(.week) == "Kept 1 week")
     #expect(CollectionText.kept(.forever) == "Kept forever")
+}
+
+@Test func trashIsSoonestGoneFirstAndNotVisible() {
+    // Expired 3 days ago on its own: Trash since Oct 30, 27 days left.
+    let expired = scan(.throwaways, daysAgo: 10)
+    // Moved to Trash 20 days ago: 10 days left.
+    let moved = scan(.wallet, daysAgo: 100, trashedDaysAgo: 20)
+    // Moved to Trash 30 days ago: gone.
+    let gone = scan(.wallet, daysAgo: 100, trashedDaysAgo: 30)
+    let kept = scan(.receipts, daysAgo: 5)
+    let subject = shelf([expired, kept, gone, moved])
+    #expect(subject.visible.map(\.id) == [kept.id])
+    #expect(subject.trash.map(\.id) == [moved.id, expired.id])
+    #expect(subject.trashDaysLeft(moved) == 10)
+    #expect(subject.trashDaysLeft(expired) == 27)
+    #expect(subject.count(in: .throwaways) == 0)
+}
+
+@Test func lifespansComeFromTheLibrary() {
+    let receipt = scan(.receipts, daysAgo: 40)
+    #expect(shelf([receipt]).visible.map(\.id) == [receipt.id])
+    let monthly = shelf([receipt], lifespans: CollectionLifespans.defaults.setting(.month, for: .receipts))
+    #expect(monthly.visible.isEmpty)
+    #expect(monthly.trash.map(\.id) == [receipt.id])
+    #expect(monthly.lifespans[.receipts] == .month)
+}
+
+@Test func homeAndGridsReadTheLibrarysLifespans() throws {
+    let library = FakeLibrary(scans: [], clock: .fixed(at(today), calendar: newYork))
+    try library.setLifespan(.month, for: .receipts)
+    let todayModel = Today(clock: .fixed(at(today), calendar: newYork))
+    let home = HomeModel(library: library, today: todayModel, calendar: newYork)
+    #expect(home.rows.first { $0.collection == .receipts }?.detail == .subtitle("Purchase receipts · 1 month"))
+    let grid = CollectionGridModel(kind: .collection(.receipts), library: library, today: todayModel, calendar: newYork)
+    #expect(grid.subtitle == "No scans · Kept 1 month")
+}
+
+@Test func collectionNouns() {
+    #expect(CollectionText.noun(.wallet, count: 1) == "card")
+    #expect(CollectionText.noun(.wallet, count: 2) == "cards")
+    #expect(CollectionText.noun(.receipts, count: 1) == "receipt")
+    #expect(CollectionText.noun(.receipts, count: 3) == "receipts")
+    #expect(CollectionText.noun(.notes, count: 0) == "notes")
+    #expect(CollectionText.noun(.documents, count: 1) == "document")
+    #expect(CollectionText.noun(.throwaways, count: 2) == "throwaways")
+    #expect(CollectionText.scansNoun(count: 1) == "scan")
+    #expect(CollectionText.scansNoun(count: 4) == "scans")
 }

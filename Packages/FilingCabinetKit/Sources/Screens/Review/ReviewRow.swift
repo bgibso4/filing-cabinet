@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// One of the sheet's two menu rows (Review.dc.html lines 291-307): an icon, a small label over the value, and the
+/// One of the sheet's two menu rows (Review.dc.html lines 291-307, ScanDetails.dc.html lines 73-97): an icon, a small label over the value, and the
 /// up-down chevrons that mark a menu.
 struct ReviewRow<Icon: View>: View {
     let label: String
     let value: String
     /// Semibold while the value is a prompt ("Choose a collection").
     var isPrompt = false
+    /// Semibold orange: the expiry is soon (07-02).
+    var isSoon = false
     @ViewBuilder let icon: Icon
 
     // Review.dc.html line 291: rows are 60 pt tall at least, with 14 pt between the icon, the text and the chevrons.
@@ -33,7 +35,7 @@ struct ReviewRow<Icon: View>: View {
             icon
                 .accessibilityHidden(true)
             texts
-            chevrons
+            MenuChevrons()
         }
     }
 
@@ -45,7 +47,7 @@ struct ReviewRow<Icon: View>: View {
                 icon
                     .accessibilityHidden(true)
                 Spacer(minLength: Self.gap)
-                chevrons
+                MenuChevrons()
             }
             texts
         }
@@ -57,18 +59,16 @@ struct ReviewRow<Icon: View>: View {
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
             Text(value)
-                .font(isPrompt ? Tokens.Typography.headline : Tokens.Typography.body)
-                .foregroundStyle(isEnabled ? Tokens.Color.textPrimary : Tokens.Color.textSecondary)
+                .font(isPrompt || isSoon ? Tokens.Typography.headline : Tokens.Typography.body)
+                .foregroundStyle(valueColor)
         }
         .multilineTextAlignment(.leading)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var chevrons: some View {
-        Image(systemName: "chevron.up.chevron.down")
-            .font(Tokens.Typography.footnote.weight(.semibold))
-            .foregroundStyle(Tokens.Color.textSecondary)
-            .accessibilityHidden(true)
+    private var valueColor: Color {
+        if !isEnabled { return Tokens.Color.textSecondary }
+        return isSoon ? Tokens.Color.expirySoon : Tokens.Color.textPrimary
     }
 }

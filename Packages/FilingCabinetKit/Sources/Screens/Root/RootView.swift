@@ -1,3 +1,4 @@
+import Core
 import ScreenModels
 import SwiftUI
 
@@ -7,6 +8,9 @@ public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
     @State private var path: [AppRoute] = []
+    /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
+    /// update.
+    @State private var restores = 0
 
     /// `canScan` is false until launch cleanup has finished, so a scan never races it.
     public init(dependencies: RootDependencies, canScan: Bool) {
@@ -39,6 +43,7 @@ public struct RootView: View {
             }
         }
         .sensoryFeedback(.success, trigger: flow.lastSaved) { _, new in new != nil }
+        .sensoryFeedback(.success, trigger: restores)
         .onChange(of: flow.lastSaved) { _, saved in
             if let saved { AccessibilityNotification.Announcement(saved.announcement).post() }
         }
@@ -93,22 +98,50 @@ public struct RootView: View {
             grid(.recent)
         case .all:
             grid(.all)
+        case .trash:
+            GridRoute(makeModel: dependencies.makeTrash) { model in
+                TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.trashedScan($0)) })
+            }
         case .scan(let id):
-            ViewerRoute(
-                makeModel: { dependencies.makeViewer(id) },
-                pages: dependencies.pages,
-                thumbnails: dependencies.thumbnails
-            )
+            viewer(id, .library)
+        case .trashedScan(let id):
+            viewer(id, .trash)
+        case .settings:
+            GridRoute(makeModel: dependencies.makeSettings) { model in
+                SettingsView(model: model, onOpenCollections: { path.append(.collections) })
+            }
+        case .collections:
+            GridRoute(makeModel: dependencies.makeCollections) { model in
+                CollectionsView(model: model, onOpen: { path.append(.collectionSettings($0)) })
+            }
+        case .collectionSettings(let collection):
+            GridRoute(
+                makeModel: { dependencies.makeCollectionSettings(collection) }, content: CollectionSettingsView.init)
         }
     }
 
-    private func grid(_ kind: GridKind) -> some View {
-        CollectionGridView(
-            model: dependencies.makeGrid(kind),
+    /// The mode decides the viewer's controls: opened from Trash, ViewerView shows nothing that opens Details.
+    private func viewer(_ id: ScanID, _ mode: ViewerModel.Mode) -> some View {
+        ViewerRoute(
+            makeModel: { dependencies.makeViewer(id, mode) },
+            makeDetails: { dependencies.makeDetails(id) },
+            pages: dependencies.pages,
             thumbnails: dependencies.thumbnails,
-            canScan: canScan,
-            onOpen: { path.append(.scan($0)) },
-            onScan: { Task { await flow.scan(from: .grid, preselected: kind.preselection) } }
+            onRestored: { restores += 1 }
         )
+    }
+
+    private func grid(_ kind: GridKind) -> some View {
+        GridRoute(
+            makeModel: { dependencies.makeGrid(kind) },
+            content: { model in
+                CollectionGridView(
+                    model: model,
+                    thumbnails: dependencies.thumbnails,
+                    canScan: canScan,
+                    onOpen: { path.append(.scan($0)) },
+                    onScan: { Task { await flow.scan(from: .grid, preselected: kind.preselection) } }
+                )
+            })
     }
 }

@@ -4,27 +4,28 @@ import SwiftUI
 import UIKit
 
 /// The Expiry row and its menu: the collection default, every lifespan and "Choose a date…", which opens a
-/// calendar. Off, with secondary text, until a collection is chosen.
-struct ExpiryMenu: View {
-    let model: ReviewModel
+/// calendar. Review and Details share it. A choice whose day has passed is greyed and can't be chosen (M15).
+struct ExpiryMenu<Model: ExpiryEditing>: View {
+    let model: Model
+    let identifier: String
+    /// The value and the hourglass in orange, as the viewer's header shows a soon expiry (07-02).
+    var isSoon = false
 
     @State private var isChoosingDate = false
 
     private static var label: String { String(localized: "Expiry", bundle: #bundle) }
 
     var body: some View {
-        ReviewRow(label: Self.label, value: model.expiryValue) {
+        ReviewRow(label: Self.label, value: model.expiryValue, isSoon: isSoon) {
             Image(systemName: "hourglass")
                 // Title 2 is closest to the mock's 26 by 24 pt glyph.
                 .font(Tokens.Typography.title2.weight(.regular))
-                .foregroundStyle(Tokens.Color.textSecondary)
+                .foregroundStyle(isSoon ? Tokens.Color.expirySoon : Tokens.Color.textSecondary)
         }
         .accessibilityHidden(true)
         .overlay {
-            MenuButton(
-                label: Self.label, value: model.expiryValue, identifier: AccessibilityID.Review.expiry, menu: menu)
+            MenuButton(label: Self.label, value: model.expiryValue, identifier: identifier, menu: menu)
         }
-        .disabled(!model.isExpiryEnabled)
         .sheet(isPresented: $isChoosingDate) {
             ExpiryDateSheet(model: model)
         }
@@ -37,6 +38,7 @@ struct ExpiryMenu: View {
                 model.chooseExpiry(option.override)
             }
             action.state = option.isSelected ? .on : .off
+            if option.isPassed { action.attributes = .disabled }
             return action
         }
         let chooseDate = UIAction(title: String(localized: "Choose a date…", bundle: #bundle)) { _ in

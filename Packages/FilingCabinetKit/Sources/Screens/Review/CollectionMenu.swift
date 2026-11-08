@@ -3,11 +3,19 @@ import ScreenModels
 import SwiftUI
 import UIKit
 
-/// The Collection row and its menu (03-06): each collection with its lifespan and its badge.
+/// The Collection row and its menu (03-06, 07-04): each collection with its lifespan and its badge. Review and Details
+/// share it.
 struct CollectionMenu: View {
-    let model: ReviewModel
+    let label: String
+    let value: String
+    /// Nil until one is chosen (Review's prompt).
+    let collection: BuiltInCollection?
+    let options: [CollectionOption]
+    let identifier: String
+    let choose: (BuiltInCollection) -> Void
 
-    // Review.dc.html line 292: once chosen, the collection's badge is 31 pt with a 17 pt symbol.
+    // Review.dc.html line 292, ScanDetails.dc.html line 75: once chosen, the collection's badge is 31 pt with a 17 pt
+    // symbol.
     private static let badgeDiameter: CGFloat = 31
     private static let badgeSymbol: CGFloat = 17
     // Review.dc.html line 320: in the menu the badge is 24 pt with a 13 pt symbol.
@@ -17,8 +25,8 @@ struct CollectionMenu: View {
     @Environment(\.displayScale) private var displayScale
 
     var body: some View {
-        ReviewRow(label: model.collectionLabel, value: model.collectionValue, isPrompt: model.collection == nil) {
-            if let collection = model.collection {
+        ReviewRow(label: label, value: value, isPrompt: collection == nil) {
+            if let collection {
                 CollectionBadge(collection: collection, diameter: Self.badgeDiameter, symbolSize: Self.badgeSymbol)
             } else {
                 DashedFolder()
@@ -26,24 +34,19 @@ struct CollectionMenu: View {
         }
         .accessibilityHidden(true)
         .overlay {
-            MenuButton(
-                label: model.collectionLabel,
-                value: model.collectionValue,
-                identifier: AccessibilityID.Review.collection,
-                menu: menu
-            )
+            MenuButton(label: label, value: value, identifier: identifier, menu: menu)
         }
     }
 
     private func menu() -> UIMenu {
         UIMenu(
-            children: model.collectionOptions.map { option in
+            children: options.map { option in
                 let action = UIAction(
                     title: option.name, subtitle: option.lifespan, image: badge(option.collection)
                 ) { _ in
-                    model.choose(option.collection)
+                    choose(option.collection)
                 }
-                action.state = model.collection == option.collection ? .on : .off
+                action.state = collection == option.collection ? .on : .off
                 return action
             })
     }

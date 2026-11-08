@@ -25,6 +25,18 @@
         }
       }
     },
+    "%lld scans moved to Trash" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan moved to Trash" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans moved to Trash" } }
+            }
+          }
+        }
+      }
+    },
     "%lld years" : {
       "localizations" : {
         "en" : {
@@ -156,9 +168,70 @@
     "Purchase receipts" : {},
     "Receipts" : {},
     "Recent" : {},
+    "Trash" : {},
     "Short-lived scraps" : {},
     "Throwaways" : {},
-    "Wallet" : {}
+    "Wallet" : {},
+    "%@ · passed" : {},
+    "Scanned %@ · %@" : {},
+    "Expiry now follows %@." : {},
+    "Keeps its own expiry." : {},
+    "Couldn’t save this change" : {},
+    "Something went wrong. Try again." : {},
+    "Move to %@?" : {},
+    "%@ are kept %@ from the scan date. This %@ is from %@, so it goes to Trash now. You can restore it for %lld days." : {},
+    "card" : {},
+    "cards" : {},
+    "receipt" : {},
+    "receipts" : {},
+    "note" : {},
+    "notes" : {},
+    "document" : {},
+    "documents" : {},
+    "throwaway" : {},
+    "throwaways" : {},
+    "scan" : {},
+    "scans" : {},
+    "This %@ moves to Trash. You can restore it for %lld days." : {},
+    "%lld selected" : {},
+    "Delete %lld" : {},
+    "Delete" : {},
+    "Restore %lld" : {},
+    "Restore" : {},
+    "To %@, kept forever" : {},
+    "Restored to %@" : {},
+    "Restored %lld scans" : {},
+    "Deleted" : {},
+    "Deleted %lld scans" : {},
+    "Delete permanently?" : {},
+    "Delete %lld scans permanently?" : {},
+    "Cleaned up" : {},
+    "Cleaned up %lld %@" : {},
+    "Cleaned up %lld scans" : {},
+    "Moved the %@ %@ to Trash. It’s there for %lld days if you need it." : {},
+    "%@ moved to Trash. They’re there for %lld days if you need them." : {},
+    "Expired scans moved to Trash. They’re there for %lld days if you need one back." : {},
+    "%@ and %@" : {},
+    "%@ will be deleted. This can’t be undone." : {},
+    "They’ll be deleted. This can’t be undone." : {},
+    "Empty Trash?" : {},
+    "Deletes %@ permanently. This can’t be undone." : {},
+    "Empty Trash" : {},
+    "%@ · each is deleted after %lld days here" : {},
+    "a week" : {},
+    "a month" : {},
+    "a year" : {},
+    "Change" : {},
+    "is" : {},
+    "are" : {},
+    "Keep %@ %@?" : {},
+    "%lld %@ %@ older than %@ and will go to Trash now. You can restore them for %lld days." : {},
+    "Applies to %@ you already have. Scans you gave their own expiry keep it." : {},
+    "Turned off in iPhone Settings" : {},
+    "A note when scans move to Trash" : {},
+    "Filing Cabinet %@ · Private by design" : {},
+    "How long each one keeps scans" : {},
+    "Counted from each scan’s date." : {}
   },
   "version" : "1.0"
 }

@@ -22,6 +22,15 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return sheetText.contains(element.identifier)
     },
+    // The same iOS 27 report on the Details sheet over the viewer, also a floating sheet sized to its content, with its
+    // text intact (Task 6's snapshots and journey screenshots). Ben accepted this on 2026-11-08. Only textClipped, and only
+    // the two text elements the audit reported (the title and the scanned line), matched by identifier; any other
+    // screen's clipped text still fails.
+    { _, issue in
+        guard issue.auditType == .textClipped, let element = issue.element else { return false }
+        let sheetText = [AccessibilityID.Details.titleText, AccessibilityID.Details.scannedLine]
+        return sheetText.contains(element.identifier)
+    },
     // In dark mode the audit misreads the viewer header's white text on dark Liquid Glass and reports low contrast,
     // though the text is the primary colour and its element screenshot reads clearly (on file in Task 20's reports).
     // Ben accepted this on 2026-11-07. Only contrast, only while the device is in dark mode, and only the header's title
@@ -31,6 +40,30 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
             return false
         }
         return element.identifier == AccessibilityID.pillTitle(AccessibilityID.Viewer.header)
+    },
+    // iOS 27's audit reports Trash's Liquid Glass buttons as low contrast even with near-black text on near-white glass
+    // (about 15:1 measured in the audit's own element screenshot, Trash redesign evidence): the bottom bar's three and
+    // the toolbar's Select/Cancel pill (CI run 42494009425). Ben accepted the bar's three on 2026-11-08 (#59);
+    // `trash.select` joined them by the executor's ruling under Ben's standing call to exempt to unblock while tracked
+    // (#59 lists it). Only contrast, and only these four buttons, matched by identifier; any other element, and any
+    // contrast issue with no element, still fails.
+    { _, issue in
+        guard issue.auditType == .contrast, let element = issue.element else { return false }
+        let glassButtons = [
+            AccessibilityID.Trash.emptyTrash, AccessibilityID.Trash.deleteSelected,
+            AccessibilityID.TrashViewer.deleteNow, AccessibilityID.Trash.select,
+        ]
+        return glassButtons.contains(element.identifier)
+    },
+    // Trash's glass bottom bar, reported with no element: on the Trash grid the bar sits in BottomBarLayout's
+    // .safeAreaInset, where the audit can't resolve the glass buttons to elements, so it reports their text as low
+    // contrast and as inaccessible text (hiding Empty Trash clears it). The viewer's .overlay bar, the same buttons,
+    // resolves fine. The real fix is to present the bar as an overlay (issue #59). Ben accepted this on 2026-11-08.
+    // Only contrast and element detection, only with no element, and only while the Trash screen is showing;
+    // element-less issues on every other screen still fail.
+    { app, issue in
+        [.contrast, .elementDetection].contains(issue.auditType) && issue.element == nil
+            && app.staticTexts[AccessibilityID.Trash.header].exists
     },
 ]
 

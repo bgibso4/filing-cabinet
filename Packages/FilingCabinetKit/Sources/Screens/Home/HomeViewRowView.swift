@@ -2,7 +2,7 @@ import Core
 import ScreenModels
 import SwiftUI
 
-/// One row of the views card (Recent, All Scans): neutral badge, name, optional count and a chevron.
+/// One row of the views card (Recent, All Scans, Trash): neutral badge, name, optional count and a chevron.
 struct HomeViewRowView: View {
     let row: HomeViewRow
     let showsSeparator: Bool
@@ -69,10 +69,7 @@ struct HomeViewRowView: View {
         if let count = row.count {
             HomeCount(count: count)
         }
-        Image(systemName: "chevron.right")
-            .font(Tokens.Typography.footnote.weight(.semibold))
-            .foregroundStyle(Tokens.Color.chevron)
-            .accessibilityHidden(true)
+        DisclosureChevron()
     }
 
     @ViewBuilder
@@ -88,6 +85,7 @@ struct HomeViewRowView: View {
         switch row.kind {
         case .recent: ViewSymbol.recent
         case .all: ViewSymbol.all
+        case .trash: ViewSymbol.trash
         }
     }
 
@@ -95,6 +93,7 @@ struct HomeViewRowView: View {
         switch row.kind {
         case .recent: AccessibilityID.Home.recentRow
         case .all: AccessibilityID.Home.allRow
+        case .trash: AccessibilityID.Home.trashRow
         }
     }
 }

@@ -12,15 +12,26 @@ public final class HomeModel {
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
+    private let cleanupBanner: CleanupBanner?
     /// The scans Home shows while held; nil when it follows the library.
     private var heldScans: [ScanSummary]?
     /// Per collection, how many times a release found its count higher: each row's pop trigger.
     private var pulses: [BuiltInCollection: Int] = [:]
 
-    public init(library: any ScanLibrary, today: Today, calendar: Calendar) {
+    /// `banner` is the line after a cleanup; nil leaves Home without one.
+    public init(library: any ScanLibrary, today: Today, calendar: Calendar, banner: CleanupBanner? = nil) {
         self.library = library
         self.today = today
         self.calendar = calendar
+        cleanupBanner = banner
+    }
+
+    /// "4 scans moved to Trash" under the title (02-04), or nil.
+    package var banner: String? { cleanupBanner?.text }
+
+    /// The banner's View: Trash is about to show what it reported.
+    package func clearBanner() {
+        cleanupBanner?.clear()
     }
 
     /// True when no scan is visible: Home shows descriptions and no views.
@@ -37,18 +48,22 @@ public final class HomeModel {
                     ? .count(shelf.count(in: collection))
                     : .subtitle(
                         CollectionText.description(collection) + " · "
-                            + CollectionText.lifespanShort(collection.lifespan)),
+                            + CollectionText.lifespanShort(shelf.lifespans[collection])),
                 pulse: pulses[collection, default: 0]
             )
         }
     }
 
+    /// Recent, All Scans and Trash. With no visible scan only Trash shows, and only while something is in it (M7).
     public var viewRows: [HomeViewRow] {
         let shelf = shelf
-        guard !shelf.visible.isEmpty else { return [] }
+        let trash = HomeViewRow(
+            kind: .trash, name: CollectionText.trash, count: shelf.trash.isEmpty ? nil : shelf.trash.count)
+        guard !shelf.visible.isEmpty else { return shelf.trash.isEmpty ? [] : [trash] }
         return [
             HomeViewRow(kind: .recent, name: CollectionText.recent, count: nil),
             HomeViewRow(kind: .all, name: CollectionText.allScans, count: shelf.visible.count),
+            trash,
         ]
     }
 
@@ -64,7 +79,7 @@ public final class HomeModel {
     /// out and pulse nothing.
     package func release() {
         guard let heldScans else { return }
-        let before = LibraryShelf(scans: heldScans, today: today.day, calendar: calendar)
+        let before = LibraryShelf(scans: heldScans, lifespans: library.lifespans, today: today.day, calendar: calendar)
         self.heldScans = nil
         let after = shelf
         for collection in BuiltInCollection.allCases
@@ -74,6 +89,7 @@ public final class HomeModel {
     }
 
     private var shelf: LibraryShelf {
-        LibraryShelf(scans: heldScans ?? library.scans, today: today.day, calendar: calendar)
+        LibraryShelf(
+            scans: heldScans ?? library.scans, lifespans: library.lifespans, today: today.day, calendar: calendar)
     }
 }
