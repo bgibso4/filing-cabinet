@@ -96,6 +96,7 @@ public struct RootView: View {
         case .scan(let id):
             ViewerRoute(
                 makeModel: { dependencies.makeViewer(id) },
+                makeDetails: { dependencies.makeDetails(id) },
                 pages: dependencies.pages,
                 thumbnails: dependencies.thumbnails
             )

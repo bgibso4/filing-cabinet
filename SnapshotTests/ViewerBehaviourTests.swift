@@ -84,7 +84,18 @@ struct ViewerBehaviourTests {
             made.models.append(model)
             return model
         } content: { makeModel in
-            ViewerRoute(makeModel: makeModel, pages: pages, thumbnails: FakeThumbnails())
+            ViewerRoute(
+                makeModel: makeModel,
+                makeDetails: {
+                    DetailsModel(
+                        id: scan.id,
+                        library: library,
+                        today: today,
+                        clock: Fixtures.clock,
+                        analytics: RecordingAnalytics())
+                },
+                pages: pages,
+                thumbnails: FakeThumbnails())
         }
         let window = try host(view)
         defer { close(window) }

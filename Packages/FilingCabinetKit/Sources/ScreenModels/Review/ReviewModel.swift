@@ -9,7 +9,7 @@ import Understanding
 /// expiry, then save or discard. Reading runs once per page set; save waits for it at most `readingWaitLimit` and
 /// adds the search text afterwards if it was still reading (M2).
 @Observable
-public final class ReviewModel {
+public final class ReviewModel: ExpiryEditing {
     package private(set) var pages: [CGImage]
     /// 0-based. The pager writes it. Another page starts unzoomed.
     package var currentPage = 0 {

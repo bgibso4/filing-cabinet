@@ -7,7 +7,9 @@ import Observation
 /// Everything is read from the library and from `Today`, so the sheet follows both; once the scan leaves the library
 /// (a move to Trash, or midnight passing its last day) `isMissing` turns true and the sheet closes.
 @Observable
-package final class DetailsModel {
+public final class DetailsModel: ExpiryEditing {
+    /// While true the title shows as a field (07-03); `rename(_:)` ends it.
+    package private(set) var isRenaming = false
     /// The note under the collection row after a move; Undo lasts until the next edit (M17).
     package private(set) var movedNote: MovedNote?
     /// Set instead of moving when a move would send the scan to Trash.
@@ -24,7 +26,7 @@ package final class DetailsModel {
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
 
-    package init(id: ScanID, library: any ScanLibrary, today: Today, clock: AppClock, analytics: any Analytics) {
+    public init(id: ScanID, library: any ScanLibrary, today: Today, clock: AppClock, analytics: any Analytics) {
         self.id = id
         self.library = library
         self.today = today
@@ -77,8 +79,14 @@ package final class DetailsModel {
 
     // MARK: Title
 
-    /// Trimmed; a blank title keeps the one there is (M16).
+    /// The title becomes a field.
+    public func startRenaming() {
+        isRenaming = true
+    }
+
+    /// Ends renaming. Trimmed; a blank title keeps the one there is (M16).
     package func rename(_ text: String) {
+        isRenaming = false
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let scan, !trimmed.isEmpty, trimmed != scan.title else { return }
         if edit(.title, { () throws(LibraryError) in try library.rename(id, to: trimmed) }) {
@@ -89,7 +97,7 @@ package final class DetailsModel {
     // MARK: Collection
 
     /// Moves the scan, offering Undo. A move that would send it to Trash asks first (`pendingTrashMove`).
-    package func choose(_ collection: BuiltInCollection) {
+    public func choose(_ collection: BuiltInCollection) {
         guard let scan, collection != scan.collection else { return }
         var moved = scan
         moved.collection = collection
@@ -134,9 +142,23 @@ package final class DetailsModel {
         }
     }
 
+    /// The calendar and locale "Choose a date…" shows its days in (M6).
+    package var calendar: Calendar { clock.calendar }
+    package var locale: Locale { clock.locale }
+
+    /// The first day "Choose a date…" offers: today.
+    package var earliestCustomDate: Date { today.day.date(in: clock.calendar) }
+
     /// Keeps the scan through the end of `date`'s day. A day before today is refused.
     package func chooseExpiryDate(_ date: Date) {
         chooseExpiry(.lastDay(CalendarDay(date, in: clock.calendar)))
+    }
+
+    // MARK: Alerts
+
+    /// The edit alert's OK.
+    package func dismissEditAlert() {
+        editAlert = nil
     }
 
     // MARK: Private

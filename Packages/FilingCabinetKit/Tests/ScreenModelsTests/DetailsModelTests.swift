@@ -102,6 +102,20 @@ private var lease: ScanSummary { summary("Lease 2026", .documents, scanned: oct1
     #expect(harness.scan?.title == "Corner Market groceries")
 }
 
+@Test func renamingEndsOnRenameEvenWhenBlank() {
+    let harness = DetailsHarness(receipt)
+    #expect(!harness.model.isRenaming)
+    harness.model.startRenaming()
+    #expect(harness.model.isRenaming)
+    harness.model.rename("   ")
+    #expect(!harness.model.isRenaming)
+    #expect(harness.model.title == "Corner Market")
+    harness.model.startRenaming()
+    harness.model.rename("Groceries")
+    #expect(!harness.model.isRenaming)
+    #expect(harness.model.title == "Groceries")
+}
+
 // MARK: - Collection
 
 @Test func moveToDocumentsFollowsAndCanUndo() {
@@ -194,6 +208,16 @@ private var lease: ScanSummary { summary("Lease 2026", .documents, scanned: oct1
     #expect(harness.model.isExpirySoon)
 }
 
+@Test func customDatesStartTodayInTheClocksCalendar() {
+    let harness = DetailsHarness(lease)
+    #expect(harness.model.earliestCustomDate == oct12.date(in: utc))
+    #expect(harness.model.calendar == utc)
+    #expect(harness.model.locale == Locale(identifier: "en_US"))
+    harness.now.set(noon.addingTimeInterval(24 * 3600))
+    harness.today.refresh()
+    #expect(harness.model.earliestCustomDate == CalendarDay(year: 2026, month: 10, day: 13).date(in: utc))
+}
+
 // MARK: - Failures and analytics
 
 @Test func failedEditShowsTheAlert() {
@@ -204,6 +228,15 @@ private var lease: ScanSummary { summary("Lease 2026", .documents, scanned: oct1
     #expect(harness.model.editAlert?.message == "Something went wrong. Try again.")
     #expect(harness.model.title == "Corner Market")
     #expect(harness.analytics.events.isEmpty)
+}
+
+@Test func editAlertIsDismissed() {
+    let harness = DetailsHarness(receipt)
+    harness.library.failNextEdit = .writeFailed
+    harness.model.rename("Groceries")
+    #expect(harness.model.editAlert != nil)
+    harness.model.dismissEditAlert()
+    #expect(harness.model.editAlert == nil)
 }
 
 @Test func failedMoveKeepsNoUndo() {

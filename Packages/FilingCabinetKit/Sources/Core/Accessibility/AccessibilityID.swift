@@ -90,9 +90,30 @@ public enum AccessibilityID {
         public static let header = "viewer.header"
         public static let page = "viewer.page"
         public static let strip = "viewer.strip"
+        /// The bottom bar's Info button, which opens Details as the header pill does.
+        public static let details = "viewer.details"
+        public static let trash = "viewer.trash"
 
         public static var all: [String] {
-            [back, header, page, strip]
+            [back, header, page, strip, details, trash]
+        }
+    }
+
+    /// The Details sheet over the viewer.
+    public enum Details {
+        public static let sheet = "details.sheet"
+        /// The title and its pencil: tapping it renames.
+        public static let title = "details.title"
+        public static let titleField = "details.titleField"
+        /// Only while renaming, so not in `all`.
+        public static let clearTitle = "details.clearTitle"
+        public static let collection = "details.collection"
+        public static let expiry = "details.expiry"
+        /// Only after a move, with its note.
+        public static let undo = "details.undo"
+
+        public static var all: [String] {
+            [sheet, title, titleField, collection, expiry, undo]
         }
     }
 
@@ -103,6 +124,6 @@ public enum AccessibilityID {
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.
         Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
-            + Viewer.all.filter { $0 != Viewer.back }
+            + Viewer.all.filter { $0 != Viewer.back } + Details.all + [Details.clearTitle]
     }
 }

@@ -8,6 +8,7 @@ public struct RootDependencies {
     let flow: ScanFlowModel
     let makeGrid: (GridKind) -> CollectionGridModel
     let makeViewer: (ScanID) -> ViewerModel
+    let makeDetails: (ScanID) -> DetailsModel
     let thumbnails: any ThumbnailProviding
     let pages: any PageImageProviding
     let cameraMode: CameraMode
@@ -19,6 +20,7 @@ public struct RootDependencies {
         flow: ScanFlowModel,
         makeGrid: @escaping (GridKind) -> CollectionGridModel,
         makeViewer: @escaping (ScanID) -> ViewerModel,
+        makeDetails: @escaping (ScanID) -> DetailsModel,
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
         cameraMode: CameraMode,
@@ -28,6 +30,7 @@ public struct RootDependencies {
         self.flow = flow
         self.makeGrid = makeGrid
         self.makeViewer = makeViewer
+        self.makeDetails = makeDetails
         self.thumbnails = thumbnails
         self.pages = pages
         self.cameraMode = cameraMode

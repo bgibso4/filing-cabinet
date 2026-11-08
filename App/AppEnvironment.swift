@@ -84,6 +84,9 @@ final class AppEnvironment {
             makeViewer: { id in
                 ViewerModel(id: id, library: store, today: today, calendar: clock.calendar)
             },
+            makeDetails: { id in
+                DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
+            },
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),

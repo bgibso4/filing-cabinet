@@ -3,13 +3,13 @@ import ScreenModels
 import SwiftUI
 
 /// "Choose a date…": a calendar from today on. Done keeps the scan through the chosen day.
-struct ExpiryDateSheet: View {
-    let model: ReviewModel
+struct ExpiryDateSheet<Model: ExpiryEditing>: View {
+    let model: Model
 
     @Environment(\.dismiss) private var dismiss
     @State private var date: Date
 
-    init(model: ReviewModel) {
+    init(model: Model) {
         self.model = model
         _date = State(initialValue: model.earliestCustomDate)
     }
