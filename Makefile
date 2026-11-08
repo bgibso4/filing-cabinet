@@ -171,13 +171,15 @@ ci-checks: generate
 	$(MAKE) --no-print-directory check-resolved
 
 # The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
-# longest UI classes, and browse also takes the snapshot tests (it had the shortest tests: about 210 s, against about
-# 750 s in main, CI run 42508098398). main skips them rather than listing the rest, so a new test class lands in main.
+# longest UI classes; browse also takes the snapshot tests, and scan the Trash and Settings journeys, so the three
+# shards' tests take similar time (CI runs 42508098398 and 42519316014). main skips what the others run rather than
+# listing the rest, so a new test class lands in main.
 # CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
 # The scan shard first flaked (4 of 10 CI runs): each read of the screen took 1 to 4 s there, and waits of 2 to 5 s
 # ran out. One launch per class (Launch.swift) and one read per check in the tight waits address that (#43).
 SHARD             ?= all
-SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests
+SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests FilingCabinetUITests/TrashJourneyTests \
+	FilingCabinetUITests/SettingsJourneyTests
 SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests FilingCabinetSnapshotTests
 SHARD_ONLY_scan   := $(SHARD_SCAN)
 SHARD_ONLY_browse := $(SHARD_BROWSE)
