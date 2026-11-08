@@ -12,7 +12,7 @@ final class CameraAccessJourneyTests: XCTestCase {
         let scan = tapScan(in: app)
 
         let openSettings = app.buttons[AccessibilityID.CameraOff.openSettings]
-        XCTAssertTrue(openSettings.waitForExistence(timeout: 5))
+        XCTAssertTrue(openSettings.appears(within: 5))
         XCTAssertEqual(openSettings.label, "Open Settings")
         XCTAssertTrue(app.staticTexts["Camera access is off"].exists)
         assertIdentifiers(AccessibilityID.CameraOff.all, in: app)
@@ -20,14 +20,14 @@ final class CameraAccessJourneyTests: XCTestCase {
         try audit(app)
 
         app.buttons[AccessibilityID.CameraOff.close].tap()
-        XCTAssertTrue(openSettings.waitForNonExistence(timeout: 5))
+        XCTAssertTrue(openSettings.disappears(within: 5))
         XCTAssertTrue(scan.isHittable)
     }
 
     func testAuditAtLargestTextOfTheCameraOffSheet() throws {
         let app = launchApp(["-CameraDenied"], largestText: true)
         tapScan(in: app)
-        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].appears(within: 5))
         attachScreenshot(of: app, named: "camera-off-sheet-ax")
         try audit(app)
         // Scrolled to its end, the sheet keeps Close on its fixed header, clear of the text. The title can't scroll fully
@@ -43,7 +43,7 @@ final class CameraAccessJourneyTests: XCTestCase {
 
         assertIdentifiers(AccessibilityID.Camera.all, in: app)
         app.buttons[AccessibilityID.Camera.fakeCancel].tap()
-        XCTAssertTrue(scan.waitForExistence(timeout: 5))
+        XCTAssertTrue(scan.appears(within: 5))
         XCTAssertTrue(scan.isHittable)
         XCTAssertFalse(app.buttons[AccessibilityID.Camera.fakeCancel].exists)
     }
@@ -52,8 +52,7 @@ final class CameraAccessJourneyTests: XCTestCase {
     @discardableResult
     private func tapScan(in app: XCUIApplication) -> XCUIElement {
         let scan = app.buttons[AccessibilityID.Home.scan]
-        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isEnabled == true"), object: scan)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        XCTAssertTrue(scan.satisfies("isEnabled == true", within: 5))
         scan.tap()
         return scan
     }

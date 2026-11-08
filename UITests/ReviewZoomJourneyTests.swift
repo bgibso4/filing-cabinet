@@ -16,7 +16,7 @@ final class ReviewZoomJourneyTests: XCTestCase {
         let app = launchApp(["-FakeCamera", "3", "-FakeReader"])
         scanOnePage(in: app)
         let strip = app.descendants(matching: .any)[Review.strip]
-        XCTAssertTrue(strip.waitForExistence(timeout: 5))
+        XCTAssertTrue(strip.appears(within: 5))
         XCTAssertEqual(strip.label, "Page 1 of 3")
 
         // The page is decorative (the pill names it), so it is found by where it sits: under the pill.
@@ -29,13 +29,11 @@ final class ReviewZoomJourneyTests: XCTestCase {
         // Zoomed, the first swipe pans the page rather than turning it.
         window.swipeLeft()
         XCTAssertEqual(strip.label, "Page 1 of 3", "the first swipe turned the page, so it wasn't zoomed")
-        let second = NSPredicate(format: "label == %@", "Page 2 of 3")
         var swipes = 0
         while swipes < 4 {
             window.swipeLeft()
             swipes += 1
-            let paged = XCTNSPredicateExpectation(predicate: second, object: strip)
-            if XCTWaiter.wait(for: [paged], timeout: 2) == .completed { break }
+            if strip.satisfies("label == %@", "Page 2 of 3", within: 2) { break }
         }
         XCTAssertEqual(strip.label, "Page 2 of 3")
     }
