@@ -48,6 +48,7 @@ struct DetailsRows: View {
             Text(note.text)
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
+                .accessibilityIdentifier(AccessibilityID.Details.movedNote)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Button(action: model.undoMove) {
                 Text("Undo", bundle: #bundle)

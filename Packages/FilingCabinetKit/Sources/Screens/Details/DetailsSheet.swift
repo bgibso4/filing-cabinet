@@ -108,6 +108,7 @@ public struct DetailsSheet: View {
                     .font(Tokens.Typography.footnote)
                     .foregroundStyle(Tokens.Color.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(AccessibilityID.Details.scannedLine)
                     .padding(.horizontal, Self.textInset)
                 DetailsRows(model: model)
             }
@@ -130,6 +131,7 @@ public struct DetailsSheet: View {
                     .lineLimit(typeSize <= .large ? 1 : nil)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier(AccessibilityID.Details.titleText)
                 Image(systemName: "pencil")
                     // Body is the mock's 17 pt glyph.
                     .font(Tokens.Typography.body)

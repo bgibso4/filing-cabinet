@@ -29,6 +29,7 @@ struct DetailsTitleEditor: View {
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier(AccessibilityID.Details.renameHint)
                 .padding(.horizontal, Self.labelInset)
         }
     }
