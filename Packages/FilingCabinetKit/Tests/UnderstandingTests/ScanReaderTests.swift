@@ -60,7 +60,9 @@ private func text(_ lines: String..., top: String? = nil) -> PageText {
     #expect(reading.failedPages == 1)
 }
 
-@Test func cancellingStopsReadingLaterPages() async {
+// The wait for the first read is a busy loop: the limit turns a reader that never starts into a failure, not a hang.
+@Test(.timeLimit(.minutes(1)))
+func cancellingStopsReadingLaterPages() async {
     let fake = FakeTextReader([.page(text("a"), delay: .seconds(5)), .page(text("b"))])
     let pages = [SyntheticPages.blank(), SyntheticPages.blank(), SyntheticPages.blank()]
     let reader = ScanReader(reader: fake)
