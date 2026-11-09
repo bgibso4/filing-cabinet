@@ -167,7 +167,7 @@ UITests/        BrowseJourneyTests, DetailsJourneyTests, Support/Sheet.swift
   - `enum HeaderRest: Sendable { case small, large }`
   - `struct HeaderMotion: Sendable, Equatable { let largeHeight: CGFloat }`. Offsets are measured from the fully expanded position: 0 means the large title fully shows, `largeHeight` means collapsed.
     - `func growth(offset: CGFloat) -> CGFloat`: 1 at or above 0, 0 at or past `largeHeight`, linear between.
-    - `func settle(proposedOffset: CGFloat) -> CGFloat`: a target inside `(0, largeHeight)` snaps to 0 when below `largeHeight / 2`, otherwise to `largeHeight` (B6). Anything outside that range is returned unchanged.
+    - ~~`func settle(proposedOffset: CGFloat) -> CGFloat`: a target inside `(0, largeHeight)` snaps to 0 when below `largeHeight / 2`, otherwise to `largeHeight` (B6). Anything outside that range is returned unchanged.~~ (dropped, E4)
     - `func restingOffset(_ rest: HeaderRest) -> CGFloat`: `.small` → `largeHeight`, `.large` → 0.
     - `func minimumContentHeight(viewport: CGFloat) -> CGFloat`: `viewport + largeHeight` (M8).
 

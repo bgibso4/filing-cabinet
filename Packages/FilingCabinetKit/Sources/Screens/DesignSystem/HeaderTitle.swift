@@ -1,4 +1,5 @@
 import Core
+import ScreenModels
 import SwiftUI
 
 /// A screen's title and subtitle in the system bar's four title slots (plan 3, E1): small in the bar, large under it.
@@ -78,6 +79,6 @@ private struct BarText: ViewModifier {
             .dynamicTypeSize(.large)
             .fixedSize()
             .accessibilityShowsLargeContentViewer()
-            .opacity(1 - growth)
+            .opacity(HeaderMotion.smallTitleOpacity(growth: growth))
     }
 }

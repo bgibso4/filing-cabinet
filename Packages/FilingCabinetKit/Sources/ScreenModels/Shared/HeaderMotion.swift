@@ -14,11 +14,9 @@ package struct HeaderMotion: Sendable, Equatable {
         min(max(1 - offset / largeHeight, 0), 1)
     }
 
-    package func restingOffset(_ rest: HeaderRest) -> CGFloat {
-        switch rest {
-        case .small: largeHeight
-        case .large: 0
-        }
+    /// The small title and subtitle in the bar fade in as the large title collapses.
+    package static func smallTitleOpacity(growth: CGFloat) -> CGFloat {
+        1 - growth
     }
 
     /// Content at least this tall can always scroll the large title away, however short it is.

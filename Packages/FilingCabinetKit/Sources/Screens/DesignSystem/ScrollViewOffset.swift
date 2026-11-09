@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// Sets the top offset of the scroll view it sits in, above the top where SwiftUI's `ScrollPosition` stops
-/// (`HeaderScroll.offset`): the system bar follows that offset as it follows a pull, which is the only way to expand a
+/// (`HeaderScroll.scrollView(offset:)`): the system bar follows that offset as it follows a pull, which is the only way to expand a
 /// collapsed bar without a gesture. Placed inside a `ScrollView`'s content, so that scroll view is its nearest
 /// enclosing `UIScrollView`.
 struct ScrollViewOffset: UIViewRepresentable {

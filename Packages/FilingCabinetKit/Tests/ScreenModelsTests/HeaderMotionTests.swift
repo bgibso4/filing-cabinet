@@ -19,12 +19,11 @@ private let motion = HeaderMotion(largeHeight: 52)
     #expect(motion.growth(offset: 26) == 0.5)
 }
 
-@Test func innerScreensRestSmall() {
-    #expect(motion.restingOffset(.small) == 52)
-}
-
-@Test func homeRestsLarge() {
-    #expect(motion.restingOffset(.large) == 0)
+/// The small title and subtitle fade in as the large title collapses, and are gone while it fully shows.
+@Test func smallTitleFadesInAsTheLargeOneCollapses() {
+    #expect(HeaderMotion.smallTitleOpacity(growth: 1) == 0)
+    #expect(HeaderMotion.smallTitleOpacity(growth: 0.25) == 0.75)
+    #expect(HeaderMotion.smallTitleOpacity(growth: 0) == 1)
 }
 
 @Test func shortContentStillRestsSmall() {

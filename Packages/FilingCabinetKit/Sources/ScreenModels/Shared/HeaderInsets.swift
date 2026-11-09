@@ -1,9 +1,11 @@
 import CoreGraphics
 
 /// The header as the scroll view's top inset shows it (plan 3, E1). The system bar grows the inset by the large title's
-/// height as the title shows, so the largest inset seen is the expanded bar, the smallest the collapsed one, and their
-/// difference is the large title's height, measured at runtime for any text size. The order they arrive in doesn't
-/// matter: a screen can appear under a bar that is already collapsed.
+/// height as the title shows, so the largest inset seen stands for the expanded bar, the smallest the collapsed one, and
+/// their difference is the large title's height, measured at runtime for any text size. The order they arrive in doesn't
+/// matter: a screen can appear under a bar that is already collapsed. The largest can overshoot the expanded bar: the bar
+/// first lays out taller (168 pt on Home, then 156.67 pt; see `record`), which is why a screen resting large measures
+/// from the inset it rested under instead.
 ///
 /// A screen resting large (Home) opens expanded and has never seen the bar collapsed when it first scrolls, so the
 /// large title's own measured height stands in for the inset drop, measured from the bar it rested under: the small

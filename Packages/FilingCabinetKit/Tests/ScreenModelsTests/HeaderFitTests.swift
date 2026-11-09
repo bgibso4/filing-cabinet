@@ -81,12 +81,19 @@ private func everySubtext() throws -> [Subtext] {
     }
     let allScans = CollectionGridModel(
         kind: .all, library: try fullLibrary(.forever, clock: clock), today: today, calendar: clock.calendar)
+    let settings = CollectionSettingsModel(
+        collection: .documents,
+        library: try fullLibrary(.forever, clock: clock),
+        today: today,
+        calendar: clock.calendar,
+        analytics: RecordingAnalytics()
+    )
     let recent = CollectionGridModel(kind: .recent, library: FakeLibrary(), today: today, calendar: clock.calendar)
     let besideBack = [
         Subtext(screen: "Recent", text: recent.subtitle, room: roomBesideBack),
         Subtext(screen: "All Scans", text: allScans.subtitle, room: roomBesideBack),
         Subtext(screen: "Collections", text: collections.subtitle, room: roomBesideBack),
-        Subtext(screen: "A collection's settings", text: CollectionText.scanCount(mostScans), room: roomBesideBack),
+        Subtext(screen: "A collection's settings", text: settings.countLine, room: roomBesideBack),
     ]
     return besideSelect + grids + besideBack
 }
