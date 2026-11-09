@@ -66,10 +66,7 @@ final class SettingsSnapshotTests: XCTestCase {
         try SnapshotHost.assertScreen(collections(rest: .small), testName: "collections")
     }
 
-    /// The state a pull reaches: the large title over its subtitle, the bar's centre empty. The snapshot cuts the top
-    /// few points off the large title at the default text size; the app doesn't (a pulled or resting-large screen
-    /// shows it whole), and a real push in the host doesn't change the snapshot, so it is the snapshot's rendering of
-    /// the bar.
+    /// The state a pull reaches: the large title over its subtitle, the bar's centre empty.
     @MainActor
     func testCollectionsLarge() throws {
         try SnapshotHost.assertScreen(collections(rest: .large), testName: "collections_large")

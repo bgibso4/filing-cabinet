@@ -13,6 +13,9 @@ struct HeaderTitle: ToolbarContent {
     /// 0 with the title small in the bar, 1 with the large title fully showing (`HeaderMotion.growth`).
     let growth: CGFloat
 
+    // Plan 3, Task 3: the large subtitle sits 2 pt under the large title (Settings2.dc.html line 51).
+    private static let largeSubtitleGap: CGFloat = 2
+
     var body: some ToolbarContent {
         ToolbarItem(placement: .title) {
             title
@@ -33,21 +36,19 @@ struct HeaderTitle: ToolbarContent {
             }
         }
         ToolbarItem(placement: .largeTitle) {
-            title
-                .font(Tokens.Typography.largeTitle)
-                .tracking(Tokens.Typography.largeTitleTracking)
-                .foregroundStyle(Tokens.Color.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityHidden(true)
-        }
-        if let subtitle {
-            ToolbarItem(placement: .largeSubtitle) {
-                subtitle
-                    .font(Tokens.Typography.subheadline)
-                    .foregroundStyle(Tokens.Color.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: Self.largeSubtitleGap) {
+                title
+                    .font(Tokens.Typography.largeTitle)
+                    .tracking(Tokens.Typography.largeTitleTracking)
+                    .foregroundStyle(Tokens.Color.textPrimary)
+                if let subtitle {
+                    subtitle
+                        .font(Tokens.Typography.subheadline)
+                        .foregroundStyle(Tokens.Color.textSecondary)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityHidden(true)
         }
     }
 }
