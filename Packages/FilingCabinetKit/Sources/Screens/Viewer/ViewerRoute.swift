@@ -7,8 +7,8 @@ import SwiftUI
 /// viewer back to the first page.
 ///
 /// One spring moves Details (M3): its position is the progress that places the panel, fits the page and fades the
-/// chrome, every frame (E2). Open and close retarget it; a drag holds it under the finger and releases it with the
-/// finger's speed.
+/// chrome, every frame (E2). Open and close retarget it; a drag (a swipe up on the page, or on the panel) holds it under
+/// the finger and releases it with the finger's speed.
 public struct ViewerRoute: View {
     private static let closed = DetailsSpring(position: 0, velocity: 0, target: 0)
 
@@ -49,6 +49,7 @@ public struct ViewerRoute: View {
             detailsProgress: progress,
             chromeProgress: spring.position,
             onDetails: open,
+            onDetailsDrag: drag,
             onRestored: onRestored
         )
         .overlay(alignment: .bottom) {
@@ -98,6 +99,8 @@ public struct ViewerRoute: View {
     private func drag(_ phase: DetailsDrag) {
         switch phase {
         case .began:
+            // A swipe up on the page can start with Details closed.
+            if details == nil { details = makeDetails() }
             dragStart = spring.position
             spring.hold(at: spring.position)
         case .changed(let translation):

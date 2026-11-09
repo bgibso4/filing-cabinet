@@ -80,4 +80,11 @@ package nonisolated enum DetailsMotion {
         !isPageZoomed && !isFromTrash && translation.height < 0
             && abs(translation.height) > abs(translation.width)
     }
+
+    /// Whether a drag on the panel's body moves the panel rather than scrolling the body, as Apple's sheets do: only a
+    /// mostly downward drag, and only with the body at its top. `bodyScrolled` is how far the body is scrolled from its
+    /// top, negative while pulled past it; under half a point counts as the top.
+    package static func bodyDragMovesPanel(translation: CGSize, bodyScrolled: CGFloat) -> Bool {
+        bodyScrolled < 0.5 && translation.height > 0 && abs(translation.height) > abs(translation.width)
+    }
 }

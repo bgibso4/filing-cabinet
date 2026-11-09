@@ -94,6 +94,31 @@ import Testing
         !DetailsMotion.swipeOpens(translation: CGSize(width: 0, height: 40), isPageZoomed: false, isFromTrash: false))
 }
 
+/// A drag exactly as wide as it is tall is not mostly vertical: it pages rather than opening Details.
+@Test func aDiagonalSwipeDoesNotOpenDetails() {
+    #expect(
+        !DetailsMotion.swipeOpens(translation: CGSize(width: 30, height: -30), isPageZoomed: false, isFromTrash: false))
+    #expect(
+        !DetailsMotion.swipeOpens(translation: CGSize(width: -30, height: -30), isPageZoomed: false, isFromTrash: false)
+    )
+}
+
+/// The panel's body scrolls first (like Apple's sheets): a drag on it moves the panel only when it is mostly downward
+/// and the body is at its top.
+@Test func theBodyScrollsBeforeThePanelMoves() {
+    let down = CGSize(width: 0, height: 40)
+    #expect(DetailsMotion.bodyDragMovesPanel(translation: down, bodyScrolled: 0))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: down, bodyScrolled: 120))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: -40), bodyScrolled: 0))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 40, height: 40), bodyScrolled: 0))
+}
+
+/// A body that has bounced past its top is at its top too.
+@Test func aBodyPulledPastItsTopIsAtItsTop() {
+    #expect(DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: 40), bodyScrolled: -12))
+    #expect(DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: 40), bodyScrolled: 0.4))
+}
+
 /// Before the panel is measured there is no travel: a drag then leaves progress where it started, never NaN.
 @Test func dragBeforeThePanelIsMeasuredStaysPut() {
     #expect(DetailsMotion.progress(dragStart: 0.3, translation: -50, travel: 0) == 0.3)

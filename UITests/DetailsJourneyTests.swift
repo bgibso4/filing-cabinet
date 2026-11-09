@@ -81,6 +81,78 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
     }
 
+    /// A swipe up on the page raises Details under the finger, and a drag down on its grabber closes it (#61, B10).
+    func testSwipeUpOpensDetailsAndSwipeDownCloses() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        let centre = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        centre.press(forDuration: 0.05, thenDragTo: centre.withOffset(CGVector(dx: 0, dy: -300)))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertTrue(sheet.appears(within: 5))
+        // Fully up once the pill has left: the sheet's frame is where it rests, not where it is mid-motion.
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        XCTAssertTrue(header.disappears(within: 5))
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(sheet.disappears(within: 5))
+        XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
+    }
+
+    /// At the largest text, after a move, Details is taller than the screen. Its body scrolls first, as Apple's sheets
+    /// do: up, Undo comes into reach; down while scrolled, it scrolls back and the panel stays. The grabber always drags
+    /// the panel.
+    func testTheBodyScrollsBeforeThePanelMovesAtTheLargestText() {
+        let app = seededApp(largestText: true)
+        openAReceipt(in: app)
+        openDetails(in: app)
+        choose("Documents", from: AccessibilityID.Details.collection, in: app)
+        let undo = app.buttons[AccessibilityID.Details.undo]
+        XCTAssertTrue(undo.appears(within: 5))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertGreaterThan(
+            undo.frame.maxY, sheet.frame.maxY, "Undo should start cut off by the panel, or this test proves nothing")
+
+        // Scrolled up, Undo comes fully into the panel, which stays where it was.
+        let panelTop = sheet.frame.minY
+        let body = app.buttons[AccessibilityID.Details.title].coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        body.press(forDuration: 0.05, thenDragTo: body.withOffset(CGVector(dx: 0, dy: -400)))
+        XCTAssertLessThanOrEqual(undo.frame.maxY, sheet.frame.maxY)
+        XCTAssertTrue(undo.isHittable)
+        XCTAssertEqual(sheet.frame.minY, panelTop)
+
+        // Dragged down while scrolled, the body scrolls back rather than the panel moving.
+        let middle = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        middle.press(forDuration: 0.05, thenDragTo: middle.withOffset(CGVector(dx: 0, dy: 200)))
+        XCTAssertTrue(sheet.exists)
+        XCTAssertEqual(sheet.frame.minY, panelTop)
+        XCTAssertGreaterThan(undo.frame.maxY, sheet.frame.maxY)
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(sheet.disappears(within: 5))
+    }
+
+    /// At the largest text, after a move, the body scrolls; at its top, a drag down on it moves the panel and closes it,
+    /// as Apple's sheets do.
+    func testADragDownOnTheBodyAtItsTopClosesDetailsAtTheLargestText() {
+        let app = seededApp(largestText: true)
+        openAReceipt(in: app)
+        openDetails(in: app)
+        choose("Documents", from: AccessibilityID.Details.collection, in: app)
+        let undo = app.buttons[AccessibilityID.Details.undo]
+        XCTAssertTrue(undo.appears(within: 5))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertGreaterThan(
+            undo.frame.maxY, sheet.frame.maxY, "The body should overflow, or this test proves nothing")
+
+        let middle = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        middle.press(
+            forDuration: 0.05,
+            thenDragTo: app.windows.firstMatch.coordinate(
+                withNormalizedOffset: CGVector(dx: 0.5, dy: 1)))
+        XCTAssertTrue(sheet.disappears(within: 5))
+    }
+
     /// 06-04: Trash asks in a popover from the button; Move to Trash pops back to a grid with one fewer tile.
     func testMoveToTrashFromTheViewer() {
         let app = seededApp()

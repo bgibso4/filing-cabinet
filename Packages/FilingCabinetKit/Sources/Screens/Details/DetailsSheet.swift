@@ -6,22 +6,25 @@ import SwiftUI
 /// place, when it was scanned, its collection and its expiry. Only as tall as its content; when the text is larger
 /// than the screen allows, the content scrolls under the grabber. It draws its own grabber, and `DetailsPanel` adds the
 /// surface, corners and motion.
+///
+/// The grabber always drags the panel. The body scrolls first, as Apple's sheets do: a drag on it moves the panel only
+/// downward from its top (`DetailsMotion.bodyDragMovesPanel`). Neither drags while renaming, where it would fight the
+/// field's own.
 struct DetailsSheet: View {
     private let model: DetailsModel
+    private let onDrag: (DetailsDrag) -> Void
 
     @State private var contentHeight: CGFloat?
+    /// How far the body is scrolled from its top, negative while pulled past it.
+    @State private var bodyScrolled: CGFloat = 0
     /// The title as typed while renaming.
     @State private var draft = ""
     @FocusState private var isTitleFocused: Bool
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    // ScanDetails.dc.html line 34: 8 pt above the grabber, 16 pt either side and 18 pt below the content.
-    private static let topPadding: CGFloat = 8
+    // ScanDetails.dc.html line 34: 16 pt either side and 18 pt below the content.
     private static let sidePadding: CGFloat = 16
     private static let bottomPadding: CGFloat = 18
-    // ScanDetails.dc.html line 35: the grabber is 36 by 5 pt.
-    private static let grabberWidth: CGFloat = 36
-    private static let grabberHeight: CGFloat = 5
     // ScanDetails.dc.html line 39: the title row is 44 pt tall at least, 8 pt below the grabber and 4 pt in, the
     // pencil 8 pt after the title.
     private static let titleMinHeight: CGFloat = 44
@@ -30,18 +33,31 @@ struct DetailsSheet: View {
     // ScanDetails.dc.html line 54: renaming, the label starts 10 pt below the grabber.
     private static let editorTop: CGFloat = 10
 
-    init(model: DetailsModel) {
+    init(model: DetailsModel, onDrag: @escaping (DetailsDrag) -> Void) {
         self.model = model
+        self.onDrag = onDrag
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            grabber
+            DetailsGrabber(isEnabled: !model.isRenaming, onDrag: onDrag)
             ScrollView {
                 content.onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
             }
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
+            .onScrollGeometryChange(
+                for: CGFloat.self,
+                of: { $0.contentOffset.y + $0.contentInsets.top },
+                action: { bodyScrolled = $1 }
+            )
+            .gesture(
+                DetailsSwipe(
+                    begins: {
+                        !model.isRenaming
+                            && DetailsMotion.bodyDragMovesPanel(translation: $0, bodyScrolled: bodyScrolled)
+                    },
+                    onDrag: onDrag))
         }
         .onChange(of: model.isRenaming, initial: true) { _, isRenaming in
             if isRenaming { draft = model.title }
@@ -67,14 +83,6 @@ struct DetailsSheet: View {
         } message: { alert in
             Text(alert.message)
         }
-    }
-
-    private var grabber: some View {
-        Capsule()
-            .fill(Tokens.Color.chevron)
-            .frame(width: Self.grabberWidth, height: Self.grabberHeight)
-            .padding(.top, Self.topPadding)
-            .accessibilityHidden(true)
     }
 
     /// While renaming only the field shows (07-03).
