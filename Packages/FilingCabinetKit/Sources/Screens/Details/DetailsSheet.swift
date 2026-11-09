@@ -13,13 +13,14 @@ import SwiftUI
 struct DetailsSheet: View {
     private let model: DetailsModel
     private let onDrag: (DetailsDrag) -> Void
+    /// The title field's focus, owned by `DetailsPanel`, which ends renaming on a tap outside the panel too.
+    private let isTitleFocused: FocusState<Bool>.Binding
 
     @State private var contentHeight: CGFloat?
     /// Whether the body is scrolled to its top (or pulled past it); written only when that changes.
     @State private var isBodyAtTop = true
     /// The title as typed while renaming.
     @State private var draft = ""
-    @FocusState private var isTitleFocused: Bool
     @Environment(\.dynamicTypeSize) private var typeSize
 
     // ScanDetails.dc.html line 34: 16 pt either side and 18 pt below the content.
@@ -33,8 +34,9 @@ struct DetailsSheet: View {
     // ScanDetails.dc.html line 54: renaming, the label starts 10 pt below the grabber.
     private static let editorTop: CGFloat = 10
 
-    init(model: DetailsModel, onDrag: @escaping (DetailsDrag) -> Void) {
+    init(model: DetailsModel, isTitleFocused: FocusState<Bool>.Binding, onDrag: @escaping (DetailsDrag) -> Void) {
         self.model = model
+        self.isTitleFocused = isTitleFocused
         self.onDrag = onDrag
     }
 
@@ -46,6 +48,8 @@ struct DetailsSheet: View {
             }
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
+            // Renaming at a large text size, the body scrolls, and a drag down on it takes the keyboard away.
+            .scrollDismissesKeyboard(.interactively)
             .onScrollGeometryChange(
                 for: Bool.self,
                 of: { DetailsMotion.bodyIsAtTop(scrolled: $0.contentOffset.y + $0.contentInsets.top) },
@@ -63,7 +67,7 @@ struct DetailsSheet: View {
             if isRenaming { draft = model.title }
         }
         // Leaving the field commits, as Return does.
-        .onChange(of: isTitleFocused) { _, isFocused in
+        .onChange(of: isTitleFocused.wrappedValue) { _, isFocused in
             if !isFocused { commitTitle() }
         }
         .onDisappear(perform: commitTitle)
@@ -89,7 +93,7 @@ struct DetailsSheet: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             if model.isRenaming {
-                DetailsTitleEditor(text: $draft, isFocused: $isTitleFocused, onCommit: commitTitle)
+                DetailsTitleEditor(text: $draft, isFocused: isTitleFocused, onCommit: commitTitle)
                     .padding(.top, Self.editorTop)
             } else {
                 titleButton
@@ -143,13 +147,13 @@ struct DetailsSheet: View {
 
     private func startRenaming() {
         model.startRenaming()
-        isTitleFocused = true
+        isTitleFocused.wrappedValue = true
     }
 
     /// Return, leaving the field or closing the sheet: the typed title is kept (a blank one keeps the old title).
     private func commitTitle() {
         guard model.isRenaming else { return }
         model.rename(draft)
-        isTitleFocused = false
+        isTitleFocused.wrappedValue = false
     }
 }

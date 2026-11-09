@@ -5,7 +5,9 @@ import SwiftUI
 /// Details floating over the viewer (B10): our own panel rather than a system sheet, so one progress value moves it,
 /// the page and the chrome together (#61). The same look as the sheet it replaces: the surface colour, 34 pt corners,
 /// 8 pt from the screen's sides and bottom, and the sheet's own grabber. It doesn't dim the viewer, rides above the
-/// keyboard while renaming, and follows a drag on its grabber, or on its body once the body is at its top.
+/// keyboard while renaming, and follows a drag on its grabber, or on its body once the body is at its top. While renaming,
+/// a tap anywhere outside the field ends it as Return does, and does nothing else: over the viewer it lands on a clear
+/// shield, not the page.
 public struct DetailsPanel: View {
     // ScanDetails.dc.html line 34: 8 pt from the screen's sides and bottom, with 34 pt corners.
     static let inset: CGFloat = 8
@@ -18,6 +20,7 @@ public struct DetailsPanel: View {
     @Binding private var height: CGFloat
     private let onDrag: (DetailsDrag) -> Void
     private let onClose: () -> Void
+    @FocusState private var isTitleFocused: Bool
 
     public init(
         model: DetailsModel,
@@ -34,11 +37,20 @@ public struct DetailsPanel: View {
     }
 
     public var body: some View {
-        DetailsSheet(model: model, onDrag: onDrag)
+        ZStack(alignment: .bottom) {
+            if model.isRenaming { shield }
+            panel
+        }
+    }
+
+    private var panel: some View {
+        DetailsSheet(model: model, isTitleFocused: $isTitleFocused, onDrag: onDrag)
             .background(Tokens.Color.bgSurface)
             .clipShape(.rect(cornerRadius: Self.cornerRadius, style: .continuous))
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { height = $0 }
             .contentShape(.rect(cornerRadius: Self.cornerRadius, style: .continuous))
+            // The field and its clear button take their own taps first.
+            .gesture(TapGesture().onEnded(endRenaming), isEnabled: model.isRenaming)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(AccessibilityID.Details.sheet)
             .accessibilityAction(.escape, onClose)
@@ -49,5 +61,19 @@ public struct DetailsPanel: View {
             }
             // Down to the screen's bottom edge, but above the keyboard.
             .ignoresSafeArea(.container, edges: .bottom)
+    }
+
+    /// Over the whole viewer while renaming, under the panel: a tap on the page ends renaming and reaches nothing else.
+    private var shield: some View {
+        Color.clear
+            .contentShape(.rect)
+            .onTapGesture(perform: endRenaming)
+            .ignoresSafeArea()
+            .accessibilityHidden(true)
+    }
+
+    /// Leaving the field commits the title (`DetailsSheet`).
+    private func endRenaming() {
+        isTitleFocused = false
     }
 }

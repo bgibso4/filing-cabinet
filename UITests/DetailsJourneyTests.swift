@@ -64,6 +64,39 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertEqual(header.label, "Groceries, details")
     }
 
+    /// Renaming ends with a tap outside the field, as Return does: on the page above the panel (which neither closes
+    /// Details nor zooms the page), or on the panel around the field. A tap on the field itself keeps renaming.
+    func testATapOutsideTheFieldEndsRenaming() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        openDetails(in: app)
+        let title = app.buttons[AccessibilityID.Details.title]
+        let field = app.textFields[AccessibilityID.Details.titleField]
+        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
+
+        title.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.appears(within: 5))
+        field.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.exists, "A tap on the field ended renaming")
+        app.buttons[AccessibilityID.Details.clearTitle].tap()
+        field.typeText("Groceries")
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+        XCTAssertTrue(title.appears(within: 5))
+        XCTAssertEqual(title.label, "Rename Groceries")
+        XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].exists, "Details closed")
+        XCTAssertNotEqual(page.value as? String, "Zoomed")
+
+        // On the panel, under the field: the hint.
+        title.tap()
+        XCTAssertTrue(field.appears(within: 5))
+        field.typeText(" list")
+        app.staticTexts["Suggested from the scan’s text. Search finds it by title and text."].tap()
+        XCTAssertTrue(title.appears(within: 5))
+        XCTAssertEqual(title.label, "Rename Groceries list")
+        XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
+    }
+
     /// Info opens Details over the pill, and dragging it down brings the pill back (#61).
     func testInfoOpensAndClosesDetails() {
         let app = seededApp()
