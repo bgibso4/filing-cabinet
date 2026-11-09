@@ -4,11 +4,28 @@ import Testing
 @testable import ScreenModels
 
 @Test func pageFitFollowsProgress() {
-    #expect(DetailsMotion.pageFitBottom(progress: 0, closed: 130, open: 260) == 130)
-    #expect(DetailsMotion.pageFitBottom(progress: 0.5, closed: 130, open: 260) == 195)
-    #expect(DetailsMotion.pageFitBottom(progress: 1, closed: 130, open: 260) == 260)
-    #expect(DetailsMotion.pageFitBottom(progress: 1.4, closed: 130, open: 260) == 260)
-    #expect(DetailsMotion.pageFitBottom(progress: -0.4, closed: 130, open: 260) == 130)
+    // Open is just above the panel: its travel (250) and the gap (10).
+    #expect(DetailsMotion.pageFitBottom(progress: 0, closed: 130, travel: 250, gap: 10) == 130)
+    #expect(DetailsMotion.pageFitBottom(progress: 0.5, closed: 130, travel: 250, gap: 10) == 195)
+    #expect(DetailsMotion.pageFitBottom(progress: 1, closed: 130, travel: 250, gap: 10) == 260)
+    #expect(DetailsMotion.pageFitBottom(progress: 1.4, closed: 130, travel: 250, gap: 10) == 260)
+    #expect(DetailsMotion.pageFitBottom(progress: -0.4, closed: 130, travel: 250, gap: 10) == 130)
+}
+
+/// Until the panel is measured its travel is unknown, so the page keeps its closed fit rather than fitting above a
+/// panel of no height.
+@Test func pageKeepsItsClosedFitUntilThePanelIsMeasured() {
+    #expect(DetailsMotion.pageFitBottom(progress: 1, closed: 130, travel: 0, gap: 10) == 130)
+}
+
+/// The travel is the panel's height and the inset below it, and unknown (0) until the panel has a height: an
+/// unmeasured panel must not make a 10 pt drag a full open (the first swipe after opening a scan).
+@Test func travelIsUnknownUntilThePanelIsMeasured() {
+    #expect(DetailsMotion.travel(panelHeight: 0, inset: 8) == 0)
+    #expect(DetailsMotion.travel(panelHeight: -1, inset: 8) == 0)
+    #expect(DetailsMotion.travel(panelHeight: 206, inset: 8) == 214)
+    let travel = DetailsMotion.travel(panelHeight: 0, inset: 8)
+    #expect(DetailsMotion.progress(dragStart: 0, translation: -10, travel: travel) == 0)
 }
 
 @Test func chromeFadesWithProgress() {
@@ -141,6 +158,34 @@ import Testing
     #expect(DetailsMotion.panelOpacity(progress: 0.3, reducesMotion: true) == 0.3)
     #expect(DetailsMotion.panelOpacity(progress: 1.02, reducesMotion: true) == 1)
     #expect(DetailsMotion.panelOpacity(progress: 0.3, reducesMotion: false) == 1)
+}
+
+/// B11: under Reduce Motion the panel jumps up to open, and on the way down holds where the close began while it fades
+/// out, so it never vanishes at once. Without Reduce Motion it follows the spring.
+@Test func reduceMotionHoldsThePanelWhileItFadesOut() {
+    // A button close from fully open.
+    #expect(DetailsMotion.panelProgress(position: 0.6, target: 0, origin: 1, reducesMotion: true) == 1)
+    #expect(DetailsMotion.panelOpacity(progress: 0.6, reducesMotion: true) == 0.6)
+    // A drag let go at 0.7, below halfway's other side: it settles shut from there.
+    #expect(DetailsMotion.panelProgress(position: 0.4, target: 0, origin: 0.7, reducesMotion: true) == 0.7)
+    // Opening jumps to open; a finger holds it where it is.
+    #expect(DetailsMotion.panelProgress(position: 0.3, target: 1, origin: 0, reducesMotion: true) == 1)
+    #expect(DetailsMotion.panelProgress(position: 0.5, target: 0.5, origin: 0.5, reducesMotion: true) == 0.5)
+    #expect(DetailsMotion.panelProgress(position: 0.4, target: 0, origin: 0.7, reducesMotion: false) == 0.4)
+}
+
+/// The spring remembers where it was when its target last changed: where a close (or a release) began.
+@Test func theSpringRemembersWhereItWasRetargeted() {
+    var spring = DetailsSpring(position: 1, velocity: 0, target: 1)
+    spring.target = 0
+    spring.step(by: 1.0 / 60)
+    #expect(spring.origin == 1)
+    #expect(spring.position < 1)
+    spring.hold(at: 0.7)
+    spring.release(velocity: -1)
+    spring.step(by: 1.0 / 60)
+    #expect(spring.origin == 0.7)
+    #expect(spring.target == 0)
 }
 
 /// A grab stops the spring where it really is.

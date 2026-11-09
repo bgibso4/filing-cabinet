@@ -12,9 +12,17 @@ package nonisolated enum DetailsMotion {
         min(max(progress, 0), 1)
     }
 
-    /// The page's fit bottom, linear between its closed and open values.
-    package static func pageFitBottom(progress: CGFloat, closed: CGFloat, open: CGFloat) -> CGFloat {
-        closed + (open - closed) * clamped(progress)
+    /// The panel's travel from fully up to fully below the screen: its height and the inset below it. Unknown (0) until
+    /// the panel has been measured, so nothing moves against a panel of no height.
+    package static func travel(panelHeight: CGFloat, inset: CGFloat) -> CGFloat {
+        panelHeight > 0 ? panelHeight + inset : 0
+    }
+
+    /// The page's fit bottom, linear between its closed value and `gap` above the open panel. While the travel is
+    /// unknown the page keeps its closed fit.
+    package static func pageFitBottom(progress: CGFloat, closed: CGFloat, travel: CGFloat, gap: CGFloat) -> CGFloat {
+        guard travel > 0 else { return closed }
+        return closed + (travel + gap - closed) * clamped(progress)
     }
 
     /// The header pill, strip and bottom bar fade out as Details rises (B2).
@@ -57,10 +65,18 @@ package nonisolated enum DetailsMotion {
         return -pointsPerSecond / travel
     }
 
-    /// The progress the panel's offset and the page's fit take: under Reduce Motion they jump to where the spring is
-    /// going, and only the panel's opacity follows it (B11).
+    /// The progress the page's fit takes: under Reduce Motion it jumps to where the spring is going (B11).
     package static func layoutProgress(position: CGFloat, target: CGFloat, reducesMotion: Bool) -> CGFloat {
         reducesMotion ? target : position
+    }
+
+    /// The progress the panel's offset takes. Under Reduce Motion it doesn't slide (B11): it jumps up to open, and on
+    /// the way down holds where it was when the close began (`origin`) while it fades out.
+    package static func panelProgress(
+        position: CGFloat, target: CGFloat, origin: CGFloat, reducesMotion: Bool
+    ) -> CGFloat {
+        guard reducesMotion else { return position }
+        return target > 0 ? target : origin
     }
 
     /// The panel fades in and out with the spring under Reduce Motion, and is opaque otherwise (B11).

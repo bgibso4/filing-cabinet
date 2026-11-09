@@ -54,8 +54,10 @@ public struct ViewerRoute: View {
         )
         .overlay(alignment: .bottom) {
             if let details {
-                DetailsPanel(model: details, progress: progress, height: $detailsHeight, onDrag: drag, onClose: close)
-                    .opacity(DetailsMotion.panelOpacity(progress: spring.position, reducesMotion: reducesMotion))
+                DetailsPanel(
+                    model: details, progress: panelProgress, height: $detailsHeight, onDrag: drag, onClose: close
+                )
+                .opacity(DetailsMotion.panelOpacity(progress: spring.position, reducesMotion: reducesMotion))
             }
         }
         .background { springDriver }
@@ -69,13 +71,19 @@ public struct ViewerRoute: View {
         }
     }
 
-    /// Where the panel and the page are: the spring's position, or its target under Reduce Motion (B11).
+    /// Where the page is: the spring's position, or its target under Reduce Motion (B11).
     private var progress: CGFloat {
         DetailsMotion.layoutProgress(position: spring.position, target: spring.target, reducesMotion: reducesMotion)
     }
 
-    /// The panel's travel from fully up to fully below the screen.
-    private var travel: CGFloat { detailsHeight + DetailsPanel.inset }
+    /// Where the panel is: the spring's position, or under Reduce Motion open, or where a close began while it fades.
+    private var panelProgress: CGFloat {
+        DetailsMotion.panelProgress(
+            position: spring.position, target: spring.target, origin: spring.origin, reducesMotion: reducesMotion)
+    }
+
+    /// The panel's travel from fully up to fully below the screen, unknown (0) until the panel is measured.
+    private var travel: CGFloat { DetailsMotion.travel(panelHeight: detailsHeight, inset: DetailsPanel.inset) }
 
     /// Steps the spring once a frame while it moves, and not at all at rest or under a finger.
     private var springDriver: some View {

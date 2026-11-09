@@ -14,12 +14,17 @@ package struct DetailsSpring: Sendable, Equatable {
 
     package var position: CGFloat
     package var velocity: CGFloat
-    package var target: CGFloat
+    package var target: CGFloat {
+        didSet { origin = position }
+    }
+    /// Where it was when its target last changed: under Reduce Motion a closing panel holds there while it fades.
+    package private(set) var origin: CGFloat
 
     package init(position: CGFloat, velocity: CGFloat, target: CGFloat) {
         self.position = position
         self.velocity = velocity
         self.target = target
+        origin = position
     }
 
     /// Within a thousandth of the target and slower than 0.01 per second. A settled spring sits exactly on it.

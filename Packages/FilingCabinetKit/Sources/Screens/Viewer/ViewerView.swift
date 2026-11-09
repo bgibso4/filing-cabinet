@@ -201,7 +201,8 @@ public struct ViewerView: View {
             progress: detailsProgress,
             closed: max(
                 safeArea + Self.pageFitBottomGap, Self.barBottomInset + bottomControlsHeight + Self.pageControlsGap),
-            open: DetailsPanel.inset + detailsHeight + Self.pageSheetGap)
+            travel: DetailsMotion.travel(panelHeight: detailsHeight, inset: DetailsPanel.inset),
+            gap: Self.pageSheetGap)
     }
 
     /// The page strip (with more than one page) above the bottom bar.

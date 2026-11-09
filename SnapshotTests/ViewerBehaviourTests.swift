@@ -173,10 +173,20 @@ struct ViewerBehaviourTests {
         var pills: [[UInt8]] = []
         for value: CGFloat in [0, 0.5, 1] {
             progress.value = value
-            // Settled: the page and the bar have their final layout.
-            try await Task.sleep(for: .milliseconds(500))
-            bottoms.append(try #require(pageFrame(in: window)).maxY)
-            pills.append(try WindowPixels.rgba(of: window, in: Self.pillBand))
+            // Settled: the page has moved from where it was, and two reads in a row agree on the page and the bar.
+            var last: (bottom: CGFloat, pill: [UInt8])?
+            let settled = try await eventually {
+                let read = (
+                    bottom: try #require(pageFrame(in: window)).maxY,
+                    pill: try WindowPixels.rgba(of: window, in: Self.pillBand)
+                )
+                defer { last = read }
+                return read.bottom != bottoms.last && last.map { $0 == read } == true
+            }
+            #expect(settled, "progress \(value)")
+            let reading = try #require(last)
+            bottoms.append(reading.bottom)
+            pills.append(reading.pill)
         }
         #expect(bottoms[0] > bottoms[1] && bottoms[1] > bottoms[2], "\(bottoms)")
         #expect(abs(bottoms[1] - (bottoms[0] + bottoms[2]) / 2) <= 1, "\(bottoms)")
