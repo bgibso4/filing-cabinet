@@ -217,7 +217,7 @@
     "Empty Trash?" : {},
     "Deletes %@ permanently. This can’t be undone." : {},
     "Empty Trash" : {},
-    "%@ · each is deleted after %lld days here" : {},
+    "%@ · Deleted after %lld days" : {},
     "a week" : {},
     "a month" : {},
     "a year" : {},

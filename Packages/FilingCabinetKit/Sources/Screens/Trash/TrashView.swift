@@ -10,12 +10,7 @@ public struct TrashView: View {
     private let thumbnails: any ThumbnailProviding
     private let onOpen: (ScanID) -> Void
 
-    // Trash.dc.html lines 19 and 25: the title starts 12 pt under the 44 pt back button. The system bar is 10 pt taller
-    // than the mock's button, so 2 pt are left to add.
-    private static let titleTopGap: CGFloat = 2
-    // Trash.dc.html line 27: 2 pt between the title and the subtitle.
-    private static let subtitleGap: CGFloat = 2
-    // Trash.dc.html lines 25 and 32: the grid starts at 190, 17 pt under the subtitle (110 + 41 + 2 + 20).
+    // Trash.dc.html lines 25 and 32: the grid starts 17 pt under the subtitle; with the title in the bar, under the bar.
     private static let gridTopGap: CGFloat = 17
     // Trash.dc.html line 32: 16 pt between rows, 8 pt between columns; 3 columns, 2 at large text as in every grid
     // (requirements 06 · Accessibility).
@@ -25,8 +20,6 @@ public struct TrashView: View {
     private static let largeTextColumnCount = 2
     // Collection.dc.html line 320: content ends 50 pt above the pill; the bar already leaves 16 of them.
     private static let contentEndGap: CGFloat = 34
-    // Trash.dc.html lines 26 and 65: the empty state starts at 300, 149 pt under the title (110 + 41).
-    private static let emptyTopGap: CGFloat = 149
     // Trash.dc.html line 126: Empty Trash is 52 pt tall with 28 pt either side of its label.
     private static let emptyTrashHeight: CGFloat = 52
     private static let emptyTrashPadding: CGFloat = 28
@@ -42,75 +35,62 @@ public struct TrashView: View {
     }
 
     public var body: some View {
-        content
-            // The system bar, clear, as on the grids: the back button is the system's glass one and swipe back works.
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar {
-                if !model.isEmpty {
-                    // Built again when the text size changes: the bar doesn't restyle a button it already holds, so
-                    // Select would keep the old size (the largest-text audit's Dynamic Type check finds it).
-                    ToolbarItem(placement: .topBarTrailing) { selectButton.id(typeSize) }
-                }
+        BottomBarLayout {
+            // One header for every state, so Trash emptying on screen changes its rest in place (HeaderScrollView).
+            HeaderScrollView(
+                title: Text("Trash", bundle: #bundle),
+                subtitle: subtitle,
+                identifier: AccessibilityID.Trash.header,
+                rest: model.isEmpty ? .large : .small,
+                // Empty holds still (B5), except at accessibility sizes, where the empty state's text runs past the
+                // screen and has to scroll to be read whole (E6).
+                scrolls: !model.isEmpty || typeSize.isAccessibilitySize
+            ) {
+                if model.isEmpty { emptyContent } else { grid }
             }
-            .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if model.isEmpty {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    header
-                    TrashEmptyView()
-                        .padding(.horizontal, Tokens.Spacing.s4)
-                        .padding(.top, typeSize.isAccessibilitySize ? Tokens.Spacing.s8 : Self.emptyTopGap)
-                        .frame(maxWidth: .infinity)
-                }
-                .padding(.horizontal, Tokens.Spacing.s4)
-                .padding(.bottom, Tokens.Spacing.s8)
-            }
-            .background(Tokens.Color.bgGrouped)
-        } else {
-            BottomBarLayout {
-                grid
-            } bar: {
-                if model.isSelecting { selectionBar } else { emptyTrashButton }
+        } bar: {
+            if model.isSelecting {
+                selectionBar
+            } else if !model.isEmpty {
+                emptyTrashButton
             }
         }
+        .toolbar {
+            // Always there, greyed out while Trash is empty, as in Passwords' Recently Deleted (B14). Built again when
+            // the text size changes: the bar doesn't restyle a button it already holds, so Select would keep the old
+            // size (the largest-text audit's Dynamic Type check finds it).
+            ToolbarItem(placement: .topBarTrailing) { selectButton.disabled(model.isEmpty).id(typeSize) }
+        }
+        .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
+    }
+
+    /// While selecting, "2 selected" is in the primary colour and semibold (Trash.dc.html line 245).
+    private var subtitle: Text {
+        Text(model.subtitle)
+            .fontWeight(model.isSelecting ? .semibold : .regular)
+            .foregroundStyle(model.isSelecting ? Tokens.Color.textPrimary : Tokens.Color.textSecondary)
     }
 
     private var grid: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Self.gridTopGap) {
-                header
-                LazyVGrid(columns: columns, spacing: Self.rowGap) {
-                    ForEach(model.tiles) { tile in
-                        TrashTileView(tile: tile, model: model, thumbnails: thumbnails) { onOpen(tile.id) }
-                    }
-                }
+        LazyVGrid(columns: columns, spacing: Self.rowGap) {
+            ForEach(model.tiles) { tile in
+                TrashTileView(tile: tile, model: model, thumbnails: thumbnails) { onOpen(tile.id) }
             }
-            .padding(.horizontal, Tokens.Spacing.s4)
-            .padding(.bottom, Self.contentEndGap)
         }
+        .padding(.top, Self.gridTopGap)
+        .padding(.horizontal, Tokens.Spacing.s4)
+        .padding(.bottom, Self.contentEndGap)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: Self.subtitleGap) {
-            Text("Trash", bundle: #bundle)
-                .font(Tokens.Typography.largeTitle)
-                .tracking(Tokens.Typography.largeTitleTracking)
-                .foregroundStyle(Tokens.Color.textPrimary)
-                .accessibilityAddTraits(.isHeader)
-                .accessibilityIdentifier(AccessibilityID.Trash.header)
-            if let subtitle = model.subtitle {
-                // While selecting, "2 selected" is in the primary colour and semibold (Trash.dc.html line 245).
-                Text(subtitle)
-                    .font(Tokens.Typography.subheadline)
-                    .fontWeight(model.isSelecting ? .semibold : .regular)
-                    .foregroundStyle(model.isSelecting ? Tokens.Color.textPrimary : Tokens.Color.textSecondary)
-            }
-        }
-        .padding(.top, Self.titleTopGap)
+    /// The empty state, centred in what the header leaves, as in Recently Deleted (at accessibility sizes, from the
+    /// top, scrolling).
+    private var emptyContent: some View {
+        TrashEmptyView()
+            .padding(.horizontal, Tokens.Spacing.s4)
+            .padding(.top, typeSize.isAccessibilitySize ? Tokens.Spacing.s8 : 0)
+            .frame(maxWidth: .infinity, maxHeight: typeSize.isAccessibilitySize ? nil : .infinity)
+            .padding(.horizontal, Tokens.Spacing.s4)
+            .padding(.bottom, Tokens.Spacing.s8)
     }
 
     private var columns: [GridItem] {

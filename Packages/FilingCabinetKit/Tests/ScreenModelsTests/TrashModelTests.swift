@@ -72,10 +72,14 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
 }
 
 @Test func subtitleCountsScans() {
-    #expect(TrashHarness(three).model.subtitle == "3 scans · each is deleted after 30 days here")
-    #expect(TrashHarness([coatCheck]).model.subtitle == "1 scan · each is deleted after 30 days here")
+    #expect(TrashHarness(three).model.subtitle == "3 scans · Deleted after 30 days")
+    #expect(TrashHarness([coatCheck]).model.subtitle == "1 scan · Deleted after 30 days")
+}
+
+/// B15: an empty Trash still has a subtext under its large title, as Passwords' "0 Items".
+@Test func emptyTrashSaysNoScans() {
     let empty = TrashHarness([]).model
-    #expect(empty.subtitle == nil)
+    #expect(empty.subtitle == "No scans")
     #expect(empty.isEmpty)
 }
 

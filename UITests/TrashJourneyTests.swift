@@ -38,7 +38,7 @@ final class TrashJourneyTests: XCTestCase {
         try restoreByLongPress(in: app)
         askDeleteNowByLongPress(in: app)
         try deleteTwoBySelecting(in: app)
-        try emptyTrash(in: app)
+        try emptyTrash(in: app, deleting: "2 scans")
 
         // Home: the restored scan is back in Throwaways, and Trash shows no number.
         app.buttons[AccessibilityID.Grid.back].tap()
@@ -46,6 +46,18 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(trashRow.appears(within: 5))
         XCTAssertEqual(trashRow.label, "Trash")
         XCTAssertEqual(app.buttons[AccessibilityID.Home.collectionRow(.throwaways)].label, "Throwaways, 2")
+    }
+
+    /// Trash emptied while it is open changes in place: one header, which comes out large and holds still, with Select
+    /// greyed out (B5, B14). "No scans" under it is proven in Fast and the trash_empty snapshot.
+    func testEmptyingTrashInPlaceShowsTheLargeTitle() throws {
+        let app = seededApp()
+        openTrash(in: app)
+        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
+        XCTAssertTrue(
+            app.staticTexts[AccessibilityID.Trash.header].satisfies("isHittable == true", within: 5),
+            "Trash didn't rest small")
+        try emptyTrash(in: app, deleting: "5 scans")
     }
 
     func testAuditAtLargestTextTrash() throws {
@@ -169,18 +181,39 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.Trash.emptyTrash].appears(within: 5))
     }
 
-    /// Empty Trash asks first, then the empty state shows.
-    private func emptyTrash(in app: XCUIApplication) throws {
+    /// Empty Trash asks first, then the empty state shows, in place: the large title comes out over "No scans" and the
+    /// screen holds still (B5), and Select stays, greyed out (B14).
+    private func emptyTrash(in app: XCUIApplication, deleting scans: String) throws {
         app.buttons[AccessibilityID.Trash.emptyTrash].tap()
         let empty = app.staticTexts["Empty Trash?"]
         XCTAssertTrue(empty.appears(within: 5))
-        XCTAssertTrue(app.staticTexts["Deletes 2 scans permanently. This can’t be undone."].exists)
+        XCTAssertTrue(app.staticTexts["Deletes \(scans) permanently. This can’t be undone."].exists)
         attachScreenshot("trash-empty-trash", of: app)
         confirmButton("Empty Trash", besides: AccessibilityID.Trash.emptyTrash, in: app).tap()
         XCTAssertTrue(app.staticTexts["Trash is empty"].appears(within: 5))
         XCTAssertEqual(tiles(in: app).count, 0)
-        XCTAssertFalse(app.buttons[AccessibilityID.Trash.select].exists)
+        let select = app.buttons[AccessibilityID.Trash.select]
+        XCTAssertTrue(select.exists)
+        XCTAssertFalse(select.isEnabled)
+        assertEmptyTrashHoldsStill(in: app)
         try audit(app)
+    }
+
+    /// The bar's small title (the header element, M6 amended) is faded out because the large title shows, and stays so;
+    /// drags either way move neither it nor the empty state.
+    private func assertEmptyTrashHoldsStill(in app: XCUIApplication) {
+        let header = app.staticTexts[AccessibilityID.Trash.header]
+        let empty = app.staticTexts["Trash is empty"]
+        XCTAssertTrue(header.satisfies("isHittable == false", within: 5), "The large title isn't showing")
+        // Still large once the bar has had time to settle.
+        XCTAssertFalse(header.satisfies("isHittable == true", within: 1), "The bar collapsed")
+        let frames = (header: header.frame, empty: empty.frame)
+        for distance in [-300.0, 300.0] {
+            empty.drag(by: distance)
+            XCTAssertEqual(header.frame, frames.header, "The header moved after a \(distance) pt drag")
+            XCTAssertEqual(empty.frame, frames.empty, "The empty state moved after a \(distance) pt drag")
+            XCTAssertFalse(header.isHittable, "The bar collapsed after a \(distance) pt drag")
+        }
     }
 
     /// Home's Trash row, with its count.
