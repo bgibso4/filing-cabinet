@@ -52,6 +52,8 @@ public struct SettingsView: View {
             .padding(.horizontal, Tokens.Spacing.s4)
             .padding(.bottom, Tokens.Spacing.s8)
         }
+        // It fits the screen: a bounce shows no scroll bar (phone check F4).
+        .scrollIndicators(.hidden)
         .background(Tokens.Color.bgGrouped)
         .task { await model.refreshAuthorization() }
         // Someone may come back from iPhone Settings having turned notifications on or off.

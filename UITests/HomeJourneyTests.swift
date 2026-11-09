@@ -22,6 +22,34 @@ final class HomeJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// Home and Settings fit the screen, so a bounce shows no scroll bar there; a grid that scrolls keeps its own
+    /// (phone check F4). The scroll bar is in the tree only while it shows, so each is bounced first.
+    func testOnlyScreensThatScrollShowAScrollBar() {
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"])
+        let receipts = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
+        waitForSeeding(of: receipts, count: 3)
+        let scrollBars = app.descendants(matching: .any).matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Vertical scroll bar"))
+
+        receipts.drag(by: -300)
+        XCTAssertEqual(scrollBars.count, 0, "Home showed a scroll bar")
+
+        app.buttons[AccessibilityID.Home.settings].tap()
+        let collections = app.buttons[AccessibilityID.Settings.collections]
+        XCTAssertTrue(collections.appears(within: 5))
+        collections.drag(by: 300)
+        XCTAssertEqual(scrollBars.count, 0, "Settings showed a scroll bar")
+        app.navigationBars.buttons.firstMatch.tap()
+
+        app.buttons[AccessibilityID.Home.allRow].tap()
+        let tile = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(tile.appears(within: 5))
+        tile.drag(by: -300)
+        XCTAssertGreaterThan(scrollBars.count, 0, "All Scans showed no scroll bar")
+    }
+
     /// Home rests large under the gear and collapses on scroll, like Passwords' root (B9, M11). The small bar title is
     /// the header in both states (M6, amended): hidden under the large title at rest, hittable once collapsed.
     func testTitleCollapsesOnScroll() {

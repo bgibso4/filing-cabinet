@@ -47,6 +47,8 @@ public struct HomeView: View {
             ) {
                 content
             }
+            // It fits the screen: a bounce shows no scroll bar (phone check F4).
+            .scrollIndicators(.hidden)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
