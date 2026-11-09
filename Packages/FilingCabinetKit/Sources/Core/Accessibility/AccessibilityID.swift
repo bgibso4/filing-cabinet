@@ -162,36 +162,44 @@ public enum AccessibilityID {
 
     /// Settings from Home's gear (10-01).
     public enum Settings {
+        /// The bar's small title, the header element in both of its states (M6).
+        public static let header = "settings.header"
         public static let collections = "settings.collections"
         public static let notifications = "settings.notifications"
 
         public static var all: [String] {
-            [collections, notifications]
+            [header, collections, notifications]
         }
     }
 
     /// Settings › Collections (10-02): one row per collection.
     public enum Collections {
+        public static let header = "collections.header"
+
         public static func row(_ collection: BuiltInCollection) -> String {
             "collections.\(collection.rawValue)"
         }
 
         public static var all: [String] {
-            BuiltInCollection.allCases.map(row)
+            [header] + BuiltInCollection.allCases.map(row)
         }
     }
 
     /// One collection's settings (10-03).
     public enum CollectionSettings {
+        public static let header = "collectionSettings.header"
         public static let keepScansFor = "collectionSettings.keepScansFor"
 
         public static var all: [String] {
-            [keepScansFor]
+            [header, keepScansFor]
         }
     }
 
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
+
+    /// The small subtitle beside a header's small bar title, which the audit reports on its own.
+    public static func headerSubtitle(_ header: String) -> String { "\(header).subtitle" }
 
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {

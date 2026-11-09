@@ -55,6 +55,18 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return glassButtons.contains(element.identifier)
     },
+    // The bar's small title and the subtitle under it stay at the default text size, as Apple's bars keep theirs, with
+    // the large-content viewer on a long press instead (plan 3, M7); the large title under them scales. The audit
+    // reports the fixed size as unsupported Dynamic Type. Ben approved this on 2026-11-08 (#59). Only dynamicType, and
+    // only the small titles and their subtitles, matched by identifier; any other element's fixed size still fails.
+    { _, issue in
+        guard issue.auditType == .dynamicType, let element = issue.element else { return false }
+        let headers = [
+            AccessibilityID.Settings.header, AccessibilityID.Collections.header,
+            AccessibilityID.CollectionSettings.header,
+        ]
+        return (headers + headers.map(AccessibilityID.headerSubtitle)).contains(element.identifier)
+    },
     // Trash's glass bottom bar, reported with no element: on the Trash grid the bar sits in BottomBarLayout's
     // .safeAreaInset, where the audit can't resolve the glass buttons to elements, so it reports their text as low
     // contrast and as inaccessible text (hiding Empty Trash clears it). The viewer's .overlay bar, the same buttons,

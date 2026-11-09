@@ -7,11 +7,7 @@ public struct CollectionsView: View {
     private let model: CollectionsModel
     private let onOpen: (BuiltInCollection) -> Void
 
-    // Settings2.dc.html lines 17 and 49: the title starts 12 pt under the 44 pt back button; the system bar is 10 pt
-    // taller than the mock's button (as on Trash).
-    private static let titleTopGap: CGFloat = 2
-    // Settings2.dc.html line 51: 2 pt between the title and the subtitle, 18 pt under it.
-    private static let subtitleGap: CGFloat = 2
+    // Settings2.dc.html line 51: the list starts 18 pt under the subtitle.
     private static let listTopGap: CGFloat = 18
     // Settings2.dc.html line 54: rows are 60 pt tall.
     private static let rowMinHeight: CGFloat = 60
@@ -25,24 +21,23 @@ public struct CollectionsView: View {
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    public init(model: CollectionsModel, onOpen: @escaping (BuiltInCollection) -> Void) {
+    private let rest: HeaderRest
+
+    /// `rest` is `.small` in the app; `.large` shows the state a pull reaches.
+    public init(model: CollectionsModel, rest: HeaderRest = .small, onOpen: @escaping (BuiltInCollection) -> Void) {
         self.model = model
+        self.rest = rest
         self.onOpen = onOpen
     }
 
     public var body: some View {
-        ScrollView {
+        HeaderScrollView(
+            title: Text("Collections", bundle: #bundle),
+            subtitle: Text(model.subtitle),
+            identifier: AccessibilityID.Collections.header,
+            rest: rest
+        ) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Collections", bundle: #bundle)
-                    .font(Tokens.Typography.largeTitle)
-                    .tracking(Tokens.Typography.largeTitleTracking)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Self.titleTopGap)
-                Text(model.subtitle)
-                    .font(Tokens.Typography.subheadline)
-                    .foregroundStyle(Tokens.Color.textSecondary)
-                    .padding(.top, Self.subtitleGap)
                 list
                     .padding(.top, Self.listTopGap)
                 Text(model.footer)
@@ -55,8 +50,6 @@ public struct CollectionsView: View {
             .padding(.bottom, Tokens.Spacing.s8)
         }
         .background(Tokens.Color.bgGrouped)
-        // The system bar, clear, as on the grids: the back button is the system's glass one and swipe back works.
-        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     private var list: some View {

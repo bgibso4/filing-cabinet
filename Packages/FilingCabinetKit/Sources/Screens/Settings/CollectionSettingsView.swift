@@ -8,15 +8,6 @@ import UIKit
 public struct CollectionSettingsView: View {
     private let model: CollectionSettingsModel
 
-    // Settings2.dc.html lines 17 and 74: the title starts 12 pt under the 44 pt back button; the system bar is 10 pt
-    // taller than the mock's button (as on Trash).
-    private static let titleTopGap: CGFloat = 2
-    // Settings2.dc.html line 75: a 36 pt badge with a 20 pt symbol, 10 pt before the title.
-    private static let badgeDiameter: CGFloat = 36
-    private static let badgeSymbol: CGFloat = 20
-    private static let badgeGap: CGFloat = 10
-    // Settings2.dc.html line 76: 2 pt between the title and the count.
-    private static let countGap: CGFloat = 2
     // Settings2.dc.html lines 76 and 92: "Expiry" starts 24 pt under the count (6 + 18), 6 pt above the row.
     private static let sectionTopGap: CGFloat = 24
     private static let sectionBottomGap: CGFloat = 6
@@ -32,10 +23,14 @@ public struct CollectionSettingsView: View {
     }
 
     public var body: some View {
-        ScrollView {
+        // No badge beside the title (plan 3, M2): Passwords has none.
+        HeaderScrollView(
+            title: Text(model.title),
+            subtitle: Text(model.countLine),
+            identifier: AccessibilityID.CollectionSettings.header,
+            rest: .small
+        ) {
             VStack(alignment: .leading, spacing: 0) {
-                header
-                    .padding(.top, Self.titleTopGap)
                 Text("Expiry", bundle: #bundle)
                     .font(Tokens.Typography.footnote)
                     .foregroundStyle(Tokens.Color.textSecondary)
@@ -54,8 +49,6 @@ public struct CollectionSettingsView: View {
             .padding(.bottom, Tokens.Spacing.s8)
         }
         .background(Tokens.Color.bgGrouped)
-        // The system bar, clear, as on the grids: the back button is the system's glass one and swipe back works.
-        .toolbarBackground(.hidden, for: .navigationBar)
         .alert(
             model.confirmation?.title ?? "",
             // Its buttons say what happens; dismissing it is only ever one of them, so the binding never clears it.
@@ -68,23 +61,6 @@ public struct CollectionSettingsView: View {
             Text(confirmation.message)
         }
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: Self.countGap) {
-            HStack(spacing: Self.badgeGap) {
-                CollectionBadge(
-                    collection: model.collection, diameter: Self.badgeDiameter, symbolSize: Self.badgeSymbol)
-                Text(model.title)
-                    .font(Tokens.Typography.largeTitle)
-                    .tracking(Tokens.Typography.largeTitleTracking)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-            }
-            Text(model.countLine)
-                .font(Tokens.Typography.subheadline)
-                .foregroundStyle(Tokens.Color.textSecondary)
-        }
     }
 
     /// The row, with a clear system menu button over it as the one accessibility element.

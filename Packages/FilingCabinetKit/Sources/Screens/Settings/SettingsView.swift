@@ -9,11 +9,7 @@ public struct SettingsView: View {
     private let model: SettingsModel
     private let onOpenCollections: () -> Void
 
-    // Settings2.dc.html lines 17 and 26: the title starts 12 pt under the 44 pt back button. The system bar is 10 pt
-    // taller than the mock's button, so 2 pt are left to add (as on Trash).
-    private static let titleTopGap: CGFloat = 2
-    // Settings2.dc.html lines 27 and 30: 6 pt under the title, then 22 pt above each group.
-    private static let titleBottomGap: CGFloat = 6
+    // Settings2.dc.html line 30: 22 pt above each group.
     private static let groupGap: CGFloat = 22
     // Settings2.dc.html line 32: rows are at least 50 pt tall.
     private static let rowMinHeight: CGFloat = 50
@@ -35,16 +31,15 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        ScrollView {
+        HeaderScrollView(
+            title: Text("Settings", bundle: #bundle),
+            subtitle: nil,
+            identifier: AccessibilityID.Settings.header,
+            rest: .small
+        ) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Settings", bundle: #bundle)
-                    .font(Tokens.Typography.largeTitle)
-                    .tracking(Tokens.Typography.largeTitleTracking)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Self.titleTopGap)
                 group { collectionsRow }
-                    .padding(.top, Self.titleBottomGap + Self.groupGap)
+                    .padding(.top, Self.groupGap)
                 group { notificationsRow }
                     .padding(.top, Self.groupGap)
                 Text(model.footer)
@@ -58,8 +53,6 @@ public struct SettingsView: View {
             .padding(.bottom, Tokens.Spacing.s8)
         }
         .background(Tokens.Color.bgGrouped)
-        // The system bar, clear, as on the grids: the back button is the system's glass one and swipe back works.
-        .toolbarBackground(.hidden, for: .navigationBar)
         .task { await model.refreshAuthorization() }
         // Someone may come back from iPhone Settings having turned notifications on or off.
         .onChange(of: scenePhase) { _, phase in
