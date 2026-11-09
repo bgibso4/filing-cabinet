@@ -14,12 +14,15 @@ public struct DetailsPanel: View {
     private let model: DetailsModel
     /// 0 below the screen's bottom edge, 1 fully up.
     private let progress: CGFloat
-    /// The sheet's height, measured inside; the viewer fits the page above it.
+    /// The panel's laid-out height, which the viewer fits the page above and a drag's travel comes from.
     @Binding private var height: CGFloat
     private let onDrag: (DetailsDrag) -> Void
     private let onClose: () -> Void
 
-    @State private var isDragging = false
+    /// Whether this drag has reported `.began`. Cleared by its end, or by `isTouching` resetting when a drag is
+    /// cancelled, which never reports an end.
+    @State private var isTracking = false
+    @GestureState private var isTouching = false
 
     public init(
         model: DetailsModel,
@@ -36,12 +39,20 @@ public struct DetailsPanel: View {
     }
 
     public var body: some View {
-        DetailsSheet(model: model, height: $height)
+        DetailsSheet(model: model)
             .background(Tokens.Color.bgSurface)
             .clipShape(.rect(cornerRadius: Self.cornerRadius, style: .continuous))
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { height = $0 }
             .contentShape(.rect(cornerRadius: Self.cornerRadius, style: .continuous))
             // Not while renaming: the drag would fight the field's own (Ruling R1).
             .gesture(drag, isEnabled: !model.isRenaming)
+            // A cancelled drag (an interruption, or renaming starting under it) lets the spring go where it was held.
+            .onChange(of: isTouching) { _, isTouching in
+                if !isTouching && isTracking {
+                    isTracking = false
+                    onDrag(.ended(velocity: 0))
+                }
+            }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier(AccessibilityID.Details.sheet)
             .accessibilityAction(.escape, onClose)
@@ -57,15 +68,16 @@ public struct DetailsPanel: View {
     /// Global coordinates: the panel moves under the finger, so its own space would feed the drag back into itself.
     private var drag: some Gesture {
         DragGesture(coordinateSpace: .global)
+            .updating($isTouching) { _, isTouching, _ in isTouching = true }
             .onChanged { value in
-                if !isDragging {
-                    isDragging = true
+                if !isTracking {
+                    isTracking = true
                     onDrag(.began)
                 }
                 onDrag(.changed(translation: value.translation.height))
             }
             .onEnded { value in
-                isDragging = false
+                isTracking = false
                 onDrag(.ended(velocity: value.velocity.height))
             }
     }

@@ -164,9 +164,6 @@ struct ViewerBehaviourTests {
             NavigationStack(path: .constant([0])) {
                 Color.clear.navigationDestination(for: Int.self) { _ in
                     ProgressViewer(model: viewer, pages: pages, height: Self.panelHeight, progress: progress)
-                        // A pushed screen's bar can start with a large title's room and give it up on a later update,
-                        // which would move the page's fit top between the readings. The viewer has no large title.
-                        .toolbarTitleDisplayMode(.inline)
                 }
             })
         defer { close(window) }

@@ -47,6 +47,7 @@ public struct ViewerRoute: View {
             thumbnails: thumbnails,
             detailsHeight: detailsHeight,
             detailsProgress: progress,
+            chromeProgress: spring.position,
             onDetails: open,
             onRestored: onRestored
         )

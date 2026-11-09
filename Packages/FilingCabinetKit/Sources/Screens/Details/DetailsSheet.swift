@@ -8,8 +8,6 @@ import SwiftUI
 /// surface, corners and motion.
 struct DetailsSheet: View {
     private let model: DetailsModel
-    /// The sheet's height, measured here; the viewer fits the page above it.
-    @Binding private var height: CGFloat
 
     @State private var contentHeight: CGFloat?
     /// The title as typed while renaming.
@@ -31,14 +29,9 @@ struct DetailsSheet: View {
     private static let textInset: CGFloat = 4
     // ScanDetails.dc.html line 54: renaming, the label starts 10 pt below the grabber.
     private static let editorTop: CGFloat = 10
-    // The default-size sheet's height (07-01), shown for the instant before the real height is measured: 8 + 5 for the
-    // grabber, 8 + 44 for the title, 18 for the scanned line, 14 + 121 for the rows (two 60 pt rows and a hairline) and
-    // 18 below (ScanDetails.dc.html lines 34-97).
-    private static let unmeasuredHeight: CGFloat = 236
 
-    init(model: DetailsModel, height: Binding<CGFloat>) {
+    init(model: DetailsModel) {
         self.model = model
-        _height = height
     }
 
     var body: some View {
@@ -50,7 +43,6 @@ struct DetailsSheet: View {
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
         }
-        .onChange(of: contentHeight, initial: true) { height = sheetHeight }
         .onChange(of: model.isRenaming, initial: true) { _, isRenaming in
             if isRenaming { draft = model.title }
         }
@@ -75,12 +67,6 @@ struct DetailsSheet: View {
         } message: { alert in
             Text(alert.message)
         }
-    }
-
-    /// The full height, or a stand-in until the content is measured.
-    private var sheetHeight: CGFloat {
-        guard let contentHeight else { return Self.unmeasuredHeight }
-        return Self.topPadding + Self.grabberHeight + contentHeight
     }
 
     private var grabber: some View {

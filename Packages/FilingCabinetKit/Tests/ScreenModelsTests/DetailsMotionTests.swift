@@ -147,3 +147,24 @@ import Testing
     #expect(DetailsMotion.chromeRoom(progress: 0.25, height: 120) == 90)
     #expect(DetailsMotion.chromeRoom(progress: 1, height: 120) == 0)
 }
+
+/// The pill, strip and bar stop taking taps once Details is past halfway, and leave VoiceOver once it is fully up.
+@Test func chromeLetsGoPastHalfwayAndHidesWhenUp() {
+    #expect(DetailsMotion.chromeTakesTaps(progress: 0))
+    #expect(DetailsMotion.chromeTakesTaps(progress: 0.5))
+    #expect(!DetailsMotion.chromeTakesTaps(progress: 0.51))
+    #expect(!DetailsMotion.chromeIsHidden(progress: 0.99))
+    #expect(DetailsMotion.chromeIsHidden(progress: 1))
+}
+
+/// A cancelled drag is released where it was held, with no speed: past halfway it settles open.
+@Test func aCancelledGrabSettlesByHalfway() {
+    var spring = DetailsSpring(position: 0.7, velocity: 0, target: 0.7)
+    spring.release(velocity: 0)
+    var steps = 0
+    while !spring.isSettled && steps < 600 {
+        spring.step(by: 1.0 / 60)
+        steps += 1
+    }
+    #expect(spring.position == 1)
+}

@@ -20,6 +20,16 @@ package nonisolated enum DetailsMotion {
         1 - clamped(progress)
     }
 
+    /// The chrome stops taking taps once Details is past halfway.
+    package static func chromeTakesTaps(progress: CGFloat) -> Bool {
+        progress <= 0.5
+    }
+
+    /// The chrome leaves VoiceOver, and the pill the bar, once Details is fully up and the chrome invisible.
+    package static func chromeIsHidden(progress: CGFloat) -> Bool {
+        progress >= 1
+    }
+
     /// The room a piece of chrome keeps in the layout as it fades: at large text the pill sits below the bar, and gives
     /// its room up to the page as Details rises.
     package static func chromeRoom(progress: CGFloat, height: CGFloat) -> CGFloat {

@@ -14,8 +14,11 @@ public struct ViewerView: View {
     private let thumbnails: any ThumbnailProviding
     /// The Details panel's height, 0 until it is measured.
     private let detailsHeight: CGFloat
-    /// How far Details is up: 0 closed, 1 open.
+    /// How far Details is up for the page's fit: 0 closed, 1 open.
     private let detailsProgress: CGFloat
+    /// How far Details is up for the chrome's fade. The same as `detailsProgress`, except under Reduce Motion, where the
+    /// fit jumps and the chrome still fades with the panel (B11).
+    private let chromeProgress: CGFloat
     private let onDetails: () -> Void
     /// After Restore, opened from Trash.
     private let onRestored: () -> Void
@@ -58,6 +61,7 @@ public struct ViewerView: View {
         thumbnails: any ThumbnailProviding,
         detailsHeight: CGFloat = 0,
         detailsProgress: CGFloat = 0,
+        chromeProgress: CGFloat? = nil,
         onDetails: @escaping () -> Void = {},
         onRestored: @escaping () -> Void = {}
     ) {
@@ -66,6 +70,7 @@ public struct ViewerView: View {
         self.thumbnails = thumbnails
         self.detailsHeight = detailsHeight
         self.detailsProgress = detailsProgress
+        self.chromeProgress = chromeProgress ?? detailsProgress
         self.onDetails = onDetails
         self.onRestored = onRestored
     }
@@ -84,6 +89,8 @@ public struct ViewerView: View {
             // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works,
             // except from Trash, which has Close and no swipe back.
             .toolbarBackground(.hidden, for: .navigationBar)
+            // No large title, whatever pushed it: a large title's room would move the page's fit top.
+            .toolbarTitleDisplayMode(.inline)
             .toolbarColorScheme(controlsScheme, for: .navigationBar)
             // Trash.dc.html line 163: Close rather than back, in the system's glass.
             .navigationBarBackButtonHidden(isFromTrash)
@@ -95,7 +102,7 @@ public struct ViewerView: View {
                 // invisible and leaves: the bar doesn't pass a hidden pill's hiding on to VoiceOver.
                 if !headerIsBelowTheBar {
                     ToolbarItem(placement: .principal) {
-                        if detailsProgress < 1 {
+                        if !DetailsMotion.chromeIsHidden(progress: chromeProgress) {
                             header.frame(maxWidth: isFromTrash ? Self.trashHeaderMaxWidth : Self.headerMaxWidth)
                         }
                     }
@@ -105,7 +112,7 @@ public struct ViewerView: View {
             // The bar can't hold the pill above the default text size, which wraps instead of cutting off (requirements 06 · Accessibility).
             // As Details rises it gives up its room, so the page grows into it, and it leaves once Details is up.
             .safeAreaInset(edge: .top) {
-                if headerIsBelowTheBar && detailsProgress < 1 {
+                if headerIsBelowTheBar && !DetailsMotion.chromeIsHidden(progress: chromeProgress) {
                     header.padding(.horizontal, Tokens.Spacing.s4)
                         .environment(\.colorScheme, controlsScheme ?? colorScheme)
                         .fixedSize(horizontal: false, vertical: true)
@@ -140,9 +147,9 @@ public struct ViewerView: View {
     /// taps past halfway and leave VoiceOver once it is up.
     private func fadesForDetails(_ chrome: some View) -> some View {
         chrome
-            .opacity(DetailsMotion.chromeOpacity(progress: detailsProgress))
-            .allowsHitTesting(detailsProgress <= 0.5)
-            .accessibilityHidden(detailsProgress >= 1)
+            .opacity(DetailsMotion.chromeOpacity(progress: chromeProgress))
+            .allowsHitTesting(DetailsMotion.chromeTakesTaps(progress: chromeProgress))
+            .accessibilityHidden(DetailsMotion.chromeIsHidden(progress: chromeProgress))
     }
 
     /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
