@@ -1,6 +1,9 @@
 import Core
 import XCTest
 
+/// BottomBarLayout's padding above the Scan button (Tokens.Spacing.s4): where the content ends at accessibility sizes.
+private let barTopPadding: CGFloat = 16
+
 /// Issues the audit may ignore. Each entry needs a comment with the reason it is a false positive.
 @MainActor
 private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bool] = [
@@ -11,6 +14,23 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
     { app, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
         return element.frame.minY >= app.windows.firstMatch.frame.maxY - 2
+    },
+    // The same scrolled-out text at accessibility sizes, where the content ends at the top of the Scan bar's area
+    // instead of under a fade (BottomBarLayout). A row label cut by that edge keeps its whole frame, so the audit
+    // samples the bar area under it (the grey glyph of a disabled Scan) and reports low contrast, though the visible
+    // part is full contrast (Home's "Notes" with 60 scans, Plan 3 Task 6 evidence). Approved by Ben 2026-11-09, Plan 3
+    // Task 6 (#59). Only contrast, only at an accessibility text size, and only an element whose frame crosses the bar
+    // area's top edge: the Scan button's top less the bar's 16 pt top padding (Tokens.Spacing.s4 in BottomBarLayout).
+    { app, issue in
+        guard issue.auditType == .contrast, let element = issue.element,
+            app.launchArguments.contains(where: { $0.hasPrefix("UICTContentSizeCategoryAccessibility") })
+        else { return false }
+        let scan = [AccessibilityID.Home.scan, AccessibilityID.Grid.scan].lazy.map { app.buttons[$0] }.first {
+            $0.exists
+        }
+        guard let scan else { return false }
+        let barTop = scan.frame.minY - barTopPadding
+        return element.frame.minY < barTop && element.frame.maxY > barTop
     },
     // On iOS 27 the audit reports text as clipped on any floating sheet (any detent shorter than .large), even with the
     // text intact. Ben chose the mocks' compact camera-off sheet knowing this (2026-11-06). Only textClipped, and only
