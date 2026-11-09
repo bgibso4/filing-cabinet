@@ -64,15 +64,14 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertEqual(header.label, "Groceries, details")
     }
 
-    /// Renaming ends with a tap outside the field, as Return does: on the page above the panel (which neither closes
-    /// Details nor zooms the page), or on the panel around the field. A tap on the field itself keeps renaming.
+    /// Renaming ends with a tap outside the field, as Return does: on the page above the panel (which doesn't close
+    /// Details), or on the panel around the field. A tap on the field itself keeps renaming.
     func testATapOutsideTheFieldEndsRenaming() {
         let app = seededApp()
         openAReceipt(in: app)
         openDetails(in: app)
         let title = app.buttons[AccessibilityID.Details.title]
         let field = app.textFields[AccessibilityID.Details.titleField]
-        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
 
         title.tap()
         XCTAssertTrue(app.keyboards.firstMatch.appears(within: 5))
@@ -85,7 +84,6 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertEqual(title.label, "Rename Groceries")
         XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].exists, "Details closed")
-        XCTAssertNotEqual(page.value as? String, "Zoomed")
 
         // On the panel, under the field: the hint.
         title.tap()
@@ -129,6 +127,30 @@ final class DetailsJourneyTests: XCTestCase {
         app.swipeDownOnSheet()
         XCTAssertTrue(sheet.disappears(within: 5))
         XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
+    }
+
+    /// With Details up, a swipe down on the page closes it, like Photos (#71); zoomed in, the same swipe pans the page
+    /// and Details stays.
+    func testASwipeDownOnThePageClosesDetailsUnlessZoomed() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        openDetails(in: app)
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
+        let swipeDown = {
+            let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)))
+        }
+
+        page.doubleTap()
+        XCTAssertTrue(page.satisfies("value == %@", "Zoomed", within: 5), "The page never reported being zoomed")
+        swipeDown()
+        XCTAssertTrue(sheet.exists, "A drag on a zoomed page closed Details")
+        page.doubleTap()
+        XCTAssertTrue(page.satisfies("value != %@", "Zoomed", within: 5), "The page never zoomed back out")
+
+        swipeDown()
+        XCTAssertTrue(sheet.disappears(within: 5))
     }
 
     /// At the largest text, after a move, Details is taller than the screen. Its body scrolls first, as Apple's sheets

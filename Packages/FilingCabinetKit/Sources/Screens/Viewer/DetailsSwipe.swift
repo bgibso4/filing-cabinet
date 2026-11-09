@@ -1,8 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// A pan that moves Details (#61): on the page it opens Details under the finger, and on the panel's body it drags the
-/// panel. It reports `DetailsDrag`'s phases in window points, so the panel moving under the finger never
+/// A pan that moves Details (#61): on the page it opens or closes Details under the finger (#71), and on the panel's
+/// body it drags the panel. It reports `DetailsDrag`'s phases in window points, so the panel moving under the finger never
 /// feeds back into the drag.
 ///
 /// It begins only when `begins` accepts the drag so far, and otherwise fails at once, leaving the touch to whatever

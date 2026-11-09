@@ -92,11 +92,14 @@ package nonisolated enum DetailsMotion {
         return progress >= 0.5 ? 1 : 0
     }
 
-    /// Whether a drag on the page opens Details: a mostly vertical upward drag on a page at rest, never in
-    /// Trash, where a scan is read-only.
-    package static func swipeOpens(translation: CGSize, isPageZoomed: Bool, isFromTrash: Bool) -> Bool {
-        !isPageZoomed && !isFromTrash && translation.height < 0
-            && abs(translation.height) > abs(translation.width)
+    /// Whether a drag on the page moves Details: only a mostly vertical drag on a page at rest (zoomed in, it pans). Up
+    /// opens Details, never in Trash, where a scan is read-only; down closes it while it is up (`detailsProgress` above
+    /// 0), like Photos.
+    package static func pageSwipeMovesDetails(
+        translation: CGSize, isPageZoomed: Bool, isFromTrash: Bool, detailsProgress: CGFloat
+    ) -> Bool {
+        guard !isPageZoomed, abs(translation.height) > abs(translation.width) else { return false }
+        return translation.height < 0 ? !isFromTrash : detailsProgress > 0
     }
 
     /// Whether a drag on the panel's body moves the panel rather than scrolling the body, as Apple's sheets do: only a

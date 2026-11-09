@@ -100,24 +100,40 @@ import Testing
     #expect(big == capped)
 }
 
+/// Whether a drag on the page moves Details, with Details at `progress` (0 closed).
+private func pageSwipe(
+    _ width: CGFloat, _ height: CGFloat, zoomed: Bool = false, fromTrash: Bool = false, progress: CGFloat = 0
+) -> Bool {
+    DetailsMotion.pageSwipeMovesDetails(
+        translation: CGSize(width: width, height: height),
+        isPageZoomed: zoomed,
+        isFromTrash: fromTrash,
+        detailsProgress: progress
+    )
+}
+
 @Test func zoomedPageNeverOpensDetails() {
-    let swipeUp = CGSize(width: 0, height: -40)
-    #expect(DetailsMotion.swipeOpens(translation: swipeUp, isPageZoomed: false, isFromTrash: false))
-    #expect(!DetailsMotion.swipeOpens(translation: swipeUp, isPageZoomed: true, isFromTrash: false))
-    #expect(!DetailsMotion.swipeOpens(translation: swipeUp, isPageZoomed: false, isFromTrash: true))
-    #expect(
-        !DetailsMotion.swipeOpens(translation: CGSize(width: 40, height: -10), isPageZoomed: false, isFromTrash: false))
-    #expect(
-        !DetailsMotion.swipeOpens(translation: CGSize(width: 0, height: 40), isPageZoomed: false, isFromTrash: false))
+    #expect(pageSwipe(0, -40))
+    #expect(!pageSwipe(0, -40, zoomed: true))
+    #expect(!pageSwipe(0, -40, fromTrash: true))
+    #expect(!pageSwipe(40, -10))
+    #expect(!pageSwipe(0, 40))
 }
 
 /// A drag exactly as wide as it is tall is not mostly vertical: it pages rather than opening Details.
 @Test func aDiagonalSwipeDoesNotOpenDetails() {
-    #expect(
-        !DetailsMotion.swipeOpens(translation: CGSize(width: 30, height: -30), isPageZoomed: false, isFromTrash: false))
-    #expect(
-        !DetailsMotion.swipeOpens(translation: CGSize(width: -30, height: -30), isPageZoomed: false, isFromTrash: false)
-    )
+    #expect(!pageSwipe(30, -30))
+    #expect(!pageSwipe(-30, -30))
+}
+
+/// With Details up, a swipe down on a page at rest drags it closed, like Photos (phone check F5, #71); zoomed in, the
+/// drag pans the page instead.
+@Test func aSwipeDownOnThePageClosesDetails() {
+    #expect(pageSwipe(0, 40, progress: 1))
+    #expect(pageSwipe(0, 40, progress: 0.4))
+    #expect(!pageSwipe(0, 40, zoomed: true, progress: 1))
+    #expect(!pageSwipe(40, 10, progress: 1))
+    #expect(!pageSwipe(30, 30, progress: 1))
 }
 
 /// The panel's body scrolls first (like Apple's sheets): a drag on it moves the panel only when it is mostly downward
