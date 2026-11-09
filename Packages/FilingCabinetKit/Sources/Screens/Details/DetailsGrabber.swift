@@ -2,9 +2,9 @@ import SwiftUI
 
 /// The Details panel's grabber, whose row always drags the panel (ScanDetails.dc.html line 35).
 ///
-/// A SwiftUI drag rather than `DetailsSwipe`: the row holds no UIKit view, and there a recognizer from
-/// `UIGestureRecognizerRepresentable` is never made for the touch, which goes to the page's swipe under the panel
-/// instead (seen on iOS 27.0).
+/// A SwiftUI drag rather than `DetailsSwipe`. Seen on iOS 27.0: a `UIGestureRecognizerRepresentable` recognizer isn't
+/// created for a touch on a row with no UIKit view, and the touch went to the page's swipe under the panel instead.
+/// Revisit if a later iOS creates it there; then the grabber could share `DetailsSwipe` with the body.
 struct DetailsGrabber: View {
     /// Off while renaming, where the drag would fight the field's own (Ruling R1).
     let isEnabled: Bool

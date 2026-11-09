@@ -5,6 +5,8 @@ import CoreGraphics
 package nonisolated enum DetailsMotion {
     /// A flick of this many progress per second or more decides the target whatever the position (M5).
     private static let flickVelocity: CGFloat = 0.6
+    /// A body scrolled less than this from its top is at its top: scroll offsets land on fractions of a point.
+    private static let bodyTopTolerance: CGFloat = 0.5
 
     private static func clamped(_ progress: CGFloat) -> CGFloat {
         min(max(progress, 0), 1)
@@ -82,9 +84,13 @@ package nonisolated enum DetailsMotion {
     }
 
     /// Whether a drag on the panel's body moves the panel rather than scrolling the body, as Apple's sheets do: only a
-    /// mostly downward drag, and only with the body at its top. `bodyScrolled` is how far the body is scrolled from its
-    /// top, negative while pulled past it; under half a point counts as the top.
-    package static func bodyDragMovesPanel(translation: CGSize, bodyScrolled: CGFloat) -> Bool {
-        bodyScrolled < 0.5 && translation.height > 0 && abs(translation.height) > abs(translation.width)
+    /// mostly downward drag, and only with the body at its top.
+    package static func bodyDragMovesPanel(translation: CGSize, isBodyAtTop: Bool) -> Bool {
+        isBodyAtTop && translation.height > 0 && abs(translation.height) > abs(translation.width)
+    }
+
+    /// Whether the panel's body is at its top, from how far it is scrolled from there (negative while pulled past it).
+    package static func bodyIsAtTop(scrolled: CGFloat) -> Bool {
+        scrolled < bodyTopTolerance
     }
 }

@@ -107,16 +107,19 @@ import Testing
 /// and the body is at its top.
 @Test func theBodyScrollsBeforeThePanelMoves() {
     let down = CGSize(width: 0, height: 40)
-    #expect(DetailsMotion.bodyDragMovesPanel(translation: down, bodyScrolled: 0))
-    #expect(!DetailsMotion.bodyDragMovesPanel(translation: down, bodyScrolled: 120))
-    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: -40), bodyScrolled: 0))
-    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 40, height: 40), bodyScrolled: 0))
+    #expect(DetailsMotion.bodyDragMovesPanel(translation: down, isBodyAtTop: true))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: down, isBodyAtTop: false))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: -40), isBodyAtTop: true))
+    #expect(!DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 40, height: 40), isBodyAtTop: true))
 }
 
-/// A body that has bounced past its top is at its top too.
-@Test func aBodyPulledPastItsTopIsAtItsTop() {
-    #expect(DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: 40), bodyScrolled: -12))
-    #expect(DetailsMotion.bodyDragMovesPanel(translation: CGSize(width: 0, height: 40), bodyScrolled: 0.4))
+/// Under half a point from the top is the top, and so is a body pulled past it.
+@Test func aBodyWithinHalfAPointOrPulledPastItsTopIsAtItsTop() {
+    #expect(DetailsMotion.bodyIsAtTop(scrolled: -12))
+    #expect(DetailsMotion.bodyIsAtTop(scrolled: 0))
+    #expect(DetailsMotion.bodyIsAtTop(scrolled: 0.4))
+    #expect(!DetailsMotion.bodyIsAtTop(scrolled: 0.5))
+    #expect(!DetailsMotion.bodyIsAtTop(scrolled: 120))
 }
 
 /// Before the panel is measured there is no travel: a drag then leaves progress where it started, never NaN.

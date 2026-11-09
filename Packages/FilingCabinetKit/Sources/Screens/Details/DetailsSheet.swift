@@ -4,8 +4,8 @@ import SwiftUI
 
 /// A scan's details over the viewer (07-01 … 07-08, ScanDetails.dc.html lines 33-137): its title, which renames in
 /// place, when it was scanned, its collection and its expiry. Only as tall as its content; when the text is larger
-/// than the screen allows, the content scrolls under the grabber. It draws its own grabber, and `DetailsPanel` adds the
-/// surface, corners and motion.
+/// than the screen allows, the content scrolls, cut off at the body's top edge just under the grabber. It draws its own
+/// grabber, and `DetailsPanel` adds the surface, corners and motion.
 ///
 /// The grabber always drags the panel. The body scrolls first, as Apple's sheets do: a drag on it moves the panel only
 /// downward from its top (`DetailsMotion.bodyDragMovesPanel`). Neither drags while renaming, where it would fight the
@@ -15,8 +15,8 @@ struct DetailsSheet: View {
     private let onDrag: (DetailsDrag) -> Void
 
     @State private var contentHeight: CGFloat?
-    /// How far the body is scrolled from its top, negative while pulled past it.
-    @State private var bodyScrolled: CGFloat = 0
+    /// Whether the body is scrolled to its top (or pulled past it); written only when that changes.
+    @State private var isBodyAtTop = true
     /// The title as typed while renaming.
     @State private var draft = ""
     @FocusState private var isTitleFocused: Bool
@@ -47,15 +47,15 @@ struct DetailsSheet: View {
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
             .onScrollGeometryChange(
-                for: CGFloat.self,
-                of: { $0.contentOffset.y + $0.contentInsets.top },
-                action: { bodyScrolled = $1 }
+                for: Bool.self,
+                of: { DetailsMotion.bodyIsAtTop(scrolled: $0.contentOffset.y + $0.contentInsets.top) },
+                action: { isBodyAtTop = $1 }
             )
             .gesture(
                 DetailsSwipe(
                     begins: {
                         !model.isRenaming
-                            && DetailsMotion.bodyDragMovesPanel(translation: $0, bodyScrolled: bodyScrolled)
+                            && DetailsMotion.bodyDragMovesPanel(translation: $0, isBodyAtTop: isBodyAtTop)
                     },
                     onDrag: onDrag))
         }

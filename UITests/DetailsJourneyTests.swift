@@ -112,20 +112,20 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertGreaterThan(
             undo.frame.maxY, sheet.frame.maxY, "Undo should start cut off by the panel, or this test proves nothing")
 
-        // Scrolled up, Undo comes fully into the panel, which stays where it was.
-        let panelTop = sheet.frame.minY
+        // Scrolled up, Undo comes fully into the panel, which stays up: the pill only comes back once Details drops.
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
         let body = app.buttons[AccessibilityID.Details.title].coordinate(
             withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         body.press(forDuration: 0.05, thenDragTo: body.withOffset(CGVector(dx: 0, dy: -400)))
         XCTAssertLessThanOrEqual(undo.frame.maxY, sheet.frame.maxY)
         XCTAssertTrue(undo.isHittable)
-        XCTAssertEqual(sheet.frame.minY, panelTop)
+        XCTAssertFalse(header.exists)
 
         // Dragged down while scrolled, the body scrolls back rather than the panel moving.
         let middle = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
         middle.press(forDuration: 0.05, thenDragTo: middle.withOffset(CGVector(dx: 0, dy: 200)))
         XCTAssertTrue(sheet.exists)
-        XCTAssertEqual(sheet.frame.minY, panelTop)
+        XCTAssertFalse(header.exists)
         XCTAssertGreaterThan(undo.frame.maxY, sheet.frame.maxY)
 
         app.swipeDownOnSheet()

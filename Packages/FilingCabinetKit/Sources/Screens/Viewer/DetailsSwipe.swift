@@ -19,8 +19,16 @@ struct DetailsSwipe: UIGestureRecognizerRepresentable {
     }
 
     func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
-        let pan = UIPanGestureRecognizer()
+        let pan = Self.makePan()
         pan.delegate = context.coordinator
+        return pan
+    }
+
+    /// One finger only: a pinch whose centre drifts upward could otherwise pass `begins` before the zoom passes 1×, and
+    /// open Details instead of zooming (Review Focus 4).
+    static func makePan() -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        pan.maximumNumberOfTouches = 1
         return pan
     }
 
