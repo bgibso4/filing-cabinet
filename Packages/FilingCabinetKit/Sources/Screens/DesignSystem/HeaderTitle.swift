@@ -58,6 +58,8 @@ struct HeaderTitle: ToolbarContent {
                         .foregroundStyle(Tokens.Color.textSecondary)
                 }
             }
+            // Space under the back button, inside the measured height so the collapse maths counts it (phone check F2).
+            .padding(.top, Tokens.Spacing.s2)
             // Wraps rather than truncating: the bar's slot proposes one line's height.
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
