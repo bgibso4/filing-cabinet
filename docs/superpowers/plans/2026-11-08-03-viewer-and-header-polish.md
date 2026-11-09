@@ -10,7 +10,7 @@
 
 **Spec:** Issues #61, #62 and #46 (Ben's Plan 1 and 2 phone checks); Ben's answers recorded below; Ben's Passwords screen recording (2026-11-08; kept off the repo because it shows his network names; what it shows is under "Seen in Ben's recording" below); the mocks at https://claude.ai/artifact/PVTq63b8qbbGYijZjDLMx1 (source `.superpowers/plandoc/plan3-mocks.html`); `docs/superpowers/specs/2026-10-10-filing-cabinet-requirements.html` section 06 ("Viewing works like Photos", Accessibility, Haptics); `docs/superpowers/specs/2026-10-31-engineering-foundations-design.md` (how); `design/` (02-01, 05-01…06, 07-01…08, 09-01/02/09, 10-01…03). Executors read these, and Plan 2 (`docs/superpowers/plans/2026-11-07-02-editing-and-self-cleaning.md`) for the conventions this plan continues.
 
-**Status:** Approved by Ben on 2026-11-08, with every question answered (B rows). Execution: subagent-driven (B12), in progress (see "Decided during execution").
+**Status:** Approved by Ben on 2026-11-08, with every question answered (B rows). Execution: subagent-driven (B12), complete through Task 9, with Task 10 in progress (see "Decided during execution").
 
 ---
 

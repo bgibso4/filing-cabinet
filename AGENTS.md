@@ -13,9 +13,14 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
                              tested in Fast
+    Shared/                  HeaderMotion (title growth), HeaderRest, HeaderInsets, HeaderSettling: the header's maths
+    Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only
+    DesignSystem/            tokens and shared views; HeaderScrollView and HeaderTitle give every screen its header
     DesignSystem/Generated/  generated tokens (never hand-edit)
+    Details/                 DetailsPanel (the panel that replaces the system sheet), DetailsGrabber
+    Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
                              ReaderComparisonTests (the bake-off report, not a gate)
