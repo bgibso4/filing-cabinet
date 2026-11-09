@@ -11,19 +11,18 @@ private func collapsed() -> HeaderInsets {
     return insets
 }
 
-@Test func theFirstInsetIsTheExpandedBar() {
+@Test func oneInsetSaysNothingAboutTheLargeTitle() {
     var insets = HeaderInsets()
     insets.record(170)
     #expect(insets.motion == nil)
-    #expect(!insets.hasCollapsed)
     #expect(insets.growth(resting: .small) == 0)
     #expect(insets.growth(resting: .large) == 1)
 }
 
 @Test func theInsetsDropIsTheLargeTitlesHeight() {
     let insets = collapsed()
-    #expect(insets.hasCollapsed)
     #expect(insets.motion == HeaderMotion(largeHeight: 60))
+    #expect(insets.isCollapsed)
     #expect(insets.growth(resting: .small) == 0)
 }
 
@@ -40,7 +39,7 @@ private func collapsed() -> HeaderInsets {
     insets.record(0)
     insets.record(170)
     insets.record(0)
-    #expect(!insets.hasCollapsed)
+    #expect(insets.motion == nil)
     #expect(insets.growth(resting: .large) == 1)
 }
 
@@ -52,4 +51,20 @@ private func collapsed() -> HeaderInsets {
 
 @Test func onceCollapsedTheContentIsTheCollapsedViewportPlusTheLargeTitle() {
     #expect(collapsed().minimumContentHeight(height: 800) == 750)
+}
+
+/// A screen that appears under a bar already collapsed (a new identity in place) learns the large title on the first
+/// pull instead.
+@Test func aCollapsedBarFirstThenExpandedMeasuresTheSame() {
+    var insets = HeaderInsets()
+    insets.record(110)
+    #expect(insets.motion == nil)
+    #expect(insets.growth(resting: .small) == 0)
+    insets.record(140)
+    insets.record(170)
+    #expect(insets.motion == HeaderMotion(largeHeight: 60))
+    #expect(insets.growth(resting: .small) == 1)
+    insets.record(140)
+    #expect(insets.growth(resting: .small) == 0.5)
+    #expect(insets.minimumContentHeight(height: 800) == 750)
 }

@@ -53,8 +53,8 @@ struct HeaderTitle: ToolbarContent {
 }
 
 /// The small title's and subtitle's shared look in the bar: the default text size whatever the setting, as Apple's bars
-/// are (M7), with the large-content viewer on a long press instead, never truncated (B13), and faded out while the large
-/// title shows.
+/// are (M7), with the large-content viewer on a long press instead, never truncated (B13), and faded out while the
+/// large title shows.
 private struct BarText: ViewModifier {
     let growth: CGFloat
 

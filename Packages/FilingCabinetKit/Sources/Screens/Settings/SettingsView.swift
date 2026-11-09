@@ -9,7 +9,7 @@ public struct SettingsView: View {
     private let model: SettingsModel
     private let onOpenCollections: () -> Void
 
-    // Settings2.dc.html line 30: 22 pt above each group.
+    // Settings2.dc.html line 30: 22 pt above each group; the first one is 22 pt under the bar now the title is in it.
     private static let groupGap: CGFloat = 22
     // Settings2.dc.html line 32: rows are at least 50 pt tall.
     private static let rowMinHeight: CGFloat = 50

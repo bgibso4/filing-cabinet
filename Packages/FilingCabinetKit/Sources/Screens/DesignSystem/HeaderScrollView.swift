@@ -4,6 +4,11 @@ import SwiftUI
 /// A screen's scroll view under its Passwords-style header (#62): the system bar, with the title in our serif in both
 /// sizes (`HeaderTitle`). Inner screens rest with the title small in the bar; pulling past halfway brings out the large
 /// title, which stays until a scroll up collapses it (B6, UIKit's own snap). Screens keep their own toolbar items.
+///
+/// Keep one `HeaderScrollView` for a screen and change `rest` and `scrolls` on it as its content changes (an empty
+/// Trash filling up): resting small settles again from where the bar is (`HeaderSettling`). Don't swap in a new one
+/// (`if`/`else` or `.id`) under a collapsed bar: it can't tell that bar from an expanded one, and would rest scrolled
+/// under it.
 struct HeaderScrollView<Content: View>: View {
     private let title: Text
     private let subtitle: Text?
@@ -14,7 +19,8 @@ struct HeaderScrollView<Content: View>: View {
 
     @State private var position = ScrollPosition(y: 0)
     @State private var insets = HeaderInsets()
-    @State private var rested = false
+    @State private var settling: HeaderSettling
+    @State private var last = LastInset()
 
     init(
         title: Text,
@@ -30,6 +36,7 @@ struct HeaderScrollView<Content: View>: View {
         self.rest = rest
         self.scrolls = scrolls
         self.content = content()
+        _settling = State(initialValue: HeaderSettling(rest: rest, scrolls: scrolls))
     }
 
     var body: some View {
@@ -46,6 +53,10 @@ struct HeaderScrollView<Content: View>: View {
             .scrollDisabled(!scrolls)
             .onScrollGeometryChange(for: CGFloat.self, of: \.contentInsets.top) { _, inset in arrive(inset) }
         }
+        .onChange(of: [rest == .small, scrolls]) {
+            settling.update(rest: rest, scrolls: scrolls)
+            if let inset = last.inset { settle(inset) }
+        }
         .navigationTitle(title)
         .toolbarTitleDisplayMode(.large)
         // Clear, so the back button is the system's glass one and swipe back works (hiding the bar turns it off).
@@ -61,19 +72,18 @@ struct HeaderScrollView<Content: View>: View {
         scrolls ? insets.minimumContentHeight(height: proxy.size.height + proxy.safeAreaInsets.top) : 0
     }
 
-    /// The bar opens with the large title showing. To rest small, the content scrolls by the bar's inset (more than the
-    /// large title) so the bar collapses, then back to its top once it has: the scroll position keeps its offset across
-    /// the bar's change, which would leave the first rows under the bar (E1). UIKit's own snap does the rest (B6).
     private func arrive(_ inset: CGFloat) {
-        guard inset > 0 else { return }
-        let first = insets == HeaderInsets()
         insets.record(inset)
-        guard rest == .small, scrolls, !rested else { return }
-        if first {
-            position.scrollTo(y: inset)
-        } else if insets.hasCollapsed {
-            rested = true
-            position.scrollTo(y: 0)
-        }
+        last.inset = inset
+        settle(inset)
     }
+
+    private func settle(_ inset: CGFloat) {
+        if let target = settling.target(insets: insets, inset: inset) { position.scrollTo(y: target) }
+    }
+}
+
+/// Holds the last inset without SwiftUI observing it: it is read only when `rest` or `scrolls` changes.
+private final class LastInset {
+    var inset: CGFloat?
 }

@@ -8,7 +8,8 @@ import UIKit
 public struct CollectionSettingsView: View {
     private let model: CollectionSettingsModel
 
-    // Settings2.dc.html lines 76 and 92: "Expiry" starts 24 pt under the count (6 + 18), 6 pt above the row.
+    // Settings2.dc.html lines 76 and 92: "Expiry" is 24 pt under the count (6 + 18), 6 pt above the row; with the
+    // title and count in the bar, 24 pt under the bar.
     private static let sectionTopGap: CGFloat = 24
     private static let sectionBottomGap: CGFloat = 6
     // Settings2.dc.html line 94: the row is 50 pt tall.

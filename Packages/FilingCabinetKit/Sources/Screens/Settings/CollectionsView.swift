@@ -7,7 +7,7 @@ public struct CollectionsView: View {
     private let model: CollectionsModel
     private let onOpen: (BuiltInCollection) -> Void
 
-    // Settings2.dc.html line 51: the list starts 18 pt under the subtitle.
+    // Settings2.dc.html line 51: 18 pt under the subtitle; with the title in the bar, 18 pt under the bar.
     private static let listTopGap: CGFloat = 18
     // Settings2.dc.html line 54: rows are 60 pt tall.
     private static let rowMinHeight: CGFloat = 60

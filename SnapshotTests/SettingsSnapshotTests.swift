@@ -7,9 +7,9 @@ import TestSupport
 import XCTest
 
 /// Settings (Settings2.dc.html): the list with notifications on (10-01, 10-07 dark, 12-05 large text) and blocked in
-/// iPhone Settings (10-06), Collections (10-02) and Receipts' screen (10-03). Titles rest small in the bar (plan 3). The Apple Intelligence and Send feedback
-/// rows come with later plans. The menu and the shortening confirmation are not snapshotted; the journey attaches
-/// screenshots of them.
+/// iPhone Settings (10-06), Collections (10-02) and Receipts' screen (10-03). Titles rest small in the bar (plan 3).
+/// The Apple Intelligence and Send feedback rows come with later plans. The menu and the shortening confirmation are
+/// not snapshotted; the journey attaches screenshots of them.
 final class SettingsSnapshotTests: XCTestCase {
     /// Pushed on a navigation stack, because the back button is in the system's bar.
     private struct Pushed<Content: View>: View {
@@ -66,9 +66,10 @@ final class SettingsSnapshotTests: XCTestCase {
         try SnapshotHost.assertScreen(collections(rest: .small), testName: "collections")
     }
 
-    /// The state a pull reaches: the large title over its subtitle, the bar's centre empty. The snapshot cuts the top few
-    /// points off the large title at the default text size; the app doesn't (a pulled or resting-large screen shows it
-    /// whole), and a real push in the host doesn't change the snapshot, so it is the snapshot's rendering of the bar.
+    /// The state a pull reaches: the large title over its subtitle, the bar's centre empty. The snapshot cuts the top
+    /// few points off the large title at the default text size; the app doesn't (a pulled or resting-large screen
+    /// shows it whole), and a real push in the host doesn't change the snapshot, so it is the snapshot's rendering of
+    /// the bar.
     @MainActor
     func testCollectionsLarge() throws {
         try SnapshotHost.assertScreen(collections(rest: .large), testName: "collections_large")
