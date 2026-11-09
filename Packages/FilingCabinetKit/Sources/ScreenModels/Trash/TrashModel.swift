@@ -46,17 +46,24 @@ public final class TrashModel {
 
     package var isEmpty: Bool { shelf.trash.isEmpty }
 
-    /// "7 scans · Deleted after 30 days", or "No scans" when empty (B15); "2 selected" while selecting (M24).
+    /// "7 scans · 30 days", or "No scans" when empty (E8); "2 selected" while selecting (M24).
     package var subtitle: String {
         isSelecting ? Self.selectedLine(selected.count) : Self.countLine(shelf.trash.count)
     }
 
-    /// "7 scans · Deleted after 30 days", "No scans" (B15). Short enough for the bar beside Select (B13).
+    /// "7 scans · 30 days", "No scans" (E8, as Passwords' Recently Deleted). Short enough to stay centred beside Select
+    /// (B13).
     static func countLine(_ count: Int) -> String {
         guard count > 0 else { return CollectionText.scanCount(0) }
+        return String(localized: "\(CollectionText.scanCount(count)) · \(Lifecycle.trashDays) days", bundle: #bundle)
+    }
+
+    /// The notice above the tiles (E8); nil when Trash is empty, whose empty state says it already.
+    package var notice: String? {
+        guard !shelf.trash.isEmpty else { return nil }
         return String(
-            localized: "\(CollectionText.scanCount(count)) · Deleted after \(Lifecycle.trashDays) days", bundle: #bundle
-        )
+            localized: "Scans stay in Trash for \(Lifecycle.trashDays) days, then they’re permanently deleted.",
+            bundle: #bundle)
     }
 
     /// "2 selected" (M24).

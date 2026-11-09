@@ -100,9 +100,9 @@ package enum CollectionText {
         }
     }
 
-    /// "3 scans · Kept 3 months".
-    static func scanCountAndKept(_ count: Int, _ lifespan: Lifespan) -> String {
-        String(localized: "\(scanCount(count)) · \(kept(lifespan))", bundle: #bundle)
+    /// A grid's subtitle: "3 scans · 3 months", "6 scans · Forever" (E8).
+    static func scanCountAndLifespan(_ count: Int, _ lifespan: Lifespan) -> String {
+        String(localized: "\(scanCount(count)) · \(lifespanChoice(lifespan))", bundle: #bundle)
     }
 
     static func emptyTitle(_ grid: GridKind) -> String {

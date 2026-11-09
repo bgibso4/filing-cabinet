@@ -7,14 +7,12 @@ import Testing
 @testable import ScreenModels
 @testable import TestSupport
 
-// Plan 3, E3: the bar's title slot on FC iPhone 17 is 314 pt beside the back button alone and 222 pt beside back and
-// Select. The title is centred, so its room is what is left between the two sides' widest button: 258 pt and 186 pt.
+// Plan 3, E3: the bar's title slot on FC iPhone 17 is 314 pt beside the back button alone. The title is centred, so its
+// room is what is left between the two sides' widest button: 258 pt.
 private let roomBesideBack: CGFloat = 258
-// E3's centred room beside back and Select (186 pt) isn't checked: no screen with Select beside back keeps its title
-// centred yet. Trash, the only one, may sit off-centre (E7).
-// Plan 3, E3 and E7 (Ben, 2026-11-09): Trash may sit off-centre at 100+ scans, never truncated, so its subtexts get the
-// whole slot beside back and Select.
-private let trashSlotBesideBackAndSelect: CGFloat = 222
+// Plan 3, E8 (from E3's 222 pt slot, measured in the Trash snapshots): beside back and Select, the bar keeps the title
+// centred up to 176 pt of subtext ("7 scans · Deleted after 30 days", 176.4 pt, stayed centred; 184 pt didn't).
+private let centredRoomBesideBackAndSelect: CGFloat = 176
 // Plan 3, E3: the bar draws the subtitle in SF Pro Regular 12 pt with monospaced digits (Tokens.Typography.caption), at
 // the default text size whatever the setting (M7), so one size is the only one to measure.
 private let subtitlePointSize: CGFloat = 12
@@ -41,28 +39,52 @@ private struct Subtext {
     let room: CGFloat
 }
 
+/// A library holding `mostScans` documents, scanned on the clock's day, with `lifespan` for Documents.
 @MainActor
-private func everySubtext() -> [Subtext] {
+private func fullLibrary(_ lifespan: Lifespan, clock: AppClock) throws -> FakeLibrary {
+    let scans = (0..<mostScans).map { index in
+        ScanSummary(
+            id: ScanID(),
+            title: "Scan \(index)",
+            collection: .documents,
+            scannedAt: clock.now(),
+            expiryOverride: nil,
+            pageCount: 1
+        )
+    }
+    let library = FakeLibrary(scans: scans, clock: clock)
+    try library.setLifespan(lifespan, for: .documents)
+    return library
+}
+
+@MainActor
+private func everySubtext() throws -> [Subtext] {
     let clock = AppClock.fixed(Date(timeIntervalSince1970: 0), calendar: Calendar(identifier: .gregorian))
-    let collections = CollectionsModel(library: FakeLibrary(), today: Today(clock: clock), calendar: clock.calendar)
+    let today = Today(clock: clock)
+    let collections = CollectionsModel(library: FakeLibrary(), today: today, calendar: clock.calendar)
     let besideSelect = [
-        Subtext(screen: "Trash", text: TrashModel.countLine(mostScans), room: trashSlotBesideBackAndSelect),
+        Subtext(screen: "Trash", text: TrashModel.countLine(mostScans), room: centredRoomBesideBackAndSelect),
         Subtext(
             screen: "Trash, selecting",
             text: TrashModel.selectedLine(mostSelected),
-            room: trashSlotBesideBackAndSelect
+            room: centredRoomBesideBackAndSelect
         ),
     ]
-    let grids = Lifespan.allCases.map { lifespan in
-        Subtext(
-            screen: "A collection's grid, \(lifespan)",
-            text: CollectionText.scanCountAndKept(mostScans, lifespan),
-            room: roomBesideBack
+    let grids = try Lifespan.allCases.map { lifespan in
+        let grid = CollectionGridModel(
+            kind: .collection(.documents),
+            library: try fullLibrary(lifespan, clock: clock),
+            today: today,
+            calendar: clock.calendar
         )
+        return Subtext(screen: "Documents' grid, \(lifespan)", text: grid.subtitle, room: roomBesideBack)
     }
+    let allScans = CollectionGridModel(
+        kind: .all, library: try fullLibrary(.forever, clock: clock), today: today, calendar: clock.calendar)
+    let recent = CollectionGridModel(kind: .recent, library: FakeLibrary(), today: today, calendar: clock.calendar)
     let besideBack = [
-        Subtext(screen: "Recent", text: CollectionText.lastThirtyDays, room: roomBesideBack),
-        Subtext(screen: "All Scans", text: CollectionText.scanCount(mostScans), room: roomBesideBack),
+        Subtext(screen: "Recent", text: recent.subtitle, room: roomBesideBack),
+        Subtext(screen: "All Scans", text: allScans.subtitle, room: roomBesideBack),
         Subtext(screen: "Collections", text: collections.subtitle, room: roomBesideBack),
         Subtext(screen: "A collection's settings", text: CollectionText.scanCount(mostScans), room: roomBesideBack),
     ]
@@ -73,7 +95,10 @@ private func everySubtext() -> [Subtext] {
 /// buttons.
 @MainActor
 @Test func everySubtextFitsTheBar() throws {
-    for subtext in everySubtext() {
+    let subtexts = try everySubtext()
+    // Built through the models: a grid of 9,999 reads its 4-digit count.
+    #expect(subtexts.contains { $0.text.contains("9,999") })
+    for subtext in subtexts {
         let width = try subtitleWidth(subtext.text)
         #expect(
             width <= subtext.room,

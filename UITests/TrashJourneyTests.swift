@@ -29,7 +29,7 @@ final class TrashJourneyTests: XCTestCase {
         assertIdentifiers(
             [
                 AccessibilityID.Grid.back, AccessibilityID.Trash.header, AccessibilityID.Trash.select,
-                AccessibilityID.Trash.emptyTrash,
+                AccessibilityID.Trash.notice, AccessibilityID.Trash.emptyTrash,
             ], in: app)
         // Soonest gone first: the scan moved 4 days ago has 26 days left.
         XCTAssertEqual(tiles(in: app).firstMatch.label, "Trashed scan 5, Throwaways, 26 days left")
@@ -57,6 +57,10 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts[AccessibilityID.Trash.header].satisfies("isHittable == true", within: 5),
             "Trash didn't rest small")
+        // E8: the notice reads as one plain line of text.
+        XCTAssertEqual(
+            app.staticTexts[AccessibilityID.Trash.notice].label,
+            "Scans stay in Trash for 30 days, then they’re permanently deleted.")
         try emptyTrash(in: app, deleting: "5 scans")
     }
 
@@ -192,6 +196,7 @@ final class TrashJourneyTests: XCTestCase {
         confirmButton("Empty Trash", besides: AccessibilityID.Trash.emptyTrash, in: app).tap()
         XCTAssertTrue(app.staticTexts["Trash is empty"].appears(within: 5))
         XCTAssertEqual(tiles(in: app).count, 0)
+        XCTAssertFalse(app.staticTexts[AccessibilityID.Trash.notice].exists, "The notice stayed on an empty Trash")
         let select = app.buttons[AccessibilityID.Trash.select]
         XCTAssertTrue(select.exists)
         XCTAssertFalse(select.isEnabled)

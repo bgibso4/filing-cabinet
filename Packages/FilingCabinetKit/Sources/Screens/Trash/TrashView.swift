@@ -75,9 +75,13 @@ public struct TrashView: View {
     }
 
     private var grid: some View {
-        LazyVGrid(columns: columns, spacing: Self.rowGap) {
-            ForEach(model.tiles) { tile in
-                TrashTileView(tile: tile, model: model, thumbnails: thumbnails) { onOpen(tile.id) }
+        // Plan 3, E8 (Ben's Passwords screenshot): the notice sits a row gap above the tiles.
+        VStack(spacing: Self.rowGap) {
+            if let notice = model.notice { TrashNotice(text: notice) }
+            LazyVGrid(columns: columns, spacing: Self.rowGap) {
+                ForEach(model.tiles) { tile in
+                    TrashTileView(tile: tile, model: model, thumbnails: thumbnails) { onOpen(tile.id) }
+                }
             }
         }
         .padding(.top, Self.gridTopGap)

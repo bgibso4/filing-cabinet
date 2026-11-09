@@ -129,8 +129,10 @@ public enum AccessibilityID {
 
     public enum Trash {
         public static let header = "trash.header"
-        /// Select, or Cancel while selecting; not while Trash is empty.
+        /// Select, or Cancel while selecting; always there, greyed out while Trash is empty (B14).
         public static let select = "trash.select"
+        /// How long scans stay, above the tiles; not while Trash is empty (E8).
+        public static let notice = "trash.notice"
         /// Only while not selecting and Trash has scans.
         public static let emptyTrash = "trash.emptyTrash"
         /// Only while selecting.
@@ -144,7 +146,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [header, select, emptyTrash, deleteSelected, restoreSelected]
+            [header, select, notice, emptyTrash, deleteSelected, restoreSelected]
         }
     }
 

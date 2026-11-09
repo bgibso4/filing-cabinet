@@ -72,8 +72,8 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
 }
 
 @Test func subtitleCountsScans() {
-    #expect(TrashHarness(three).model.subtitle == "3 scans · Deleted after 30 days")
-    #expect(TrashHarness([coatCheck]).model.subtitle == "1 scan · Deleted after 30 days")
+    #expect(TrashHarness(three).model.subtitle == "3 scans · 30 days")
+    #expect(TrashHarness([coatCheck]).model.subtitle == "1 scan · 30 days")
 }
 
 /// B15: an empty Trash still has a subtext under its large title, as Passwords' "0 Items".
@@ -345,4 +345,11 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
     _ = try await model.performConfirmation(#require(model.confirmation))
     #expect(harness.analytics.events == [.scansRestored(count: 1), .scansDeleted(count: 2)])
     #expect(harness.analytics.events.allSatisfy { Set($0.payload.keys) == [.count] })
+}
+
+/// E8: the notice above the tiles says how long scans stay; an empty Trash has none (its empty state says it).
+@Test func theNoticeSaysHowLongScansStayAndGoesWhenEmpty() {
+    #expect(
+        TrashHarness(three).model.notice == "Scans stay in Trash for 30 days, then they’re permanently deleted.")
+    #expect(TrashHarness([]).model.notice == nil)
 }
