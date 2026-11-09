@@ -26,6 +26,14 @@ private let motion = HeaderMotion(largeHeight: 52)
     #expect(HeaderMotion.smallTitleOpacity(growth: 0) == 1)
 }
 
+/// The large title shows only as far as it has grown: a screen resting small draws none of it, so a pop back to Home
+/// can't show it over Home's (phone check F1).
+@Test func largeTitleFadesWithGrowth() {
+    #expect(HeaderMotion.largeTitleOpacity(growth: 0) == 0)
+    #expect(HeaderMotion.largeTitleOpacity(growth: 0.25) == 0.25)
+    #expect(HeaderMotion.largeTitleOpacity(growth: 1) == 1)
+}
+
 @Test func shortContentStillRestsSmall() {
     // Content one viewport tall plus the large title's height always leaves room to scroll it away.
     #expect(motion.minimumContentHeight(viewport: 700) == 752)

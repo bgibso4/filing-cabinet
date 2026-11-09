@@ -19,6 +19,12 @@ package struct HeaderMotion: Sendable, Equatable {
         1 - growth
     }
 
+    /// The large title shows as far as it has grown, so a screen resting small never draws it: the bar shows the large
+    /// title slot of the screen it is leaving while a pop runs, over the large title of the screen it goes back to.
+    package static func largeTitleOpacity(growth: CGFloat) -> CGFloat {
+        growth
+    }
+
     /// Content at least this tall can always scroll the large title away, however short it is.
     package func minimumContentHeight(viewport: CGFloat) -> CGFloat {
         viewport + largeHeight
