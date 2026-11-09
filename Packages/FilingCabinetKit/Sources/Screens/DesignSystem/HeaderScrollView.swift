@@ -58,7 +58,7 @@ struct HeaderScrollView<Content: View>: View {
             }
             .scrollPosition($position)
             .scrollDisabled(!scrolls)
-            .onScrollGeometryChange(for: CGFloat.self, of: \.contentInsets.top) { _, inset in arrive(inset) }
+            .onScrollGeometryChange(for: BarReport.self, of: BarReport.init) { _, report in arrive(report) }
         }
         .onChange(of: [rest == .small, scrolls]) {
             settling.update(rest: rest, scrolls: scrolls)
@@ -75,7 +75,8 @@ struct HeaderScrollView<Content: View>: View {
                 identifier: identifier,
                 growth: growth,
                 isHidden: captureLayerIsUp,
-                typeSize: typeSize
+                typeSize: typeSize,
+                onLargeTitleHeight: { insets.recordLargeTitle(height: $0) }
             )
         }
     }
@@ -86,10 +87,10 @@ struct HeaderScrollView<Content: View>: View {
         scrolls ? insets.minimumContentHeight(height: proxy.size.height + proxy.safeAreaInsets.top) : 0
     }
 
-    private func arrive(_ inset: CGFloat) {
-        insets.record(inset)
-        last.inset = inset
-        settle(inset)
+    private func arrive(_ report: BarReport) {
+        insets.record(report.inset, atTop: report.atTop)
+        last.inset = report.inset
+        settle(report.inset)
     }
 
     private func settle(_ inset: CGFloat) {
@@ -98,6 +99,18 @@ struct HeaderScrollView<Content: View>: View {
         case .scrollView(let offset): offsetRequest = .init(offset: offset, count: (offsetRequest?.count ?? 0) + 1)
         case nil: break
         }
+    }
+}
+
+/// What the header follows of the scroll: the bar's inset, and whether the content is at its top. Not the offset itself,
+/// so the screen doesn't update on every frame of a scroll under a collapsed bar.
+private struct BarReport: Equatable {
+    let inset: CGFloat
+    let atTop: Bool
+
+    init(_ geometry: ScrollGeometry) {
+        inset = geometry.contentInsets.top
+        atTop = HeaderInsets.isAtTop(inset: inset, contentOffset: geometry.contentOffset.y)
     }
 }
 

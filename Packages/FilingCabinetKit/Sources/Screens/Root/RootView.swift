@@ -27,8 +27,6 @@ public struct RootView: View {
                 onOpen: { path.append($0) }
             )
             .accessibilityHidden(isCapturing.wrappedValue)
-            // Home draws its own large title (Home.dc.html); pushed screens bring their own headers.
-            .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)

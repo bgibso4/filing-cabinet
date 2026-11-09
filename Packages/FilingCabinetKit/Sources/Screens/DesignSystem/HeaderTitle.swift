@@ -18,6 +18,8 @@ struct HeaderTitle: ToolbarContent {
     /// The screen's text size, read outside the bar: the bar hosts its title items at a clamped size, so the large title
     /// takes it back from here to grow at any size (M7).
     let typeSize: DynamicTypeSize
+    /// The large title's height as drawn, so a screen resting large knows where the bar collapses before it has.
+    let onLargeTitleHeight: (CGFloat) -> Void
 
     // Plan 3, Task 3: the large subtitle sits 2 pt under the large title (Settings2.dc.html line 51).
     private static let largeSubtitleGap: CGFloat = 2
@@ -59,6 +61,7 @@ struct HeaderTitle: ToolbarContent {
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
             .dynamicTypeSize(typeSize)
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { onLargeTitleHeight($0) }
             .accessibilityHidden(true)
         }
     }
@@ -76,14 +79,5 @@ private struct BarText: ViewModifier {
             .fixedSize()
             .accessibilityShowsLargeContentViewer()
             .opacity(1 - growth)
-    }
-}
-
-/// `hidden()`, as for the Scan button (`ScanBarLayout`): `accessibilityHidden` leaves an element in the tree.
-private struct HiddenUnderCapture: ViewModifier {
-    let isHidden: Bool
-
-    func body(content: Content) -> some View {
-        if isHidden { content.hidden() } else { content }
     }
 }

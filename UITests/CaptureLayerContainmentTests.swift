@@ -9,19 +9,21 @@ extension ScanJourneyTests {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         let scan = app.buttons[AccessibilityID.Home.scan]
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
+        // Home's bar isn't inside Home's view, so the root's hiding doesn't reach it: its items hide themselves.
+        let bar = [app.buttons[AccessibilityID.Home.settings], app.staticTexts[AccessibilityID.Home.header]]
 
         // Under the camera, then under review.
         openCamera(in: app)
-        assertHomeHidden(scan, row)
+        assertHomeHidden(scan, row, bar)
         app.buttons[AccessibilityID.Camera.fakeFinish].tap()
         XCTAssertTrue(app.buttons[AccessibilityID.Review.save].appears(within: 5))
-        assertHomeHidden(scan, row)
+        assertHomeHidden(scan, row, bar)
         chooseReceipts(in: app)
         app.buttons[AccessibilityID.Review.save].tap()
         assertHomeBack(scan, row)
 
         scanOnePage(in: app)
-        assertHomeHidden(scan, row)
+        assertHomeHidden(scan, row, bar)
         app.buttons[AccessibilityID.Review.close].tap()
         app.alerts["Discard this scan?"].buttons["Discard"].tap()
         assertHomeBack(scan, row)
@@ -39,9 +41,12 @@ extension ScanJourneyTests {
         XCTAssertTrue(app.buttons[AccessibilityID.Camera.fakeFinish].appears(within: 5))
     }
 
-    private func assertHomeHidden(_ scan: XCUIElement, _ row: XCUIElement, line: UInt = #line) {
+    private func assertHomeHidden(_ scan: XCUIElement, _ row: XCUIElement, _ bar: [XCUIElement], line: UInt = #line) {
         XCTAssertTrue(row.disappears(within: 5), "A Home row is in the tree under the layer", line: line)
         XCTAssertTrue(scan.disappears(within: 5), "Scan is in the tree under the layer", line: line)
+        for item in bar {
+            XCTAssertTrue(item.disappears(within: 5), "\(item) is in the tree under the layer", line: line)
+        }
     }
 
     private func assertHomeBack(_ scan: XCUIElement, _ row: XCUIElement, line: UInt = #line) {

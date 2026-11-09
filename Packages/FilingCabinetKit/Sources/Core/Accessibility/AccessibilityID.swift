@@ -7,7 +7,9 @@ public enum AccessibilityID {
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
         public static let trashRow = "home.trash"
-        /// The gear beside the title.
+        /// The bar's small title, the header element in both of its states (M6).
+        public static let header = "home.header"
+        /// The gear in the bar, on the row above the large title (B9).
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
         public static let cleanupBanner = "home.cleanupBanner"
@@ -17,7 +19,8 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings, cleanupBanner] + BuiltInCollection.allCases.map(collectionRow)
+            [header, scan, recentRow, allRow, trashRow, settings, cleanupBanner]
+                + BuiltInCollection.allCases.map(collectionRow)
         }
     }
 

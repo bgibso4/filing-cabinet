@@ -3,14 +3,21 @@ import Foundation
 import Library
 import ScreenModels
 import Screens
+import SwiftUI
 import TestSupport
 import XCTest
 
 final class HomeSnapshotTests: XCTestCase {
+    /// At the root of a navigation stack, as in the app, because the title and the gear are in the system's bar.
     @MainActor
-    private func home(_ library: FakeLibrary) -> HomeView {
+    private func home(_ library: FakeLibrary) -> some View {
         let model = HomeModel(library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
-        return HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in })
+        return rooted(HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in }))
+    }
+
+    @MainActor
+    private func rooted(_ home: HomeView) -> some View {
+        NavigationStack { home }
     }
 
     @MainActor
@@ -42,6 +49,6 @@ final class HomeSnapshotTests: XCTestCase {
         await banner.refreshAuthorization()
         let model = HomeModel(library: library, today: today, calendar: Fixtures.clock.calendar, banner: banner)
         try SnapshotHost.assertScreen(
-            HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in }), testName: "home_banner")
+            rooted(HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in })), testName: "home_banner")
     }
 }
