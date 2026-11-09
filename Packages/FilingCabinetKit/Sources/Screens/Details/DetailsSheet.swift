@@ -3,10 +3,10 @@ import ScreenModels
 import SwiftUI
 
 /// A scan's details over the viewer (07-01 … 07-08, ScanDetails.dc.html lines 33-137): its title, which renames in
-/// place, when it was scanned, its collection and its expiry. A compact sheet only as tall as its content; when the
-/// text is larger than the screen allows, the content scrolls under the grabber. It draws its own grabber, so a
-/// container only adds the sheet's surface and corners.
-public struct DetailsSheet: View {
+/// place, when it was scanned, its collection and its expiry. Only as tall as its content; when the text is larger
+/// than the screen allows, the content scrolls under the grabber. It draws its own grabber, and `DetailsPanel` adds the
+/// surface, corners and motion.
+struct DetailsSheet: View {
     private let model: DetailsModel
     /// The sheet's height, measured here; the viewer fits the page above it.
     @Binding private var height: CGFloat
@@ -36,12 +36,12 @@ public struct DetailsSheet: View {
     // 18 below (ScanDetails.dc.html lines 34-97).
     private static let unmeasuredHeight: CGFloat = 236
 
-    public init(model: DetailsModel, height: Binding<CGFloat>) {
+    init(model: DetailsModel, height: Binding<CGFloat>) {
         self.model = model
         _height = height
     }
 
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 0) {
             grabber
             ScrollView {
@@ -50,8 +50,6 @@ public struct DetailsSheet: View {
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(AccessibilityID.Details.sheet)
         .onChange(of: contentHeight, initial: true) { height = sheetHeight }
         .onChange(of: model.isRenaming, initial: true) { _, isRenaming in
             if isRenaming { draft = model.title }
@@ -77,15 +75,9 @@ public struct DetailsSheet: View {
         } message: { alert in
             Text(alert.message)
         }
-        .presentationDetents([.height(sheetHeight)])
-        // The sheet draws the mock's grabber itself: the system one is an unidentified button.
-        .presentationDragIndicator(.hidden)
-        .presentationBackground(Tokens.Color.bgSurface)
-        // The mocks don't dim the viewer: its back button still works with the sheet up.
-        .presentationBackgroundInteraction(.enabled)
     }
 
-    /// The sheet's full height, or a stand-in until the content is measured.
+    /// The full height, or a stand-in until the content is measured.
     private var sheetHeight: CGFloat {
         guard let contentHeight else { return Self.unmeasuredHeight }
         return Self.topPadding + Self.grabberHeight + contentHeight

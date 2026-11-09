@@ -10,30 +10,25 @@ import XCTest
 /// text), after a move (07-05) and renaming (07-03, without the keyboard). Menus and alerts are not snapshotted; the
 /// journey attaches screenshots of them.
 final class DetailsSnapshotTests: XCTestCase {
-    /// The system draws a presented sheet's chrome, which a snapshot can't capture, so this reproduces it over the
-    /// viewer: the compact sheet's rounded surface 8 pt in from the screen's sides and bottom (ScanDetails.dc.html
-    /// line 34). The sheet draws its own grabber. Both live in the pushed destination, so the sheet's measured height
-    /// reaches the viewer (a destination's content isn't evaluated again for its parent's state).
+    /// The viewer with Details fully up, as `ViewerRoute` lays them out. Both live in the pushed destination, so the
+    /// panel's measured height reaches the viewer (a destination's content isn't evaluated again for its parent's state).
     private struct DetailsOverViewer: View {
-        private static let inset: CGFloat = 8
-        private static let cornerRadius: CGFloat = 34
-
         let viewer: ViewerModel
         let details: DetailsModel
-        /// Screens' resource bundle, where the token colours live.
-        let screensBundle: Bundle
 
         @State private var height: CGFloat = 0
 
         var body: some View {
-            ViewerView(model: viewer, pages: Fixtures.pages, thumbnails: Fixtures.thumbnails, detailsHeight: height)
-                .overlay(alignment: .bottom) {
-                    DetailsSheet(model: details, height: $height)
-                        .background(Color("bg-surface", bundle: screensBundle))
-                        .clipShape(.rect(cornerRadius: Self.cornerRadius))
-                        .padding([.horizontal, .bottom], Self.inset)
-                        .ignoresSafeArea(edges: .bottom)
-                }
+            ViewerView(
+                model: viewer,
+                pages: Fixtures.pages,
+                thumbnails: Fixtures.thumbnails,
+                detailsHeight: height,
+                detailsProgress: 1
+            )
+            .overlay(alignment: .bottom) {
+                DetailsPanel(model: details, progress: 1, height: $height)
+            }
         }
     }
 
@@ -49,7 +44,7 @@ final class DetailsSnapshotTests: XCTestCase {
     }
 
     @MainActor
-    private func screen(_ scan: ScanSummary, change: (DetailsModel) -> Void = { _ in }) throws -> DetailsScreen {
+    private func screen(_ scan: ScanSummary, change: (DetailsModel) -> Void = { _ in }) -> DetailsScreen {
         let library = FakeLibrary(scans: [scan])
         let today = Today(clock: Fixtures.clock)
         let viewer = ViewerModel(
@@ -61,10 +56,7 @@ final class DetailsSnapshotTests: XCTestCase {
         let details = DetailsModel(
             id: scan.id, library: library, today: today, clock: Fixtures.clock, analytics: RecordingAnalytics())
         change(details)
-        // Screens' resources are a bundle inside the host app.
-        let url = Bundle.main.url(forResource: "FilingCabinetKit_Screens", withExtension: "bundle")
-        let bundle = try XCTUnwrap(url.flatMap(Bundle.init(url:)))
-        return DetailsScreen(content: DetailsOverViewer(viewer: viewer, details: details, screensBundle: bundle))
+        return DetailsScreen(content: DetailsOverViewer(viewer: viewer, details: details))
     }
 
     /// One variant at a time, each with new models: closing a window ends renaming (the sheet commits the title as it

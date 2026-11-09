@@ -4,15 +4,18 @@ import ScreenModels
 import SwiftUI
 
 /// A scan, like Photos: its pages, a back button, a header pill, the page strip and the bottom bar. Per A2 there is no
-/// More button. The pill and Info open Details; while it is up (`detailsHeight`) the pill, strip and bar make way and
-/// the page fits above the sheet (07-01). Opened from Trash (09-04) it has Close for back, a pill with the days left in
-/// Trash that opens nothing (a scan in Trash is read-only until restored), and Delete now and Restore for the bar.
+/// More button. The pill and Info open Details. As it rises (`detailsProgress`) the pill, strip and bar fade away (B2)
+/// and the page fits above it, a step every frame (07-01, #61). Opened from Trash (09-04) it has Close for back, a pill
+/// with the days left in Trash that opens nothing (a scan in Trash is read-only until restored), and Delete now and
+/// Restore for the bar.
 public struct ViewerView: View {
     @Bindable private var model: ViewerModel
     private let pages: any PageImageProviding
     private let thumbnails: any ThumbnailProviding
-    /// The Details sheet's height while it is up, nil while it is closed.
-    private let detailsHeight: CGFloat?
+    /// The Details panel's height, 0 until it is measured.
+    private let detailsHeight: CGFloat
+    /// How far Details is up: 0 closed, 1 open.
+    private let detailsProgress: CGFloat
     private let onDetails: () -> Void
     /// After Restore, opened from Trash.
     private let onRestored: () -> Void
@@ -37,13 +40,13 @@ public struct ViewerView: View {
     // the screen's bottom edge.
     private static let barSideInset: CGFloat = 20
     private static let barBottomInset: CGFloat = 30
-    // ScanDetails.dc.html lines 18 and 34: with Details up the page fits above the sheet, which floats 8 pt above the
-    // screen's bottom edge, with 8 pt between them.
-    private static let sheetBottomInset: CGFloat = 8
+    // ScanDetails.dc.html lines 18 and 34: with Details up the page fits 8 pt above the panel.
     private static let pageSheetGap: CGFloat = 8
 
     /// The strip and bar's height, which grows with Dynamic Type.
     @State private var bottomControlsHeight: CGFloat = 0
+    /// The pill's own height where it sits below the bar, nil until measured.
+    @State private var belowBarHeaderHeight: CGFloat?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -53,7 +56,8 @@ public struct ViewerView: View {
         model: ViewerModel,
         pages: any PageImageProviding,
         thumbnails: any ThumbnailProviding,
-        detailsHeight: CGFloat? = nil,
+        detailsHeight: CGFloat = 0,
+        detailsProgress: CGFloat = 0,
         onDetails: @escaping () -> Void = {},
         onRestored: @escaping () -> Void = {}
     ) {
@@ -61,6 +65,7 @@ public struct ViewerView: View {
         self.pages = pages
         self.thumbnails = thumbnails
         self.detailsHeight = detailsHeight
+        self.detailsProgress = detailsProgress
         self.onDetails = onDetails
         self.onRestored = onRestored
     }
@@ -69,13 +74,12 @@ public struct ViewerView: View {
         pager
             .background { Tokens.Color.bgGrouped.ignoresSafeArea() }
             .overlay(alignment: .bottom) {
-                if !isShowingDetails {
+                fadesForDetails(
                     bottomControls
                         .onGeometryChange(for: CGFloat.self, of: \.size.height) { bottomControlsHeight = $0 }
                         .padding(.bottom, Self.barBottomInset)
                         .ignoresSafeArea(edges: .bottom)
-                        .environment(\.colorScheme, controlsScheme ?? colorScheme)
-                }
+                        .environment(\.colorScheme, controlsScheme ?? colorScheme))
             }
             // The system bar, clear, like the grid's: the back button is the system's glass one and swipe back works,
             // except from Trash, which has Close and no swipe back.
@@ -87,18 +91,30 @@ public struct ViewerView: View {
                 if isFromTrash {
                     ToolbarItem(placement: .topBarLeading) { closeButton }
                 }
-                if !headerIsBelowTheBar && !isShowingDetails {
+                // Always in the bar, so it fades rather than blinking out (B2). Once Details is fully up the pill is
+                // invisible and leaves: the bar doesn't pass a hidden pill's hiding on to VoiceOver.
+                if !headerIsBelowTheBar {
                     ToolbarItem(placement: .principal) {
-                        header.frame(maxWidth: isFromTrash ? Self.trashHeaderMaxWidth : Self.headerMaxWidth)
+                        if detailsProgress < 1 {
+                            header.frame(maxWidth: isFromTrash ? Self.trashHeaderMaxWidth : Self.headerMaxWidth)
+                        }
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
             }
             // The bar can't hold the pill above the default text size, which wraps instead of cutting off (requirements 06 · Accessibility).
+            // As Details rises it gives up its room, so the page grows into it, and it leaves once Details is up.
             .safeAreaInset(edge: .top) {
-                if headerIsBelowTheBar && !isShowingDetails {
+                if headerIsBelowTheBar && detailsProgress < 1 {
                     header.padding(.horizontal, Tokens.Spacing.s4)
                         .environment(\.colorScheme, controlsScheme ?? colorScheme)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { belowBarHeaderHeight = $0 }
+                        .frame(
+                            height: belowBarHeaderHeight.map {
+                                DetailsMotion.chromeRoom(progress: detailsProgress, height: $0)
+                            },
+                            alignment: .top)
                 }
             }
             .onChange(of: model.isMissing, initial: true) { _, isMissing in
@@ -120,8 +136,14 @@ public struct ViewerView: View {
 
     private var isFromTrash: Bool { model.mode == .trash }
 
-    /// The sheet shows the title, so the pill makes way (07-01).
-    private var isShowingDetails: Bool { detailsHeight != nil }
+    /// The panel shows the title, so the pill, strip and bar make way (07-01): they fade with Details (B2), stop taking
+    /// taps past halfway and leave VoiceOver once it is up.
+    private func fadesForDetails(_ chrome: some View) -> some View {
+        chrome
+            .opacity(DetailsMotion.chromeOpacity(progress: detailsProgress))
+            .allowsHitTesting(detailsProgress <= 0.5)
+            .accessibilityHidden(detailsProgress >= 1)
+    }
 
     /// The header wraps above the default size (see `header`), and the bar can't hold more than one line.
     private var headerIsBelowTheBar: Bool { typeSize > .large }
@@ -153,13 +175,13 @@ public struct ViewerView: View {
         }
     }
 
-    /// Above the bar at rest, or above the Details sheet while it is up.
+    /// Above the bar at rest and above the Details panel while it is up, moving between the two with Details.
     private func pageFitBottom(safeArea: CGFloat) -> CGFloat {
-        guard let detailsHeight else {
-            return max(
-                safeArea + Self.pageFitBottomGap, Self.barBottomInset + bottomControlsHeight + Self.pageControlsGap)
-        }
-        return Self.sheetBottomInset + detailsHeight + Self.pageSheetGap
+        DetailsMotion.pageFitBottom(
+            progress: detailsProgress,
+            closed: max(
+                safeArea + Self.pageFitBottomGap, Self.barBottomInset + bottomControlsHeight + Self.pageControlsGap),
+            open: DetailsPanel.inset + detailsHeight + Self.pageSheetGap)
     }
 
     /// The page strip (with more than one page) above the bottom bar.
@@ -205,7 +227,7 @@ public struct ViewerView: View {
     @ViewBuilder
     private var header: some View {
         switch model.mode {
-        case .library: libraryHeader
+        case .library: fadesForDetails(libraryHeader)
         case .trash: trashHeader
         }
     }

@@ -42,15 +42,6 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return sheetText.contains(element.identifier)
     },
-    // The same iOS 27 report on the Details sheet over the viewer, also a floating sheet sized to its content, with its
-    // text intact (Task 6's snapshots and journey screenshots). Ben accepted this on 2026-11-08. Only textClipped, and only
-    // the two text elements the audit reported (the title and the scanned line), matched by identifier; any other
-    // screen's clipped text still fails.
-    { _, issue in
-        guard issue.auditType == .textClipped, let element = issue.element else { return false }
-        let sheetText = [AccessibilityID.Details.titleText, AccessibilityID.Details.scannedLine]
-        return sheetText.contains(element.identifier)
-    },
     // In dark mode the audit misreads the viewer header's white text on dark Liquid Glass and reports low contrast,
     // though the text is the primary colour and its element screenshot reads clearly (on file in Task 20's reports).
     // Ben accepted this on 2026-11-07. Only contrast, only while the device is in dark mode, and only the header's title

@@ -93,3 +93,57 @@ import Testing
     #expect(
         !DetailsMotion.swipeOpens(translation: CGSize(width: 0, height: 40), isPageZoomed: false, isFromTrash: false))
 }
+
+/// Before the panel is measured there is no travel: a drag then leaves progress where it started, never NaN.
+@Test func dragBeforeThePanelIsMeasuredStaysPut() {
+    #expect(DetailsMotion.progress(dragStart: 0.3, translation: -50, travel: 0) == 0.3)
+    #expect(DetailsMotion.progressVelocity(pointsPerSecond: -500, travel: 0) == 0)
+}
+
+@Test func releaseVelocityIsProgressPerSecond() {
+    // An upward flick (negative points) opens.
+    #expect(DetailsMotion.progressVelocity(pointsPerSecond: -428, travel: 214) == 2)
+    #expect(DetailsMotion.progressVelocity(pointsPerSecond: 107, travel: 214) == -0.5)
+}
+
+/// B11: under Reduce Motion the panel fades with the spring while its offset and the page's fit jump to the target.
+@Test func reduceMotionFadesInsteadOfSliding() {
+    #expect(DetailsMotion.layoutProgress(position: 0.3, target: 1, reducesMotion: true) == 1)
+    #expect(DetailsMotion.layoutProgress(position: 0.3, target: 1, reducesMotion: false) == 0.3)
+    #expect(DetailsMotion.panelOpacity(progress: 0.3, reducesMotion: true) == 0.3)
+    #expect(DetailsMotion.panelOpacity(progress: 1.02, reducesMotion: true) == 1)
+    #expect(DetailsMotion.panelOpacity(progress: 0.3, reducesMotion: false) == 1)
+}
+
+/// A grab stops the spring where it really is.
+@Test func holdingStopsTheSpringWhereItIs() {
+    var spring = DetailsSpring(position: 0, velocity: 0, target: 1)
+    for _ in 0..<6 { spring.step(by: 1.0 / 60) }
+    let position = spring.position
+    spring.hold(at: position)
+    #expect(spring == DetailsSpring(position: position, velocity: 0, target: position))
+    spring.step(by: 1.0 / 60)
+    #expect(spring.position == position)
+}
+
+@Test func releaseCarriesTheFlick() {
+    var spring = DetailsSpring(position: 0.3, velocity: 0, target: 0.3)
+    spring.release(velocity: 0.8)
+    #expect(spring == DetailsSpring(position: 0.3, velocity: 0.8, target: 1))
+    spring.release(velocity: 0)
+    #expect(spring.target == 0)
+}
+
+@Test func closedOnlyOnceSettledAtZero() {
+    #expect(DetailsSpring(position: 0, velocity: 0, target: 0).isClosed)
+    #expect(!DetailsSpring(position: 0, velocity: 0, target: 1).isClosed)
+    #expect(!DetailsSpring(position: 0.4, velocity: -1, target: 0).isClosed)
+    #expect(!DetailsSpring(position: 1, velocity: 0, target: 1).isClosed)
+}
+
+/// At large text the pill sits below the bar; as it fades it gives up its room, so the page grows into it.
+@Test func headerRoomShrinksAsItFades() {
+    #expect(DetailsMotion.chromeRoom(progress: 0, height: 120) == 120)
+    #expect(DetailsMotion.chromeRoom(progress: 0.25, height: 120) == 90)
+    #expect(DetailsMotion.chromeRoom(progress: 1, height: 120) == 0)
+}

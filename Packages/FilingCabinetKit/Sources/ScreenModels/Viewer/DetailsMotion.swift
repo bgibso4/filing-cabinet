@@ -2,7 +2,7 @@ import CoreGraphics
 
 /// The viewer's Details motion as pure functions of one progress value, 0 (closed) to 1 (open). The panel's
 /// offset, the page's fit and the chrome's opacity all follow it, so they can never disagree.
-package enum DetailsMotion {
+package nonisolated enum DetailsMotion {
     /// A flick of this many progress per second or more decides the target whatever the position (M5).
     private static let flickVelocity: CGFloat = 0.6
 
@@ -20,14 +20,40 @@ package enum DetailsMotion {
         1 - clamped(progress)
     }
 
+    /// The room a piece of chrome keeps in the layout as it fades: at large text the pill sits below the bar, and gives
+    /// its room up to the page as Details rises.
+    package static func chromeRoom(progress: CGFloat, height: CGFloat) -> CGFloat {
+        height * chromeOpacity(progress: progress)
+    }
+
     /// How far below its open position the panel sits.
     package static func panelOffset(progress: CGFloat, travel: CGFloat) -> CGFloat {
         (1 - progress) * travel
     }
 
-    /// Progress during a drag: an upward (negative) translation raises it.
+    /// Progress during a drag: an upward (negative) translation raises it. Until the panel is measured there is no
+    /// travel, and progress stays where the drag started.
     package static func progress(dragStart: CGFloat, translation: CGFloat, travel: CGFloat) -> CGFloat {
-        clamped(dragStart - translation / travel)
+        guard travel > 0 else { return clamped(dragStart) }
+        return clamped(dragStart - translation / travel)
+    }
+
+    /// A drag's vertical speed in points per second (downward positive, as UIKit reports it) as progress per second,
+    /// positive toward open. Zero until the panel is measured.
+    package static func progressVelocity(pointsPerSecond: CGFloat, travel: CGFloat) -> CGFloat {
+        guard travel > 0 else { return 0 }
+        return -pointsPerSecond / travel
+    }
+
+    /// The progress the panel's offset and the page's fit take: under Reduce Motion they jump to where the spring is
+    /// going, and only the panel's opacity follows it (B11).
+    package static func layoutProgress(position: CGFloat, target: CGFloat, reducesMotion: Bool) -> CGFloat {
+        reducesMotion ? target : position
+    }
+
+    /// The panel fades in and out with the spring under Reduce Motion, and is opaque otherwise (B11).
+    package static func panelOpacity(progress: CGFloat, reducesMotion: Bool) -> CGFloat {
+        reducesMotion ? clamped(progress) : 1
     }
 
     /// Where a released drag settles: a flick decides, otherwise the halfway point does.

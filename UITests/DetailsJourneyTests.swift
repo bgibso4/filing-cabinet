@@ -64,6 +64,23 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertEqual(header.label, "Groceries, details")
     }
 
+    /// Info opens Details over the pill, and dragging it down brings the pill back (#61).
+    func testInfoOpensAndClosesDetails() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        XCTAssertTrue(header.isHittable)
+
+        app.buttons[AccessibilityID.Viewer.details].tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].appears(within: 5))
+        // Faded out, and out of VoiceOver's way, so nothing can reach it.
+        XCTAssertTrue(header.disappears(within: 5))
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].disappears(within: 5))
+        XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
+    }
+
     /// 06-04: Trash asks in a popover from the button; Move to Trash pops back to a grid with one fewer tile.
     func testMoveToTrashFromTheViewer() {
         let app = seededApp()
@@ -158,7 +175,8 @@ final class DetailsJourneyTests: XCTestCase {
                 AccessibilityID.Details.sheet, AccessibilityID.Details.title, AccessibilityID.Details.collection,
                 AccessibilityID.Details.expiry,
             ], in: app)
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Viewer.header].exists)
+        // The pill fades as Details rises, and leaves VoiceOver once it is up.
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
     }
 
     private func choose(_ item: String, from menu: String, in app: XCUIApplication) {

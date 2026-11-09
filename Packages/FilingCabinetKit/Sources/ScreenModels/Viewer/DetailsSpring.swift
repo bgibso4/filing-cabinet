@@ -27,6 +27,25 @@ package struct DetailsSpring: Sendable, Equatable {
         abs(position - target) < Self.restDistance && abs(velocity) < Self.restSpeed
     }
 
+    /// Settled shut: Details can be let go.
+    package var isClosed: Bool {
+        isSettled && position == 0
+    }
+
+    /// A finger has it: it stays exactly at `position`, with no velocity, until released.
+    package mutating func hold(at position: CGFloat) {
+        self.position = position
+        velocity = 0
+        target = position
+    }
+
+    /// Let go at `velocity` (progress per second, positive toward open): a flick or the halfway point decides where it
+    /// settles, and the motion carries on from the finger's speed.
+    package mutating func release(velocity: CGFloat) {
+        self.velocity = velocity
+        target = DetailsMotion.target(progress: position, velocity: velocity)
+    }
+
     /// Semi-implicit Euler: velocity first, then position. Snaps to the target once settled.
     package mutating func step(by seconds: Double) {
         let delta = CGFloat(min(seconds, Self.maxStep))

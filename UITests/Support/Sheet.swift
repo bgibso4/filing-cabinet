@@ -2,7 +2,7 @@ import Core
 import XCTest
 
 extension XCUIApplication {
-    /// Drags the Details sheet's grabber down until the sheet closes.
+    /// Drags the Details panel down by its grabber, to the screen's bottom edge, so it closes.
     @MainActor
     func swipeDownOnSheet() {
         let sheet = descendants(matching: .any)[AccessibilityID.Details.sheet]
