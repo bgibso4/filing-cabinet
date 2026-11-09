@@ -150,8 +150,14 @@ final class BrowseJourneyTests: XCTestCase {
         assertPageLabel("Page 2 of 3", in: app)
 
         // Leaving and coming back to the app evaluates the root again; the viewer stays on its page.
+        // `activate()` returns while iOS still scales the window up from its icon: the app is already
+        // running in the foreground and Back already hittable, but Back's frame is where the scaled window put
+        // it, so a tap then lands below the button once the window settles. Wait for the window's resting frame.
+        let window = app.windows.firstMatch
+        let restingFrame = NSValue(cgRect: window.frame)
         XCUIDevice.shared.press(.home)
         app.activate()
+        XCTAssertTrue(window.satisfies("frame == %@", restingFrame, within: 5), "The window never settled")
         assertPageLabel("Page 2 of 3", in: app)
 
         app.buttons[AccessibilityID.Viewer.back].tap()
