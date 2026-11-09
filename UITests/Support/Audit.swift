@@ -63,7 +63,7 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         guard issue.auditType == .dynamicType, let element = issue.element else { return false }
         let headers = [
             AccessibilityID.Settings.header, AccessibilityID.Collections.header,
-            AccessibilityID.CollectionSettings.header,
+            AccessibilityID.CollectionSettings.header, AccessibilityID.Grid.header,
         ]
         return (headers + headers.map(AccessibilityID.headerSubtitle)).contains(element.identifier)
     },

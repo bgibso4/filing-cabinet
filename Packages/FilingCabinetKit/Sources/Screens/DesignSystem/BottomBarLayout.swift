@@ -13,18 +13,18 @@ struct BottomBarLayout<Content: View, Bar: View>: View {
 
     @Environment(\.dynamicTypeSize) private var typeSize
 
+    /// One structure for both, so the content keeps its identity (and its scroll and header state) when the text size
+    /// crosses into the accessibility sizes, as the accessibility audit's Dynamic Type check does.
     var body: some View {
-        if typeSize.isAccessibilitySize {
-            VStack(spacing: 0) {
-                content
-                barArea(fades: false)
-            }
-            .background(Tokens.Color.bgGrouped)
-        } else {
+        let isLarge = typeSize.isAccessibilitySize
+        VStack(spacing: 0) {
             content
-                .background(Tokens.Color.bgGrouped)
-                .safeAreaInset(edge: .bottom, spacing: 0) { barArea(fades: true) }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if !isLarge { barArea(fades: true) }
+                }
+            if isLarge { barArea(fades: false) }
         }
+        .background(Tokens.Color.bgGrouped)
     }
 
     private func barArea(fades: Bool) -> some View {

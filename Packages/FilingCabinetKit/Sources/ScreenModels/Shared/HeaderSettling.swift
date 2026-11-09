@@ -1,14 +1,23 @@
 import CoreGraphics
 
+/// A scroll a header screen asks for.
+package enum HeaderScroll: Sendable, Equatable {
+    /// To this offset of the content, as SwiftUI's scroll position measures it (0 is the top under the bar).
+    case content(offset: CGFloat)
+    /// To this raw top offset of the scroll view, above the top where SwiftUI's scroll position stops. The bar follows
+    /// it as it follows a pull, so a collapsed bar expands.
+    case scrollView(offset: CGFloat)
+}
+
 /// The scrolls a header screen makes by itself to rest as `rest` asks (plan 3, E1). A new screen's bar opens expanded,
 /// so to rest small the content first scrolls by the bar's whole inset (more than any large title), which collapses the
 /// bar, then back to its top once the inset has dropped: the scroll position keeps its offset across the bar's change,
 /// which would leave the first rows under the bar. The scroll lands a report before the inset drops, so landing says
 /// nothing.
 ///
-/// Resting large, or not scrolling, asks for nothing and leaves the bar as it is: a new screen's bar opens expanded, but a
-/// live change to large under a collapsed bar doesn't expand it (not seen yet; Trash emptying in Task 5 will show). A
-/// change to small on a screen that is showing settles again (Trash filling up).
+/// A new screen resting large, or not scrolling, asks for nothing: its bar opens expanded. A live change to large under
+/// a collapsed bar (a grid emptied on screen) pulls the content down to the expanded bar's inset, which expands it as a
+/// pull would. A live change to small settles again (Trash filling up).
 package struct HeaderSettling: Sendable, Equatable {
     private enum Phase: Sendable, Equatable {
         case unsettled
@@ -33,9 +42,10 @@ package struct HeaderSettling: Sendable, Equatable {
         phase = .unsettled
     }
 
-    /// The `y` to scroll the content to after a report of the bar's `inset` (already recorded in `insets`), if any.
-    package mutating func target(insets: HeaderInsets, inset: CGFloat) -> CGFloat? {
-        guard inset > 0, rest == .small, scrolls else { return nil }
+    /// The scroll to make after a report of the bar's `inset` (already recorded in `insets`), if any.
+    package mutating func target(insets: HeaderInsets, inset: CGFloat) -> HeaderScroll? {
+        guard inset > 0, phase != .settled else { return nil }
+        guard rest == .small, scrolls else { return expand(insets) }
         switch phase {
         case .unsettled:
             // A live change to small under a bar already collapsed: nothing to do.
@@ -44,13 +54,20 @@ package struct HeaderSettling: Sendable, Equatable {
                 return nil
             }
             phase = .collapsing
-            return inset
+            return .content(offset: inset)
         case .collapsing:
             guard inset < (insets.largest ?? inset) else { return nil }
             phase = .settled
-            return 0
+            return .content(offset: 0)
         case .settled:
             return nil
         }
+    }
+
+    /// Resting large: a bar seen collapsed is expanded; one that is already expanded, or a new screen's, is left alone.
+    private mutating func expand(_ insets: HeaderInsets) -> HeaderScroll? {
+        phase = .settled
+        guard insets.isCollapsed, let largest = insets.largest else { return nil }
+        return .scrollView(offset: -largest)
     }
 }

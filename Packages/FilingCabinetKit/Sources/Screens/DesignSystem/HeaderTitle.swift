@@ -12,6 +12,9 @@ struct HeaderTitle: ToolbarContent {
     let identifier: String
     /// 0 with the title small in the bar, 1 with the large title fully showing (`HeaderMotion.growth`).
     let growth: CGFloat
+    /// True under the capture layer: the small title and subtitle leave the accessibility tree, as the screen under the
+    /// layer does (the bar isn't inside the screen's view, so the root's hiding doesn't reach it).
+    let isHidden: Bool
 
     // Plan 3, Task 3: the large subtitle sits 2 pt under the large title (Settings2.dc.html line 51).
     private static let largeSubtitleGap: CGFloat = 2
@@ -25,6 +28,7 @@ struct HeaderTitle: ToolbarContent {
                 .modifier(BarText(growth: growth))
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityIdentifier(identifier)
+                .modifier(HiddenUnderCapture(isHidden: isHidden))
         }
         if let subtitle {
             ToolbarItem(placement: .subtitle) {
@@ -33,6 +37,7 @@ struct HeaderTitle: ToolbarContent {
                     .foregroundStyle(Tokens.Color.textSecondary)
                     .modifier(BarText(growth: growth))
                     .accessibilityIdentifier(AccessibilityID.headerSubtitle(identifier))
+                    .modifier(HiddenUnderCapture(isHidden: isHidden))
             }
         }
         ToolbarItem(placement: .largeTitle) {
@@ -65,5 +70,14 @@ private struct BarText: ViewModifier {
             .fixedSize()
             .accessibilityShowsLargeContentViewer()
             .opacity(1 - growth)
+    }
+}
+
+/// `hidden()`, as for the Scan button (`ScanBarLayout`): `accessibilityHidden` leaves an element in the tree.
+private struct HiddenUnderCapture: ViewModifier {
+    let isHidden: Bool
+
+    func body(content: Content) -> some View {
+        if isHidden { content.hidden() } else { content }
     }
 }

@@ -149,18 +149,22 @@ final class ScanJourneyTests: XCTestCase {
         let all = app.buttons[AccessibilityID.Home.allRow]
         XCTAssertTrue(all.appears(within: 30))
         all.tap()
-        let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
-        XCTAssertTrue(header.appears(within: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        // The newest tile, first in the grid; scrolled off the top, it is no longer hittable.
+        let first = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(first.appears(within: 5))
         app.swipeUp(velocity: .fast)
         app.swipeUp(velocity: .fast)
-        XCTAssertFalse(header.isHittable)
+        XCTAssertFalse(first.isHittable)
         finishCameraFromGrid(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
         XCTAssertTrue(save.disappears(within: 10))
         XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].appears(within: 5))
-        XCTAssertFalse(header.isHittable)
+        XCTAssertFalse(first.isHittable)
     }
 
     func testChooseADateSetsExpiry() {

@@ -66,6 +66,55 @@ final class BrowseJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// An empty collection rests with the large title showing and doesn't scroll (B5).
+    func testEmptyGridDoesNotScroll() {
+        let app = launchApp()
+        openReceipts(in: app)
+        assertEmptyReceiptsHoldStill(in: app)
+    }
+
+    /// A grid that empties while it is open (its only scan moved to Trash from the viewer, which pops back to it) comes
+    /// back with the large title showing, and holds still, as one opened empty does (B5).
+    func testAGridEmptiedFromTheViewerShowsTheLargeTitle() {
+        // Scan 2 is the seed's only receipt.
+        let app = launchApp(["-SeedScans", "2", "-FixedDate", "2026-10-12"])
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 1)
+        openReceipts(in: app)
+        let header = app.staticTexts[AccessibilityID.Grid.header]
+        XCTAssertTrue(header.satisfies("isHittable == true", within: 5), "The grid didn't rest small")
+        tiles(in: app).firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
+
+        app.buttons[AccessibilityID.Viewer.trash].tap()
+        let confirm = app.buttons.matching(
+            NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Viewer.trash)
+        ).firstMatch
+        XCTAssertTrue(confirm.appears(within: 5))
+        confirm.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
+
+        assertEmptyReceiptsHoldStill(in: app)
+    }
+
+    /// The bar's small title (the header element, M6 amended) is faded out because the large title shows, and stays so;
+    /// drags either way move neither it nor the empty state.
+    private func assertEmptyReceiptsHoldStill(in app: XCUIApplication, line: UInt = #line) {
+        let header = app.staticTexts[AccessibilityID.Grid.header]
+        let empty = app.staticTexts["No receipts yet"]
+        XCTAssertTrue(empty.appears(within: 5), line: line)
+        XCTAssertTrue(header.satisfies("isHittable == false", within: 5), "The large title isn't showing", line: line)
+        // Still large once the bar has had time to settle.
+        XCTAssertFalse(header.satisfies("isHittable == true", within: 1), "The bar collapsed", line: line)
+        let frames = (header: header.frame, empty: empty.frame)
+
+        for distance in [-300.0, 300.0] {
+            empty.drag(by: distance)
+            XCTAssertEqual(header.frame, frames.header, "The header moved after a \(distance) pt drag", line: line)
+            XCTAssertEqual(empty.frame, frames.empty, "The empty state moved after a \(distance) pt drag", line: line)
+            XCTAssertFalse(header.isHittable, "The bar collapsed after a \(distance) pt drag", line: line)
+        }
+    }
+
     func testEdgeSwipeGoesBackFromTheGrid() {
         let app = seededApp()
         openReceipts(in: app)

@@ -47,7 +47,9 @@ public struct TrashView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 if !model.isEmpty {
-                    ToolbarItem(placement: .topBarTrailing) { selectButton }
+                    // Built again when the text size changes: the bar doesn't restyle a button it already holds, so
+                    // Select would keep the old size (the largest-text audit's Dynamic Type check finds it).
+                    ToolbarItem(placement: .topBarTrailing) { selectButton.id(typeSize) }
                 }
             }
             .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
