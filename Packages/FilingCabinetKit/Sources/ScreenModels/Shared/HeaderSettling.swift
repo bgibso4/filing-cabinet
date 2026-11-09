@@ -15,7 +15,8 @@ package enum HeaderScroll: Sendable, Equatable {
 /// which would leave the first rows under the bar. The scroll lands a report before the inset drops, so landing says
 /// nothing.
 ///
-/// A new screen resting large, or not scrolling, asks for nothing: its bar opens expanded. A live change to large under
+/// A new screen resting large, or not scrolling, asks for nothing while its bar is expanded; one resting large that
+/// doesn't scroll expands its bar whenever it is seen collapsed (see `expand`). A live change to large under
 /// a collapsed bar (a grid emptied on screen) pulls the content down to the expanded bar's inset, which expands it as a
 /// pull would. A live change to small settles again (Trash filling up).
 package struct HeaderSettling: Sendable, Equatable {
@@ -65,8 +66,11 @@ package struct HeaderSettling: Sendable, Equatable {
     }
 
     /// Resting large: a bar seen collapsed is expanded; one that is already expanded, or a new screen's, is left alone.
+    /// Content that doesn't scroll keeps watching: nothing the person does there collapses the bar, but the system does
+    /// on a push from a screen with a shorter large title (phone check F6: the bar opens at that title's height, then
+    /// collapses).
     private mutating func expand(_ insets: HeaderInsets) -> HeaderScroll? {
-        phase = .settled
+        if scrolls { phase = .settled }
         guard insets.isCollapsed, let largest = insets.largest else { return nil }
         return .scrollView(offset: -largest)
     }

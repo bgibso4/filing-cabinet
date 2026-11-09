@@ -96,6 +96,26 @@ final class BrowseJourneyTests: XCTestCase {
         assertEmptyReceiptsHoldStill(in: app)
     }
 
+    /// An empty collection opened after one with scans rests with its large title showing: the bar is taller than the
+    /// full collection's collapsed one and the small title is faded out (phone check F6). On the phone the push's
+    /// animation collapsed the bar and neither title showed; `-UITest` turns animations off, so this journey can't
+    /// catch that collapse (`HeaderSettlingTests` does), only the state it must end in.
+    func testAnEmptyCollectionAfterAFullOneShowsItsLargeTitle() {
+        // Scan 1 is the seed's only wallet card, scan 2 its only receipt: Notes is empty.
+        let app = launchApp(["-SeedScans", "2", "-FixedDate", "2026-10-12"])
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 1)
+        open(.wallet, in: app)
+        let header = app.staticTexts[AccessibilityID.Grid.header]
+        XCTAssertTrue(header.satisfies("isHittable == true", within: 5), "The full grid didn't rest small")
+        let collapsedBar = app.navigationBars.firstMatch.frame.height
+        app.buttons[AccessibilityID.Grid.back].tap()
+
+        open(.notes, in: app)
+        XCTAssertTrue(app.staticTexts["No notes yet"].appears(within: 5))
+        XCTAssertTrue(header.satisfies("isHittable == false", within: 5), "The large title isn't showing")
+        XCTAssertGreaterThan(app.navigationBars.firstMatch.frame.height, collapsedBar, "The bar is collapsed")
+    }
+
     /// The bar's small title (the header element, M6 amended) is faded out because the large title shows, and stays so;
     /// drags either way move neither it nor the empty state.
     private func assertEmptyReceiptsHoldStill(in app: XCUIApplication, line: UInt = #line) {

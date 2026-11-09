@@ -94,3 +94,22 @@ private func report(_ settling: inout HeaderSettling, _ insets: inout HeaderInse
     settling.update(rest: .large, scrolls: false)
     #expect(settling.target(insets: insets, inset: 170) == nil)
 }
+
+/// An empty grid pushed from Home (phone check F6, measured in the simulator): the bar opens at Home's large title
+/// height (164.67), then collapses by itself (116), and nothing touching the screen can bring it back. Content that
+/// doesn't scroll can't collapse the bar, so a collapse seen there is always expanded again.
+@Test func restingLargeAndStillExpandsABarThatCollapsesByItself() {
+    var settling = HeaderSettling(rest: .large, scrolls: false)
+    var insets = HeaderInsets()
+    #expect(report(&settling, &insets, inset: 164.67) == nil)
+    #expect(report(&settling, &insets, inset: 116) == .scrollView(offset: -164.67))
+    #expect(report(&settling, &insets, inset: 184.67) == nil)
+}
+
+/// Home rests large and scrolls: a collapse there is the person's scroll, and stays.
+@Test func restingLargeAndScrollingLeavesACollapseAlone() {
+    var settling = HeaderSettling(rest: .large, scrolls: true)
+    var insets = HeaderInsets()
+    _ = report(&settling, &insets, inset: 164.67)
+    #expect(report(&settling, &insets, inset: 116) == nil)
+}
