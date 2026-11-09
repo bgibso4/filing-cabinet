@@ -56,10 +56,13 @@ public struct TrashView: View {
             }
         }
         .toolbar {
-            // Always there, greyed out while Trash is empty, as in Passwords' Recently Deleted (B14). Built again when
+            // Always there, greyed out while Trash is empty, as in Passwords' Recently Deleted (B14); as Cancel it stays on,
+            // should Trash empty mid-selection (a purge). Built again when
             // the text size changes: the bar doesn't restyle a button it already holds, so Select would keep the old
             // size (the largest-text audit's Dynamic Type check finds it).
-            ToolbarItem(placement: .topBarTrailing) { selectButton.disabled(model.isEmpty).id(typeSize) }
+            ToolbarItem(placement: .topBarTrailing) {
+                selectButton.disabled(model.isEmpty && !model.isSelecting).id(typeSize)
+            }
         }
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
     }

@@ -15,6 +15,9 @@ struct HeaderTitle: ToolbarContent {
     /// True under the capture layer: the small title and subtitle leave the accessibility tree, as the screen under the
     /// layer does (the bar isn't inside the screen's view, so the root's hiding doesn't reach it).
     let isHidden: Bool
+    /// The screen's text size, read outside the bar: the bar hosts its title items at a clamped size, so the large title
+    /// takes it back from here to grow at any size (M7).
+    let typeSize: DynamicTypeSize
 
     // Plan 3, Task 3: the large subtitle sits 2 pt under the large title (Settings2.dc.html line 51).
     private static let largeSubtitleGap: CGFloat = 2
@@ -52,7 +55,10 @@ struct HeaderTitle: ToolbarContent {
                         .foregroundStyle(Tokens.Color.textSecondary)
                 }
             }
+            // Wraps rather than truncating: the bar's slot proposes one line's height.
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .dynamicTypeSize(typeSize)
             .accessibilityHidden(true)
         }
     }

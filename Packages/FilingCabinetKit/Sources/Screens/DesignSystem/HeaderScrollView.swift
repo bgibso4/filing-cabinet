@@ -18,6 +18,7 @@ struct HeaderScrollView<Content: View>: View {
     private let content: Content
 
     @Environment(\.captureLayerIsUp) private var captureLayerIsUp
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var position = ScrollPosition(y: 0)
     @State private var insets = HeaderInsets()
     @State private var settling: HeaderSettling
@@ -69,7 +70,13 @@ struct HeaderScrollView<Content: View>: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             HeaderTitle(
-                title: title, subtitle: subtitle, identifier: identifier, growth: growth, isHidden: captureLayerIsUp)
+                title: title,
+                subtitle: subtitle,
+                identifier: identifier,
+                growth: growth,
+                isHidden: captureLayerIsUp,
+                typeSize: typeSize
+            )
         }
     }
 

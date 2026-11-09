@@ -10,12 +10,13 @@ import Testing
 // Plan 3, E3: the bar's title slot on FC iPhone 17 is 314 pt beside the back button alone and 222 pt beside back and
 // Select. The title is centred, so its room is what is left between the two sides' widest button: 258 pt and 186 pt.
 private let roomBesideBack: CGFloat = 258
-private let roomBesideBackAndSelect: CGFloat = 186
+// E3's centred room beside back and Select (186 pt) isn't checked: no screen with Select beside back keeps its title
+// centred yet. Trash, the only one, may sit off-centre (E7).
 // Plan 3, E3 and E7 (Ben, 2026-11-09): Trash may sit off-centre at 100+ scans, never truncated, so its subtexts get the
 // whole slot beside back and Select.
 private let trashSlotBesideBackAndSelect: CGFloat = 222
-// Plan 3, E3: the bar draws the subtitle in SF Pro Regular 12 pt (Tokens.Typography.caption), at the default text size
-// whatever the setting (M7), so one size is the only one to measure.
+// Plan 3, E3: the bar draws the subtitle in SF Pro Regular 12 pt with monospaced digits (Tokens.Typography.caption), at
+// the default text size whatever the setting (M7), so one size is the only one to measure.
 private let subtitlePointSize: CGFloat = 12
 // B13: the longest form of a count is four digits.
 private let mostScans = 9_999
@@ -23,7 +24,10 @@ private let mostSelected = 999
 
 /// The width Core Text lays the line out at, in the system font (SF Pro) at the subtitle's size.
 private func subtitleWidth(_ text: String) throws -> CGFloat {
-    let font = try #require(CTFontCreateUIFontForLanguage(.system, subtitlePointSize, nil))
+    let system = try #require(CTFontCreateUIFontForLanguage(.system, subtitlePointSize, nil))
+    let descriptor = CTFontDescriptorCreateCopyWithFeature(
+        CTFontCopyFontDescriptor(system), kNumberSpacingType as CFNumber, kMonospacedNumbersSelector as CFNumber)
+    let font = CTFontCreateWithFontDescriptor(descriptor, subtitlePointSize, nil)
     let attributed = NSAttributedString(
         string: text, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font])
     let line = CTLineCreateWithAttributedString(attributed)
@@ -77,12 +81,11 @@ private func everySubtext() -> [Subtext] {
     }
 }
 
-/// The measure itself: a longer line is wider, and a short one fits the narrowest centred room (any other screen with
-/// Select beside back).
+/// The measure itself: a longer line is wider, and digits are monospaced as in the caption token.
 @Test func theMeasureGrowsWithTheText() throws {
     let short = try subtitleWidth("No scans")
     let long = try subtitleWidth("No scans · No scans")
     #expect(short > 0)
     #expect(long > short)
-    #expect(short < roomBesideBackAndSelect)
+    #expect(try subtitleWidth("1111") == subtitleWidth("8888"))
 }
