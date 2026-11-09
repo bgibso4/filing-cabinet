@@ -10,7 +10,7 @@
 
 **Spec:** Issues #61, #62 and #46 (Ben's Plan 1 and 2 phone checks); Ben's answers recorded below; Ben's Passwords screen recording (2026-11-08; kept off the repo because it shows his network names; what it shows is under "Seen in Ben's recording" below); the mocks at https://claude.ai/artifact/PVTq63b8qbbGYijZjDLMx1 (source `.superpowers/plandoc/plan3-mocks.html`); `docs/superpowers/specs/2026-10-10-filing-cabinet-requirements.html` section 06 ("Viewing works like Photos", Accessibility, Haptics); `docs/superpowers/specs/2026-10-31-engineering-foundations-design.md` (how); `design/` (02-01, 05-01…06, 07-01…08, 09-01/02/09, 10-01…03). Executors read these, and Plan 2 (`docs/superpowers/plans/2026-11-07-02-editing-and-self-cleaning.md`) for the conventions this plan continues.
 
-**Status:** Approved by Ben on 2026-11-08, with every question answered (B rows). Execution: subagent-driven (B12). Not started.
+**Status:** Approved by Ben on 2026-11-08, with every question answered (B rows). Execution: subagent-driven (B12), in progress (see "Decided during execution").
 
 ---
 
@@ -355,4 +355,7 @@ UITests/        BrowseJourneyTests, DetailsJourneyTests, Support/Sheet.swift
 
 | # | Decision | Whose | Task |
 |---|---|---|---|
-| | (empty until execution starts) | | |
+| E1 | **Header: option A, the system bar.** On the simulator it rests small, snaps large past halfway and stays (UIKit's own snap matches B6), collapses on scroll, uses serif in both sizes and keeps clear of Select, on the Receipts grid and Settings › Collections, short content included. It needs three pieces of our own: rest small by starting at `ScrollPosition(y: largeHeight)` and calling `scrollTo(y: 0)` once the bar's top inset first reports; the `.title`/`.subtitle` items fade themselves with `HeaderMotion.growth`, fed by the scroll view's top-inset growth (`largeHeight` measured at runtime, 58.7 pt here); no custom `ScrollTargetBehavior`, because it fought UIKit's snap. M8's minimum height goes on an outer container, not the content. **M6 amended (Ben, 2026-11-08):** the small bar title carries the header identifier and `.isHeader` in both states. Task 3 checks with VoiceOver that each title reads once and hides a duplicate if not; UI tests check the small title's hittability instead of its position. | spike; M6 change is Ben's | 1, 3–6 |
+| E2 | (pending: p95 per-frame page layout on Ben's iPhone; the run is ready on `spike/plan-3`) | | 1, 8 |
+| E3 | **Room for the small title:** the bar's slot is 314 pt beside back alone and 222 pt beside back and Select, on FC iPhone 17. Centred, that leaves **258 pt** and **186 pt**, and `HeaderFitTests` uses these. The bar draws the subtitle in SF Pro Regular 12 pt (= `Tokens.Typography.caption`) and its own title in SF Pro Semibold 17 pt. | spike (measured); centred widths my call (executor) | 1, 5 |
+| E4 | **`HeaderMotion.settle` is dropped** from Task 2 (and its three tests), because E1 leaves the snap to UIKit, so `settle` would be dead code. | my call (executor) | 2 |
