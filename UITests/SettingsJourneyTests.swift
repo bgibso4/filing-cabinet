@@ -92,6 +92,31 @@ final class SettingsJourneyTests: XCTestCase {
         attachScreenshot("notifications-back-from-iphone-settings", of: app)
     }
 
+    /// Appearance starts at System, and the menu checks the current choice. UI tests keep their preferences apart and
+    /// empty them at every launch, so a choice surviving a launch is a Fast test (`AppPreferences`), not this one's.
+    func testAppearanceMenuChangesTheChoice() throws {
+        let app = seededApp()
+        openSettings(in: app)
+        let appearance = app.buttons[AccessibilityID.Settings.appearance]
+        XCTAssertEqual(appearance.value as? String, "System")
+
+        appearance.tap()
+        XCTAssertTrue(menuItem("Dark", in: app).appears(within: 5))
+        XCTAssertTrue(menuItem("System", in: app).isSelected)
+        XCTAssertFalse(menuItem("Dark", in: app).isSelected)
+        attachScreenshot("appearance-menu", of: app)
+        menuItem("Dark", in: app).tap()
+        XCTAssertTrue(waitFor(appearance, value: "Dark"))
+        attachScreenshot("appearance-dark", of: app)
+
+        appearance.tap()
+        XCTAssertTrue(menuItem("Dark", in: app).appears(within: 5))
+        XCTAssertTrue(menuItem("Dark", in: app).isSelected)
+        menuItem("Light", in: app).tap()
+        XCTAssertTrue(waitFor(appearance, value: "Light"))
+        try audit(app)
+    }
+
     /// Collections rests with its title small; a pull brings out the large title, which stays after the pull ends (B6)
     /// until a scroll up collapses it again.
     func testPullingDownGrowsTheTitleAndItStays() {

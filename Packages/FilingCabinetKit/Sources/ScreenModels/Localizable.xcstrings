@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Dark" : {},
+    "Light" : {},
+    "System" : {},
     "%lld months" : {
       "localizations" : {
         "en" : {

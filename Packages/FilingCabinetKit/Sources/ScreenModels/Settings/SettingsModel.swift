@@ -21,6 +21,10 @@ public final class SettingsModel {
         self.version = version
     }
 
+    package var appearance: AppearanceChoice { preferences.appearance }
+
+    package func setAppearance(_ choice: AppearanceChoice) { preferences.appearance = choice }
+
     package var collectionsCount: Int { BuiltInCollection.allCases.count }
 
     /// On only when the person wants notes and iOS allows them.

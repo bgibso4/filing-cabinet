@@ -57,6 +57,17 @@ public struct RootView: View {
         }
         // Outermost, so the capture layer's cover gets it as well as Home.
         .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
+        // Settings › Appearance; nil follows the phone. Here so the cover and sheets, which present from this view,
+        // and the system-drawn bar titles all follow it.
+        .preferredColorScheme(colorScheme)
+    }
+
+    private var colorScheme: ColorScheme? {
+        switch dependencies.preferences.appearance {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
     }
 
     private var flow: ScanFlowModel { dependencies.flow }

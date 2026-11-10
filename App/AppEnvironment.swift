@@ -96,7 +96,8 @@ final class AppEnvironment {
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
-            forcesReduceMotion: options.reduceMotion
+            forcesReduceMotion: options.reduceMotion,
+            preferences: preferences
         )
     }
 

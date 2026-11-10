@@ -164,10 +164,11 @@ public enum AccessibilityID {
     /// Settings from Home's gear (10-01).
     public enum Settings {
         public static let collections = "settings.collections"
+        public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
 
         public static var all: [String] {
-            [collections, notifications]
+            [collections, appearance, notifications]
         }
     }
 

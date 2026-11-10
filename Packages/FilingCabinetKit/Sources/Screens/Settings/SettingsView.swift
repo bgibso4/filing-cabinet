@@ -39,6 +39,8 @@ public struct SettingsView: View {
             VStack(alignment: .leading, spacing: 0) {
                 group { collectionsRow }
                     .padding(.top, Self.groupGap)
+                group { appearanceRow }
+                    .padding(.top, Self.groupGap)
                 group { notificationsRow }
                     .padding(.top, Self.groupGap)
                 Text(model.footer)
@@ -83,6 +85,38 @@ public struct SettingsView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.Settings.collections)
+    }
+
+    /// The row, with a clear system menu button over it as the one accessibility element (as "Keep scans for").
+    private var appearanceRow: some View {
+        row(icon: "circle.lefthalf.filled") {
+            Text("Appearance", bundle: #bundle)
+                .font(Tokens.Typography.body)
+                .foregroundStyle(Tokens.Color.textPrimary)
+        } trailing: {
+            Text(model.appearance.title)
+                .font(Tokens.Typography.body)
+                .foregroundStyle(Tokens.Color.textSecondary)
+            MenuChevrons()
+        }
+        .accessibilityHidden(true)
+        .overlay {
+            MenuButton(
+                label: String(localized: "Appearance", bundle: #bundle),
+                value: model.appearance.title,
+                identifier: AccessibilityID.Settings.appearance,
+                menu: appearanceMenu)
+        }
+    }
+
+    /// System, Light and Dark, with a check on the current one.
+    private func appearanceMenu() -> UIMenu {
+        UIMenu(
+            children: AppearanceChoice.allCases.map { choice in
+                let action = UIAction(title: choice.title) { _ in model.setAppearance(choice) }
+                action.state = choice == model.appearance ? .on : .off
+                return action
+            })
     }
 
     /// The switch carries the name and note for VoiceOver; the text beside it is only drawn, so it can sit above the

@@ -18,6 +18,8 @@ public struct RootDependencies {
     let cameraMode: CameraMode
     /// `-ReduceMotion`: Reduce Motion's paths whatever the system setting, so UI tests can reach them.
     let forcesReduceMotion: Bool
+    /// Read at the root for Settings › Appearance.
+    let preferences: AppPreferences
 
     public init(
         home: HomeModel,
@@ -32,7 +34,8 @@ public struct RootDependencies {
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
         cameraMode: CameraMode,
-        forcesReduceMotion: Bool
+        forcesReduceMotion: Bool,
+        preferences: AppPreferences
     ) {
         self.home = home
         self.flow = flow
@@ -47,5 +50,6 @@ public struct RootDependencies {
         self.pages = pages
         self.cameraMode = cameraMode
         self.forcesReduceMotion = forcesReduceMotion
+        self.preferences = preferences
     }
 }
