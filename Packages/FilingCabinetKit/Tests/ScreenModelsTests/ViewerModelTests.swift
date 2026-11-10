@@ -44,6 +44,8 @@ private func model(
         calendar: utc,
         analytics: analytics,
         history: history,
+        export: ExportFolder().export,
+        photos: FakePhotoSaving(),
         mode: mode)
 }
 

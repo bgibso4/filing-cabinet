@@ -6,10 +6,10 @@ import ImageIO
 /// A scan as a PDF in the temporary folder (M10, M20): one page at a time, each page the page's own shape, 612 pt
 /// wide, its image stored as JPEG at 0.85. Files live in `Export/<uuid>/` and are removed when the share ends and
 /// at launch.
-package struct ScanExport: Sendable {
+public struct ScanExport: Sendable {
     /// Opens one page file, hands the decoded page to `draw` and lets it go when `draw` returns: the seam tests use
     /// to watch how many pages are open at once.
-    package typealias WithPage = @Sendable (URL, (CGImage) throws -> Void) throws -> Void
+    public typealias WithPage = @Sendable (URL, (CGImage) throws -> Void) throws -> Void
 
     /// M10: 612 pt (8.5 in) wide.
     private static let pageWidth: CGFloat = 612
@@ -20,7 +20,7 @@ package struct ScanExport: Sendable {
     private let folder: URL
     private let withPage: WithPage
 
-    package init(
+    public init(
         files: PageFileStore,
         folder: URL = FileManager.default.temporaryDirectory.appending(path: "Export", directoryHint: .isDirectory),
         withPage: WithPage? = nil
@@ -48,6 +48,11 @@ package struct ScanExport: Sendable {
             remove(directory)
             throw failure
         }
+    }
+
+    /// The scan's original page files, in page order: what Save to Photos adds (M11).
+    package func originalURLs(for scan: ScanSummary) -> [URL] {
+        files.originalURLs(pageCount: scan.pageCount, for: scan.id)
     }
 
     /// Removes every exported file. Missing is fine.

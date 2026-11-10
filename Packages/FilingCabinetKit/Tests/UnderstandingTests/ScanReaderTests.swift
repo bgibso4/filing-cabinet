@@ -11,13 +11,14 @@ private func text(_ lines: String..., top: String? = nil) -> PageText {
     return PageText(lines: out)
 }
 
+/// Copy Text copies it as stored: each page's lines, and a blank line between pages (M11).
 @Test func joinsSearchTextInPageOrder() async {
     let fake = FakeTextReader([.page(text("a", "b")), .page(text("c"))])
     let pages = [SyntheticPages.blank(), SyntheticPages.blank()]
 
     let reading = await ScanReader(reader: fake).read(pages)
 
-    #expect(reading.searchText == "a\nb\nc")
+    #expect(reading.searchText == "a\nb\n\nc")
     #expect(reading.failedPages == 0)
 }
 
@@ -27,7 +28,7 @@ private func text(_ lines: String..., top: String? = nil) -> PageText {
 
     let reading = await ScanReader(reader: fake).read(pages)
 
-    #expect(reading.searchText == "a\nc")
+    #expect(reading.searchText == "a\n\nc")
     #expect(reading.failedPages == 1)
 }
 

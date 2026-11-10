@@ -17,6 +17,7 @@ private let everyFlag = [
     "-TextReader", "documents",
     "-Notifications", "denied",
     "-NotificationsUnanswered",
+    "-Photos", "denied",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -36,6 +37,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.reader == .documents)
     #expect(options.notifications == .denied)
     #expect(options.notificationsUnanswered)
+    #expect(options.photos == .denied)
 }
 
 @Test func parsesSeedFavorites() {
@@ -59,6 +61,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.reader == .text)
     #expect(options.notifications == nil)
     #expect(!options.notificationsUnanswered)
+    #expect(options.photos == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -122,4 +125,13 @@ func invalidSeedCountIsIgnored(_ value: String) {
     #expect(LaunchOptions(arguments: ["-SeedTrash", "-2"], isDebugBuild: true).seedTrash == nil)
     #expect(LaunchOptions(arguments: ["-SeedTrash", "some"], isDebugBuild: true).seedTrash == nil)
     #expect(LaunchOptions(arguments: ["-SeedTrash", "3"], isDebugBuild: false).seedTrash == nil)
+}
+
+@Test(arguments: [("authorized", PhotosAuthorization.authorized), ("denied", .denied)])
+func photosFlagScriptsAuthorization(_ value: String, _ expected: PhotosAuthorization) {
+    #expect(LaunchOptions(arguments: ["-Photos", value], isDebugBuild: true).photos == expected)
+}
+
+@Test func unknownPhotosValueIsIgnored() {
+    #expect(LaunchOptions(arguments: ["-Photos", "limited"], isDebugBuild: true).photos == nil)
 }

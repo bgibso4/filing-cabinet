@@ -5,8 +5,9 @@ package struct EditAlert: Equatable {
     package let title: String
     package let message: String
 
-    init() {
-        title = String(localized: "Couldn’t save this change", bundle: #bundle)
+    /// "Couldn’t save this change", or what failed in its place ("Couldn’t save to Photos", M12).
+    init(title: String? = nil) {
+        self.title = title ?? String(localized: "Couldn’t save this change", bundle: #bundle)
         message = String(localized: "Something went wrong. Try again.", bundle: #bundle)
     }
 }

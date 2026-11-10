@@ -56,6 +56,15 @@ enum Fixtures {
     }
 
     static let thumbnails = FakeThumbnails(images: allImages)
+    /// Where the viewers made here would export to, and Photos for them; no snapshot shares or saves anything.
+    static let export: ScanExport = {
+        let base = FileManager.default.temporaryDirectory.appending(path: "SnapshotTests-Export")
+        let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
+        return ScanExport(
+            files: PageFileStore(location: location, fileSystem: LocalFileSystem()),
+            folder: base.appending(path: "Export"))
+    }()
+    static let photos = FakePhotoSaving()
     static let pages = FakePageImages(images: allImages)
 
     /// ScanView.dc.html line 332: the lease, three pages, kept forever, a favourite (06-01's filled heart).

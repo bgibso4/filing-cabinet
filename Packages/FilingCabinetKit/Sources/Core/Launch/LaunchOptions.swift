@@ -31,6 +31,8 @@ public struct LaunchOptions: Sendable, Equatable {
     /// `-NotificationsUnanswered`: a fake notification center that never answers what iOS allows, like a stuck
     /// notification service.
     public private(set) var notificationsUnanswered = false
+    /// `-Photos authorized|denied`: a fake Photos answers with this access, so no system prompt shows.
+    public private(set) var photos: PhotosAuthorization?
 
     private static let fakeCameraRange = 1...3
 
@@ -68,6 +70,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-SeedFavorites": seedFavorites = Self.count(value)
         case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
         case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
+        case "-Photos": photos = PhotosAuthorization(rawValue: value)
         default: break
         }
     }

@@ -45,7 +45,7 @@ import Testing
     // Documents' three pages, in order.
     #expect(
         texts[store.scans[3].id]
-            == "Sample scan 4\nPage 1\nSample scan 4\nPage 2\nSample scan 4\nPage 3")
+            == "Sample scan 4\nPage 1\n\nSample scan 4\nPage 2\n\nSample scan 4\nPage 3")
 }
 
 @MainActor

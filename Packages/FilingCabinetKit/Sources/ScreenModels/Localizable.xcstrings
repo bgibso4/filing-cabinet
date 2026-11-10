@@ -275,7 +275,12 @@
     "No results for “%@”" : {},
     "Search reads the words on every scan. Check the spelling or try another word." : {},
     "%lld scans in %@ and %@ mention “%@”." : {},
-    "%lld scans in other collections mention “%@”." : {}
+    "%lld scans in other collections mention “%@”." : {},
+    "Saved to Photos" : {},
+    "Saved to Files" : {},
+    "Copied" : {},
+    "Couldn’t save to Photos" : {},
+    "Couldn’t save to Files" : {}
   },
   "version" : "1.0"
 }

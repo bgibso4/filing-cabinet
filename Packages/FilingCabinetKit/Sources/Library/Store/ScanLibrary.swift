@@ -62,7 +62,6 @@ public protocol ScanLibrary: AnyObject {
     /// Every scan's recognized text, Trash included, as read, in one fetch. Empty when the fetch fails.
     func searchTexts() -> [ScanID: String]
 
-    // periphery:ignore - Task 11 (Plan 4) calls it for Copy Text; remove this when it lands
     /// The scan's recognized text, as read; nil when there is no such scan or the fetch fails.
     func searchText(for id: ScanID) -> String?
 }

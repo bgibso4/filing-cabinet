@@ -57,8 +57,9 @@ public enum LibrarySeed {
                     scannedAt: scannedAt,
                     expiryOverride: nil,
                     pages: pages,
-                    // What reading the pages finds: their lines, in page order, as the reader joins them.
-                    searchText: pageLines.flatMap { $0 }.joined(separator: "\n")
+                    // What reading the pages finds, as the reader joins it: each page's lines, a blank line between
+                    // pages.
+                    searchText: pageLines.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
                 ))
             ids.append(id)
         }

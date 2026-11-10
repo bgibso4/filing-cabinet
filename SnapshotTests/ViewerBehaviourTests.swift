@@ -36,7 +36,9 @@ struct ViewerBehaviourTests {
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
             analytics: RecordingAnalytics(),
-            history: Fixtures.searchHistory())
+            history: Fixtures.searchHistory(),
+            export: Fixtures.export,
+            photos: Fixtures.photos)
     }
 
     private func host(_ view: some View) throws -> UIWindow {
@@ -105,7 +107,9 @@ struct ViewerBehaviourTests {
                 today: today,
                 calendar: Fixtures.clock.calendar,
                 analytics: RecordingAnalytics(),
-                history: Fixtures.searchHistory())
+                history: Fixtures.searchHistory(),
+                export: Fixtures.export,
+                photos: Fixtures.photos)
             made.models.append(model)
             return model
         } content: { makeModel in

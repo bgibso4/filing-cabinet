@@ -116,9 +116,13 @@ public enum AccessibilityID {
         /// The heart, left of Info in the centre pill (06-01).
         public static let favorite = "viewer.favorite"
         public static let trash = "viewer.trash"
+        /// Share, at the bar's leading edge (06-01).
+        public static let share = "viewer.share"
+        /// The "•••" at the top's trailing edge, which opens More (06-03).
+        public static let more = "viewer.more"
 
         public static var all: [String] {
-            [back, header, page, strip, details, favorite, trash]
+            [back, header, page, strip, details, favorite, trash, share, more]
         }
     }
 

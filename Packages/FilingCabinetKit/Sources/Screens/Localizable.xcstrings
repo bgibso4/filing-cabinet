@@ -59,7 +59,14 @@
     "Recently viewed" : {},
     "Recent searches" : {},
     "Search" : {},
-    "Search all scans" : {}
+    "Search all scans" : {},
+    "Share" : {},
+    "More" : {},
+    "Save to Photos" : {},
+    "Save to Files" : {},
+    "Copy Text" : {},
+    "Photos access is off" : {},
+    "Filing Cabinet needs to add to Photos to save scans there. Tap Open Settings, then Photos, and choose Add Photos Only." : {}
   },
   "version" : "1.0"
 }

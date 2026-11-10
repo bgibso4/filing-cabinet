@@ -1,9 +1,14 @@
 import Core
+import Library
 import SwiftUI
 
-/// The viewer's bottom bar (ScanView.dc.html lines 260-268): the heart and Info in a glass pill at the centre (06-01),
-/// and Trash at the trailing edge, which asks first (06-04). Info opens Details. Share comes later in Plan 4.
+/// The viewer's bottom bar (ScanView.dc.html lines 260-268): Share at the leading edge (06-01), the heart and Info in a
+/// glass pill at the centre, and Trash at the trailing edge, which asks first (06-04). Info opens Details.
 struct ViewerBottomBar: View {
+    /// What Share sends: the scan as a PDF (M10); nil once the scan has gone.
+    let sharedPDF: ScanPDF?
+    /// The share sheet's preview title.
+    let title: String
     let isFavorite: Bool
     let onToggleFavorite: () -> Void
     let onDetails: () -> Void
@@ -18,13 +23,32 @@ struct ViewerBottomBar: View {
     private static let pillPadding: CGFloat = 10
     private static let pillButtonDiameter: CGFloat = 52
     private static let pillButtonGap = Tokens.Spacing.s1
-    // ScanView.dc.html line 267: Trash is 56 pt.
-    private static let trashDiameter: CGFloat = 56
+    // ScanView.dc.html lines 263 and 267: Share and Trash are 56 pt, each with a 23 pt glyph.
+    private static let circleDiameter: CGFloat = 56
+    // Title 2 is closest to the mock's 23 pt glyph.
+    private static let circleFont = Tokens.Typography.title2.weight(.regular)
 
     var body: some View {
         ZStack {
             infoPill
-            trashButton.frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                shareButton
+                Spacer(minLength: 0)
+                trashButton
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var shareButton: some View {
+        if let sharedPDF {
+            ShareLink(item: sharedPDF, preview: SharePreview(title)) {
+                GlassCircleLabel(
+                    systemImage: "square.and.arrow.up", font: Self.circleFont, diameter: Self.circleDiameter)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Share", bundle: #bundle))
+            .accessibilityIdentifier(AccessibilityID.Viewer.share)
         }
     }
 
@@ -44,7 +68,7 @@ struct ViewerBottomBar: View {
                 .accessibilityIdentifier(AccessibilityID.Viewer.details)
         }
         .padding(.horizontal, Self.pillPadding)
-        .padding(.vertical, (Self.trashDiameter - Self.pillButtonDiameter) / 2)
+        .padding(.vertical, (Self.circleDiameter - Self.pillButtonDiameter) / 2)
         .glassEffect(.regular.interactive(), in: .capsule)
     }
 
@@ -64,11 +88,10 @@ struct ViewerBottomBar: View {
     private var trashButton: some View {
         GlassCircleButton(
             systemImage: "trash",
-            // Title 2 is closest to the mock's 23 pt glyph.
-            font: Tokens.Typography.title2.weight(.regular),
+            font: Self.circleFont,
             label: Text("Move to Trash", bundle: #bundle),
             identifier: AccessibilityID.Viewer.trash,
-            diameter: Self.trashDiameter,
+            diameter: Self.circleDiameter,
             action: { isConfirmingTrash = true }
         )
         .moveToTrashConfirmation(isPresented: $isConfirmingTrash, message: trashMessage, move: onTrash)
