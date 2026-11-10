@@ -38,6 +38,12 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.notificationsUnanswered)
 }
 
+@Test func parsesSeedFavorites() {
+    #expect(LaunchOptions(arguments: ["-SeedFavorites", "3"], isDebugBuild: true).seedFavorites == 3)
+    #expect(LaunchOptions(arguments: ["-SeedFavorites", "-1"], isDebugBuild: true).seedFavorites == nil)
+    #expect(LaunchOptions(arguments: ["-SeedFavorites", "3"], isDebugBuild: false).seedFavorites == nil)
+}
+
 @Test func releaseIgnoresEveryFlag() {
     let options = LaunchOptions(arguments: everyFlag, isDebugBuild: false)
     #expect(options == LaunchOptions(arguments: [], isDebugBuild: true))

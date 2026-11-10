@@ -16,6 +16,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var seedScans: Int?
     /// `-SeedTrash <n>`: saves `n` synthetic scans at launch, already moved to Trash on staggered days.
     public private(set) var seedTrash: Int?
+    /// `-SeedFavorites <n>`: the first `n` scans `-SeedScans` saves are favourites, in seed order.
+    public private(set) var seedFavorites: Int?
     /// `-FailSave`: the next page write fails with a full disk.
     public private(set) var failNextSave = false
     /// `-FakeReader`: every page reads as the synthetic City Pharmacy receipt (M16).
@@ -63,6 +65,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-FixedDate": fixedDate = Self.noonUTC(value)
         case "-SeedScans": seedScans = Self.count(value)
         case "-SeedTrash": seedTrash = Self.count(value)
+        case "-SeedFavorites": seedFavorites = Self.count(value)
         case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
         case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
         default: break

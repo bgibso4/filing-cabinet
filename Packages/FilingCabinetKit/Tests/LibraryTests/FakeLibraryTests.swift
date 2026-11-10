@@ -160,3 +160,72 @@ private func summary(_ title: String, _ collection: BuiltInCollection, scannedAt
     #expect(try await library.emptyTrash() == 2)
     #expect(library.scans.map(\.id) == [kept.id])
 }
+
+/// Scans a day apart from Oct 10 back, the first newest.
+private func dated(_ titles: [String]) -> [ScanSummary] {
+    titles.enumerated().map { summary($1, .notes, scannedAt: noon(10, 10 - $0)) }
+}
+
+@MainActor
+private func orders(_ scans: [ScanSummary], in library: FakeLibrary) -> [Int?] {
+    scans.map { scan in library.scans.first { $0.id == scan.id }?.favoriteOrder }
+}
+
+@MainActor
+@Test func fakeFavoritingPutsNewOnesLast() throws {
+    let scans = dated(["A", "B", "C"])
+    let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
+
+    try library.setFavorite(true, for: [scans[2].id])
+    try library.setFavorite(true, for: [scans[0].id])
+
+    #expect(orders(scans, in: library) == [1, nil, 0])
+}
+
+@MainActor
+@Test func fakeFavoritingSeveralKeepsTheirOrder() throws {
+    let scans = dated(["A", "B", "C", "D"])
+    let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
+    try library.setFavorite(true, for: [scans[3].id])
+
+    try library.setFavorite(true, for: [scans[1].id, scans[0].id, scans[2].id])
+
+    #expect(orders(scans, in: library) == [2, 1, 3, 0])
+}
+
+@MainActor
+@Test func fakeNewFavoriteSkipsNumbersHeldInTrash() throws {
+    let scans = dated(["A", "B", "C"])
+    let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
+    try library.setFavorite(true, for: [scans[0].id, scans[1].id])
+    try library.moveToTrash([scans[1].id])
+
+    try library.setFavorite(true, for: [scans[2].id])
+
+    #expect(orders(scans, in: library) == [0, 1, 2])
+}
+
+@MainActor
+@Test func fakeReorderKeepsTrashedFavoritesInPlace() throws {
+    let scans = dated(["A", "B", "C", "D"])
+    let library = FakeLibrary(scans: scans, clock: octoberTwelfth)
+    try library.setFavorite(true, for: scans.map(\.id))
+    try library.moveToTrash([scans[1].id])
+
+    try library.reorderFavorites([scans[3].id, scans[2].id, scans[0].id])
+
+    #expect(orders(scans, in: library) == [3, 1, 2, 0])
+}
+
+@MainActor
+@Test func fakeKeepsSearchTextLikeTheStore() async throws {
+    let fake = FakeLibrary()
+    let scan = draft(scannedAt: 1_000)
+    try await fake.save(scan)
+
+    fake.updateSearchText("corner market", for: scan.id)
+
+    #expect(fake.searchTexts() == [scan.id: "corner market"])
+    #expect(fake.searchText(for: scan.id) == "corner market")
+    #expect(fake.searchText(for: ScanID()) == nil)
+}

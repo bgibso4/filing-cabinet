@@ -149,7 +149,7 @@ final class AppEnvironment {
     }
 
     /// Clears what an interrupted save left behind, deletes what has had its 30 days in Trash, and only then seeds
-    /// (`-SeedScans`, `-SeedTrash`) and enables Scan. Then reads what iOS allows for Home's banner.
+    /// (`-SeedScans` with `-SeedFavorites`, `-SeedTrash`) and enables Scan. Then reads what iOS allows for Home's banner.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
@@ -158,7 +158,8 @@ final class AppEnvironment {
         #if DEBUG
             if let count = options.seedScans {
                 do {
-                    try await LibrarySeed.seed(store, count: count, clock: clock)
+                    try await LibrarySeed.seed(
+                        store, count: count, favorites: options.seedFavorites ?? 0, clock: clock)
                 } catch {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"

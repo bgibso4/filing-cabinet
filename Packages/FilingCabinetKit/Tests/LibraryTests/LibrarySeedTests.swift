@@ -51,3 +51,13 @@ import Testing
     #expect(Set(store.scans.map(\.title)).count == 5)
     #expect(store.scans.allSatisfy { store.pageFileURLs(for: $0.id).count == $0.pageCount })
 }
+
+@MainActor
+@Test func seedFavoritesTheFirstScansInSeedOrder() async throws {
+    let store = try makeStore()
+
+    try await LibrarySeed.seed(store, count: 4, favorites: 2, clock: octoberTwelfth)
+
+    // Newest first, so the store's order is the seed order.
+    #expect(store.scans.map(\.favoriteOrder) == [0, 1, nil, nil])
+}

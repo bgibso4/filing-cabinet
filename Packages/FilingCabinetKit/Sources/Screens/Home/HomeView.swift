@@ -148,6 +148,10 @@ private final class PreviewLibrary: ScanLibrary {
     func emptyTrash() async throws(LibraryError) -> Int { 0 }
     func setLifespan(_ lifespan: Lifespan, for collection: BuiltInCollection) throws(LibraryError) {}
     func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int { 0 }
+    func setFavorite(_ isFavorite: Bool, for ids: [ScanID]) throws(LibraryError) {}
+    func reorderFavorites(_ ids: [ScanID]) throws(LibraryError) {}
+    func searchTexts() -> [ScanID: String] { [:] }
+    func searchText(for id: ScanID) -> String? { nil }
 }
 
 @MainActor

@@ -19,11 +19,11 @@ public final class ScanStore: ScanLibrary {
     /// Held so the main context keeps working: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let files: PageFileStore
-    /// Today, for Trash days.
-    @ObservationIgnored private let clock: AppClock
+    /// Today, for Trash days. Internal, like the helpers the favourites extension uses.
+    @ObservationIgnored let clock: AppClock
     @ObservationIgnored private let persist: (ModelContext) throws -> Void
     /// Every fetch of scan records goes through here.
-    @ObservationIgnored private let fetch: (ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord]
+    @ObservationIgnored let fetch: (ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord]
     /// Scans whose files may be on disk before their record is: orphan cleanup must leave them alone.
     @ObservationIgnored private var inFlight: Set<ScanID> = []
 
@@ -59,7 +59,7 @@ public final class ScanStore: ScanLibrary {
     /// The SwiftData container for the library, migrating an older store to the current schema. A nil
     /// `storeURL` keeps the store in memory.
     public static func makeContainer(storeURL: URL?) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: SchemaV2.self)
+        let schema = Schema(versionedSchema: SchemaV3.self)
         let configuration =
             if let storeURL {
                 ModelConfiguration(schema: schema, url: storeURL)
@@ -191,7 +191,7 @@ public final class ScanStore: ScanLibrary {
     }
 
     /// Changes each scan's record, then persists: all or nothing.
-    private func edit(_ ids: [ScanID], _ change: (ScanRecord) -> Void) throws(LibraryError) {
+    func edit(_ ids: [ScanID], _ change: (ScanRecord) -> Void) throws(LibraryError) {
         try records(for: ids).forEach(change)
         try persistEdit()
     }
@@ -253,12 +253,12 @@ public final class ScanStore: ScanLibrary {
         }
     }
 
-    private static func list(_ ids: [ScanID]) -> String {
+    static func list(_ ids: [ScanID]) -> String {
         ids.map(\.uuid.uuidString).joined(separator: ", ")
     }
 
     /// The one context every SwiftData read and write goes through.
-    private var context: ModelContext { container.mainContext }
+    var context: ModelContext { container.mainContext }
 
     /// Every recorded scan, in one fetch; nil when the fetch fails.
     private func recordedScanIDs() -> Set<UUID>? {
@@ -272,7 +272,7 @@ public final class ScanStore: ScanLibrary {
         }
     }
 
-    private func record(for id: ScanID) -> ScanRecord? {
+    func record(for id: ScanID) -> ScanRecord? {
         let uuid = id.uuid
         var descriptor = FetchDescriptor<ScanRecord>(predicate: #Predicate { $0.scanID == uuid })
         descriptor.fetchLimit = 1

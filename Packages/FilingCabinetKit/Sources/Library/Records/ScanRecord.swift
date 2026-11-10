@@ -2,7 +2,7 @@ import Core
 import Foundation
 import SwiftData
 
-extension SchemaV2 {
+extension SchemaV3 {
     /// One saved scan in the store. Plain values only: every property has a default, nothing is unique and
     /// there are no relationships, so later schema changes stay lightweight. Never leaves the main context;
     /// hand out `summary` instead.
@@ -21,6 +21,8 @@ extension SchemaV2 {
         var searchText: String = ""
         /// A `CalendarDay.storageValue`; set while the scan is in Trash.
         var trashedDay: Int?
+        /// The scan's place in Favorites, lower first; nil when it isn't a favourite (M1). Only `ScanStore` sets it.
+        var favoriteOrder: Int?
 
         init() {}
 
@@ -60,7 +62,8 @@ extension SchemaV2 {
                 scannedAt: scannedAt,
                 expiryOverride: expiryOverride,
                 pageCount: pageFileNames.count,
-                trashedDay: trashedDay.flatMap(CalendarDay.init(storageValue:))
+                trashedDay: trashedDay.flatMap(CalendarDay.init(storageValue:)),
+                favoriteOrder: favoriteOrder
             )
         }
     }

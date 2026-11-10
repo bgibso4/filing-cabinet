@@ -13,10 +13,12 @@ public enum LibrarySeed {
     private static let documentPageCount = 3
 
     /// Saves `count` scans, cycling through the five collections in display order: one page each, more in Documents.
-    /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first.
+    /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
+    /// favourites, in seed order.
     @MainActor
-    public static func seed(_ store: ScanStore, count: Int, clock: AppClock) async throws {
-        _ = try await save(store, count: count, titled: "Sample scan", clock: clock)
+    public static func seed(_ store: ScanStore, count: Int, favorites: Int = 0, clock: AppClock) async throws {
+        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock)
+        try store.setFavorite(true, for: Array(ids.prefix(favorites)))
     }
 
     /// Saves `count` scans as `seed` does, then moves scan `n` to Trash on the day it was scanned, `n` days before
