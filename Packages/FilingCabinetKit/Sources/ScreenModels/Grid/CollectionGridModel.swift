@@ -3,7 +3,7 @@ import Foundation
 import Library
 import Observation
 
-/// What a grid shows: a collection's scans, Recent or All Scans, newest first, with Select for several at once and Move
+/// What a grid shows: a collection's scans, Recent or All Scans, newest first (Favorites in its own order), with Select for several at once and Move
 /// to Trash for them (#68, as Trash's select mode). Expired scans are hidden (M5); everything is read from the library
 /// and from `Today`, so the grid moves when either does, and a scan that leaves the grid leaves the selection.
 @Observable
@@ -46,6 +46,7 @@ public final class CollectionGridModel {
         case .collection(let collection): CollectionText.name(collection)
         case .recent: CollectionText.recent
         case .all: CollectionText.allScans
+        case .favorites: CollectionText.favorites
         }
     }
 
@@ -57,7 +58,7 @@ public final class CollectionGridModel {
             CollectionText.scanCountAndLifespan(scans(on: shelf).count, shelf.lifespans[collection])
         case .recent:
             CollectionText.lastThirtyDays
-        case .all:
+        case .all, .favorites:
             CollectionText.scanCount(scans(on: shelf).count)
         }
     }
@@ -80,7 +81,8 @@ public final class CollectionGridModel {
                 collectionName: collectionName,
                 timeLeft: timeLeft,
                 isSoon: shelf.isSoon(scan),
-                dot: showsWideScansWhole ? scan.collection : nil
+                dot: showsWideScansWhole ? scan.collection : nil,
+                isFavorite: scan.isFavorite
             )
         }
     }
@@ -154,6 +156,20 @@ public final class CollectionGridModel {
         return MoveToTrashText.announcement(count: scans.count)
     }
 
+    /// A tile's VoiceOver Favorite or Remove from Favorites: flips the scan's heart. A failed write shows the edit
+    /// alert and changes nothing (P2).
+    package func toggleFavorite(_ id: ScanID) {
+        guard let scan = scans(on: shelf).first(where: { $0.id == id }) else { return }
+        let isFavorite = !scan.isFavorite
+        do {
+            try library.setFavorite(isFavorite, for: [id])
+        } catch {
+            editAlert = EditAlert()
+            return
+        }
+        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: 1))
+    }
+
     /// The edit alert's OK.
     package func dismissEditAlert() {
         editAlert = nil
@@ -180,6 +196,7 @@ public final class CollectionGridModel {
         case .collection(let collection): shelf.in(collection)
         case .recent: shelf.recent
         case .all: shelf.visible
+        case .favorites: shelf.favorites
         }
     }
 }

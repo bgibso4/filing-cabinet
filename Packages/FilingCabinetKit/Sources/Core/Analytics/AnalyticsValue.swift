@@ -2,7 +2,6 @@
 /// our own enums conforming to `AnalyticsToken`; new payload values are added the same way.
 public enum AnalyticsValue: Sendable, Equatable {
     case int(Int)
-    // periphery:ignore - analytics payload vocabulary; no event carries a flag yet
     case bool(Bool)
     case token(AnalyticsTokenValue)
 }

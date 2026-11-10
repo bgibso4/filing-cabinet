@@ -9,4 +9,7 @@ public enum AnalyticsKey: String, Sendable {
     case field
     case count
     case lifespan
+    case isFavorite
+    case kind
+    case resultCount
 }

@@ -108,6 +108,8 @@ public struct RootView: View {
             grid(.recent)
         case .all:
             grid(.all)
+        case .favorites:
+            grid(.favorites)
         case .trash:
             GridRoute(makeModel: dependencies.makeTrash) { model in
                 TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.trashedScan($0)) })

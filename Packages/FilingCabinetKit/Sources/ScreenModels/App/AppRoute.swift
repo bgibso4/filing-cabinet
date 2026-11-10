@@ -5,6 +5,7 @@ public enum AppRoute: Hashable {
     case collection(BuiltInCollection)
     case recent
     case all
+    case favorites
     case trash
     case scan(ScanID)
     /// A scan opened from Trash, with Restore and Delete now.

@@ -71,9 +71,52 @@ private struct Expected {
     }
 }
 
+@Test func favoriteAndExportEventsCarryBucketedCounts() {
+    let expected = [
+        Expected(
+            event: .favoritesChanged(isFavorite: true, count: 3),
+            name: "favoritesChanged",
+            payload: [.isFavorite: .bool(true), .count: .token(.init(CountBucket.fewer))]),
+        Expected(
+            event: .scansExported(kind: .copyText, count: 1),
+            name: "scansExported",
+            payload: [.kind: .token(.init(ExportKind.copyText)), .count: .token(.init(CountBucket.one))]),
+        Expected(
+            event: .searchSaved(resultCount: 0),
+            name: "searchSaved",
+            payload: [.resultCount: .token(.init(CountBucket.none))]),
+    ]
+    for item in expected {
+        #expect(item.event.name == item.name)
+        #expect(item.event.payload == item.payload, "\(item.name)")
+    }
+}
+
 @Test func tokensKeepTheirRawValues() {
     #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])
     #expect(FailureReason.allCases.map(\.rawValue) == ["diskFull", "writeFailed"])
     #expect(EditedField.allCases.map(\.rawValue) == ["title", "collection", "expiry"])
+}
+
+@Test func countsFallIntoFourBuckets() {
+    let buckets = [0, 1, 2, 5, 6, 400].map { CountBucket($0).rawValue }
+    #expect(buckets == ["none", "one", "fewer", "fewer", "many", "many"])
+    #expect(ExportKind.allCases.map(\.rawValue) == ["share", "photos", "files", "copyText"])
+}
+
+@Test func favoriteEventsCarryNoText() {
+    let events: [AnalyticsEvent] = [
+        .favoritesChanged(isFavorite: false, count: 9), .scansExported(kind: .share, count: 2),
+        .searchSaved(resultCount: 12),
+    ]
+    for event in events {
+        for value in event.payload.values {
+            switch value {
+            case .int: Issue.record("a count must be bucketed")
+            case .bool, .token: break
+            }
+        }
+        #expect(event.payload.keys.allSatisfy { [.isFavorite, .kind, .count, .resultCount].contains($0) })
+    }
 }

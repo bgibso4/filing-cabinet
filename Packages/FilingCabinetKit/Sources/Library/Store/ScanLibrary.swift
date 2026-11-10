@@ -46,7 +46,6 @@ public protocol ScanLibrary: AnyObject {
     /// How many scans in the library `setLifespan` would send to Trash today.
     func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int
 
-    // periphery:ignore - Tasks 3 and 5 (Plan 4) call it from the screens; remove this when they land
     /// Favourites the scans, last and in the order of `ids` (B8), or un-favourites them. A scan already as asked is
     /// left alone. Numbers never clash, Trash included (M3); a stored tie is renumbered first (B11).
     func setFavorite(_ isFavorite: Bool, for ids: [ScanID]) throws(LibraryError)

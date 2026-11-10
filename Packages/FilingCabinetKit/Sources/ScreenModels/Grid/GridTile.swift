@@ -10,9 +10,17 @@ package struct GridTile: Identifiable, Equatable {
     package let isSoon: Bool
     /// The collection's dot, in the grids that mix collections (05-04); nil in a single collection's grid.
     package let dot: BuiltInCollection?
+    /// Marked with a heart (M13).
+    package let isFavorite: Bool
 
     package init(
-        id: ScanID, title: String, collectionName: String, timeLeft: String, isSoon: Bool, dot: BuiltInCollection?
+        id: ScanID,
+        title: String,
+        collectionName: String,
+        timeLeft: String,
+        isSoon: Bool,
+        dot: BuiltInCollection?,
+        isFavorite: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -20,10 +28,12 @@ package struct GridTile: Identifiable, Equatable {
         self.timeLeft = timeLeft
         self.isSoon = isSoon
         self.dot = dot
+        self.isFavorite = isFavorite
     }
 
-    /// What VoiceOver reads for the whole tile: "Corner Market, Receipts, 2 days left".
+    /// What VoiceOver reads for the whole tile: "Corner Market, Receipts, 2 days left", then ", favorite" (M13).
     package var accessibilityLabel: String {
-        String(localized: "\(title), \(collectionName), \(timeLeft)", bundle: #bundle)
+        let label = String(localized: "\(title), \(collectionName), \(timeLeft)", bundle: #bundle)
+        return isFavorite ? String(localized: "\(label), favorite", bundle: #bundle) : label
     }
 }

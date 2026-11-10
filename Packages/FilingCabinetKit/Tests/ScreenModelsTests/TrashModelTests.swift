@@ -353,3 +353,16 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
         TrashHarness(three).model.notice == "Scans stay in Trash for 30 days, then they’re permanently deleted.")
     #expect(TrashHarness([]).model.notice == nil)
 }
+
+@Test func trashTilesKeepTheirHeart() {
+    var hearted = coatCheck
+    hearted.favoriteOrder = 0
+    let model = TrashHarness([hearted, pharmacy]).model
+    #expect(model.tiles.filter(\.isFavorite).map(\.title) == ["Coat check"])
+    let tile = model.tiles.first { $0.title == "Coat check" }
+    #expect(tile?.isFavorite == true)
+    #expect(tile?.accessibilityLabel == "Coat check, Throwaways, 28 days left, favorite")
+    #expect(
+        model.tiles.first { $0.title == "City Pharmacy" }?.accessibilityLabel
+            == "City Pharmacy, Receipts, 1 day left")
+}

@@ -16,7 +16,7 @@ private let utc: Calendar = {
 
 private let noon = CalendarDay(year: 2026, month: 10, day: 12).date(in: utc).addingTimeInterval(12 * 3600)
 
-private func scan(_ title: String, _ collection: BuiltInCollection, daysAgo: Int = 0) -> ScanSummary {
+func scan(_ title: String, _ collection: BuiltInCollection, daysAgo: Int = 0) -> ScanSummary {
     ScanSummary(
         id: ScanID(),
         title: title,
@@ -197,7 +197,7 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
 
 /// A grid with its library and analytics, for select mode.
 @MainActor
-private struct GridHarness {
+struct GridHarness {
     let analytics = RecordingAnalytics()
     let library: FakeLibrary
     let grid: CollectionGridModel

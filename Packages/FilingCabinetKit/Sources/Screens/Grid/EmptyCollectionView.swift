@@ -38,6 +38,8 @@ struct EmptyCollectionView: View {
             ViewBadge(symbol: ViewSymbol.recent, diameter: Self.badgeDiameter, symbolSize: Self.symbolSize)
         case .all:
             ViewBadge(symbol: ViewSymbol.all, diameter: Self.badgeDiameter, symbolSize: Self.symbolSize)
+        case .favorites:
+            ViewBadge(symbol: ViewSymbol.favorites, diameter: Self.badgeDiameter, symbolSize: Self.symbolSize)
         }
     }
 }
