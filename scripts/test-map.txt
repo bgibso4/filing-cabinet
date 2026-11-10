@@ -21,6 +21,7 @@ scripts/ NONE
 Packages/FilingCabinetKit/Tests/ NONE
 
 # Shared: everything.
+Makefile ALL
 design/tokens.json ALL
 scripts/generate-tokens.swift ALL
 App/ ALL
