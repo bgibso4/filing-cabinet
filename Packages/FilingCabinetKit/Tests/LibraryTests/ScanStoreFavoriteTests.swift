@@ -334,3 +334,24 @@ private struct SeededGenerator: RandomNumberGenerator {
     #expect(store.searchText(for: ids[1]) == "B text")
     #expect(store.searchText(for: ScanID()) == nil)
 }
+
+/// Review Focus 3: a reorder is in the store file, so it survives a relaunch (UI tests run on an in-memory store).
+@MainActor
+@Test func reorderSurvivesReopening() async throws {
+    let location = temporaryLocation()
+    try FileManager.default.createDirectory(at: location.root, withIntermediateDirectories: true)
+    let files = PageFileStore(location: location, fileSystem: LocalFileSystem())
+    let ids: [ScanID]
+    do {
+        let store = ScanStore(
+            container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files, clock: octoberTwelfth)
+        ids = try await save(["A", "B", "C"], in: store)
+        try store.setFavorite(true, for: ids)
+        try store.reorderFavorites([ids[2], ids[0], ids[1]])
+    }
+
+    let reopened = ScanStore(
+        container: try ScanStore.makeContainer(storeURL: location.storeURL), files: files, clock: octoberTwelfth)
+
+    #expect(favorites(in: reopened) == [ids[2], ids[0], ids[1]])
+}

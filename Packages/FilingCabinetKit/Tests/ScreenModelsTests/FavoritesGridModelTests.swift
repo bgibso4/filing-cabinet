@@ -104,3 +104,97 @@ private func favorites(_ titles: String...) -> [ScanSummary] {
     let everyFavorite = harness.library.scans.filter(\.isFavorite).sorted(by: ScanSummary.favoritesOrder)
     #expect(everyFavorite.map(\.id) == [made[0].id, made[2].id, scanB, made[3].id])
 }
+
+// MARK: - Your own order, by drag (Task 6, M8)
+
+@Test func dragReordersFavorites() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport", "Card"))
+    let tiles = harness.grid.tiles
+
+    harness.grid.moveFavorites([tiles[2].id], before: tiles[0].id)
+
+    #expect(harness.grid.tiles.map(\.title) == ["Passport", "License", "Lease", "Card"])
+    #expect(harness.reopened().tiles.map(\.title) == ["Passport", "License", "Lease", "Card"], "in the library")
+}
+
+@Test func failedDragShowsTheAlert() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    harness.library.failNextEdit = .writeFailed
+
+    harness.grid.moveFavorites([tiles[2].id], before: tiles[0].id)
+
+    #expect(harness.grid.editAlert == EditAlert())
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Lease", "Passport"])
+}
+
+/// A kept tile isn't a favourite (M9), so it has no place to move to: it stays where it was, and the favourites around
+/// it keep their order.
+@Test func keptTileDoesNotMove() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    harness.grid.toggleFavorite(tiles[1].id)
+
+    harness.grid.moveFavorites([tiles[1].id], before: nil)
+
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Lease", "Passport"])
+    #expect(harness.grid.editAlert == nil)
+}
+
+/// Moving a favourite past a kept tile: the favourites take the new order; the kept tile holds its old place.
+@Test func dragPastAKeptTile() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    harness.grid.toggleFavorite(tiles[1].id)
+
+    harness.grid.moveFavorites([tiles[0].id], before: nil)
+
+    #expect(harness.grid.tiles.map(\.title) == ["Passport", "Lease", "License"])
+    #expect(harness.reopened().tiles.map(\.title) == ["Passport", "License"])
+}
+
+// VoiceOver's Move earlier and Move later on a favourite's tile (E2: the system's own move actions couldn't be shown).
+
+@Test func onlyFavoritesTilesMoveByAction() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    #expect(harness.grid.tiles.map(\.canMoveEarlier) == [false, true, true])
+    #expect(harness.grid.tiles.map(\.canMoveLater) == [true, true, false])
+
+    let all = GridHarness(.all, favorites("License", "Lease"))
+    #expect(all.grid.tiles.map(\.canMoveEarlier) == [false, false], "only Favorites has an order of its own")
+    #expect(all.grid.tiles.map(\.canMoveLater) == [false, false])
+}
+
+@Test func noMoveActionsWhileSelecting() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease"))
+    harness.grid.toggleSelecting()
+    #expect(harness.grid.tiles.map(\.canMoveEarlier) == [false, false])
+    #expect(harness.grid.tiles.map(\.canMoveLater) == [false, false])
+}
+
+@Test func moveEarlierAndLater() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let passport = harness.grid.tiles[2].id
+
+    harness.grid.moveFavoriteEarlier(passport)
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Passport", "Lease"])
+    harness.grid.moveFavoriteEarlier(passport)
+    #expect(harness.grid.tiles.map(\.title) == ["Passport", "License", "Lease"])
+    harness.grid.moveFavoriteLater(passport)
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Passport", "Lease"])
+    harness.grid.moveFavoriteLater(passport)
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Lease", "Passport"])
+}
+
+/// A kept tile has no move actions, and a favourite's step skips over it to the next favourite.
+@Test func moveActionsSkipAKeptTile() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    harness.grid.toggleFavorite(tiles[1].id)
+    #expect(harness.grid.tiles.map(\.canMoveEarlier) == [false, false, true])
+    #expect(harness.grid.tiles.map(\.canMoveLater) == [true, false, false])
+
+    harness.grid.moveFavoriteLater(tiles[0].id)
+
+    #expect(harness.reopened().tiles.map(\.title) == ["Passport", "License"])
+}

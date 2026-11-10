@@ -29,6 +29,8 @@ public struct CollectionGridView: View {
     @State private var firstFrame: OSSignpostIntervalState? = ScreensLog.signposter.beginInterval("Grid first frame")
     @State private var prefetcher = GridPrefetcher()
     @State private var isConfirmingMove = false
+    /// Counts drops in Favorites, for a light tap as each one lands.
+    @State private var drops = 0
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -128,9 +130,25 @@ public struct CollectionGridView: View {
                     if model.isSelecting { model.toggle(tile.id) } else { onOpen(tile.id) }
                 } onToggleFavorite: {
                     model.toggleFavorite(tile.id)
+                } onMoveEarlier: {
+                    model.moveFavoriteEarlier(tile.id)
+                } onMoveLater: {
+                    model.moveFavoriteLater(tile.id)
                 }
             }
+            .reorderable()
         }
+        // Only Favorites has an order of your own (M8); not while selecting, where a tap ticks (P5).
+        .reorderContainer(for: GridTile.self, isEnabled: model.kind == .favorites && !model.isSelecting) { difference in
+            let destination: ScanID? =
+                switch difference.destination.position {
+                case .before(let id): id
+                case .end: nil
+                }
+            model.moveFavorites(difference.sources, before: destination)
+            drops += 1
+        }
+        .sensoryFeedback(.selection, trigger: drops)
         .padding(.top, Self.gridTopGap)
         .padding(.horizontal, Tokens.Spacing.s4)
         .padding(.bottom, Self.contentEndGap)

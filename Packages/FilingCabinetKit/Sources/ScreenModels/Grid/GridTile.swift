@@ -15,6 +15,10 @@ package struct GridTile: Identifiable, Equatable {
     /// Taken out of Favorites while Favorites is on screen: the tile stays, with an empty heart, until the screen goes
     /// (M9).
     package let isUnfavorited: Bool
+    /// VoiceOver's Move earlier and Move later: a favourite in Favorites, not while selecting, with a favourite before
+    /// (or after) it.
+    package let canMoveEarlier: Bool
+    package let canMoveLater: Bool
 
     package init(
         id: ScanID,
@@ -24,7 +28,9 @@ package struct GridTile: Identifiable, Equatable {
         isSoon: Bool,
         dot: BuiltInCollection?,
         isFavorite: Bool = false,
-        isUnfavorited: Bool = false
+        isUnfavorited: Bool = false,
+        canMoveEarlier: Bool = false,
+        canMoveLater: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -34,6 +40,8 @@ package struct GridTile: Identifiable, Equatable {
         self.dot = dot
         self.isFavorite = isFavorite
         self.isUnfavorited = isUnfavorited
+        self.canMoveEarlier = canMoveEarlier
+        self.canMoveLater = canMoveLater
     }
 
     /// What VoiceOver reads for the whole tile: "Corner Market, Receipts, 2 days left", then ", favorite" (M13), or

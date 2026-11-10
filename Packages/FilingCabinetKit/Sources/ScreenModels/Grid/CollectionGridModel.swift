@@ -80,6 +80,10 @@ public final class CollectionGridModel {
         // handful of different strings exist.
         var names: [BuiltInCollection: String] = [:]
         var timeLefts: [TimeLeft: String] = [:]
+        // Where each favourite stands among the favourites, for VoiceOver's moves; none outside Favorites or while
+        // selecting (P5).
+        let movable = kind == .favorites && !isSelecting ? Self.favoriteIDs(built.shown) : []
+        let positions = Dictionary(uniqueKeysWithValues: movable.enumerated().map { ($1, $0) })
         return built.shown.map { scan in
             let left = shelf.timeLeft(scan)
             let timeLeft = timeLefts[left] ?? TimeLeftText.text(left)
@@ -95,7 +99,9 @@ public final class CollectionGridModel {
                 dot: showsWideScansWhole ? scan.collection : nil,
                 isFavorite: scan.isFavorite,
                 // Only Favorites shows a scan that isn't one: a tile it keeps (M9).
-                isUnfavorited: kind == .favorites && !scan.isFavorite
+                isUnfavorited: kind == .favorites && !scan.isFavorite,
+                canMoveEarlier: positions[scan.id].map { $0 > 0 } ?? false,
+                canMoveLater: positions[scan.id].map { $0 < movable.count - 1 } ?? false
             )
         }
     }
@@ -192,6 +198,32 @@ public final class CollectionGridModel {
         }
     }
 
+    /// A drop in Favorites (M8): the tiles `sources` go just before `destination` (nil: at the end), and the store
+    /// takes the favourites' new order (M3). A kept tile isn't a favourite (M9), so the store leaves it out and it
+    /// stays in its place. A failed write shows the edit alert and changes nothing.
+    package func moveFavorites(_ sources: [ScanID], before destination: ScanID?) {
+        let order = FavoriteReorder.order(built.shown.map(\.id), moving: sources, before: destination)
+        do {
+            try library.reorderFavorites(order)
+        } catch {
+            editAlert = EditAlert()
+        }
+    }
+
+    /// VoiceOver's Move earlier: the favourite swaps places with the favourite before it (a kept tile isn't one).
+    package func moveFavoriteEarlier(_ id: ScanID) {
+        let favorites = Self.favoriteIDs(built.shown)
+        guard let index = favorites.firstIndex(of: id), index > 0 else { return }
+        moveFavorites([id], before: favorites[index - 1])
+    }
+
+    /// VoiceOver's Move later: the favourite swaps places with the favourite after it.
+    package func moveFavoriteLater(_ id: ScanID) {
+        let favorites = Self.favoriteIDs(built.shown)
+        guard let index = favorites.firstIndex(of: id), index < favorites.count - 1 else { return }
+        moveFavorites([id], before: favorites.indices.contains(index + 2) ? favorites[index + 2] : nil)
+    }
+
     /// The edit alert's OK.
     package func dismissEditAlert() {
         editAlert = nil
@@ -225,6 +257,11 @@ public final class CollectionGridModel {
         case .favorites:
             return Self.keepingUnfavorited(shelf.favorites, lastShown: lastShown, visible: shelf.visible)
         }
+    }
+
+    /// The favourites among `shown`, in its order.
+    private static func favoriteIDs(_ shown: [ScanSummary]) -> [ScanID] {
+        shown.filter(\.isFavorite).map(\.id)
     }
 
     /// Favorites' tiles: the favourites in their order, with each scan shown before but no longer a favourite put back

@@ -94,6 +94,44 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertEqual(tileTitles(in: app).last, "Sample scan 5")
     }
 
+    /// Review Focus 3: a long press lifts a tile and a drag moves it; Home follows at once and the order is the
+    /// library's (the grid opened again shows it; that it survives a relaunch is `reorderSurvivesReopening`, as UI tests
+    /// run on an in-memory store). A tap still opens.
+    func testDragReordersFavorites() {
+        let app = seededApp(favorites: 4)
+        let link = app.buttons[AccessibilityID.Home.favoritesLink]
+        XCTAssertTrue(link.appears(within: 5))
+        link.tap()
+        XCTAssertTrue(app.header("Favorites").appears(within: 5))
+        XCTAssertTrue(tile("Sample scan 3", in: app).appears(within: 5))
+
+        drag("Sample scan 3", before: "Sample scan 1", in: app)
+
+        let moved = ["Sample scan 3", "Sample scan 1", "Sample scan 2", "Sample scan 4"]
+        let firstTile = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(firstTile.satisfies("label BEGINSWITH %@", "Sample scan 3,", within: 5), firstTile.label)
+        XCTAssertEqual(tileTitles(in: app), moved)
+        goBack(in: app)
+        XCTAssertTrue(favoriteCards(in: app).firstMatch.satisfies("label == %@", "Sample scan 3", within: 5))
+        XCTAssertEqual(cardTitles(in: app), moved)
+
+        link.tap()
+        XCTAssertTrue(app.header("Favorites").appears(within: 5))
+        XCTAssertEqual(tileTitles(in: app), moved)
+
+        // Selecting, a long press and drag moves nothing (P5).
+        let select = app.buttons[AccessibilityID.Grid.select]
+        select.tap()
+        drag("Sample scan 4", before: "Sample scan 3", in: app)
+        XCTAssertEqual(tileTitles(in: app), moved)
+        select.tap()
+
+        tile("Sample scan 3", in: app).tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5), "a tap opens")
+    }
+
     // MARK: Steps
 
     /// Six seeded scans, every one landed: Wallet holds scans 1 and 6.
@@ -113,6 +151,13 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertTrue(tile.appears(within: 5))
         tile.tap()
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
+    }
+
+    /// A long press lifts the tile titled `title`; a slow drag drops it on the left of `target`'s, before it.
+    private func drag(_ title: String, before target: String, in app: XCUIApplication) {
+        let drop = tile(target, in: app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.4))
+        tile(title, in: app).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)).press(
+            forDuration: 1.0, thenDragTo: drop, withVelocity: .slow, thenHoldForDuration: 0.5)
     }
 
     private func goBack(in app: XCUIApplication) {

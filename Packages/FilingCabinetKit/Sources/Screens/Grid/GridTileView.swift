@@ -4,7 +4,8 @@ import ScreenModels
 import SwiftUI
 
 /// One scan in a grid: its thumbnail, title and time left. A tap opens it, or ticks it while selecting (#68, as in
-/// Trash). A favourite wears a heart. VoiceOver reads it as one element, with Favorite as an action.
+/// Trash). A favourite wears a heart. VoiceOver reads it as one element, with Favorite as an action (and, in
+/// Favorites, Move earlier and Move later).
 struct GridTileView: View {
     let tile: GridTile
     let shape: CollectionGridModel.TileShape
@@ -17,6 +18,9 @@ struct GridTileView: View {
     let onTap: () -> Void
     /// VoiceOver's Favorite or Remove from Favorites on the tile (P2).
     let onToggleFavorite: () -> Void
+    /// VoiceOver's Move earlier and Move later, on a favourite's tile in Favorites (M8).
+    let onMoveEarlier: () -> Void
+    let onMoveLater: () -> Void
 
     // Collection.dc.html line 317: Wallet's tiles are 1.55 wide per 1 tall, every other tile is 3:4.
     private static let cardAspect: CGFloat = 1.55
@@ -69,6 +73,10 @@ struct GridTileView: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(AccessibilityID.Grid.tile(tile.id))
         .accessibilityAction(named: favoriteActionName, onToggleFavorite)
+        .accessibilityActions {
+            if tile.canMoveEarlier { Button(String(localized: "Move earlier", bundle: #bundle), action: onMoveEarlier) }
+            if tile.canMoveLater { Button(String(localized: "Move later", bundle: #bundle), action: onMoveLater) }
+        }
         .onAppear { prefetcher.tileAppeared(tile.id) }
         .onDisappear { prefetcher.tileDisappeared(tile.id) }
     }
