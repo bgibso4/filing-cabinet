@@ -1,0 +1,77 @@
+# Which simulator test classes a changed path can affect (read by scripts/affected-tests.sh, `make affected`).
+#
+#   <path prefix> <Class> ...   a changed path under the prefix runs those classes
+#   <path prefix> ALL           runs every simulator test (shared code)
+#   <path prefix> NONE          runs nothing (can't affect the simulator tests)
+#   SELF <Class> ...            classes that only their own files affect (so the map check accepts them)
+#
+# A path takes the union of every rule whose prefix matches; "*.md" matches Markdown anywhere. A path no rule
+# matches runs everything, so a gap here costs time, never coverage. Test files need no rule: a file under UITests/ or
+# SnapshotTests/ runs the *Tests types it declares or extends, and SnapshotTests/__Snapshots__/<Class>/ runs <Class>.
+# Screen rows were checked against which AccessibilityID namespaces and view/model types each test class uses.
+
+# Can't affect the simulator tests (package tests other than ScreensTests run in Fast).
+*.md NONE
+docs/ NONE
+.github/ NONE
+.claude/ NONE
+DeviceTests/ NONE
+design/ NONE
+scripts/ NONE
+Packages/FilingCabinetKit/Tests/ NONE
+
+# Shared: everything.
+design/prototype/ ALL
+Makefile ALL
+design/tokens.json ALL
+scripts/generate-tokens.swift ALL
+App/ ALL
+project.yml ALL
+Package.resolved ALL
+Packages/FilingCabinetKit/Package.swift ALL
+Packages/FilingCabinetKit/Sources/Core/ ALL
+Packages/FilingCabinetKit/Sources/Library/ ALL
+Packages/FilingCabinetKit/Sources/TestSupport/ ALL
+Packages/FilingCabinetKit/Sources/Screens/DesignSystem/ ALL
+Packages/FilingCabinetKit/Sources/Screens/Root/ ALL
+Packages/FilingCabinetKit/Sources/Screens/Resources/ ALL
+Packages/FilingCabinetKit/Sources/Screens/Localizable.xcstrings ALL
+Packages/FilingCabinetKit/Sources/Screens/ScreensLog.swift ALL
+Packages/FilingCabinetKit/Sources/ScreenModels/App/ ALL
+Packages/FilingCabinetKit/Sources/ScreenModels/Shared/ ALL
+Packages/FilingCabinetKit/Sources/ScreenModels/Localizable.xcstrings ALL
+Packages/FilingCabinetKit/Sources/ScreenModels/ScreenModelsLog.swift ALL
+UITests/Support/ ALL
+SnapshotTests/SnapshotConfig.swift ALL
+SnapshotTests/SnapshotHost.swift ALL
+SnapshotTests/Fixtures.swift ALL
+SnapshotTests/WindowPixels.swift ALL
+SnapshotTests/CPUImageMatch.swift ALL
+
+# ScreensTests runs only on the simulator (the Fast scheme can't build Screens); every Screens change runs it.
+Packages/FilingCabinetKit/Sources/Screens/ ScreensTests
+Packages/FilingCabinetKit/Tests/ScreensTests/ ScreensTests
+
+# Screens (views in Screens/, their models in ScreenModels/).
+Packages/FilingCabinetKit/Sources/Screens/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests
+Packages/FilingCabinetKit/Sources/Screens/Grid/ BrowseJourneyTests GridSelectJourneyTests GridSnapshotTests GridPerformanceTests ThumbnailRedrawTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Grid/ BrowseJourneyTests GridSelectJourneyTests GridSnapshotTests GridPerformanceTests ThumbnailRedrawTests
+Packages/FilingCabinetKit/Sources/Screens/Home/ HomeJourneyTests BrowseJourneyTests CleanupJourneyTests HomeSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Home/ HomeJourneyTests BrowseJourneyTests CleanupJourneyTests HomeSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Viewer/ BrowseJourneyTests DetailsJourneyTests TrashJourneyTests ViewerSnapshotTests ViewerBehaviourTests DetailsSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Viewer/ BrowseJourneyTests DetailsJourneyTests TrashJourneyTests ViewerSnapshotTests ViewerBehaviourTests DetailsSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
+Packages/FilingCabinetKit/Sources/Screens/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests
+Packages/FilingCabinetKit/Sources/Screens/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Review/ ScanJourneyTests ReviewZoomJourneyTests BrowseJourneyTests ReviewSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Review/ ScanJourneyTests ReviewZoomJourneyTests BrowseJourneyTests ReviewSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Save/ ScanJourneyTests ReviewSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Cleanup/ CleanupJourneyTests HomeSnapshotTests HomeJourneyTests
+Packages/FilingCabinetKit/Sources/Understanding/ ScanJourneyTests ReviewSnapshotTests
+
+SELF CPUImageMatchTests
