@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci ci-checks ci-sim full-run unused-run check-resolved compare-readers device-perf
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim full-run unused-run check-resolved compare-readers device-perf
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -138,6 +138,10 @@ device-perf: generate
 test-hooks:
 	bats scripts/hooks/tests
 
+# bats tests for the test-run scripts (affected, sim-tests, audit-report).
+test-scripts:
+	bats scripts/tests
+
 # Fixture tests for the SwiftLint custom rules.
 test-lint:
 	scripts/test-lint-rules.sh
@@ -162,7 +166,7 @@ ci: ci-checks ci-sim
 ci-checks: generate
 	@test -z "$$(git status --porcelain -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets)" || { \
 		echo "error: generated files differ from the committed ones: run make generate and commit." >&2; exit 1; }
-	$(MAKE) --no-print-directory lint test-hooks test-lint
+	$(MAKE) --no-print-directory lint test-hooks test-scripts test-lint
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory unused-run
