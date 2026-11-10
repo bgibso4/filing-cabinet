@@ -82,6 +82,11 @@ public struct PageFileStore: Sendable {
         return names.map { folder.appending(path: $0) }
     }
 
+    /// Where the scan's first `count` originals live, named as `write` names them.
+    package func originalURLs(pageCount count: Int, for id: ScanID) -> [URL] {
+        originalURLs(named: (1...max(count, 1)).prefix(count).map { "page-\($0).heic" }, for: id)
+    }
+
     private func removeFolders(of id: ScanID) {
         for folder in [location.originals(for: id), location.thumbnails(for: id)]
         where fileSystem.fileExists(at: folder) {

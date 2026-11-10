@@ -14,6 +14,11 @@ enum ImageCoding {
         try encode(image, as: .heic, quality: quality)
     }
 
+    /// Encodes `image` as JPEG at `quality` (0...1), for a PDF page.
+    static func jpeg(_ image: CGImage, quality: Double) throws -> Data {
+        try encode(image, as: .jpeg, quality: quality)
+    }
+
     /// Scales `image` so its long edge is at most `maxPixel`, then encodes JPEG at quality 0.8.
     static func jpegThumbnail(_ image: CGImage, maxPixel: Int) throws -> Data {
         try encode(scaled(image, maxPixel: maxPixel), as: .jpeg, quality: thumbnailQuality)
