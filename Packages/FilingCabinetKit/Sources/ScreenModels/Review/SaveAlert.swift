@@ -19,7 +19,7 @@ package struct SaveAlert: Equatable {
                 String(
                     localized: "Your iPhone is out of space. Free some up, then try again. Your pages are still here.",
                     bundle: #bundle)
-            case .writeFailed:
+            case .writeFailed, .pageMissing:
                 String(localized: "Something went wrong. Your pages are still here.", bundle: #bundle)
             }
         self.init(title: String(localized: "Couldn’t save this scan", bundle: #bundle), message: message)

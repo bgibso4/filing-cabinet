@@ -30,17 +30,18 @@ package struct ScanExport: Sendable {
         self.withPage = withPage ?? { try Self.readOriginal(at: $0, $1) }
     }
 
-    /// Writes `<name>.pdf` for the scan, one page drawn and released before the next is read.
+    /// Writes `<name>.pdf` for the scan, one page drawn and released before the next is read. `name` goes through
+    /// `fileName(for:taken:)` first, so a raw title is safe; pass the unique name a share chose to keep it.
     @concurrent
     package func pdf(for scan: ScanSummary, named name: String) async throws(LibraryError) -> URL {
         let directory = folder.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         do {
             try FileManager().createDirectory(at: directory, withIntermediateDirectories: true)
-            let url = directory.appending(path: "\(name).pdf")
+            let url = directory.appending(path: "\(Self.fileName(for: name, taken: [])).pdf")
             try write(files.originalURLs(pageCount: scan.pageCount, for: scan.id), to: url)
             return url
         } catch {
-            let failure = LibraryError(error)
+            let failure = error as? LibraryError ?? LibraryError(error)
             LibraryLog.logger.error(
                 "Exporting \(scan.pageCount, privacy: .public) pages failed (\(String(describing: failure))): \(error.localizedDescription, privacy: .private)"
             )
@@ -71,7 +72,7 @@ package struct ScanExport: Sendable {
     package static func readOriginal(at url: URL, _ draw: (CGImage) throws -> Void) throws {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
             let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
-        else { throw CocoaError(.fileReadNoSuchFile) }
+        else { throw LibraryError.pageMissing }
         try draw(image)
     }
 

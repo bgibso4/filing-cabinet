@@ -34,6 +34,7 @@ private struct Fixture {
     let location = temporaryLocation()
     let files: PageFileStore
     let temporary: URL
+    var folder: URL { temporary.appending(path: "Export") }
     let id = ScanID()
     let scan: ScanSummary
 
@@ -52,7 +53,7 @@ private struct Fixture {
     }
 
     func export(withPage: ScanExport.WithPage? = nil) -> ScanExport {
-        ScanExport(files: files, folder: temporary.appending(path: "Export"), withPage: withPage)
+        ScanExport(files: files, folder: folder, withPage: withPage)
     }
 }
 
@@ -89,6 +90,8 @@ private func pdfDocument(at url: URL) throws -> CGPDFDocument {
     #expect(text.components(separatedBy: "/DCTDecode").count - 1 == 2)
 }
 
+/// Proves pages are never open at the same time (scopes do not overlap), not that each is released from memory;
+/// the phone check covers that.
 @Test func pagesAreDrawnOneAtATime() async throws {
     let fixture = try await Fixture(pages: [smallPage(), smallPage(), smallPage(), smallPage()])
     let counter = OpenPages()
@@ -127,29 +130,27 @@ private func pdfDocument(at url: URL) throws -> CGPDFDocument {
     )
 }
 
-@Test func launchCleanupClearsExports() async throws {
+@Test func pdfAppliesTheFileNameRules() async throws {
     let fixture = try await Fixture(pages: [smallPage()])
-    // A previous run's leftovers, then a new process's export object.
-    let leftover = try await fixture.export().pdf(for: fixture.scan, named: "Old")
+    let url = try await fixture.export().pdf(for: fixture.scan, named: "a/b")
 
-    fixture.export().removeAll()
-
-    #expect(!FileManager.default.fileExists(atPath: leftover.path(percentEncoded: false)))
+    #expect(url.lastPathComponent == "a-b.pdf")
 }
 
-@Test func missingPageFileThrows() async throws {
+@Test func missingPageFileThrowsAndLeavesNothingBehind() async throws {
     let fixture = try await Fixture(pages: [smallPage()])
-    var longer = fixture.scan
-    longer = ScanSummary(
-        id: longer.id,
-        title: longer.title,
-        collection: longer.collection,
-        scannedAt: longer.scannedAt,
+    let longer = ScanSummary(
+        id: fixture.id,
+        title: "Receipt",
+        collection: .receipts,
+        scannedAt: .now,
         expiryOverride: nil,
         pageCount: 2
     )
 
-    await #expect(throws: LibraryError.writeFailed) {
+    await #expect(throws: LibraryError.pageMissing) {
         try await fixture.export().pdf(for: longer, named: "Receipt")
     }
+    let left = try FileManager.default.contentsOfDirectory(at: fixture.folder, includingPropertiesForKeys: nil)
+    #expect(left.isEmpty)
 }

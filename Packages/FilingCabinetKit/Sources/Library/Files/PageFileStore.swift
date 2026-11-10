@@ -30,10 +30,10 @@ public struct PageFileStore: Sendable {
             for (index, page) in pages.enumerated() {
                 let stem = "page-\(index + 1)"
                 let original = try ImageCoding.heic(page, quality: Self.originalQuality)
-                try fileSystem.write(original, to: originals.appending(path: "\(stem).heic"))
+                try fileSystem.write(original, to: originals.appending(path: Self.originalName(page: index)))
                 let thumbnail = try ImageCoding.jpegThumbnail(page, maxPixel: Self.thumbnailMaxPixel)
                 try fileSystem.write(thumbnail, to: thumbnails.appending(path: "\(stem).jpg"))
-                names.append("\(stem).heic")
+                names.append(Self.originalName(page: index))
             }
             return names
         } catch {
@@ -82,9 +82,12 @@ public struct PageFileStore: Sendable {
         return names.map { folder.appending(path: $0) }
     }
 
+    /// The file name of the original of the page at `index` (from 0).
+    private static func originalName(page index: Int) -> String { "page-\(index + 1).heic" }
+
     /// Where the scan's first `count` originals live, named as `write` names them.
     package func originalURLs(pageCount count: Int, for id: ScanID) -> [URL] {
-        originalURLs(named: (1...max(count, 1)).prefix(count).map { "page-\($0).heic" }, for: id)
+        originalURLs(named: (0..<count).map { Self.originalName(page: $0) }, for: id)
     }
 
     private func removeFolders(of id: ScanID) {
