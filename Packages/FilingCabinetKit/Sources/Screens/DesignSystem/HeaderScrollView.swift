@@ -59,7 +59,13 @@ struct HeaderScrollView<Content: View>: View {
             .scrollPosition($position)
             .scrollDisabled(!scrolls)
             .onScrollGeometryChange(for: BarReport.self, of: BarReport.init) { _, report in arrive(report) }
+            // A touch, not our own animated expand (`.animating`): from now on the bar is the person's.
+            .onScrollPhaseChange { _, phase in
+                if phase == .tracking || phase == .interacting { settling.stopWatching() }
+            }
         }
+        // Covered by a pushed screen, whose bar this one shares.
+        .onDisappear { settling.stopWatching() }
         .onChange(of: [rest == .small, scrolls]) {
             settling.update(rest: rest, scrolls: scrolls)
             if let inset = last.inset { settle(inset) }

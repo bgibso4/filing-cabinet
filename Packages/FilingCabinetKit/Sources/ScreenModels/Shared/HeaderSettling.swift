@@ -46,6 +46,13 @@ package struct HeaderSettling: Sendable, Equatable {
         phase = .unsettled
     }
 
+    /// Ends a new screen's watch for the system collapsing its bar (see `expand`): the person has touched the scroll
+    /// view, so what the bar does now is theirs (review N1), or another screen has been pushed over this one, whose bar
+    /// it shares (N2). F6's collapse comes as the screen arrives, before either.
+    package mutating func stopWatching() {
+        if phase == .watching { phase = .settled }
+    }
+
     /// The scroll to make after a report of the bar's `inset` (already recorded in `insets`), if any.
     package mutating func target(insets: HeaderInsets, inset: CGFloat) -> HeaderScroll? {
         guard inset > 0, phase != .settled else { return nil }
@@ -69,9 +76,9 @@ package struct HeaderSettling: Sendable, Equatable {
     }
 
     /// Resting large: a bar seen collapsed is expanded; one that is already expanded is left alone. A new screen keeps
-    /// watching until the person scrolls: the system collapses its bar by itself on a push from a screen with a shorter
-    /// large title (phone check F6: the bar opens at that title's height, then collapses), at any text size. Once they
-    /// have scrolled, a collapse is theirs (Home's scroll up), and stays.
+    /// watching until the person touches or scrolls it, or it is covered (`stopWatching`): the system collapses its bar
+    /// by itself on a push from a screen with a shorter large title (phone check F6: the bar opens at that title's
+    /// height, then collapses), at any text size. After that, a collapse is the person's (Home's scroll up), and stays.
     private mutating func expand(_ insets: HeaderInsets) -> HeaderScroll? {
         if phase == .watching {
             guard !insets.hasScrolled else {

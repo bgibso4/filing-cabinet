@@ -138,3 +138,38 @@ private func report(
     #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
     #expect(report(&settling, &insets, inset: 116) == nil)
 }
+
+/// A pull down and release on an unscrolled Home stays at its top all the way, so only the touch itself ends the watch
+/// (review N1): the bar the person pulled taller and let go of is theirs, and nothing snaps it open.
+@Test func restingLargeATouchEndsTheWatch() {
+    var settling = HeaderSettling(rest: .large, scrolls: true)
+    var insets = HeaderInsets()
+    insets.recordLargeTitle(height: 48.67)
+    _ = report(&settling, &insets, inset: 164.67, atTop: true)
+    settling.stopWatching()
+    #expect(report(&settling, &insets, inset: 200, atTop: true) == nil)
+    #expect(report(&settling, &insets, inset: 116, atTop: true) == nil)
+}
+
+/// Covered by a pushed screen, Home's bar collapses with the shared bar (seen under -UITest): the watch has ended by
+/// then (review N2), so Home asks for no scroll off screen.
+@Test func restingLargeACoveredScreenAsksNothing() {
+    var settling = HeaderSettling(rest: .large, scrolls: true)
+    var insets = HeaderInsets()
+    insets.recordLargeTitle(height: 48.67)
+    _ = report(&settling, &insets, inset: 168, atTop: true)
+    _ = report(&settling, &insets, inset: 164.67, atTop: true)
+    settling.stopWatching()
+    #expect(report(&settling, &insets, inset: 116, atTop: true) == nil)
+}
+
+/// Stopping the watch leaves a live change alone: a grid emptied on screen still expands its collapsed bar once.
+@Test func stoppingTheWatchKeepsALiveChangeToLarge() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    _ = report(&settling, &insets, inset: 170)
+    _ = report(&settling, &insets, inset: 110)
+    settling.stopWatching()
+    settling.update(rest: .large, scrolls: false)
+    #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170))
+}
