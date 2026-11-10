@@ -48,6 +48,9 @@ package final class SearchModel {
         let entries: [Entry]
     }
 
+    /// One scan's match against the folded terms.
+    package typealias Matching = (SearchMatch.Folded, SearchMatch.FoldedText, [SearchMatch.Folded]) -> SearchHit?
+
     /// The field's text, as typed.
     package var query = ""
     /// The chip: nil is All.
@@ -58,6 +61,8 @@ package final class SearchModel {
     private let clock: AppClock
     private let history: SearchHistory
     @ObservationIgnored private let analytics: any Analytics
+    /// How one scan is matched: `SearchMatch.match`, unless a test counts the visits.
+    @ObservationIgnored private let matching: Matching
     @ObservationIgnored private var index: Index?
     /// The last query's matches in every collection, and the scans they came from.
     @ObservationIgnored private var lastSearch: LastSearch?
@@ -67,8 +72,14 @@ package final class SearchModel {
     @ObservationIgnored private var details: [ScanID: String] = [:]
 
     package init(
-        library: any ScanLibrary, today: Today, clock: AppClock, history: SearchHistory, analytics: any Analytics
+        library: any ScanLibrary,
+        today: Today,
+        clock: AppClock,
+        history: SearchHistory,
+        analytics: any Analytics,
+        matching: @escaping Matching = { SearchMatch.match(title: $0, text: $1, terms: $2) }
     ) {
+        self.matching = matching
         self.library = library
         self.today = today
         self.clock = clock
@@ -165,9 +176,12 @@ package final class SearchModel {
         let index = currentIndex
         if let lastSearch, lastSearch.query == query, lastSearch.scans == index.scans { return lastSearch.hits }
         let terms = terms.map(SearchMatch.Folded.init)
+        let interval = ScreenModelsLog.signposter.beginInterval(
+            "Search", id: ScreenModelsLog.signposter.makeSignpostID())
         let hits = index.entries.compactMap { entry in
-            SearchMatch.match(title: entry.title, text: entry.text, terms: terms).map { (entry, $0) }
+            matching(entry.title, entry.text, terms).map { (entry, $0) }
         }
+        ScreenModelsLog.signposter.endInterval("Search", interval)
         lastSearch = LastSearch(query: query, scans: index.scans, hits: hits)
         return hits
     }
