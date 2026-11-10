@@ -1,0 +1,35 @@
+{
+  "testNodes": [
+    {
+      "nodeType": "Test Plan",
+      "name": "FilingCabinet",
+      "children": [
+        {
+          "nodeType": "Test Case",
+          "nodeIdentifier": "BrowseJourneyTests/testViewerAuditInDarkMode()",
+          "result": "Failed"
+        },
+        {
+          "nodeType": "Test Case",
+          "nodeIdentifier": "HomeJourneyTests/testAuditAtLargestTextOfHome()",
+          "result": "Passed"
+        },
+        {
+          "nodeType": "Test Case",
+          "nodeIdentifier": "HomeJourneyTests/testHomeShowsCollectionsAndScan()",
+          "result": "Passed"
+        },
+        {
+          "nodeType": "Test Case",
+          "nodeIdentifier": "HomeJourneyTests/testOnlyScreensThatScrollShowAScrollBar()",
+          "result": "Passed"
+        },
+        {
+          "nodeType": "Test Case",
+          "nodeIdentifier": "HomeJourneyTests/testTitleCollapsesOnScroll()",
+          "result": "Passed"
+        }
+      ]
+    }
+  ]
+}

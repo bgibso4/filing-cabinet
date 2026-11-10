@@ -1,0 +1,167 @@
+{
+  "testRuns": [
+    {
+      "activities": [
+        {
+          "title": "Start Test at 2026-11-10 09:18:36.354",
+          "childActivities": [
+            {
+              "title": "kXCTAttachmentScreenRecording"
+            }
+          ]
+        },
+        {
+          "title": "Set Up"
+        },
+        {
+          "title": "Setting appearance mode to Dark",
+          "childActivities": [
+            {
+              "title": "Wait for com.apple.springboard to idle"
+            }
+          ]
+        },
+        {
+          "title": "Open com.cadre.filingcabinet",
+          "childActivities": [
+            {
+              "title": "Launch com.cadre.filingcabinet",
+              "childActivities": [
+                {
+                  "title": "Setting up automation session"
+                },
+                {
+                  "title": "Wait for com.cadre.filingcabinet to idle"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Checking existence of `\"home.collection.receipts\" Button`"
+        },
+        {
+          "title": "Find the \"home.collection.receipts\" Button"
+        },
+        {
+          "title": "Checking existence of `\"home.cleanupBanner\" Button`"
+        },
+        {
+          "title": "Checking existence of `\"home.collection.documents\" Button`"
+        },
+        {
+          "title": "Tap \"home.collection.documents\" Button",
+          "childActivities": [
+            {
+              "title": "Wait for com.cadre.filingcabinet to idle"
+            },
+            {
+              "title": "Find the \"home.collection.documents\" Button"
+            },
+            {
+              "title": "Check for interrupting elements affecting \"home.collection.documents\" Button"
+            },
+            {
+              "title": "Synthesize event",
+              "childActivities": [
+                {
+                  "title": "kXCTAttachmentLegacySynthesizedEvent"
+                }
+              ]
+            },
+            {
+              "title": "Wait for com.cadre.filingcabinet to idle"
+            }
+          ]
+        },
+        {
+          "title": "Checking existence of `\"Documents\" NavigationBar`"
+        },
+        {
+          "title": "Tap Button (First Match)",
+          "childActivities": [
+            {
+              "title": "Wait for com.cadre.filingcabinet to idle"
+            },
+            {
+              "title": "Find the Button (First Match)"
+            },
+            {
+              "title": "Check for interrupting elements affecting \"grid.tile.208A816C-A03D-4D0B-BC40-4E0B4F64BDD3\" Button"
+            },
+            {
+              "title": "Synthesize event",
+              "childActivities": [
+                {
+                  "title": "kXCTAttachmentLegacySynthesizedEvent"
+                }
+              ]
+            },
+            {
+              "title": "Wait for com.cadre.filingcabinet to idle"
+            }
+          ]
+        },
+        {
+          "title": "Checking existence of `\"viewer.header\" Any`"
+        },
+        {
+          "title": "Audit exemptions declared · deep-text-under-scan, camera-off-sheet-clipped, dark-viewer-header, trash-glass-buttons, trash-bar-unresolved, grid-select-unresolved"
+        },
+        {
+          "title": "Checking existence of `\"Trash\" NavigationBar`"
+        },
+        {
+          "title": "Checking existence of `\"grid.select\" Button`"
+        },
+        {
+          "title": "Checking existence of `\"home.scan\" Button`"
+        },
+        {
+          "title": "Checking existence of `\"grid.scan\" Button`"
+        },
+        {
+          "title": "Find the Window (First Match)"
+        },
+        {
+          "title": "Audit issue · contrast · no element",
+          "childActivities": [
+            {
+              "title": "Audit issue"
+            }
+          ]
+        },
+        {
+          "title": "Contrast failed",
+          "childActivities": [
+            {
+              "title": "Complete Issue Description"
+            },
+            {
+              "title": "App Screenshot"
+            },
+            {
+              "title": "audit(_:)"
+            },
+            {
+              "title": "BrowseJourneyTests.testViewerAuditInDarkMode()"
+            }
+          ]
+        },
+        {
+          "title": "Tear Down",
+          "childActivities": [
+            {
+              "title": "Setting appearance mode to Light",
+              "childActivities": [
+                {
+                  "title": "Wait for com.cadre.filingcabinet to idle"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
