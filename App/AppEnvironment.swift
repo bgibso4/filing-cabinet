@@ -118,8 +118,8 @@ final class AppEnvironment {
                 today: today,
                 calendar: clock.calendar,
                 analytics: analytics,
-                mode: mode,
-                history: history)
+                history: history,
+                mode: mode)
         }
     }
 

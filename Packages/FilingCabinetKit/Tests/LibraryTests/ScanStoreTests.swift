@@ -244,10 +244,16 @@ private func persistedCount(in container: ModelContainer) -> Int {
     let scan = draft(searchText: nil)
     try await store.save(scan)
 
+    let scansBefore = store.scans
     store.updateSearchText("city pharmacy batteries aa", for: scan.id)
 
     let records = try ModelContext(container).fetch(FetchDescriptor<ScanRecord>())
     #expect(records.map(\.searchText) == ["city pharmacy batteries aa"])
+    // Search follows the revision; the scans (and so every grid) stay as they were.
+    #expect(store.searchTextRevision == 1)
+    #expect(store.scans == scansBefore)
+    store.updateSearchText("no record", for: ScanID())
+    #expect(store.searchTextRevision == 1)
 }
 
 @MainActor

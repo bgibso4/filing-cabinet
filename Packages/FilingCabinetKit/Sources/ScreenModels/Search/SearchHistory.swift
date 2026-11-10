@@ -6,7 +6,7 @@ import Observation
 @MainActor
 @Observable
 public final class SearchHistory {
-    /// The last 3 searches kept (M5), newest first, trimmed, without repeats (ignoring case).
+    /// The last 3 searches kept (M5), newest first, trimmed and single-spaced, without repeats (ignoring case).
     package private(set) var recentSearches: [String] {
         didSet { defaults.set(recentSearches, forKey: Key.recentSearches) }
     }
@@ -26,9 +26,9 @@ public final class SearchHistory {
         }
     }
 
-    /// Keeps a search, first; an empty one is skipped and a repeat moves up.
+    /// Keeps a search, first, its words single-spaced; an empty one is skipped and a repeat moves up.
     package func record(search: String) {
-        let search = search.trimmingCharacters(in: .whitespacesAndNewlines)
+        let search = search.split(whereSeparator: \.isWhitespace).joined(separator: " ")
         guard !search.isEmpty else { return }
         let others = recentSearches.filter { $0.caseInsensitiveCompare(search) != .orderedSame }
         recentSearches = Array(([search] + others).prefix(Self.searchesKept))

@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import ImageIO
 import Library
+import ScreenModels
 import TestSupport
 
 /// The scan sets the snapshot tests render, with the mocks' titles and ages, and the preloaded images behind them.
@@ -28,6 +29,16 @@ enum Fixtures {
         let noon = DateComponents(calendar: calendar, timeZone: .gmt, year: 2026, month: 10, day: 12, hour: 12)
         return AppClock.fixed(noon.date ?? Date(timeIntervalSince1970: 0), calendar: calendar)
     }()
+
+    /// A search history for the viewers made here to record into; no snapshot shows it. Emptied each time.
+    static func searchHistory() -> SearchHistory {
+        let suite = "SnapshotTests.SearchHistory"
+        guard let defaults = UserDefaults(suiteName: suite) else {
+            preconditionFailure("Fixtures: the search history suite could not be made")
+        }
+        defaults.removePersistentDomain(forName: suite)
+        return SearchHistory(defaults: defaults)
+    }
 
     static func library(_ set: FixtureSet) -> FakeLibrary {
         FakeLibrary(scans: entries(set).map(\.summary))

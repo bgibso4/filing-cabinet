@@ -6,7 +6,7 @@ import Observation
 /// One scan on screen: its header and which page is showing. Everything but the page is read from the library and
 /// from `Today`, so the header moves when either does and the view pops when the scan goes away (M5). A scan opened
 /// from Trash (09-04) reads its days left in Trash and offers Restore and Delete now, which Trash's own model runs.
-/// Opened in the library, the scan goes first in Search's recently viewed (M4).
+/// Opened in the library, the scan goes first in Search's recently viewed (M4) when the viewer appears.
 @Observable
 public final class ViewerModel {
     /// Where the scan was opened from.
@@ -37,16 +37,19 @@ public final class ViewerModel {
     private let analytics: any Analytics
     /// Runs Restore and Delete now in Trash mode, with Trash's confirmation and announcements; nil in the library.
     private let trash: TrashModel?
+    private let history: SearchHistory
+    /// Set once this open is in Search's recently viewed: appearing again (back from a pushed screen) isn't a new one.
+    @ObservationIgnored private var isRecorded = false
 
-    /// `history` gets the scan as recently viewed when it opens in the library; nil records nothing.
+    /// `history` gets the scan as recently viewed when it opens in the library.
     public init(
         id: ScanID,
         library: any ScanLibrary,
         today: Today,
         calendar: Calendar,
         analytics: any Analytics,
-        mode: Mode = .library,
-        history: SearchHistory? = nil
+        history: SearchHistory,
+        mode: Mode = .library
     ) {
         self.id = id
         self.library = library
@@ -54,9 +57,16 @@ public final class ViewerModel {
         self.calendar = calendar
         self.analytics = analytics
         self.mode = mode
+        self.history = history
         trash =
             mode == .trash ? TrashModel(library: library, today: today, calendar: calendar, analytics: analytics) : nil
-        if mode == .library { history?.record(viewed: id) }
+    }
+
+    /// The viewer is on screen: a scan opened from the library goes first in recently viewed (M4), once per open.
+    package func appeared() {
+        guard mode == .library, !isRecorded else { return }
+        isRecorded = true
+        history.record(viewed: id)
     }
 
     package var title: String { scan?.title ?? "" }

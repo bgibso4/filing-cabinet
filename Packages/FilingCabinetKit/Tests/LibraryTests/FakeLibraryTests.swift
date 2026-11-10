@@ -67,6 +67,7 @@ private func summary(_ title: String, _ collection: BuiltInCollection, scannedAt
     let fake = FakeLibrary()
     fake.updateSearchText("corner market", for: ScanID())
     #expect(fake.searchTextUpdates.isEmpty)
+    #expect(fake.searchTextRevision == 0)
 }
 
 @MainActor
@@ -225,6 +226,7 @@ private func orders(_ scans: [ScanSummary], in library: FakeLibrary) -> [Int?] {
 
     fake.updateSearchText("corner market", for: scan.id)
 
+    #expect(fake.searchTextRevision == 1)
     #expect(fake.searchTexts() == [scan.id: "corner market"])
     #expect(fake.searchText(for: scan.id) == "corner market")
     #expect(fake.searchText(for: ScanID()) == nil)

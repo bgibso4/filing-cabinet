@@ -33,6 +33,8 @@ private func model(
     library: FakeLibrary? = nil,
     today: Today? = nil,
     analytics: RecordingAnalytics = RecordingAnalytics(),
+    // Only `appeared()` writes to it, and the tests that call that pass their own.
+    history: SearchHistory = SearchHistory(defaults: .standard),
     mode: ViewerModel.Mode = .library
 ) -> ViewerModel {
     ViewerModel(
@@ -41,6 +43,7 @@ private func model(
         today: today ?? Today(clock: clock),
         calendar: utc,
         analytics: analytics,
+        history: history,
         mode: mode)
 }
 
@@ -299,22 +302,28 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
 }
 
 @MainActor
-@Test func openingInTheLibraryRecordsItAsViewed() throws {
+@Test func appearingInTheLibraryRecordsItOncePerOpen() throws {
     let fresh = try FreshDefaults()
     defer { fresh.cleanUp() }
     let history = SearchHistory(defaults: fresh.defaults)
-    let scan = summary("Lease 2026", .documents)
-    let trashedScan = trashed("Coat check", daysAgo: 2)
-    let library = FakeLibrary(scans: [scan, trashedScan], clock: clock)
-    for (id, mode) in [(scan.id, ViewerModel.Mode.library), (trashedScan.id, .trash)] {
-        _ = ViewerModel(
-            id: id,
-            library: library,
-            today: Today(clock: clock),
-            calendar: utc,
-            analytics: RecordingAnalytics(),
-            mode: mode,
-            history: history)
-    }
-    #expect(history.recentlyViewed == [scan.id])
+    let lease = summary("Lease 2026", .documents)
+    let note = summary("Bio 210", .notes)
+    let library = FakeLibrary(scans: [lease, note], clock: clock)
+    let viewer = model(lease, library: library, history: history)
+    // Made, not yet on screen: a destination the stack evaluates again records nothing.
+    #expect(history.recentlyViewed.isEmpty)
+    viewer.appeared()
+    model(note, library: library, history: history).appeared()
+    // Back to the first viewer, still the same open: it doesn't jump ahead again.
+    viewer.appeared()
+    #expect(history.recentlyViewed == [note.id, lease.id])
+}
+
+@MainActor
+@Test func appearingFromTrashRecordsNothing() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let history = SearchHistory(defaults: fresh.defaults)
+    model(trashed("Coat check", daysAgo: 2), history: history, mode: .trash).appeared()
+    #expect(history.recentlyViewed.isEmpty)
 }

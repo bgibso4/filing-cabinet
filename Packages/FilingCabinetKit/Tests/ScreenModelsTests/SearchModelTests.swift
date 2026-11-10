@@ -1,6 +1,8 @@
 import Core
 import Foundation
 import Library
+import Observation
+import Synchronization
 import Testing
 
 @testable import ScreenModels
@@ -223,6 +225,23 @@ private struct Fixture {
 }
 
 @MainActor
+@Test func aSearchIsReportedOnce() throws {
+    let lock = Seed("Bike lock")
+    let fixture = try Fixture([lock, Seed("Bike pump")])
+    defer { fixture.cleanUp() }
+    fixture.model.query = "bike  lock"
+    fixture.model.submit()
+    fixture.model.opened(lock.id)
+    fixture.model.query = "bike lock "
+    fixture.model.submit()
+    #expect(fixture.history.recentSearches == ["bike lock"])
+    #expect(fixture.analytics.events == [.searchSaved(resultCount: 1)])
+    fixture.model.query = "bike"
+    fixture.model.submit()
+    #expect(fixture.analytics.events == [.searchSaved(resultCount: 1), .searchSaved(resultCount: 2)])
+}
+
+@MainActor
 @Test func openingAResultSavesIt() throws {
     let lock = Seed("Bike lock", .wallet)
     let fixture = try Fixture([lock, Seed("Bike pump")])
@@ -241,7 +260,7 @@ private struct Fixture {
     _ = fixture.search("straße bike")
     fixture.model.submit()
     fixture.model.opened(lock.id)
-    #expect(fixture.analytics.events.count == 2)
+    #expect(fixture.analytics.events.count == 1)
     for event in fixture.analytics.events {
         let described = "\(event.name) \(event.payload)"
         for word in ["straße", "bike", "Bike lock", "Hauptstraße"] { #expect(!described.contains(word)) }
@@ -266,9 +285,33 @@ private struct Fixture {
         searchText: "harbor view")
     try await fixture.library.save(new)
     #expect(fixture.search("harbor") == [lease.id, new.id])
-    fixture.library.updateSearchText("Unit 4B", for: new.id)
-    try fixture.library.rename(lease.id, to: "Harbor lease 2026")
-    #expect(fixture.search("harbor") == [lease.id])
     try fixture.library.moveToTrash([lease.id])
-    #expect(fixture.search("harbor").isEmpty)
+    #expect(fixture.search("harbor") == [new.id])
+}
+
+@MainActor
+@Test func textThatArrivesWhileOpenIsFound() async throws {
+    let receipt = ScanDraft(
+        id: ScanID(),
+        title: "Receipt",
+        collection: .receipts,
+        scannedAt: noon,
+        expiryOverride: nil,
+        pages: [],
+        searchText: nil)
+    let fixture = try Fixture([])
+    defer { fixture.cleanUp() }
+    try await fixture.library.save(receipt)
+    #expect(fixture.search("pharmacy").isEmpty)
+    // Reading finishes while Search is open: the view hears of it, though the scans don't change.
+    let heard = Mutex(false)
+    withObservationTracking {
+        _ = fixture.model.results
+    } onChange: {
+        heard.withLock { $0 = true }
+    }
+    fixture.library.updateSearchText("CITY PHARMACY\nBatteries AA", for: receipt.id)
+    #expect(heard.withLock { $0 })
+    #expect(fixture.search("pharmacy") == [receipt.id])
+    #expect(fixture.model.results.first?.snippet == "CITY PHARMACY")
 }

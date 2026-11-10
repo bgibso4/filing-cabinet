@@ -34,6 +34,7 @@ public final class FakeLibrary: ScanLibrary {
     }
 
     public private(set) var lifespans: CollectionLifespans = .defaults
+    public private(set) var searchTextRevision = 0
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
         if saveDelay > .zero {
@@ -61,6 +62,7 @@ public final class FakeLibrary: ScanLibrary {
     public func updateSearchText(_ text: String, for id: ScanID) {
         guard scans.contains(where: { $0.id == id }) else { return }
         searchTextUpdates[id] = text
+        searchTextRevision += 1
     }
 
     public func rename(_ id: ScanID, to title: String) throws(LibraryError) {

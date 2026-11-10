@@ -15,7 +15,12 @@ public protocol ScanLibrary: AnyObject {
     /// Saves the draft's files and record, all or nothing. Throws `.diskFull` or `.writeFailed`.
     func save(_ draft: ScanDraft) async throws(LibraryError)
 
-    /// Sets the scan's search text once reading finishes. A failure is logged; the scan stays saved.
+    /// Goes up each time `updateSearchText` stores a text, so Search can follow texts without `scans` changing (and
+    /// every grid redrawing).
+    var searchTextRevision: Int { get }
+
+    /// Sets the scan's search text once reading finishes, and bumps `searchTextRevision`. A failure is logged; the
+    /// scan stays saved.
     func updateSearchText(_ text: String, for id: ScanID)
 
     func rename(_ id: ScanID, to title: String) throws(LibraryError)

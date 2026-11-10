@@ -61,6 +61,7 @@ public struct ViewerRoute: View {
             }
         }
         .background { springDriver }
+        .onAppear { model.appeared() }
         // Once the scan leaves the library (Trash, or midnight passing its last day) the panel closes as the viewer
         // pops (Review Focus 2).
         .onChange(of: details?.isMissing ?? false) { _, isMissing in

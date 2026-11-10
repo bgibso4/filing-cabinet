@@ -33,7 +33,8 @@ import Testing
     history.record(search: "  bike \n")
     history.record(search: "   ")
     history.record(search: "")
-    #expect(history.recentSearches == ["bike"])
+    history.record(search: " bike \t  lock ")
+    #expect(history.recentSearches == ["bike lock", "bike"])
 }
 
 @MainActor

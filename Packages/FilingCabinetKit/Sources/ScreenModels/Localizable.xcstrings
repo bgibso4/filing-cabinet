@@ -269,7 +269,12 @@
     "A note when scans move to Trash" : {},
     "Filing Cabinet %@ · Private by design" : {},
     "How long each one keeps scans" : {},
-    "Counted from each scan’s date." : {}
+    "Counted from each scan’s date." : {},
+    "No results in %@" : {},
+    "No results for “%@”" : {},
+    "Search reads the words on every scan. Check the spelling or try another word." : {},
+    "%lld scans in %@ and %@ mention “%@”." : {},
+    "%lld scans in other collections mention “%@”." : {}
   },
   "version" : "1.0"
 }

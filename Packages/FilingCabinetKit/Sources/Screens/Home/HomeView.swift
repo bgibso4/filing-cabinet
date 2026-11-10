@@ -152,6 +152,7 @@ public struct HomeView: View {
 private final class PreviewLibrary: ScanLibrary {
     let scans: [ScanSummary] = []
     let lifespans = CollectionLifespans.defaults
+    let searchTextRevision = 0
     func save(_ draft: ScanDraft) async throws(LibraryError) {}
     func updateSearchText(_ text: String, for id: ScanID) {}
     func rename(_ id: ScanID, to title: String) throws(LibraryError) {}

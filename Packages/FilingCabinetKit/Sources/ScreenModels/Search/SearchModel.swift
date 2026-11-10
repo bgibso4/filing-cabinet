@@ -6,7 +6,7 @@ import Observation
 /// What Search shows (08-01…08-06): before typing, the recently viewed scans and recent searches; then the library's
 /// scans holding every word, title matches first (M15), in All or one collection. Trash and expired scans are never
 /// searched. Each scan's title and text are folded once, when the model is made, and again only for the scans that
-/// change (E3); a text that arrives while nothing else about the scans changes is picked up with the next change.
+/// change (E3): an edit, a new scan, Trash, or a text that finishes reading while Search is open.
 @MainActor
 @Observable
 package final class SearchModel {
@@ -28,7 +28,7 @@ package final class SearchModel {
     private struct Entry {
         let scan: ScanSummary
         let title: SearchMatch.Folded
-        let text: SearchMatch.Folded
+        let text: SearchMatch.FoldedText
     }
 
     /// A query's matches in every collection, newest first, and the scans they were found among.
@@ -43,6 +43,7 @@ package final class SearchModel {
         let scans: [ScanSummary]
         let lifespans: CollectionLifespans
         let day: CalendarDay
+        let textRevision: Int
         /// Newest first.
         let entries: [Entry]
     }
@@ -60,6 +61,8 @@ package final class SearchModel {
     @ObservationIgnored private var index: Index?
     /// The last query's matches in every collection, and the scans they came from.
     @ObservationIgnored private var lastSearch: LastSearch?
+    /// The search last kept, so keeping it again (Search, then opening a result) reports it once (M19).
+    @ObservationIgnored private var lastSaved: String?
     /// Each shown result's third line, made once per index: formatting a date per result per keystroke adds up.
     @ObservationIgnored private var details: [ScanID: String] = [:]
 
@@ -165,7 +168,9 @@ package final class SearchModel {
 
     /// The index, rebuilt when the scans, lifespans or day change. Reading them here is what makes the views follow.
     private var currentIndex: Index {
-        if let index, index.scans == library.scans, index.lifespans == library.lifespans, index.day == today.day {
+        if let index, index.scans == library.scans, index.lifespans == library.lifespans, index.day == today.day,
+            index.textRevision == library.searchTextRevision
+        {
             return index
         }
         let rebuilt = makeIndex()
@@ -180,6 +185,7 @@ package final class SearchModel {
         let scans = library.scans
         let lifespans = library.lifespans
         let day = today.day
+        let textRevision = library.searchTextRevision
         let visible = LibraryShelf(scans: scans, lifespans: lifespans, today: day, calendar: clock.calendar).visible
         let texts = library.searchTexts()
         let previous = Dictionary(uniqueKeysWithValues: (index?.entries ?? []).map { ($0.scan.id, $0) })
@@ -191,7 +197,7 @@ package final class SearchModel {
                 title: old.flatMap { $0.title.original == scan.title ? $0.title : nil } ?? .init(scan.title),
                 text: old.flatMap { $0.text.original == text ? $0.text : nil } ?? .init(text))
         }
-        return Index(scans: scans, lifespans: lifespans, day: day, entries: entries)
+        return Index(scans: scans, lifespans: lifespans, day: day, textRevision: textRevision, entries: entries)
     }
 
     /// "Documents · Oct 1", with the year when it isn't this one (M16).
@@ -203,10 +209,13 @@ package final class SearchModel {
         return detail
     }
 
-    /// Keeps the search and reports how many it found, never what (M19). Never from an empty field (M5).
+    /// Keeps the search, its words single-spaced, and reports how many it found, never what (M19); a search already
+    /// kept isn't reported again. Never from an empty field (M5).
     private func save() {
-        guard !terms.isEmpty else { return }
-        history.record(search: query)
+        let search = terms.joined(separator: " ")
+        guard !search.isEmpty, search != lastSaved else { return }
+        lastSaved = search
+        history.record(search: search)
         analytics.send(.searchSaved(resultCount: shown.count))
     }
 

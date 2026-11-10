@@ -15,6 +15,7 @@ public final class ScanStore: ScanLibrary {
     public private(set) var scans: [ScanSummary] = []
     /// How long each collection keeps its scans: the defaults, changed by the stored `CollectionRecord`s.
     public private(set) var lifespans: CollectionLifespans = .defaults
+    public private(set) var searchTextRevision = 0
 
     /// Held so the main context keeps working: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
@@ -114,6 +115,7 @@ public final class ScanStore: ScanLibrary {
         record.searchText = text
         do {
             try persist(context)
+            searchTextRevision += 1
         } catch {
             LibraryLog.logger.error(
                 "Saving search text for scan \(scanID, privacy: .public) failed: \(error.localizedDescription, privacy: .private)"

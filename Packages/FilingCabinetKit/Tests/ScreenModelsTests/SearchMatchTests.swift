@@ -6,7 +6,7 @@ import Testing
 private func hit(_ query: String, title: String, text: String = "") -> SearchHit? {
     SearchMatch.match(
         title: SearchMatch.Folded(title),
-        text: SearchMatch.Folded(text),
+        text: SearchMatch.FoldedText(text),
         terms: SearchMatch.terms(query).map(SearchMatch.Folded.init))
 }
 
@@ -44,6 +44,33 @@ private func bold(_ hit: SearchHit?) -> [String] {
     #expect(found != nil)
     #expect(bold(found) == ["straße"])
     #expect(hit("Straße", title: "Letter", text: "HAUPTSTRASSE 5") != nil)
+    // The compare alone would bold "St" for "ß" and pick the first line; the fold picks "Fuß".
+    let sharp = hit("ß", title: "x", text: "Stop\nFuß")
+    #expect(sharp?.snippet == "Fuß")
+    #expect(bold(sharp) == ["ß"])
+    #expect(bold(hit("ß", title: "x", text: "Stop at the Fuß")) == ["ß"])
+}
+
+/// E3: the bold compare runs on one line per hit, the one `memmem` found, never across the whole text.
+@Test func comparesOneLinePerHit() {
+    let text = SearchMatch.FoldedText((1...40).map { "line \($0) of the receipt" }.joined(separator: "\n") + "\nRenew")
+    var compared = 0
+    let inText = SearchMatch.match(
+        title: SearchMatch.Folded("Receipt"), text: text, terms: [SearchMatch.Folded("renew")], comparedLines: &compared
+    )
+    #expect(inText?.snippet == "Renew")
+    #expect(compared == 1)
+    compared = 0
+    let titleOnly = SearchMatch.match(
+        title: SearchMatch.Folded("Gym card"), text: text, terms: [SearchMatch.Folded("gym")], comparedLines: &compared)
+    #expect(titleOnly?.snippet == "line 1 of the receipt")
+    #expect(compared == 0)
+}
+
+@Test func snippetLineIsWhereTheEarliestTermIs() {
+    let found = hit("unit lease", title: "x", text: "Harbor\nUnit 4B\nRe: Lease renewal")
+    #expect(found?.snippet == "Unit 4B")
+    #expect(bold(found) == ["Unit"])
 }
 
 @Test func multiWordAcrossTitleAndText() {
