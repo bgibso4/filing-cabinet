@@ -86,6 +86,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
 | `-TextReader text\|documents` | which Vision reader understands pages |
 | `-Notifications authorized\|denied\|notDetermined` | a fake notification center answers with that authorization |
+| `-NotificationsUnanswered` | a fake notification center never answers what iOS allows (a stuck notification service) |
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-SeedTrash <n>` | saves `n` synthetic scans at launch and moves scan `i` to Trash on today − `i` |

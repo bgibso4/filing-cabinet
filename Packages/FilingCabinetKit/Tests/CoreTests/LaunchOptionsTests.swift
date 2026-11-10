@@ -16,6 +16,7 @@ private let everyFlag = [
     "-ReduceMotion",
     "-TextReader", "documents",
     "-Notifications", "denied",
+    "-NotificationsUnanswered",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -34,6 +35,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.reduceMotion)
     #expect(options.reader == .documents)
     #expect(options.notifications == .denied)
+    #expect(options.notificationsUnanswered)
 }
 
 @Test func releaseIgnoresEveryFlag() {
@@ -50,6 +52,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(!options.reduceMotion)
     #expect(options.reader == .text)
     #expect(options.notifications == nil)
+    #expect(!options.notificationsUnanswered)
 }
 
 @Test func unknownFlagsAreIgnored() {

@@ -10,6 +10,13 @@ final class ScanJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Scan doesn't wait for iOS to say whether notes may be sent (CI run 42752032236: Scan stayed disabled 5.5 s
+    /// after a relaunch).
+    func testScanIsReadyWhileNotificationsHaveNotAnswered() {
+        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-NotificationsUnanswered"])
+        scanOnePage(in: app)
+    }
+
     func testScanReviewSaveShowsOnHome() throws {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         scanOnePage(in: app)
