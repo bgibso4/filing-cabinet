@@ -49,12 +49,12 @@ None open. All four were answered on 2026-11-10 (B7–B10, under Agreed).
 | M5 | **A search is saved** when you press Search on the keyboard or open a result (requirements 06), and never from Trash or an empty field. Clear empties recent searches only. | 7, 9 |
 | M6 | **Favorites' order is the store's `favoriteOrder`**, lowest first (B10); every other grid stays newest first, as today. Trash keeps its soonest-gone order. | 3, 6 |
 | M7 | **No sort control and no remembered order per grid** (B10), so `AppPreferences` gains nothing for ordering and the grid's top bar is #68's, unchanged: no `HeaderFitTests` re-measure. | 6 |
-| M8 | **Favorites' order is dragged with iOS 27's `reorderable()`** on the Favorites grid, always on (05-09 without the menu). There's no separate mode: a long press lifts the tile and you drag it. Let go without moving and #68's menu shows. Only Favorites reorders, because every other grid is ordered by date. The spike (Task 1) proves it coexists with the tile's long-press menu from #68 and with scrolling; if it doesn't, reordering moves into Select mode (drag while selecting), and I'll ask you. | 1, 6 |
+| M8 | **Favorites' order is dragged with iOS 27's `reorderable()`** on the Favorites grid, always on (05-09 without the menu). There's no separate mode: a long press lifts the tile and you drag it. Library grid tiles have no long-press menu (P1). Only Favorites reorders, because every other grid is ordered by date, and not while selecting (P5). The spike (Task 1) proves the drag coexists with scrolling, tapping and Select; if it doesn't, reordering moves into Select mode (drag while selecting), and I'll ask you. | 1, 6 |
 | M9 | **Un-favouriting from inside Favorites leaves the tile in place with an empty heart** ("Not a favorite", Collection.dc.html's `unfav` state) until you leave the screen, so a slip is one tap to undo. Home's row and the count update at once. | 5 |
 | M10 | **Share sends one PDF per scan** named after its title (Q1); an empty title becomes "Scan", "/" and ":" become "-", and a second "Receipt" in one share becomes "Receipt 2". Each page is the page's own shape, 612 pt (8.5 in) wide, and its image is stored as JPEG at quality 0.85 so the PDF stays small. Pages are drawn one at a time off the main actor, so a 20-page scan never holds more than one full-size page. | 10, 11 |
 | M11 | **More holds Save to Photos, Save to Files and Copy Text** (06-03), in that order. Save to Photos adds each page as its own photo, from the original HEIC, asking iOS for add-only access the first time ("Filing Cabinet saves the scans you choose to Photos."). Denied shows an alert like the camera's ("Photos access is off", Open Settings, Cancel). Save to Files offers the same PDF as Share. Copy Text copies every page's recognized text, pages separated by a blank line, and is greyed out when the scan has none. More is hidden in the Trash viewer (a trashed scan is read-only). | 11 |
 | M12 | **No note after Save to Photos, Save to Files or Copy Text** (the app's no-notes rule): a success haptic and a VoiceOver announcement ("Saved to Photos", "Copied"). A failure shows the existing edit alert's wording adapted ("Couldn't save to Photos"). | 11 |
-| M13 | **Hearts on tiles are marks, not buttons** (Collection.dc.html draws them as labelled spans). You favourite from the viewer, from the tile's long-press menu (#68) and with VoiceOver's Favorite action on the tile (requirements 06). The tile reads "Corner Market, Receipts, 2 days left, favorite". | 4, 5 |
+| M13 | **Hearts on tiles are marks, not buttons** (Collection.dc.html draws them as labelled spans). You favourite from the viewer, from a selection (Task 12) and with VoiceOver's Favorite action on the tile (requirements 06). Library tiles have no long-press menu (P1). The tile reads "Corner Market, Receipts, 2 days left, favorite". | 4, 5 |
 | M14 | **Search is presented by the system's `.searchable`** on Home, in the navigation bar drawer so it sits under the title as in 02-01 rather than at the bottom where Scan is (Q4). While searching, Home's content is replaced by the Search content (08-01…08-06); results push the viewer onto Home's stack, and back returns to the results. The fallback, if the spike fails a check, is our own field on Home (02-01) opening an `AppRoute.search` screen with its own field and X (08-01). | 1, 9 |
 | M15 | **Search matches every word you type, anywhere in the title or the text,** ignoring case and accents ("cafe" finds "Café"), so "renew" finds "renewal" and "Renews" (08-03). Scans whose title has every word come first; then the rest; each group newest first. Only library scans are searched, never Trash or expired ones. Results update as you type. | 7, 9 |
 | M16 | **The result's second line is the first line of text holding a match, with every match in bold** (08-03). A result found only by its title shows its first line of text, unbolded. The third line is the collection's dot, name and scan day ("Documents · Oct 1", with the year when it isn't this one, as Details does). | 7, 9 |
@@ -107,7 +107,7 @@ Before release, separately: the issues labelled before-release (#25, #26, #40, #
 
 1. **A favourite goes to Trash and comes back.** Its heart shows on the Trash tile, it isn't on Home or in Favorites while in Trash, and Restore puts it back in its old place. Tests: Task 2 `restoreKeepsFavoriteOrder`; Task 3 `trashedFavoritesLeaveFavorites`; Task 5 `FavoritesJourneyTests.testFavoriteSurvivesTrashAndRestore`.
 2. **No two favourites ever share a number** (B11): favouriting, reordering, Trash, Restore and Delete in any mix, and a tie made by hand still reads in a fixed order without crashing. Tests: Task 2 `numbersStayUniqueAcrossRandomOperations`, `tiesReadInAFixedOrder`, `nextWriteRepairsATie`.
-3. **Dragging in Favorites, or long-pressing a tile.** A drag reorders and the new order shows on Home at once; the long-press menu, scrolling and tapping still work; the order survives a relaunch. Tests: Task 6 `FavoriteReorderTests`, `FavoritesJourneyTests.testDragReordersFavorites`.
+3. **Dragging in Favorites.** A drag reorders and the new order shows on Home at once; scrolling, tapping and Select still work (P1, P5); the order survives a relaunch. Tests: Task 6 `FavoriteReorderTests`, `FavoritesJourneyTests.testDragReordersFavorites`.
 4. **Search at scale and in odd text.** 2,000 scans with text, accents ("Café"), a scan still being read (empty text), a word in the title and in the text. Results come first by title, never include Trash, and stay quick enough to update per keystroke. Tests: Task 7 `SearchMatchTests`; Task 1's measurement on the phone.
 5. **Sharing a 20-page scan.** The PDF is built page by page off the main actor, the share sheet stays responsive, and nothing is left in the temporary folder afterwards. Tests: Task 10 `ScanExportTests.pagesAreDrawnOneAtATime`, `exportFolderIsRemoved`; Task 13's phone check.
 6. **Un-favouriting inside Favorites, then leaving.** The tile stays with an empty heart, the subtext count drops, and the tile is gone when you come back. Test: Task 5 `FavoritesGridModelTests.unfavoritedTileStaysUntilLeaving`.
@@ -165,7 +165,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 
 - [ ] **Step 1: Search, option A (system).** On Home, `.searchable(text:placement: .navigationBarDrawer(displayMode: .always), prompt: "Search")` with a stand-in Search content shown while `isSearching` (read inside the searchable view). Pass if all hold on the simulator: the field sits under "Filing Cabinet" and collapses with it on scroll, never at the bottom over Scan; tapping it focuses with the keyboard, and the system's X or Cancel leaves search and restores Home; a row of chips can sit under the field (08-01); pushing a viewer from a result and coming back keeps the query and the results; Scan hides while searching (08-01 has none); the header audit stays clean. Note how close the field looks to 02-01 and 08-01 (screenshot both).
 - [ ] **Step 2: Search, option B (ours), only if A fails a check.** A drawn field in Home's content (02-01) that pushes `AppRoute.search` with its own field focused and an X (08-01). Check the same points.
-- [ ] **Step 3: Reorder.** In the Favorites grid stand-in (a `LazyVGrid` of 10 tiles), `ForEach(...).reorderable()` and `.reorderContainer(for: GridTile.self)`, beside a `.contextMenu` on each tile (as #68 adds). Pass if: a long press shows the menu and dragging out of the lift reorders; a plain scroll still scrolls; a tap still opens; VoiceOver offers the system's move actions. If the menu and the drag fight, try the drag only from Select mode, and record which.
+- [ ] **Step 3: Reorder.** In the Favorites grid stand-in (a `LazyVGrid` of 10 tiles), `ForEach(...).reorderable()` and `.reorderContainer(for: GridTile.self)`, with #68's Select on the bar (library tiles have no long-press menu, P1). Pass if: a long press lifts the tile and dragging reorders; a plain scroll still scrolls; a tap still opens; in Select mode a tap still ticks and nothing drags (P5); VoiceOver offers the system's move actions. If the drag fights scrolling or tapping, try the drag only from Select mode, and record which.
 - [ ] **Step 4: Search speed on the phone.** Seed 2,000 scans with about 1.5 KB of text each (`-SeedScans 2000` with the text from Task 7's seed). Time one `SearchMatch` pass over every scan for a 1-, 3- and 6-letter query with an `OSSignposter` interval; `make device`, 20 runs each, report p95. Under 16 ms keeps M15's "as you type"; over it, Task 9 waits 150 ms after the last keystroke instead.
 - [ ] **Step 5: Record** E1 (Search: A or B, and why), E2 (reorder: in the grid or in Select mode) and E3 (search p95 and M15's path) in "Decided during execution", with a line for Ben in `.superpowers/for-ben.md`. Delete the spike branch. Timebox: 2 hours total; if neither Search option passes, stop and ask Ben.
 
@@ -209,7 +209,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
   - `GridKind.favorites`, `AppRoute.favorites`.
   - `CollectionGridModel` for `.favorites`: the library's favourites in `ScanSummary.favoritesOrder` (M3, M6), title "Favorites", subtitle "10 scans" (no lifespan), mixed dots, empty copy "No favorites yet" · "Tap the heart on a scan to keep it one tap from Home." (Collection.dc.html).
   - `GridTile.isFavorite`, `TrashTile.isFavorite`; each label ends ", favorite" when true (M13).
-  - `CollectionGridModel.toggleFavorite(_ id: ScanID)` for the tile's VoiceOver action and #68's long-press menu: a failed write shows the edit alert; sends `favoritesChanged`.
+  - `CollectionGridModel.toggleFavorite(_ id: ScanID)` for the tile's VoiceOver action (P1): a failed write shows the edit alert; sends `favoritesChanged`.
   - `AnalyticsEvent.favoritesChanged(isFavorite:count:)`, `scansExported(kind:count:)`, `searchSaved(resultCount:)` with bucketed counts (M19).
 
 - [ ] **Step 1: Write the failing tests.** `CollectionGridModelTests`: `favoritesGridShowsOnlyFavorites`, `favoritesFollowFavoriteOrder`, `tiedFavoritesBothShow`, `trashedFavoritesLeaveFavorites` (Review Focus 1), `favoritesSubtitleIsTheCount`, `tilesCarryTheirHeart`, `tileLabelSaysFavorite`, `toggleFavoriteFromATile`, `failedToggleShowsTheAlert`. `TrashModelTests.trashTilesKeepTheirHeart`. `AnalyticsEventTests` for the three events' parameters, with no text in any.
@@ -232,7 +232,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 - Produces: `FavoriteMark(isFilled: Bool)`: a 26 pt circle 5 pt in from the tile's top-right corner with a white heart (Collection.dc.html lines for the mark; cite them). Hidden from VoiceOver: the tile's label carries "favorite" (M13). The tile's VoiceOver actions gain Favorite / Remove from Favorites in the library grids (Trash keeps Restore and Delete now).
 
 - [ ] **Step 1: Snapshots first.** Seed two favourites into the fixtures of `grid_receipts`, `grid_all` and `trash_list`, and record. Expected: FAIL (no hearts).
-- [ ] **Step 2: Implement** the mark and place it on both tile views. Add the tile's VoiceOver favourite action, calling a closure the grid passes (`onToggleFavorite`), wired to the library in the grid view.
+- [ ] **Step 2: Implement** the mark and place it on both tile views. Add the tile's VoiceOver favourite action, calling a closure the grid passes (`onToggleFavorite`), wired to `CollectionGridModel.toggleFavorite` (P2).
 - [ ] **Step 3: Re-record** `grid_receipts`, `grid_all`, `trash_list` (light, dark, ax5). Open each against 05-07 and 09-01 and list the paths.
 - [ ] **Step 4: Run** `make full ONLY="FilingCabinetSnapshotTests/GridSnapshotTests FilingCabinetSnapshotTests/TrashSnapshotTests"`. Expected: PASS.
 - [ ] **Step 5: Commit** `Grid, Trash: hearts on favourite tiles`, naming each reference.
@@ -254,7 +254,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
   - `HomeModel.favorites: [HomeFavorite]` (id, title) for the first 10 in Favorites' order, and `favoritesOpensGrid` (3 or more, M18). `HomeFavoritesRow`: "Favorites" (title2 serif) as a link with a chevron or plain, then the sideways row of 148 × 96 pt thumbnails with titles under them (Home.dc.html `cardW`, `cardH`; cite the lines). Tapping a card opens the viewer; the link opens `AppRoute.favorites`.
   - `CollectionGridModel` for `.favorites` keeps tiles un-favourited since the screen appeared, with an empty heart and "Not a favorite", until the screen goes (M9). The count in the subtitle is live.
 
-- [ ] **Step 1: Write the failing model tests.** `ViewerModelTests.toggleFavoriteFlipsIt`, `failedFavoriteShowsTheAlert`. `HomeModelTests.favoritesRowFollowsFavoritesOrder`, `rowShowsAtMostTen`, `linkOnlyFromThree`, `noFavoritesNoRow`. `FavoritesGridModelTests.unfavoritedTileStaysUntilLeaving` (Review Focus 5), `subtitleCountIsLive`.
+- [ ] **Step 1: Write the failing model tests.** `ViewerModelTests.toggleFavoriteFlipsIt`, `failedFavoriteShowsTheAlert`. `HomeModelTests.favoritesRowFollowsFavoritesOrder`, `rowShowsAtMostTen`, `linkOnlyFromThree`, `noFavoritesNoRow`. `FavoritesGridModelTests.unfavoritedTileStaysUntilLeaving` (Review Focus 6), `subtitleCountIsLive`.
 - [ ] **Step 2: Run `make fast`.** Expected: FAIL. Implement the models; `make fast` PASS.
 - [ ] **Step 3: UI tests** in `FavoritesJourneyTests` (`-SeedScans 6`): `testHeartingAScanPutsItOnHome` (open a scan, tap the heart, back: Home shows the card; the grid tile has a heart); `testFavoriteSurvivesTrashAndRestore` (favourite, Move to Trash, Trash's tile has a heart, Restore, the card is back on Home) (Review Focus 1); `testFavoritesLinkOpensTheGrid` (`-SeedFavorites 3`); `testNewFavoriteGoesLast` (`-SeedFavorites 3`: favourite a fourth scan; it is the last card on Home and the last tile in Favorites). Run them. Expected: FAIL.
 - [ ] **Step 4: Implement** the views.
@@ -275,11 +275,11 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 - Consumes: `ScanLibrary.reorderFavorites`, E2. Read #68's grid, as merged, first (its long-press menu and Select mode).
 - Produces:
   - `enum FavoriteReorder { static func order(_ ids: [ScanID], moving sources: [ScanID], before destination: ScanID?) -> [ScanID] }`: the moved ids keep their own order and land before `destination` (nil: at the end).
-  - In Favorites (E2's path), the grid's `ForEach` is `.reorderable()` and the grid a `.reorderContainer(for: GridTile.self)` that applies `FavoriteReorder` and calls `reorderFavorites`. No other grid reorders. A light haptic as a tile drops.
+  - In Favorites (E2's path), the grid's `ForEach` is `.reorderable()` and the grid a `.reorderContainer(for: GridTile.self)` that applies `FavoriteReorder` and calls `reorderFavorites`. No other grid reorders, and Favorites doesn't while selecting (P5). A light haptic as a tile drops.
 
 - [ ] **Step 1: Write the failing tests.** `FavoriteReorderTests`: `moveOneForward`, `moveOneToEnd`, `moveSeveralKeepsTheirOrder`, `moveOntoItselfChangesNothing`.
 - [ ] **Step 2: Run `make fast`.** Expected: FAIL. Implement `FavoriteReorder`; `make fast` PASS.
-- [ ] **Step 3: UI test.** `FavoritesJourneyTests.testDragReordersFavorites` (`-SeedFavorites 4`: drag the 3rd tile before the 1st; it's first, Home's first card matches, and after a relaunch it's still first) (Review Focus 2). Run. Expected: FAIL.
+- [ ] **Step 3: UI test.** `FavoritesJourneyTests.testDragReordersFavorites` (`-SeedFavorites 4`: drag the 3rd tile before the 1st; it's first, Home's first card matches, and after a relaunch it's still first) (Review Focus 3). Run. Expected: FAIL.
 - [ ] **Step 4: Implement** the drag.
 - [ ] **Step 5: Run** `make full ONLY="FilingCabinetSnapshotTests/GridSnapshotTests FilingCabinetUITests/BrowseJourneyTests FilingCabinetUITests/FavoritesJourneyTests"`. Expected: PASS, including `testAuditAtLargestTextOfAGrid`; no snapshot changes.
 - [ ] **Step 6: Commit** `Favorites: your own order, by drag`.
@@ -359,7 +359,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
   - `struct ScanExport: Sendable` with `@concurrent func pdf(for scan: ScanSummary, named: String) async throws(LibraryError) -> URL`: writes `tmp/Export/<uuid>/<name>.pdf`, drawing one page at a time (M10): read the HEIC, re-encode as JPEG 0.85, draw it through a JPEG data provider so the PDF keeps the JPEG, release it before the next page. `static func fileName(for title: String, taken: Set<String>) -> String` (M10's rules). `func removeAll()`.
   - `struct ScanPDF: Transferable` (`FileRepresentation(exportedContentType: .pdf)`, made lazily when the share sheet or file exporter asks; `suggestedFileName`), used by Share, Save to Files and a selection's Share.
 
-- [ ] **Step 1: Write the failing tests** with `SyntheticPages`: `onePagePerScanPage`, `pageShapeFollowsTheImage` (612 pt wide, the image's aspect), `pagesAreJPEG` (the PDF's image streams use DCTDecode), `pagesAreDrawnOneAtATime` (a counting image source never has two pages open, Review Focus 4), `fileNames` ("", "a/b", "Receipt" twice), `exportFolderIsRemoved`, `launchCleanupClearsExports`, `missingPageFileThrows`.
+- [ ] **Step 1: Write the failing tests** with `SyntheticPages`: `onePagePerScanPage`, `pageShapeFollowsTheImage` (612 pt wide, the image's aspect), `pagesAreJPEG` (the PDF's image streams use DCTDecode), `pagesAreDrawnOneAtATime` (a counting image source never has two pages open, Review Focus 5), `fileNames` ("", "a/b", "Receipt" twice), `exportFolderIsRemoved`, `launchCleanupClearsExports`, `missingPageFileThrows`.
 - [ ] **Step 2: Run `make fast`.** Expected: FAIL to compile.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run `make fast`.** Expected: PASS.
@@ -388,7 +388,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 - [ ] **Step 3: UI tests** `ExportJourneyTests`: `testShareOpensTheShareSheet` (the system share sheet appears with a PDF named after the scan; close it); `testMoreMenuOffersThreeActions`; `testSaveToPhotosDeniedShowsTheAlert` (`-Photos denied`); `testTrashViewerHasNoShareOrMore`. Run. Expected: FAIL.
 - [ ] **Step 4: Implement** the views, the seam, `NSPhotoLibraryAddUsageDescription` ("Filing Cabinet saves the scans you choose to Photos.") and the denied alert.
 - [ ] **Step 5: Re-record** `viewer_lease`, `viewer_receipt` (Share and More now shown) light, dark, ax5; `trash_viewer` must not change. Open each against 06-01, 06-02, 06-05 and list the paths.
-- [ ] **Step 6: Run** `make full ONLY="FilingCabinetSnapshotTests/ViewerSnapshotTests FilingCabinetUITests/ExportJourneyTests FilingCabinetUITests/DetailsJourneyTests FilingCabinetUITests/TrashJourneyTests"`. Expected: PASS. Add `ExportJourneyTests` to CI's `SHARD=main`.
+- [ ] **Step 6: Run** `make full ONLY="FilingCabinetSnapshotTests/ViewerSnapshotTests FilingCabinetUITests/ExportJourneyTests FilingCabinetUITests/DetailsJourneyTests FilingCabinetUITests/TrashJourneyTests"`. Expected: PASS. CI's `SHARD=main` takes `ExportJourneyTests` by itself (P6); confirm with `make -n ci-sim SHARD=main`.
 - [ ] **Step 7: Commit** `Viewer: Share as PDF; More saves to Photos or Files and copies the text`, naming each reference.
 
 ### Task 12: A selection can be shared and favourited
@@ -396,14 +396,14 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 **Unit:** Screen · Grid (on #68's Select)
 
 **Files:**
-- Modify: #68's selection bar and model (read them first: names below are placeholders until then), `Sources/Core/Accessibility/AccessibilityID.swift`
-- Test: #68's selection model tests, `UITests/FavoritesJourneyTests.swift`, `SnapshotTests/GridSnapshotTests.swift`
+- Modify: `Sources/Screens/Grid/CollectionGridView.swift` (`moveBar`), `Sources/ScreenModels/Grid/CollectionGridModel.swift`, `Sources/ScreenModels/Shared/ScanSelection.swift` if needed, `Sources/Core/Accessibility/AccessibilityID.swift`
+- Test: `Tests/ScreenModelsTests/CollectionGridModelTests.swift`, `UITests/FavoritesJourneyTests.swift`, `SnapshotTests/GridSnapshotTests.swift`
 
 **Interfaces:**
 - Consumes: #68's selection (the selected ids, its bottom bar), `ScanLibrary.setFavorite`, `ScanPDF`.
-- Produces: in the selection's bar, Share (`ShareLink(items:)`, one PDF per scan, M10's names) and Favorite: "Favorite" when any selected scan isn't one, "Remove from Favorites" when all are. Favouriting ends select mode, as #68's other actions do. The long-press menu from #68 gains Favorite / Remove from Favorites and Share for its one scan.
+- Produces: in the selection's bar, Share (`ShareLink(items:)`, one PDF per scan, M10's names) and Favorite: "Favorite" when any selected scan isn't one, "Remove from Favorites" when all are. Favouriting ends select mode, as #68's other actions do. No long-press menu is added (P1).
 
-- [ ] **Step 1: Read #68 as merged** and fit this task's names to it. If #68's bar has no room for two more actions, stop and ask Ben with a mock rather than choosing.
+- [ ] **Step 1: Read #68 as merged** and fit this task's names to it. #68's bar is one filled pill, Move to Trash, in Scan's place (`CollectionGridView.moveBar`). If it has no room for two more actions, stop and ask Ben with a mock rather than choosing (P4).
 - [ ] **Step 2: Write the failing tests:** the selection model's `favoriteLabelFollowsTheSelection` and `favoritingSeveralKeepsScreenOrder`; `FavoritesJourneyTests.testFavoritingASelection` (select 3 in All Scans, Favorite, each tile has a heart and Home's row has 3 cards). Run. Expected: FAIL.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Re-record** #68's selecting snapshot(s) with the two new actions; open them and list the paths.
@@ -428,3 +428,9 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 
 | # | Decision | Whose | Task |
 |---|---|---|---|
+| P1 | Library grid tiles get no long-press menu. #68 added none and the mocks draw one only in Trash (09-03). You favourite from the viewer, a selection and VoiceOver; the drag in Favorites is a plain long-press lift. | Mine, pre-flight 2026-11-10; Ben may veto | 1, 3, 6, 12 |
+| P2 | A tile's VoiceOver Favorite calls `CollectionGridModel.toggleFavorite`, so the alert and analytics live in one place. | Mine, pre-flight | 4 |
+| P3 | Three Review Focus numbers in Tasks 5, 6 and 10 corrected (6, 3, 5). | Mine, pre-flight | 5, 6, 10 |
+| P4 | Task 12 keeps its stop: #68's selection bar is one pill, so Share and Favorite beside Move to Trash need Ben's choice from a mock. | Mine, pre-flight; Ben decides | 12 |
+| P5 | Favorites doesn't drag while selecting: a tap ticks, as #68. | Mine, pre-flight | 1, 6 |
+| P6 | CI's `SHARD=main` already takes every class outside the scan and browse shards, so `ExportJourneyTests` needs no Makefile change. | Mine, pre-flight | 11 |
