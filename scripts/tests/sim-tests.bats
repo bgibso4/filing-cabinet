@@ -159,3 +159,20 @@ called() { grep -q -- "$1" "$CALLS" 2>/dev/null; }
   [ "$(sed -n 2p .build/test-runs.log | cut -f4)" = 0 ]
   [[ "$output" == *"test-runs: retest"* ]]
 }
+
+@test "retest allows a change to the test-run scripts" {
+  ONLY="FilingCabinetUITests/A" sim full
+  rm "$CALLS"
+  printf '# edited\n' >>scripts/sim-tests.sh
+  ONLY="FilingCabinetUITests/A" sim retest
+  [ "$status" -eq 0 ]
+}
+
+@test "retest refuses after a token generator change" {
+  mkdir -p scripts && printf 'gen\n' >scripts/generate-tokens.swift
+  ONLY="FilingCabinetUITests/A" sim full
+  rm "$CALLS"
+  printf '// edited\n' >>scripts/generate-tokens.swift
+  ONLY="FilingCabinetUITests/A" sim retest
+  [ "$status" -eq 2 ]
+}

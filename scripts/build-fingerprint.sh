@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Content fingerprint of everything that goes into the simulator build, so `make retest` can tell whether the last
 # build still matches the sources. Leaves out what the build doesn't read: docs, Markdown, CI and agent config, design
-# hand-off files (but not design/tokens.json) and snapshot references (the tests read those from disk at run time).
+# hand-off files (but not design/tokens.json), scripts other than the token generator, and snapshot references (the
+# tests read those from disk at run time).
 #   build-fingerprint.sh            print the current fingerprint
 #   build-fingerprint.sh current    exit 0 when it equals the one recorded after the last good build
 #   build-fingerprint.sh record FP  record FP (.build/fc-test-build)
@@ -14,8 +15,8 @@ fingerprint() {
 	git ls-files -co --exclude-standard -z | sort -z |
 		while IFS= read -r -d '' file; do
 			case "$file" in
-			design/tokens.json) ;;
-			docs/* | .github/* | .claude/* | design/* | SnapshotTests/__Snapshots__/* | *.md) continue ;;
+			design/tokens.json | scripts/generate-tokens.swift) ;;
+			docs/* | .github/* | .claude/* | design/* | scripts/* | SnapshotTests/__Snapshots__/* | *.md) continue ;;
 			esac
 			[ -f "$file" ] && printf '%s\0' "$file"
 		done | xargs -0 shasum -a 256 | shasum -a 256 | cut -d' ' -f1
