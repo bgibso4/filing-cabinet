@@ -12,4 +12,6 @@ package struct SearchResult: Equatable, Identifiable {
     package let collection: BuiltInCollection
     /// The third line: "Documents · Oct 1", with the year when it isn't this one.
     package let detail: String
+    /// What VoiceOver reads for the whole row: "Lease 2026, Documents, October 1, Re: Lease renewal…".
+    package let accessibilityLabel: String
 }

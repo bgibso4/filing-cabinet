@@ -13,4 +13,19 @@ public enum AppRoute: Hashable {
     case settings
     case collections
     case collectionSettings(BuiltInCollection)
+    /// Search, from Home's field (M14, E1).
+    case search
+}
+
+extension AppRoute {
+    /// The grid a route shows, or nil for a screen that isn't a grid (Trash has its own).
+    package var gridKind: GridKind? {
+        switch self {
+        case .collection(let collection): .collection(collection)
+        case .recent: .recent
+        case .all: .all
+        case .favorites: .favorites
+        case .trash, .scan, .trashedScan, .settings, .collections, .collectionSettings, .search: nil
+        }
+    }
 }

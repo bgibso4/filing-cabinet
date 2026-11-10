@@ -84,15 +84,15 @@ final class AppEnvironment {
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
             makeViewer: Self.viewerMaker(
                 store: store, today: today, clock: clock, analytics: analytics, history: history),
-            makeDetails: { id in
-                DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
-            },
+            makeDetails: { DetailsModel(id: $0, library: store, today: today, clock: clock, analytics: analytics) },
             makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
             makeCollectionSettings: {
                 CollectionSettingsModel(
                     collection: $0, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
+            makeSearch: Self.searchMaker(
+                store: store, today: today, clock: clock, analytics: analytics, history: history),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
@@ -121,6 +121,13 @@ final class AppEnvironment {
                 history: history,
                 mode: mode)
         }
+    }
+
+    /// Makes Search's model, keeping what it saves in the app-wide history the viewer records into.
+    private static func searchMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
+    ) -> () -> SearchModel {
+        { SearchModel(library: store, today: today, clock: clock, history: history, analytics: analytics) }
     }
 
     /// The scan flow, with its reader built here so the reader flags apply from launch.

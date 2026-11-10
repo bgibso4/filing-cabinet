@@ -76,3 +76,13 @@ import Testing
         AccessibilityID.Settings.all + AccessibilityID.Collections.all + AccessibilityID.CollectionSettings.all
     #expect(Set(settings).isSubset(of: AccessibilityID.all))
 }
+
+@Test func searchIdentifiersArePrefixedAndInAll() {
+    #expect(AccessibilityID.Search.chip(nil) == "search.chip.all")
+    #expect(AccessibilityID.Search.chip(.wallet) == "search.chip.wallet")
+    #expect(AccessibilityID.Search.recent(0) == "search.recent.0")
+    let search = AccessibilityID.Search.all + [AccessibilityID.Search.clear, AccessibilityID.Search.searchAll]
+    #expect(search.allSatisfy { $0.hasPrefix("search.") })
+    #expect(Set(search).isSubset(of: AccessibilityID.all))
+    #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.search))
+}

@@ -15,6 +15,8 @@ public enum AccessibilityID {
         public static let favoritesLink = "home.favoritesLink"
         /// Every Favorites card's identifier starts with this; cards are checked by prefix, not listed in `all`.
         public static let favoritePrefix = "home.favorite."
+        /// The drawn search field under the title (02-01): it opens Search.
+        public static let search = "home.search"
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
@@ -25,7 +27,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings, cleanupBanner]
+            [scan, recentRow, allRow, trashRow, settings, cleanupBanner, search]
                 + BuiltInCollection.allCases.map(collectionRow)
         }
     }
@@ -208,6 +210,47 @@ public enum AccessibilityID {
         }
     }
 
+    /// Search, pushed from Home's field (08-01…08-06).
+    public enum Search {
+        public static let field = "search.field"
+        /// The X beside the field: back to Home.
+        public static let close = "search.close"
+        /// The field's own clear button, only while it holds text (08-03).
+        public static let clearQuery = "search.clearQuery"
+        /// Recent searches' Clear, only while there are some (08-02).
+        public static let clear = "search.clear"
+        /// "Search all scans", only when the chosen collection has nothing and others have (08-05).
+        public static let searchAll = "search.searchAll"
+        /// Every result row's identifier starts with this; rows are checked by prefix, not listed in `all`.
+        public static let resultPrefix = "search.result."
+        /// Every recently viewed scan's identifier starts with this.
+        public static let viewedPrefix = "search.viewed."
+        /// Every recent search's identifier starts with this, then its place in the list (0 is the newest).
+        public static let recentPrefix = "search.recent."
+
+        /// A filter chip: All for nil, otherwise the collection.
+        public static func chip(_ collection: BuiltInCollection?) -> String {
+            "search.chip.\(collection?.rawValue ?? "all")"
+        }
+
+        public static func result(_ id: ScanID) -> String {
+            resultPrefix + id.uuid.uuidString
+        }
+
+        public static func viewed(_ id: ScanID) -> String {
+            viewedPrefix + id.uuid.uuidString
+        }
+
+        public static func recent(_ index: Int) -> String {
+            recentPrefix + String(index)
+        }
+
+        /// What Search always shows: the field, the X and every chip.
+        public static var all: [String] {
+            [field, close, chip(nil)] + BuiltInCollection.allCases.map(chip)
+        }
+    }
+
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
 
@@ -219,5 +262,6 @@ public enum AccessibilityID {
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all
+            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll]
     }
 }

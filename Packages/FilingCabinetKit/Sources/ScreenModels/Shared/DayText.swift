@@ -13,6 +13,11 @@ enum DayText {
         day.year == today.year ? monthDay(day, clock: clock) : monthDayYear(day, clock: clock)
     }
 
+    /// "October 12", or "January 9, 2027" when the year isn't today's: the spoken form of `monthDay(_:today:clock:)`.
+    static func spokenMonthDay(_ day: CalendarDay, today: CalendarDay, clock: AppClock) -> String {
+        format(day, template: day.year == today.year ? "MMMMd" : "MMMMdy", clock: clock)
+    }
+
     /// "Jan 9, 2027".
     static func monthDayYear(_ day: CalendarDay, clock: AppClock) -> String {
         format(day, template: "MMMdy", clock: clock)

@@ -13,6 +13,7 @@ public struct RootDependencies {
     let makeSettings: () -> SettingsModel
     let makeCollections: () -> CollectionsModel
     let makeCollectionSettings: (BuiltInCollection) -> CollectionSettingsModel
+    let makeSearch: () -> SearchModel
     let thumbnails: any ThumbnailProviding
     let pages: any PageImageProviding
     let cameraMode: CameraMode
@@ -31,6 +32,7 @@ public struct RootDependencies {
         makeSettings: @escaping () -> SettingsModel,
         makeCollections: @escaping () -> CollectionsModel,
         makeCollectionSettings: @escaping (BuiltInCollection) -> CollectionSettingsModel,
+        makeSearch: @escaping () -> SearchModel,
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
         cameraMode: CameraMode,
@@ -46,6 +48,7 @@ public struct RootDependencies {
         self.makeSettings = makeSettings
         self.makeCollections = makeCollections
         self.makeCollectionSettings = makeCollectionSettings
+        self.makeSearch = makeSearch
         self.thumbnails = thumbnails
         self.pages = pages
         self.cameraMode = cameraMode

@@ -128,6 +128,21 @@ private struct Fixture {
     #expect(fixture.model.results.last?.detail == "Documents · Sep 7, 2025")
 }
 
+/// Requirements 06 · Accessibility: one VoiceOver element per row, its day spoken in full.
+@MainActor
+@Test func resultReadsAsOneSentence() throws {
+    let lease = Seed("Lease 2026", .documents, text: "Re: Lease renewal", daysAgo: 11)
+    let old = Seed("Lease 2025", .documents, text: "renewal", daysAgo: 400)
+    let fixture = try Fixture([lease, old])
+    defer { fixture.cleanUp() }
+    fixture.model.query = "renew"
+    #expect(
+        fixture.model.results.map(\.accessibilityLabel) == [
+            "Lease 2026, Documents, October 1, Re: Lease renewal",
+            "Lease 2025, Documents, September 7, 2025, renewal",
+        ])
+}
+
 @MainActor
 @Test func headerCopy() throws {
     let fixture = try Fixture([

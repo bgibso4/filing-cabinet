@@ -103,14 +103,8 @@ public struct RootView: View {
     @ViewBuilder
     private func screen(_ route: AppRoute) -> some View {
         switch route {
-        case .collection(let collection):
-            grid(.collection(collection))
-        case .recent:
-            grid(.recent)
-        case .all:
-            grid(.all)
-        case .favorites:
-            grid(.favorites)
+        case .collection, .recent, .all, .favorites:
+            if let kind = route.gridKind { grid(kind) }
         case .trash:
             GridRoute(makeModel: dependencies.makeTrash) { model in
                 TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.trashedScan($0)) })
@@ -130,6 +124,10 @@ public struct RootView: View {
         case .collectionSettings(let collection):
             GridRoute(
                 makeModel: { dependencies.makeCollectionSettings(collection) }, content: CollectionSettingsView.init)
+        case .search:
+            GridRoute(makeModel: dependencies.makeSearch) { model in
+                SearchView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.scan($0)) })
+            }
         }
     }
 

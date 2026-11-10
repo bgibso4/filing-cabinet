@@ -9,7 +9,7 @@ import Observation
 /// change (E3): an edit, a new scan, Trash, or a text that finishes reading while Search is open.
 @MainActor
 @Observable
-package final class SearchModel {
+public final class SearchModel {
     /// Which of 08-01…08-06 shows.
     package enum State: Equatable {
         /// Nothing viewed or searched yet: only the filters (08-01).
@@ -22,6 +22,12 @@ package final class SearchModel {
         case nothingHere(title: String, body: String)
         /// Nothing anywhere (08-06).
         case nothingAnywhere(title: String, body: String)
+    }
+
+    /// A result's third line and its day as VoiceOver reads it.
+    private struct Place {
+        let detail: String
+        let spokenDay: String
     }
 
     /// One library scan, folded for matching.
@@ -52,9 +58,9 @@ package final class SearchModel {
     package typealias Matching = (SearchMatch.Folded, SearchMatch.FoldedText, [SearchMatch.Folded]) -> SearchHit?
 
     /// The field's text, as typed.
-    package var query = ""
+    public var query = ""
     /// The chip: nil is All.
-    package var filter: BuiltInCollection?
+    public var filter: BuiltInCollection?
 
     private let library: any ScanLibrary
     private let today: Today
@@ -68,16 +74,30 @@ package final class SearchModel {
     @ObservationIgnored private var lastSearch: LastSearch?
     /// The search last kept, so keeping it again (Search, then opening a result) reports it once (M19).
     @ObservationIgnored private var lastSaved: String?
-    /// Each shown result's third line, made once per index: formatting a date per result per keystroke adds up.
-    @ObservationIgnored private var details: [ScanID: String] = [:]
+    /// Each shown result's third line and spoken day, made once per index: formatting a date per result per keystroke
+    /// adds up.
+    @ObservationIgnored private var places: [ScanID: Place] = [:]
 
+    public convenience init(
+        library: any ScanLibrary, today: Today, clock: AppClock, history: SearchHistory, analytics: any Analytics
+    ) {
+        self.init(
+            library: library,
+            today: today,
+            clock: clock,
+            history: history,
+            analytics: analytics,
+            matching: { SearchMatch.match(title: $0, text: $1, terms: $2) })
+    }
+
+    /// `matching` is how one scan is matched, so a test can count the visits.
     package init(
         library: any ScanLibrary,
         today: Today,
         clock: AppClock,
         history: SearchHistory,
         analytics: any Analytics,
-        matching: @escaping Matching = { SearchMatch.match(title: $0, text: $1, terms: $2) }
+        matching: @escaping Matching
     ) {
         self.matching = matching
         self.library = library
@@ -113,13 +133,18 @@ package final class SearchModel {
     package var results: [SearchResult] {
         let day = today.day
         return shown.map { entry, hit in
-            SearchResult(
+            let place = place(entry.scan, today: day)
+            return SearchResult(
                 id: entry.scan.id,
                 title: entry.scan.title,
                 snippet: hit.snippet,
                 bold: hit.bold,
                 collection: entry.scan.collection,
-                detail: detail(entry.scan, today: day))
+                detail: place.detail,
+                accessibilityLabel: String(
+                    localized:
+                        "\(entry.scan.title), \(CollectionText.name(entry.scan.collection)), \(place.spokenDay), \(hit.snippet)",
+                    bundle: #bundle))
         }
     }
 
@@ -196,7 +221,7 @@ package final class SearchModel {
         let rebuilt = makeIndex()
         index = rebuilt
         lastSearch = nil
-        details = [:]
+        places = [:]
         return rebuilt
     }
 
@@ -220,13 +245,16 @@ package final class SearchModel {
         return Index(scans: scans, lifespans: lifespans, day: day, textRevision: textRevision, entries: entries)
     }
 
-    /// "Documents · Oct 1", with the year when it isn't this one (M16).
-    private func detail(_ scan: ScanSummary, today: CalendarDay) -> String {
-        if let detail = details[scan.id] { return detail }
-        let day = DayText.monthDay(CalendarDay(scan.scannedAt, in: clock.calendar), today: today, clock: clock)
-        let detail = String(localized: "\(CollectionText.name(scan.collection)) · \(day)", bundle: #bundle)
-        details[scan.id] = detail
-        return detail
+    /// "Documents · Oct 1", with the year when it isn't this one (M16), and the day as VoiceOver says it.
+    private func place(_ scan: ScanSummary, today: CalendarDay) -> Place {
+        if let place = places[scan.id] { return place }
+        let scanned = CalendarDay(scan.scannedAt, in: clock.calendar)
+        let day = DayText.monthDay(scanned, today: today, clock: clock)
+        let place = Place(
+            detail: String(localized: "\(CollectionText.name(scan.collection)) · \(day)", bundle: #bundle),
+            spokenDay: DayText.spokenMonthDay(scanned, today: today, clock: clock))
+        places[scan.id] = place
+        return place
     }
 
     /// Keeps the search, its words single-spaced, and reports how many it found, never what (M19); a search already

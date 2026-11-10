@@ -52,7 +52,14 @@
     "View" : {},
     "Notifications" : {},
     "Appearance" : {},
-    "Keep scans for" : {}
+    "Keep scans for" : {},
+    "All" : {},
+    "Close search" : {},
+    "Clear search" : {},
+    "Recently viewed" : {},
+    "Recent searches" : {},
+    "Search" : {},
+    "Search all scans" : {}
   },
   "version" : "1.0"
 }

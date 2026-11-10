@@ -27,7 +27,7 @@ public final class SearchHistory {
     }
 
     /// Keeps a search, first, its words single-spaced; an empty one is skipped and a repeat moves up.
-    package func record(search: String) {
+    public func record(search: String) {
         let search = search.split(whereSeparator: \.isWhitespace).joined(separator: " ")
         guard !search.isEmpty else { return }
         let others = recentSearches.filter { $0.caseInsensitiveCompare(search) != .orderedSame }
@@ -40,7 +40,7 @@ public final class SearchHistory {
     }
 
     /// Keeps a scan opened in the viewer, first; a repeat moves up.
-    package func record(viewed id: ScanID) {
+    public func record(viewed id: ScanID) {
         recentlyViewed = Array(([id] + recentlyViewed.filter { $0 != id }).prefix(Self.viewedKept))
     }
 
