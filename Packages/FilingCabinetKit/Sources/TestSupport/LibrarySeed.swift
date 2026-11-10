@@ -13,6 +13,7 @@ public enum LibrarySeed {
     private static let documentPageCount = 3
 
     /// Saves `count` scans, cycling through the five collections in display order: one page each, more in Documents.
+    /// Each scan's search text is the lines its pages show ("Sample scan 1", "Page 1"), so Search finds real words.
     /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
     /// favourites, in seed order.
     @MainActor
@@ -42,8 +43,9 @@ public enum LibrarySeed {
         for index in 0..<count {
             let title = "\(prefix) \(index + 1)"
             let collection = collections[index % collections.count]
-            let pages = (1...(collection == .documents ? documentPageCount : 1)).map { number in
-                SyntheticPages.page(lines: [(title, titleSize), ("Page \(number)", titleSize)], size: pageSize)
+            let pageLines = (1...(collection == .documents ? documentPageCount : 1)).map { [title, "Page \($0)"] }
+            let pages = pageLines.map { lines in
+                SyntheticPages.page(lines: lines.map { ($0, titleSize) }, size: pageSize)
             }
             let scannedAt = clock.calendar.date(byAdding: .day, value: -index, to: now) ?? now
             let id = ScanID()
@@ -55,7 +57,8 @@ public enum LibrarySeed {
                     scannedAt: scannedAt,
                     expiryOverride: nil,
                     pages: pages,
-                    searchText: title
+                    // What reading the pages finds: their lines, in page order, as the reader joins them.
+                    searchText: pageLines.flatMap { $0 }.joined(separator: "\n")
                 ))
             ids.append(id)
         }

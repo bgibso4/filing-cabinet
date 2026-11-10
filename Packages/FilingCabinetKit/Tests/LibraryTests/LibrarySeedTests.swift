@@ -32,6 +32,23 @@ import Testing
 }
 
 @MainActor
+@Test func seededTextIsWhatThePagesShow() async throws {
+    let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
+    let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
+    let store = try makeStore(location: location)
+    let now = Date(timeIntervalSince1970: 1_791_806_400)
+
+    try await LibrarySeed.seed(store, count: 4, clock: .fixed(now, calendar: utc))
+
+    let texts = store.searchTexts()
+    #expect(texts[store.scans[0].id] == "Sample scan 1\nPage 1")
+    // Documents' three pages, in order.
+    #expect(
+        texts[store.scans[3].id]
+            == "Sample scan 4\nPage 1\nSample scan 4\nPage 2\nSample scan 4\nPage 3")
+}
+
+@MainActor
 @Test func seedTrashMovesEachScanToTrashADayEarlierThanTheLast() async throws {
     let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
     let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))

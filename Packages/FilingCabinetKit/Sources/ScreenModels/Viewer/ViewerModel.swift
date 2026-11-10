@@ -6,6 +6,7 @@ import Observation
 /// One scan on screen: its header and which page is showing. Everything but the page is read from the library and
 /// from `Today`, so the header moves when either does and the view pops when the scan goes away (M5). A scan opened
 /// from Trash (09-04) reads its days left in Trash and offers Restore and Delete now, which Trash's own model runs.
+/// Opened in the library, the scan goes first in Search's recently viewed (M4).
 @Observable
 public final class ViewerModel {
     /// Where the scan was opened from.
@@ -37,13 +38,15 @@ public final class ViewerModel {
     /// Runs Restore and Delete now in Trash mode, with Trash's confirmation and announcements; nil in the library.
     private let trash: TrashModel?
 
+    /// `history` gets the scan as recently viewed when it opens in the library; nil records nothing.
     public init(
         id: ScanID,
         library: any ScanLibrary,
         today: Today,
         calendar: Calendar,
         analytics: any Analytics,
-        mode: Mode = .library
+        mode: Mode = .library,
+        history: SearchHistory? = nil
     ) {
         self.id = id
         self.library = library
@@ -53,6 +56,7 @@ public final class ViewerModel {
         self.mode = mode
         trash =
             mode == .trash ? TrashModel(library: library, today: today, calendar: calendar, analytics: analytics) : nil
+        if mode == .library { history?.record(viewed: id) }
     }
 
     package var title: String { scan?.title ?? "" }

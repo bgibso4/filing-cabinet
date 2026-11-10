@@ -28,6 +28,30 @@
         }
       }
     },
+    "%lld scans in %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan in %@" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans in %@" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld scans in %@ mention “%@”." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan in %@ mentions “%@”." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans in %@ mention “%@”." } }
+            }
+          }
+        }
+      }
+    },
     "%lld scans moved to Trash" : {
       "localizations" : {
         "en" : {

@@ -54,7 +54,6 @@ public protocol ScanLibrary: AnyObject {
     /// missing from `ids` keeps its place after them; an id that isn't a favourite is ignored (M3).
     func reorderFavorites(_ ids: [ScanID]) throws(LibraryError)
 
-    // periphery:ignore - Task 7 (Plan 4) calls it from Search; remove this when it lands
     /// Every scan's recognized text, Trash included, as read, in one fetch. Empty when the fetch fails.
     func searchTexts() -> [ScanID: String]
 

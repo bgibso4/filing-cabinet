@@ -8,6 +8,11 @@ enum DayText {
         format(day, template: "MMMd", clock: clock)
     }
 
+    /// "Oct 12", or "Jan 9, 2027" when the year isn't today's.
+    static func monthDay(_ day: CalendarDay, today: CalendarDay, clock: AppClock) -> String {
+        day.year == today.year ? monthDay(day, clock: clock) : monthDayYear(day, clock: clock)
+    }
+
     /// "Jan 9, 2027".
     static func monthDayYear(_ day: CalendarDay, clock: AppClock) -> String {
         format(day, template: "MMMdy", clock: clock)

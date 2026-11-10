@@ -297,3 +297,24 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
     viewer.dismissEditAlert()
     #expect(viewer.editAlert == nil)
 }
+
+@MainActor
+@Test func openingInTheLibraryRecordsItAsViewed() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let history = SearchHistory(defaults: fresh.defaults)
+    let scan = summary("Lease 2026", .documents)
+    let trashedScan = trashed("Coat check", daysAgo: 2)
+    let library = FakeLibrary(scans: [scan, trashedScan], clock: clock)
+    for (id, mode) in [(scan.id, ViewerModel.Mode.library), (trashedScan.id, .trash)] {
+        _ = ViewerModel(
+            id: id,
+            library: library,
+            today: Today(clock: clock),
+            calendar: utc,
+            analytics: RecordingAnalytics(),
+            mode: mode,
+            history: history)
+    }
+    #expect(history.recentlyViewed == [scan.id])
+}

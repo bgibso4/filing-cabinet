@@ -67,7 +67,9 @@ final class AppEnvironment {
         self.today = today
         self.store = store
         lifecycle = AppLifecycleModel(analytics: analytics)
-        let preferences = AppPreferences(defaults: Self.preferencesDefaults(isUITest: options.isUITest))
+        let defaults = Self.preferencesDefaults(isUITest: options.isUITest)
+        let preferences = AppPreferences(defaults: defaults)
+        let history = SearchHistory(defaults: defaults)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
         let banner = CleanupBanner(
@@ -80,10 +82,8 @@ final class AppEnvironment {
             flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
             makeGrid: { Self.makeGrid($0, store: store, today: today, clock: clock, analytics: analytics) },
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
-            makeViewer: { id, mode in
-                ViewerModel(
-                    id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics, mode: mode)
-            },
+            makeViewer: Self.viewerMaker(
+                store: store, today: today, clock: clock, analytics: analytics, history: history),
             makeDetails: { id in
                 DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
             },
@@ -105,6 +105,22 @@ final class AppEnvironment {
         _ kind: GridKind, store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics
     ) -> CollectionGridModel {
         CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics)
+    }
+
+    /// Makes the viewer for a scan, opened from the library (which records it in Search's history) or from Trash.
+    private static func viewerMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
+    ) -> (ScanID, ViewerModel.Mode) -> ViewerModel {
+        { id, mode in
+            ViewerModel(
+                id: id,
+                library: store,
+                today: today,
+                calendar: clock.calendar,
+                analytics: analytics,
+                mode: mode,
+                history: history)
+        }
     }
 
     /// The scan flow, with its reader built here so the reader flags apply from launch.
