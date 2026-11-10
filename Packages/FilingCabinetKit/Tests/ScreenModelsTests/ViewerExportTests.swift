@@ -1,6 +1,8 @@
 import Core
 import Foundation
 import Library
+import Observation
+import Synchronization
 import Testing
 
 @testable import ScreenModels
@@ -166,15 +168,50 @@ func copyTextDisabledWithoutText(text: String?) {
     #expect(ExportText.copied == "Copied")
 }
 
-@Test func endingAnExportRemovesExportedFiles() async throws {
+/// M20: ending removes this viewer's PDFs only: another screen's export may still be in use.
+@Test func endingAnExportRemovesOnlyThisViewersFiles() async throws {
     let folder = ExportFolder()
     let scan = summary("Lease 2026", .documents)
     _ = try await folder.files.write([SyntheticPages.blank()], for: scan.id)
     let viewer = model(scan, export: folder.export)
-    let url = try await #require(viewer.sharedPDF).file()
-    #expect(FileManager.default.fileExists(atPath: url.path(percentEncoded: false)))
+    let other = model(scan, export: folder.export)
+    let shared = try await #require(viewer.sharedPDF).file()
+    let saved = try await #require(viewer.savedPDF).file()
+    let othersPDF = try await #require(other.sharedPDF).file()
 
     viewer.exportEnded()
 
-    #expect(!FileManager.default.fileExists(atPath: folder.folder.path(percentEncoded: false)))
+    #expect(!exists(shared.deletingLastPathComponent()))
+    #expect(!exists(saved.deletingLastPathComponent()))
+    #expect(exists(othersPDF))
+}
+
+/// Copy Text comes on when reading finishes while the viewer is open (M11): `canCopyText` is observed.
+@Test func copyTextComesOnWhenReadingFinishes() {
+    let scan = summary("Lease 2026", .documents)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let viewer = model(scan, library: library)
+    let changed = Flag()
+    withObservationTracking {
+        _ = viewer.canCopyText
+    } onChange: {
+        changed.set()
+    }
+    #expect(!viewer.canCopyText)
+
+    library.updateSearchText("Harlow Property", for: scan.id)
+
+    #expect(changed.isSet)
+    #expect(viewer.canCopyText)
+}
+
+private func exists(_ url: URL) -> Bool {
+    FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
+}
+
+/// Set once an observed value changes.
+nonisolated private final class Flag: Sendable {
+    private let value = Mutex(false)
+    var isSet: Bool { value.withLock { $0 } }
+    func set() { value.withLock { $0 = true } }
 }

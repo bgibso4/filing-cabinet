@@ -44,6 +44,8 @@ public final class ViewerModel {
     private let trash: TrashModel?
     private let history: SearchHistory
     private let export: ScanExport
+    /// The PDFs this viewer made, which go when its share or file export ends (M20).
+    private let exported: ExportedFiles
     private let photos: any PhotoSaving
     /// Set once this open is in Search's recently viewed: appearing again (back from a pushed screen) isn't a new one.
     @ObservationIgnored private var isRecorded = false
@@ -69,6 +71,7 @@ public final class ViewerModel {
         self.mode = mode
         self.history = history
         self.export = export
+        exported = ExportedFiles(export: export)
         self.photos = photos
         trash =
             mode == .trash ? TrashModel(library: library, today: today, calendar: calendar, analytics: analytics) : nil
@@ -205,9 +208,10 @@ public final class ViewerModel {
         }
     }
 
-    /// A share or file export is over, or the viewer has gone: whatever it exported is no longer needed (M20).
+    /// A share or file export is over, or the viewer has gone: the PDFs this viewer exported are no longer needed
+    /// (M20). Another screen's stay.
     package func exportEnded() {
-        export.removeAll()
+        exported.removeAll()
     }
 
     /// Adds each page to Photos from its original (M11). True when saved; false with `isPhotosAccessOff` when access
@@ -241,7 +245,7 @@ public final class ViewerModel {
 
     /// The scan's text as the reader stored it, nil when it has none.
     private var copiableText: String? {
-        // Read so the menu updates when reading finishes while the viewer is open.
+        // Observed, so More's menu updates when reading finishes while the viewer is open.
         _ = library.searchTextRevision
         guard let text = library.searchText(for: id)?.trimmingCharacters(in: .whitespacesAndNewlines),
             !text.isEmpty
@@ -252,7 +256,10 @@ public final class ViewerModel {
     private func pdf(made: @escaping @Sendable () -> Void = {}) -> ScanPDF? {
         scan.map {
             ScanPDF(
-                scan: $0, export: export, suggestedFileName: ScanExport.fileName(for: $0.title, taken: []), made: made)
+                scan: $0,
+                exported: exported,
+                suggestedFileName: ScanExport.fileName(for: $0.title, taken: []),
+                made: made)
         }
     }
 

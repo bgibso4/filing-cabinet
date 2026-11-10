@@ -14,6 +14,8 @@ struct ViewerMoreMenu: View {
     let onExported: (String) -> Void
 
     var body: some View {
+        // Read here, so the menu is rebuilt when reading finishes while the viewer is open.
+        let canCopyText = model.canCopyText
         Image(systemName: "ellipsis")
             .frame(minWidth: Tokens.Spacing.tapMin, minHeight: Tokens.Spacing.tapMin)
             .accessibilityHidden(true)
@@ -22,13 +24,13 @@ struct ViewerMoreMenu: View {
                     label: String(localized: "More", bundle: #bundle),
                     value: "",
                     identifier: AccessibilityID.Viewer.more,
-                    menu: menu)
+                    menu: { menu(canCopyText: canCopyText) })
             }
     }
 
-    private func menu() -> UIMenu {
+    private func menu(canCopyText: Bool) -> UIMenu {
         let copyText = action(String(localized: "Copy Text", bundle: #bundle), "doc.on.doc", copy)
-        if !model.canCopyText { copyText.attributes = .disabled }
+        if !canCopyText { copyText.attributes = .disabled }
         return UIMenu(children: [
             action(String(localized: "Save to Photos", bundle: #bundle), "photo", saveToPhotos),
             action(String(localized: "Save to Files", bundle: #bundle), "folder", onSaveToFiles),

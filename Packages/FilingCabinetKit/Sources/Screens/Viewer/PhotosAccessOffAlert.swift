@@ -17,7 +17,7 @@ extension View {
             }
         } message: {
             Text(
-                "Filing Cabinet needs to add to Photos to save scans there. Tap Open Settings, then Photos, and choose Add Photos Only.",
+                "Filing Cabinet needs access to Photos to save scans there. Tap Open Settings, then Photos, and choose Add Photos Only.",
                 bundle: #bundle)
         }
     }

@@ -45,7 +45,7 @@ public struct ScanExport: Sendable {
             LibraryLog.logger.error(
                 "Exporting \(scan.pageCount, privacy: .public) pages failed (\(String(describing: failure))): \(error.localizedDescription, privacy: .private)"
             )
-            remove(directory)
+            removeItem(directory)
             throw failure
         }
     }
@@ -57,7 +57,15 @@ public struct ScanExport: Sendable {
 
     /// Removes every exported file. Missing is fine.
     package func removeAll() {
-        remove(folder)
+        removeItem(folder)
+    }
+
+    /// Removes the PDF `pdf(for:named:)` made, with its `Export/<uuid>/` folder. Missing is fine; a URL from anywhere
+    /// else is left alone.
+    package func remove(_ pdf: URL) {
+        let directory = pdf.deletingLastPathComponent()
+        guard directory.deletingLastPathComponent().standardizedFileURL == folder.standardizedFileURL else { return }
+        removeItem(directory)
     }
 
     /// The name (no extension) for a scan titled `title` among `taken` ones in one share (M10): an empty title is
@@ -104,7 +112,7 @@ public struct ScanExport: Sendable {
         context.endPage()
     }
 
-    private func remove(_ url: URL) {
+    private func removeItem(_ url: URL) {
         let files = FileManager()
         guard files.fileExists(atPath: url.path(percentEncoded: false)) else { return }
         do {
