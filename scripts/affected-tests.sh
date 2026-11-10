@@ -21,9 +21,14 @@ types_in_file() {
 	sed -nE 's/^([[:space:]]*@[A-Za-z]+[[:space:]]+)*(final[[:space:]]+)?(class|struct|extension)[[:space:]]+([A-Za-z0-9_]+Tests)([^A-Za-z0-9_].*)?$/\4/p' "$1"
 }
 
-# The test target that declares a class, or nothing.
+# The test target that declares a class, or nothing. A package test target that runs only on the simulator
+# (ScreensTests) is named by itself.
 target_of() {
 	local dir
+	if [ -d "Packages/FilingCabinetKit/Tests/$1" ]; then
+		echo "$1"
+		return
+	fi
 	for dir in "${test_dirs[@]}"; do
 		if grep -lqE "^([[:space:]]*@[A-Za-z]+[[:space:]]+)*(final[[:space:]]+)?(class|struct)[[:space:]]+$1([^A-Za-z0-9_]|$)" "$dir"/*.swift 2>/dev/null; then
 			echo "FilingCabinet$dir"
@@ -61,7 +66,7 @@ string_targets() {
 	old="$(git show "$merge_base:$path" 2>/dev/null)" && [ -f "$path" ] || { echo ALL; return; }
 	changed="$(jq -rn --argjson a "$old" --slurpfile b "$path" '
 		($a.strings) as $o | ($b[0].strings) as $n
-		| (($o | keys) + ($n | keys) | unique)[] as $k | select($o[$k] != $n[$k]) | "\($k)\t\($n | has($k))"')"
+		| (($o | keys) + ($n | keys) | unique)[] as $k | select($o[$k] != $n[$k]) | "\($k)\t\($n | has($k))"')" || { echo ALL; return; }
 	while IFS=$'\t' read -r key present; do
 		[ -n "$key" ] || continue
 		files="$(grep -rlF --include='*.swift' -- "\"$key\"" Packages/FilingCabinetKit/Sources App 2>/dev/null || true)"
@@ -94,10 +99,10 @@ namespaces_at() {
 # or to identifiers UI test support uses, runs everything.
 identifier_targets() {
 	local path="$1" old ranges namespaces ns files found=""
-	old="$(mktemp)"
+	old="$(mktemp)" || { echo ALL; return; }
 	git show "$merge_base:$path" >"$old" 2>/dev/null && [ -f "$path" ] || { echo ALL; return; }
 	# Hunk headers "@@ -a,b +c,d @@": old lines a..a+b-1 and new lines c..c+d-1 changed.
-	ranges="$(git diff -U0 "$merge_base" -- "$path" | sed -nE 's/^@@ -([0-9]+)(,([0-9]+))? \+([0-9]+)(,([0-9]+))? @@.*/\1 \3 \4 \6/p')"
+	ranges="$(git diff -U0 "$merge_base" -- "$path" | sed -nE 's/^@@ -([0-9]+)(,([0-9]+))? \+([0-9]+)(,([0-9]+))? @@.*/\1,\3,\4,\6/p')" || { echo ALL; return; }
 	namespaces="$({
 		awk -F, '{ n = ($2 == "" ? 1 : $2); for (i = 0; i < n; i++) print $1 + i }' <<<"$ranges" | namespaces_at "$old"
 		awk -F, '{ n = ($4 == "" ? 1 : $4); for (i = 0; i < n; i++) print $3 + i }' <<<"$ranges" | namespaces_at "$path"
@@ -198,5 +203,5 @@ for class in $(echo "$classes" | sort -u); do
 		echo ALL
 		exit 0
 	fi
-	echo "$target/$class"
+	[ "$target" = "$class" ] && echo "$class" || echo "$target/$class"
 done | sort

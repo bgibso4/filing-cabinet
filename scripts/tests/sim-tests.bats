@@ -176,3 +176,21 @@ called() { grep -q -- "$1" "$CALLS" 2>/dev/null; }
   ONLY="FilingCabinetUITests/A" sim retest
   [ "$status" -eq 2 ]
 }
+
+@test "a failed build forgets the last good build" {
+  ONLY="FilingCabinetUITests/A" sim full
+  printf 'let a = 3\n' >A.swift
+  STUB_BUILD_STATUS=65 ONLY="FilingCabinetUITests/A" sim full
+  printf 'let a = 1\n' >A.swift
+  rm "$CALLS"
+  ONLY="FilingCabinetUITests/A" sim retest
+  [ "$status" -eq 2 ]
+}
+
+@test "the fingerprint covers the scans the snapshot tests bundle" {
+  mkdir -p design/prototype/scans && printf 'jpg\n' >design/prototype/scans/a.jpg
+  ONLY="FilingCabinetUITests/A" sim full
+  printf 'other jpg\n' >design/prototype/scans/a.jpg
+  ONLY="FilingCabinetUITests/A" sim retest
+  [ "$status" -eq 2 ]
+}

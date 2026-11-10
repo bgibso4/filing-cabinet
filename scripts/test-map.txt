@@ -10,7 +10,7 @@
 # SnapshotTests/ runs the *Tests types it declares or extends, and SnapshotTests/__Snapshots__/<Class>/ runs <Class>.
 # Screen rows were checked against which AccessibilityID namespaces and view/model types each test class uses.
 
-# Can't affect the simulator tests.
+# Can't affect the simulator tests (package tests other than ScreensTests run in Fast).
 *.md NONE
 docs/ NONE
 .github/ NONE
@@ -21,6 +21,7 @@ scripts/ NONE
 Packages/FilingCabinetKit/Tests/ NONE
 
 # Shared: everything.
+design/prototype/ ALL
 Makefile ALL
 design/tokens.json ALL
 scripts/generate-tokens.swift ALL
@@ -46,6 +47,10 @@ SnapshotTests/SnapshotHost.swift ALL
 SnapshotTests/Fixtures.swift ALL
 SnapshotTests/WindowPixels.swift ALL
 SnapshotTests/CPUImageMatch.swift ALL
+
+# ScreensTests runs only on the simulator (the Fast scheme can't build Screens); every Screens change runs it.
+Packages/FilingCabinetKit/Sources/Screens/ ScreensTests
+Packages/FilingCabinetKit/Tests/ScreensTests/ ScreensTests
 
 # Screens (views in Screens/, their models in ScreenModels/).
 Packages/FilingCabinetKit/Sources/Screens/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests

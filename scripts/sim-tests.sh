@@ -77,6 +77,7 @@ if [ "$mode" = retest ]; then
 else
 	start=$SECONDS
 	before="$("$fingerprint")"
+	"$fingerprint" forget # products change from here on; only a good build records again
 	"$xcodebuild" build-for-testing "${common[@]}" -destination "$SIM_DEST" | "$beautify"
 	status=$?
 	build_seconds=$((SECONDS - start))

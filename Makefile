@@ -48,7 +48,9 @@ generate:
 	xcodegen generate --quiet
 	mkdir -p $(RESOLVED_DEST) && cp Package.resolved $(RESOLVED_DEST)/Package.resolved
 
+# Anything that builds into $(DERIVED) first drops make retest's record of the last good build (build-fingerprint.sh).
 build: sim generate
+	scripts/build-fingerprint.sh forget
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
@@ -75,6 +77,7 @@ format:
 # confirm green. ONLY narrows it to some snapshot classes.
 SNAPSHOT_RECORD ?= failed
 snapshots-record: sim generate
+	scripts/build-fingerprint.sh forget
 	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=$(SNAPSHOT_RECORD) xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(or $(TEST_ARGS),-only-testing:FilingCabinetSnapshotTests) \
 		| $(BEAUTIFY)
@@ -221,6 +224,7 @@ ci-sim: ONLY = $(SHARD_ONLY_$(SHARD))
 ci-sim: SKIP = $(SHARD_SKIP_$(SHARD))
 ci-sim: generate
 	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
+	scripts/build-fingerprint.sh forget
 	# The simulator boots while the tests build, and the tests wait until it has finished booting. Left to xcodebuild
 	# on a slow CI runner, the UI test runner once started before accessibility had loaded and failed before any
 	# test ran (#43). By ID: the CI image has an iPhone 17 for more than one iOS version.

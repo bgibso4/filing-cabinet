@@ -8,7 +8,8 @@ AFFECTED="$REPO/scripts/affected-tests.sh"
 setup() {
   export TMPDIR="$BATS_TEST_TMPDIR"
   FIX="$BATS_TEST_TMPDIR/repo"
-  mkdir -p "$FIX/scripts" "$FIX/UITests" "$FIX/SnapshotTests"
+  mkdir -p "$FIX/scripts" "$FIX/UITests" "$FIX/SnapshotTests" "$FIX/Packages/FilingCabinetKit/Tests/ScreensTests"
+  printf 'struct TokensTests {}\n' >"$FIX/Packages/FilingCabinetKit/Tests/ScreensTests/TokensTests.swift"
   cp "$REPO/scripts/test-map.txt" "$FIX/scripts/"
   printf 'final class CleanupJourneyTests: XCTestCase {}\n' >"$FIX/UITests/CleanupJourneyTests.swift"
   printf 'final class ScanJourneyTests: XCTestCase {}\n' >"$FIX/UITests/ScanJourneyTests.swift"
@@ -35,7 +36,7 @@ setup() {
   cd "$FIX"
 }
 
-TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/TrashJourneyTests')"
+TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/TrashJourneyTests\nScreensTests')"
 
 # The fixture catalog's four keys, with these comments: Empty Trash, Gone, "%lld scans · %@" (in code as an
 # interpolation) and "%@ default" (in no code).
@@ -109,7 +110,7 @@ change() {
 @test "the reasoning goes to stderr" {
   change Packages/FilingCabinetKit/Sources/Screens/Trash/TrashView.swift
   run --separate-stderr "$AFFECTED" main
-  [[ "$stderr" == *"Screens/Trash/TrashView.swift → TrashJourneyTests TrashSnapshotTests CleanupJourneyTests"* ]]
+  [[ "$stderr" == *"Screens/Trash/TrashView.swift → ScreensTests TrashJourneyTests TrashSnapshotTests CleanupJourneyTests"* ]]
 }
 
 @test "the map names only classes that exist" {
@@ -182,4 +183,32 @@ change() {
   git commit -qam ids
   run --separate-stderr "$AFFECTED" main
   [ "$output" = "ALL" ]
+}
+
+@test "an identifier added between screen enums runs everything" {
+  sed -i '' 's/^    }$/    }\
+\
+    public static func extra() -> String { "x" }/' "$IDS"
+  git commit -qam ids
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ALL" ]
+}
+
+@test "a catalog the script can't read runs everything" {
+  printf '{ not json\n' >"$STRINGS"
+  git commit -qam broken
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ALL" ]
+}
+
+@test "a change to the scans the snapshot tests bundle runs everything" {
+  change design/prototype/scans/scan-lease.jpg
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ALL" ]
+}
+
+@test "a ScreensTests change runs ScreensTests" {
+  change Packages/FilingCabinetKit/Tests/ScreensTests/TokensTests.swift
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ScreensTests" ]
 }
