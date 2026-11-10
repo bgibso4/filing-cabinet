@@ -78,7 +78,7 @@ final class AppEnvironment {
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
             flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
-            makeGrid: { CollectionGridModel(kind: $0, library: store, today: today, calendar: clock.calendar) },
+            makeGrid: { Self.makeGrid($0, store: store, today: today, clock: clock, analytics: analytics) },
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
             makeViewer: { id, mode in
                 ViewerModel(
@@ -99,6 +99,12 @@ final class AppEnvironment {
             forcesReduceMotion: options.reduceMotion,
             preferences: preferences
         )
+    }
+
+    private static func makeGrid(
+        _ kind: GridKind, store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics
+    ) -> CollectionGridModel {
+        CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics)
     }
 
     /// The scan flow, with its reader built here so the reader flags apply from launch.

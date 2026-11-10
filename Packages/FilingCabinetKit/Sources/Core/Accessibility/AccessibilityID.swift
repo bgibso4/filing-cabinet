@@ -27,6 +27,10 @@ public enum AccessibilityID {
         /// identifier, so this is the one UIKit gives it.
         public static let back = "BackButton"
         public static let scan = "grid.scan"
+        /// Select, or Cancel while selecting; always there, greyed out while the grid is empty (#68).
+        public static let select = "grid.select"
+        /// Only while selecting, in Scan's place.
+        public static let moveToTrash = "grid.moveToTrash"
         /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
         public static let tilePrefix = "grid.tile."
 
@@ -34,8 +38,9 @@ public enum AccessibilityID {
             tilePrefix + id.uuid.uuidString
         }
 
+        /// What a grid with scans shows when not selecting.
         public static var all: [String] {
-            [back, scan]
+            [back, scan, select]
         }
     }
 

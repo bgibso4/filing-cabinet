@@ -82,8 +82,71 @@ private func report(
     _ = report(&settling, &insets, inset: 170)
     _ = report(&settling, &insets, inset: 110)
     settling.update(rest: .large, scrolls: false)
-    #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170))
+    #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170, duringTransition: -170))
     #expect(report(&settling, &insets, inset: 170) == nil)
+}
+
+/// #75 and #74, measured with animations on (FC iPhone 17): Trash pushed from Home first lays out under Home's shorter
+/// bar (168, no subtitle), so the largest inset it has seen isn't its own expanded bar (192). Emptied in place, it
+/// expands to 168, and the bar opens to 192 under content 24 pt short of its top: the large title sat 24 pt up, under
+/// the back button. The expand follows the bar to the inset it opens to.
+@Test func changingToRestLargeFollowsTheBarToItsOwnExpandedInset() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    insets.largeTitleHeight = 40.57
+    _ = report(&settling, &insets, inset: 168)
+    _ = report(&settling, &insets, inset: 116)
+    settling.update(rest: .large, scrolls: false)
+    #expect(
+        settling.target(insets: insets, inset: 116) == .scrollView(offset: -168, duringTransition: -(168 + 40.57)))
+    #expect(report(&settling, &insets, inset: 192) == .scrollView(offset: -192, duringTransition: -192))
+    #expect(report(&settling, &insets, inset: 192) == nil)
+    // Settled: a later collapse is the person's.
+    #expect(report(&settling, &insets, inset: 116) == nil)
+}
+
+/// #74: a grid emptied under the viewer, then shown again by the pop. The bar stays collapsed until the transition ends
+/// (reports at 116), then opens; the expand waits for it rather than settling on the way.
+@Test func changingToRestLargeWaitsForTheBarToOpen() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    insets.largeTitleHeight = 40.57
+    _ = report(&settling, &insets, inset: 168)
+    _ = report(&settling, &insets, inset: 116)
+    settling.stopWatching()
+    settling.update(rest: .large, scrolls: false)
+    #expect(settling.target(insets: insets, inset: 116) != nil)
+    #expect(report(&settling, &insets, inset: 116) == nil)
+    #expect(report(&settling, &insets, inset: 192) == .scrollView(offset: -192, duringTransition: -192))
+    #expect(report(&settling, &insets, inset: 192) == nil)
+}
+
+/// The bar laying out a third of a point off the expand's target (192.33 for 192) is the target: the expand settles
+/// rather than following it again (review M3).
+@Test func aLiveExpandSettlesWithinAThirdOfAPoint() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    insets.largeTitleHeight = 40.57
+    _ = report(&settling, &insets, inset: 168)
+    _ = report(&settling, &insets, inset: 116)
+    settling.update(rest: .large, scrolls: false)
+    _ = settling.target(insets: insets, inset: 116)
+    #expect(report(&settling, &insets, inset: 192) == .scrollView(offset: -192, duringTransition: -192))
+    #expect(report(&settling, &insets, inset: 192.33) == nil)
+    // Settled: the bar laying out taller again (a pull) asks nothing.
+    #expect(report(&settling, &insets, inset: 230) == nil)
+}
+
+/// A touch while the bar opens makes the bar the person's: the expand stops following it.
+@Test func aTouchEndsALiveExpand() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    _ = report(&settling, &insets, inset: 168)
+    _ = report(&settling, &insets, inset: 116)
+    settling.update(rest: .large, scrolls: true)
+    #expect(settling.target(insets: insets, inset: 116) != nil)
+    settling.stopWatching()
+    #expect(report(&settling, &insets, inset: 192) == nil)
 }
 
 /// Emptied with the large title already pulled out: nothing to do.
@@ -106,7 +169,9 @@ private func report(
     insets.largeTitleHeight = 68.67
     // The arrival's pull (`restingLargeANewScreenPullsOnItsFirstReport`): the collapse here is one it didn't prevent.
     #expect(report(&settling, &insets, inset: 164.67, atTop: true) == .pullDuringPush(offset: -(164.67 + 68.67)))
-    #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
+    #expect(
+        report(&settling, &insets, inset: 116, atTop: true)
+            == .scrollView(offset: -164.67, duringTransition: -(164.67 + 68.67)))
     #expect(report(&settling, &insets, inset: 184.67, atTop: true) == nil)
 }
 
@@ -117,7 +182,9 @@ private func report(
     insets.largeTitleHeight = 68.67
     // The arrival's pull (`restingLargeANewScreenPullsOnItsFirstReport`): the collapse here is one it didn't prevent.
     #expect(report(&settling, &insets, inset: 164.67, atTop: true) == .pullDuringPush(offset: -(164.67 + 68.67)))
-    #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
+    #expect(
+        report(&settling, &insets, inset: 116, atTop: true)
+            == .scrollView(offset: -164.67, duringTransition: -(164.67 + 68.67)))
 }
 
 /// The bar laying out again a few points shorter (168, then 164.67, measured under the old titles): not a collapse.
@@ -174,7 +241,7 @@ private func report(
     _ = report(&settling, &insets, inset: 110)
     settling.stopWatching()
     settling.update(rest: .large, scrolls: false)
-    #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170))
+    #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170, duringTransition: -170))
 }
 
 /// An empty grid pushed from Home (plan 3, E9, measured): it first lays out under Home's shorter bar (168), and UIKit

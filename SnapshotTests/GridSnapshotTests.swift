@@ -7,9 +7,16 @@ import XCTest
 
 final class GridSnapshotTests: XCTestCase {
     @MainActor
-    private func grid(_ kind: GridKind, _ library: FakeLibrary) -> some View {
+    private func grid(
+        _ kind: GridKind, _ library: FakeLibrary, change: (CollectionGridModel) -> Void = { _ in }
+    ) -> some View {
         let model = CollectionGridModel(
-            kind: kind, library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
+            kind: kind,
+            library: library,
+            today: Today(clock: Fixtures.clock),
+            calendar: Fixtures.clock.calendar,
+            analytics: RecordingAnalytics())
+        change(model)
         // Pushed on a navigation stack, because the back button is the system's and only a pushed screen has one.
         return NavigationStack(path: .constant([0])) {
             Color.clear.navigationDestination(for: Int.self) { _ in
@@ -43,6 +50,18 @@ final class GridSnapshotTests: XCTestCase {
     @MainActor
     func testAll() throws {
         try SnapshotHost.assertScreen(grid(.all, Fixtures.library(.home)), testName: "grid_all")
+    }
+
+    /// #68: Receipts selecting, its first two ticked, with Move 2 to Trash in Scan's place. No mock: it mirrors Trash's
+    /// select mode (09-02).
+    @MainActor
+    func testSelect() throws {
+        try SnapshotHost.assertScreen(
+            grid(.collection(.receipts), Fixtures.library(.home)) { model in
+                model.toggleSelecting()
+                Fixtures.newestReceipts(2).forEach(model.toggle)
+            },
+            testName: "grid_select")
     }
 
     @MainActor

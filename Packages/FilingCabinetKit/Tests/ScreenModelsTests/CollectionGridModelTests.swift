@@ -29,7 +29,11 @@ private func scan(_ title: String, _ collection: BuiltInCollection, daysAgo: Int
 private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> CollectionGridModel {
     let clock = AppClock.fixed(noon, calendar: utc)
     return CollectionGridModel(
-        kind: kind, library: FakeLibrary(scans: summaries), today: Today(clock: clock), calendar: utc)
+        kind: kind,
+        library: FakeLibrary(scans: summaries),
+        today: Today(clock: clock),
+        calendar: utc,
+        analytics: RecordingAnalytics())
 }
 
 @Test func receiptsSubtitleAndTilesNewestFirst() {
@@ -150,7 +154,8 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     let clock = AppClock(now: { now.now }, calendar: utc, locale: Locale(identifier: "en_US"))
     let today = Today(clock: clock)
     let library = FakeLibrary(scans: [scan("Coat check", .throwaways, daysAgo: 5)])
-    let grid = CollectionGridModel(kind: .collection(.throwaways), library: library, today: today, calendar: utc)
+    let grid = CollectionGridModel(
+        kind: .collection(.throwaways), library: library, today: today, calendar: utc, analytics: RecordingAnalytics())
     #expect(grid.tiles.map(\.timeLeft) == ["2 days left"])
 
     now.set(noon.addingTimeInterval(86_400))
@@ -164,7 +169,8 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
 @Test func gridFollowsTheLibraryEvenWhenTheShelfIsAlreadyBuilt() async throws {
     let library = FakeLibrary()
     let clock = AppClock.fixed(noon, calendar: utc)
-    let grid = CollectionGridModel(kind: .all, library: library, today: Today(clock: clock), calendar: utc)
+    let grid = CollectionGridModel(
+        kind: .all, library: library, today: Today(clock: clock), calendar: utc, analytics: RecordingAnalytics())
     #expect(grid.isEmpty)
 
     let changed = Mutex(false)
@@ -186,4 +192,130 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
         ))
     #expect(changed.withLock { $0 })
     #expect(grid.subtitle == "1 scan")
+}
+// MARK: - Select (#68)
+
+/// A grid with its library and analytics, for select mode.
+@MainActor
+private struct GridHarness {
+    let analytics = RecordingAnalytics()
+    let library: FakeLibrary
+    let grid: CollectionGridModel
+
+    init(_ kind: GridKind, _ summaries: [ScanSummary]) {
+        let clock = AppClock.fixed(noon, calendar: utc)
+        library = FakeLibrary(scans: summaries, clock: clock)
+        grid = CollectionGridModel(
+            kind: kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
+    }
+}
+
+private var threeReceipts: [ScanSummary] {
+    [
+        scan("Corner Market", .receipts), scan("Bluebird Café", .receipts, daysAgo: 1),
+        scan("Harbor Gas", .receipts, daysAgo: 2),
+    ]
+}
+
+@Test func selectingReadsTheCountAndMoveTitle() {
+    let grid = GridHarness(.collection(.receipts), threeReceipts).grid
+    grid.toggleSelecting()
+    #expect(grid.isSelecting)
+    #expect(grid.subtitle == "0 selected")
+    #expect(!grid.canAct)
+    #expect(grid.moveTitle == "Move to Trash")
+    grid.toggle(grid.tiles[0].id)
+    #expect(grid.canAct)
+    #expect(grid.subtitle == "1 selected")
+    #expect(grid.moveTitle == "Move to Trash")
+    #expect(grid.moveMessage == "This receipt moves to Trash. You can restore it for 30 days.")
+    grid.toggle(grid.tiles[1].id)
+    #expect(grid.moveTitle == "Move 2 to Trash")
+    #expect(grid.moveMessage == "These 2 receipts move to Trash. You can restore them for 30 days.")
+    grid.toggleSelecting()
+    #expect(!grid.isSelecting)
+    #expect(grid.selected.isEmpty)
+    #expect(grid.subtitle == "3 scans · 3 months")
+}
+
+/// Recent and All Scans mix collections: a selection from more than one is called scans.
+@Test func aMixedSelectionIsCalledScans() {
+    let grid = GridHarness(
+        .all, [scan("Work ID", .wallet), scan("Corner Market", .receipts, daysAgo: 1)]
+    ).grid
+    grid.toggleSelecting()
+    grid.toggle(grid.tiles[0].id)
+    #expect(grid.moveMessage == "This card moves to Trash. You can restore it for 30 days.")
+    grid.toggle(grid.tiles[1].id)
+    #expect(grid.moveMessage == "These 2 scans move to Trash. You can restore them for 30 days.")
+}
+
+@Test func movingTheSelectionToTrashEndsSelectMode() {
+    let harness = GridHarness(.collection(.receipts), threeReceipts)
+    let grid = harness.grid
+    let kept = grid.tiles[2].id
+    grid.toggleSelecting()
+    grid.toggle(grid.tiles[0].id)
+    grid.toggle(grid.tiles[1].id)
+    #expect(grid.moveSelectedToTrash() == "Moved 2 scans to Trash")
+    #expect(grid.tiles.map(\.id) == [kept])
+    #expect(!grid.isSelecting)
+    #expect(harness.library.scans.count { $0.trashedDay != nil } == 2)
+    #expect(
+        harness.analytics.events == [
+            .scanMovedToTrash(collection: .receipts), .scanMovedToTrash(collection: .receipts),
+        ])
+}
+
+@Test func movingOneAnnouncesMovedToTrash() {
+    let grid = GridHarness(.collection(.receipts), threeReceipts).grid
+    grid.toggleSelecting()
+    grid.toggle(grid.tiles[0].id)
+    #expect(grid.moveSelectedToTrash() == "Moved to Trash")
+}
+
+@Test func movingTheLastScanEmptiesTheGrid() {
+    let grid = GridHarness(.collection(.wallet), [scan("Work ID", .wallet)]).grid
+    grid.toggleSelecting()
+    grid.toggle(grid.tiles[0].id)
+    #expect(grid.moveSelectedToTrash() != nil)
+    #expect(grid.isEmpty)
+    #expect(!grid.isSelecting)
+}
+
+@Test func movingNothingDoesNothing() {
+    let harness = GridHarness(.collection(.receipts), threeReceipts)
+    harness.grid.toggleSelecting()
+    #expect(harness.grid.moveSelectedToTrash() == nil)
+    #expect(harness.grid.isSelecting)
+    #expect(harness.analytics.events.isEmpty)
+}
+
+@Test func aFailedMoveAlertsAndChangesNothing() {
+    let harness = GridHarness(.collection(.receipts), threeReceipts)
+    let grid = harness.grid
+    grid.toggleSelecting()
+    grid.toggle(grid.tiles[0].id)
+    harness.library.failNextEdit = .writeFailed
+    #expect(grid.moveSelectedToTrash() == nil)
+    #expect(grid.editAlert == EditAlert())
+    #expect(grid.tiles.count == 3)
+    #expect(grid.isSelecting)
+    #expect(grid.selected.count == 1)
+    #expect(harness.analytics.events.isEmpty)
+    grid.dismissEditAlert()
+    #expect(grid.editAlert == nil)
+}
+
+/// A scan that leaves the grid (moved from another screen, or expired overnight) leaves the selection.
+@Test func theSelectionDropsScansThatLeaveTheGrid() throws {
+    let harness = GridHarness(.collection(.receipts), threeReceipts)
+    let grid = harness.grid
+    grid.toggleSelecting()
+    let leaving = grid.tiles[0].id
+    grid.toggle(leaving)
+    grid.toggle(grid.tiles[1].id)
+    try harness.library.moveToTrash([leaving])
+    #expect(grid.selected.count == 1)
+    #expect(grid.moveTitle == "Move to Trash")
 }

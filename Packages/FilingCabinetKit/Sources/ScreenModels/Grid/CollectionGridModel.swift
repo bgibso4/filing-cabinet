@@ -3,8 +3,9 @@ import Foundation
 import Library
 import Observation
 
-/// What a grid shows: a collection's scans, Recent or All Scans, newest first. Expired scans are hidden (M5);
-/// everything is read from the library and from `Today`, so the grid moves when either does.
+/// What a grid shows: a collection's scans, Recent or All Scans, newest first, with Select for several at once and Move
+/// to Trash for them (#68, as Trash's select mode). Expired scans are hidden (M5); everything is read from the library
+/// and from `Today`, so the grid moves when either does, and a scan that leaves the grid leaves the selection.
 @Observable
 public final class CollectionGridModel {
     /// Wallet's scans are cards; every other grid shows pages.
@@ -22,17 +23,22 @@ public final class CollectionGridModel {
     }
 
     package let kind: GridKind
+    /// Set when Move to Trash fails to save; the move changed nothing (M18).
+    package private(set) var editAlert: EditAlert?
 
+    private var selection = ScanSelection()
     private let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
+    @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private var builtShelf: BuiltShelf?
 
-    public init(kind: GridKind, library: any ScanLibrary, today: Today, calendar: Calendar) {
+    public init(kind: GridKind, library: any ScanLibrary, today: Today, calendar: Calendar, analytics: any Analytics) {
         self.kind = kind
         self.library = library
         self.today = today
         self.calendar = calendar
+        self.analytics = analytics
     }
 
     package var title: String {
@@ -43,8 +49,10 @@ public final class CollectionGridModel {
         }
     }
 
+    /// The count (and lifespan) or "Last 30 days"; "2 selected" while selecting (M24).
     package var subtitle: String {
-        switch kind {
+        if isSelecting { return ScanSelection.selectedLine(selected.count) }
+        return switch kind {
         case .collection(let collection):
             CollectionText.scanCountAndLifespan(scans(on: shelf).count, shelf.lifespans[collection])
         case .recent:
@@ -94,6 +102,64 @@ public final class CollectionGridModel {
         case .page: largeText ? 2 : 3
         }
     }
+
+    // MARK: Select
+
+    package var isSelecting: Bool { selection.isSelecting }
+
+    /// The ticked scans the grid still shows.
+    package var selected: Set<ScanID> { selection.selected(among: scans(on: shelf).map(\.id)) }
+
+    /// Move to Trash is off until a scan is ticked (M24).
+    package var canAct: Bool { !selected.isEmpty }
+
+    /// "Move to Trash", or "Move 2 to Trash" for several, as Trash's "Delete 2".
+    package var moveTitle: String {
+        selected.count > 1
+            ? String(localized: "Move \(selected.count) to Trash", bundle: #bundle)
+            : String(localized: "Move to Trash", bundle: #bundle)
+    }
+
+    /// The confirmation's message (06-04's, for any count).
+    package var moveMessage: String {
+        let collections = Set(scans(on: shelf).filter { selected.contains($0.id) }.map(\.collection))
+        return MoveToTrashText.message(
+            count: selected.count, collection: collections.count == 1 ? collections.first : nil)
+    }
+
+    /// Select / Cancel; leaving forgets the ticks.
+    public func toggleSelecting() {
+        selection.toggleSelecting()
+    }
+
+    public func toggle(_ id: ScanID) {
+        selection.toggle(id)
+    }
+
+    /// The confirmation's Move to Trash: the selected scans go to Trash and select mode ends. Returns what VoiceOver
+    /// announces (M19), or nil when nothing was selected or the move failed to save (the alert shows).
+    @discardableResult
+    package func moveSelectedToTrash() -> String? {
+        let scans = scans(on: shelf).filter { selected.contains($0.id) }
+        guard !scans.isEmpty else { return nil }
+        do {
+            try library.moveToTrash(scans.map(\.id))
+        } catch {
+            editAlert = EditAlert()
+            return nil
+        }
+        // One event per scan, as from the viewer: each carries its collection.
+        for scan in scans { analytics.send(.scanMovedToTrash(collection: scan.collection)) }
+        selection.finish()
+        return MoveToTrashText.announcement(count: scans.count)
+    }
+
+    /// The edit alert's OK.
+    package func dismissEditAlert() {
+        editAlert = nil
+    }
+
+    // MARK: Private
 
     /// Built once per update: a body reads the model several times, and the library and day only change between
     /// updates. Reading them all here is what keeps the observation.

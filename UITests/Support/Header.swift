@@ -11,6 +11,11 @@ enum HeaderSize {
 // accessibility tree on FC iPhone 17). The large title sits below it.
 private let barRowHeight: CGFloat = 44
 
+/// The system's gap from the back button to the large title's text frame: 17.33 pt (plan 3, E9, FC iPhone 17).
+let largeTitleGap: CGFloat = 17.33
+/// How far a measured gap may be from `largeTitleGap` (the frames round to a third of a point; #75's was 24 pt off).
+let largeTitleGapTolerance: CGFloat = 1
+
 extension XCUIApplication {
     /// A screen's header: the system bar, with its own title (plan 3, E9). The bar takes the title as its identifier,
     /// so a screen is found by what its title says.
@@ -40,6 +45,11 @@ extension XCUIApplication {
             let isLarge = text.frame.minY >= bar.frame.minY + barRowHeight
             return isLarge == (size == .large)
         }
+    }
+
+    /// The gap from the back button down to `title`'s large title, to compare with `largeTitleGap`.
+    func largeTitleGap(_ title: String) -> CGFloat {
+        headerTitle(title).frame.minY - buttons[AccessibilityID.Grid.back].frame.maxY
     }
 
     func header(_ collection: BuiltInCollection, shows size: HeaderSize, within timeout: TimeInterval) -> Bool {

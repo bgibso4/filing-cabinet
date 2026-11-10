@@ -18,8 +18,6 @@ struct TrashTileView: View {
     private static let rowGap: CGFloat = 2
     // Trash.dc.html line 56: 5 pt between the dot and the title.
     private static let dotGap: CGFloat = 5
-    // Trash.dc.html line 49: a ticked scan's image fades to 75%.
-    private static let selectedImageOpacity = 0.75
 
     @Environment(\.dynamicTypeSize) private var typeSize
     /// The thumbnail's size, so the long-press preview lifts just the image, as 09-03 shows.
@@ -29,11 +27,8 @@ struct TrashTileView: View {
         Button(action: tap) {
             VStack(alignment: .leading, spacing: Self.rowGap) {
                 thumbnail
-                    .opacity(isSelected ? Self.selectedImageOpacity : 1)
                     .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
-                    .overlay(alignment: .bottomTrailing) {
-                        if model.isSelecting { TrashCheckCircle(isOn: isSelected) }
-                    }
+                    .selectionMark(isSelecting: model.isSelecting, isSelected: isSelected)
                     .onGeometryChange(for: CGSize.self, of: \.size) { thumbnailSize = $0 }
                 HStack(spacing: Self.dotGap) {
                     CollectionDot(collection: tile.collection)

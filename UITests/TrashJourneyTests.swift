@@ -212,6 +212,11 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.header("Trash", shows: .large, within: 5), "The large title isn't showing")
         // Still large once the bar has had time to settle.
         XCTAssertFalse(app.header("Trash", shows: .small, within: 1), "The bar collapsed")
+        XCTAssertEqual(
+            app.largeTitleGap("Trash"),
+            largeTitleGap,
+            accuracy: largeTitleGapTolerance,
+            "The large title isn't the system's gap under the back button (#75)")
         let frames = (title: title.frame, empty: empty.frame)
         for distance in [-300.0, 300.0] {
             empty.drag(by: distance)
