@@ -42,7 +42,8 @@ struct ScanBarLayout<Content: View, Replacement: View>: View {
     }
 
     /// `accessibilityHidden` doesn't take the button out of the accessibility tree (measured in a UI test, with the
-    /// cause unknown); `hidden()` does, and keeps its place so nothing moves when the layer goes.
+    /// cause unknown; still so with the glass pill as an overlay, 2026-11-10); `hidden()` does, and keeps its place so
+    /// nothing moves when the layer goes.
     @ViewBuilder
     private var button: some View {
         let scan = ScanButton(identifier: scanIdentifier, action: onScan).disabled(!canScan)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Scan pill: graphite in light, near-white in dark, always labelled "Scan".
+/// The Scan pill (see `FilledPillButton`), always labelled "Scan".
 struct ScanButton: View {
     private let identifier: String
     private let action: () -> Void

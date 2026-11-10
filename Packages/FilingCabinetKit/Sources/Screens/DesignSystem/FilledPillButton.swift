@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// The filled pill at the bottom centre: graphite in light, near-white in dark. Scan, and a grid's Move to Trash while
-/// selecting, in Scan's place (#68). Disabled, it turns to the well colour with secondary text.
+/// The filled pill at the bottom centre: Liquid Glass tinted graphite in light, near-white in dark (Ben, 2026-11-10).
+/// Scan, and a grid's Move to Trash while selecting, in Scan's place (#68). Disabled, it turns to plain glass with
+/// secondary text.
 struct FilledPillButton<Label: View>: View {
     let identifier: String
     let action: () -> Void
@@ -23,7 +24,7 @@ struct FilledPillButton<Label: View>: View {
                 .foregroundStyle(isEnabled ? Tokens.Color.bgGrouped : Tokens.Color.textSecondary)
                 .padding(.horizontal, Self.horizontalPadding)
                 .frame(minHeight: min(scaledHeight, Self.maxHeight))
-                .background(isEnabled ? Tokens.Color.tint : Tokens.Color.bgWell, in: .capsule)
+                .glassEffect(isEnabled ? .regular.tint(Tokens.Color.tint).interactive() : .regular, in: .capsule)
                 // One element for the whole pill, so the audit measures the text against the pill and not against a
                 // frame that is exactly the glyphs.
                 .accessibilityElement(children: .combine)

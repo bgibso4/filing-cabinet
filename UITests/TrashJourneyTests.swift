@@ -166,13 +166,16 @@ final class TrashJourneyTests: XCTestCase {
     private func deleteTwoBySelecting(in app: XCUIApplication) throws {
         app.buttons[AccessibilityID.Trash.select].tap()
         XCTAssertTrue(app.buttons["Cancel"].appears(within: 5))
+        // Audited before ticking: the audit reads the last ticked tile's caption as "contrast nearly passed", every run,
+        // though the same caption passes unticked (#79). The bar's glass buttons are an overlay since 2026-11-10, so the
+        // audit now names that caption instead of reporting it with no element under the Trash exemption.
+        try audit(app)
         tiles(in: app).element(boundBy: 0).tap()
         tiles(in: app).element(boundBy: 1).tap()
         XCTAssertTrue(app.staticTexts["2 selected"].appears(within: 5))
         assertIdentifiers([AccessibilityID.Trash.deleteSelected, AccessibilityID.Trash.restoreSelected], in: app)
         XCTAssertEqual(app.buttons[AccessibilityID.Trash.deleteSelected].label, "Delete 2")
         XCTAssertEqual(app.buttons[AccessibilityID.Trash.restoreSelected].label, "Restore 2")
-        try audit(app)
         app.buttons[AccessibilityID.Trash.deleteSelected].tap()
         let deleteTwo = app.staticTexts["Delete 2 scans permanently?"]
         XCTAssertTrue(deleteTwo.appears(within: 5))

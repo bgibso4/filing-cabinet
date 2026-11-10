@@ -26,6 +26,9 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var reader = ReaderKind.text
     /// `-Notifications authorized|denied|notDetermined`: a fake notification center answers with this authorization.
     public private(set) var notifications: NotificationAuthorization?
+    /// `-NotificationsUnanswered`: a fake notification center that never answers what iOS allows, like a stuck
+    /// notification service.
+    public private(set) var notificationsUnanswered = false
 
     private static let fakeCameraRange = 1...3
 
@@ -47,6 +50,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-FailSave": failNextSave = true
         case "-FakeReader": fakeReader = true
         case "-ReduceMotion": reduceMotion = true
+        case "-NotificationsUnanswered": notificationsUnanswered = true
         default: return false
         }
         return true
