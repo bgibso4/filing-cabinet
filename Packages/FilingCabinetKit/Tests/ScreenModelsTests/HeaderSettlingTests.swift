@@ -3,9 +3,11 @@ import Testing
 
 @testable import ScreenModels
 
-/// Records the bar's inset and returns the scroll the settling asks for.
-private func report(_ settling: inout HeaderSettling, _ insets: inout HeaderInsets, inset: CGFloat) -> HeaderScroll? {
-    insets.record(inset)
+/// Records the bar's inset, with the content at its top or not, and returns the scroll the settling asks for.
+private func report(
+    _ settling: inout HeaderSettling, _ insets: inout HeaderInsets, inset: CGFloat, atTop: Bool = false
+) -> HeaderScroll? {
+    insets.record(inset, atTop: atTop)
     return settling.target(insets: insets, inset: inset)
 }
 
@@ -96,20 +98,43 @@ private func report(_ settling: inout HeaderSettling, _ insets: inout HeaderInse
 }
 
 /// An empty grid pushed from Home (phone check F6, measured in the simulator): the bar opens at Home's large title
-/// height (164.67), then collapses by itself (116), and nothing touching the screen can bring it back. Content that
-/// doesn't scroll can't collapse the bar, so a collapse seen there is always expanded again.
+/// height (164.67), then collapses by itself (116) with the content still at its top. Until the person has scrolled, a
+/// collapse is the system's, and is expanded again.
 @Test func restingLargeAndStillExpandsABarThatCollapsesByItself() {
     var settling = HeaderSettling(rest: .large, scrolls: false)
     var insets = HeaderInsets()
-    #expect(report(&settling, &insets, inset: 164.67) == nil)
-    #expect(report(&settling, &insets, inset: 116) == .scrollView(offset: -164.67))
-    #expect(report(&settling, &insets, inset: 184.67) == nil)
+    insets.recordLargeTitle(height: 68.67)
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
+    #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
+    #expect(report(&settling, &insets, inset: 184.67, atTop: true) == nil)
 }
 
-/// Home rests large and scrolls: a collapse there is the person's scroll, and stays.
-@Test func restingLargeAndScrollingLeavesACollapseAlone() {
+/// The same push at an accessibility text size, where an empty grid scrolls (review I1): still the system's collapse.
+@Test func restingLargeAndScrollingExpandsABarThatCollapsesBeforeAnyScroll() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    _ = report(&settling, &insets, inset: 164.67)
+    insets.recordLargeTitle(height: 68.67)
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
+    #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
+}
+
+/// Home's bar first lays out a few points taller (168, then 164.67, measured): not a collapse, so nothing is asked.
+@Test func restingLargeTheBarLayingOutShorterIsNoCollapse() {
+    var settling = HeaderSettling(rest: .large, scrolls: true)
+    var insets = HeaderInsets()
+    insets.recordLargeTitle(height: 48.67)
+    #expect(report(&settling, &insets, inset: 168, atTop: true) == nil)
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
+}
+
+/// Home rests large and scrolls: once the person has scrolled, a collapse is theirs, and stays.
+@Test func restingLargeACollapseAfterAScrollStays() {
+    var settling = HeaderSettling(rest: .large, scrolls: true)
+    var insets = HeaderInsets()
+    insets.recordLargeTitle(height: 48.67)
+    _ = report(&settling, &insets, inset: 164.67, atTop: true)
+    #expect(report(&settling, &insets, inset: 140) == nil)
+    #expect(report(&settling, &insets, inset: 116) == nil)
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
     #expect(report(&settling, &insets, inset: 116) == nil)
 }

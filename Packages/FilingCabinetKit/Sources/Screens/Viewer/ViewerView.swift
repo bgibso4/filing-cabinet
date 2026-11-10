@@ -4,10 +4,11 @@ import ScreenModels
 import SwiftUI
 
 /// A scan, like Photos: its pages, a back button, a header pill, the page strip and the bottom bar. Per A2 there is no
-/// More button. The pill and Info open Details, and so does a swipe up on a page at rest, under the finger (M5); a swipe
-/// down there closes it (#71). As it rises (`detailsProgress`) the pill, strip and bar fade away (B2) and the page fits
-/// above it, a step every frame (07-01, #61). Opened from Trash (09-04) it has Close for back, a pill with the days left in Trash that opens nothing
-/// (a scan in Trash is read-only until restored), and Delete now and Restore for the bar.
+/// More button. The pill and Info open Details, and so does a swipe up on a page at rest, under the finger (M5); a
+/// swipe down there closes it (#71). As it rises (`detailsProgress`) the pill, strip and bar fade away (B2) and the
+/// page fits above it, a step every frame (07-01, #61). Opened from Trash (09-04) it has Close for back, a pill with
+/// the days left in Trash that opens nothing (a scan in Trash is read-only until restored), and Delete now and Restore
+/// for the bar.
 public struct ViewerView: View {
     @Bindable private var model: ViewerModel
     private let pages: any PageImageProviding

@@ -15,12 +15,14 @@ package enum HeaderScroll: Sendable, Equatable {
 /// which would leave the first rows under the bar. The scroll lands a report before the inset drops, so landing says
 /// nothing.
 ///
-/// A new screen resting large, or not scrolling, asks for nothing while its bar is expanded; one resting large that
-/// doesn't scroll expands its bar whenever it is seen collapsed (see `expand`). A live change to large under
+/// A new screen resting large, or not scrolling, asks for nothing while its bar is expanded; one resting large expands
+/// its bar whenever the system collapses it before the person has scrolled (see `expand`). A live change to large under
 /// a collapsed bar (a grid emptied on screen) pulls the content down to the expanded bar's inset, which expands it as a
 /// pull would. A live change to small settles again (Trash filling up).
 package struct HeaderSettling: Sendable, Equatable {
     private enum Phase: Sendable, Equatable {
+        /// A new screen resting large, until the person scrolls: the system may still collapse its bar (see `expand`).
+        case watching
         case unsettled
         /// Scrolled by the bar's inset, waiting for it to collapse.
         case collapsing
@@ -29,11 +31,12 @@ package struct HeaderSettling: Sendable, Equatable {
 
     private var rest: HeaderRest
     private var scrolls: Bool
-    private var phase = Phase.unsettled
+    private var phase: Phase
 
     package init(rest: HeaderRest, scrolls: Bool) {
         self.rest = rest
         self.scrolls = scrolls
+        phase = rest == .large ? .watching : .unsettled
     }
 
     package mutating func update(rest: HeaderRest, scrolls: Bool) {
@@ -60,17 +63,24 @@ package struct HeaderSettling: Sendable, Equatable {
             guard inset < (insets.largest ?? inset) else { return nil }
             phase = .settled
             return .content(offset: 0)
-        case .settled:
+        case .watching, .settled:
             return nil
         }
     }
 
-    /// Resting large: a bar seen collapsed is expanded; one that is already expanded, or a new screen's, is left alone.
-    /// Content that doesn't scroll keeps watching: nothing the person does there collapses the bar, but the system does
-    /// on a push from a screen with a shorter large title (phone check F6: the bar opens at that title's height, then
-    /// collapses).
+    /// Resting large: a bar seen collapsed is expanded; one that is already expanded is left alone. A new screen keeps
+    /// watching until the person scrolls: the system collapses its bar by itself on a push from a screen with a shorter
+    /// large title (phone check F6: the bar opens at that title's height, then collapses), at any text size. Once they
+    /// have scrolled, a collapse is theirs (Home's scroll up), and stays.
     private mutating func expand(_ insets: HeaderInsets) -> HeaderScroll? {
-        if scrolls { phase = .settled }
+        if phase == .watching {
+            guard !insets.hasScrolled else {
+                phase = .settled
+                return nil
+            }
+            return insets.hasCollapsedTheLargeTitle ? insets.largest.map { .scrollView(offset: -$0) } : nil
+        }
+        phase = .settled
         guard insets.isCollapsed, let largest = insets.largest else { return nil }
         return .scrollView(offset: -largest)
     }

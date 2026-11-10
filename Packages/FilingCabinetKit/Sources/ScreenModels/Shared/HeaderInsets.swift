@@ -17,7 +17,8 @@ package struct HeaderInsets: Sendable, Equatable {
     private var largeTitle: CGFloat = 0
     /// The inset last seen with the content at its top before it first scrolled: the expanded bar a screen rests under.
     private var resting: CGFloat?
-    private var hasScrolled = false
+    /// True once the content has left its top after resting there: the person has scrolled.
+    package private(set) var hasScrolled = false
 
     /// How far the content may sit past minus the inset and still count as at its top (rounding in the reports).
     private static let topTolerance: CGFloat = 0.5
@@ -54,6 +55,14 @@ package struct HeaderInsets: Sendable, Equatable {
 
     /// True when the bar has been seen both ways and is collapsed now.
     package var isCollapsed: Bool { motion != nil && current == collapsed }
+
+    /// True when the bar is collapsed now by more than half the measured large title, the point past which UIKit's own
+    /// snap collapses it (B6): a real collapse, not the bar laying out again a few points shorter (Home's first 168 pt,
+    /// then 164.67 pt). False until the large title has been measured.
+    package var hasCollapsedTheLargeTitle: Bool {
+        guard isCollapsed, largeTitle > 0, let expanded else { return false }
+        return expanded - current > largeTitle / 2
+    }
 
     /// Known once the bar has been seen both ways, so never built with a zero height.
     package var motion: HeaderMotion? {

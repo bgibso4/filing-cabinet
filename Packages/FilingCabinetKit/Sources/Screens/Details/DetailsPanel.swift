@@ -5,9 +5,9 @@ import SwiftUI
 /// Details floating over the viewer (B10): our own panel rather than a system sheet, so one progress value moves it,
 /// the page and the chrome together (#61). The same look as the sheet it replaces: the surface colour, 34 pt corners,
 /// 8 pt from the screen's sides and bottom, and the sheet's own grabber. It doesn't dim the viewer, rides above the
-/// keyboard while renaming, and follows a drag on its grabber, or on its body once the body is at its top. While renaming,
-/// a tap anywhere outside the field ends it as Return does, and does nothing else: over the viewer it lands on a clear
-/// shield, not the page.
+/// keyboard while renaming, and follows a drag on its grabber, or on its body once the body is at its top. While
+/// renaming, a tap anywhere outside the field ends it as Return does, and does nothing else: over the viewer it lands
+/// on a clear shield, not the page.
 public struct DetailsPanel: View {
     // ScanDetails.dc.html line 34: 8 pt from the screen's sides and bottom, with 34 pt corners.
     static let inset: CGFloat = 8

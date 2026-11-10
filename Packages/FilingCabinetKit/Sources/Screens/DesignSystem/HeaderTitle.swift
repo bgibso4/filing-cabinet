@@ -5,8 +5,9 @@ import SwiftUI
 /// A screen's title and subtitle in the system bar's four title slots (plan 3, E1): small in the bar, large under it.
 ///
 /// The bar hides its own inline title as the large one shows, but not ours, so the small title and subtitle fade
-/// themselves with `growth`, and the large title shows only as far as it has grown (`largeTitleOpacity`). The small title is the header element in both states (M6, amended by Ben): the system
-/// keeps it in the tree, so it carries `identifier` and the header trait, and the large title is only drawn.
+/// themselves with `growth`, and the large title shows only as far as it has grown (`largeTitleOpacity`). The small
+/// title is the header element in both states (M6, amended by Ben): the system keeps it in the tree, so it carries
+/// `identifier` and the header trait, and the large title is only drawn.
 struct HeaderTitle: ToolbarContent {
     let title: Text
     let subtitle: Text?

@@ -96,11 +96,11 @@ final class BrowseJourneyTests: XCTestCase {
         assertEmptyReceiptsHoldStill(in: app)
     }
 
-    /// An empty collection opened after one with scans rests with its large title showing: the bar is taller than the
-    /// full collection's collapsed one and the small title is faded out (phone check F6). On the phone the push's
-    /// animation collapsed the bar and neither title showed; `-UITest` turns animations off, so this journey can't
-    /// catch that collapse (`HeaderSettlingTests` does), only the state it must end in.
-    func testAnEmptyCollectionAfterAFullOneShowsItsLargeTitle() {
+    /// The state an empty collection opened after one with scans must end in: the bar taller than the full collection's
+    /// collapsed one and the small title faded out. Not F6's regression test: on the phone the push's animation
+    /// collapsed the bar and neither title showed, but `-UITest` turns animations off, so this journey can't catch that
+    /// collapse (`HeaderSettlingTests` does).
+    func testAnEmptyCollectionAfterAFullOneEndsWithTheBarExpanded() {
         // Scan 1 is the seed's only wallet card, scan 2 its only receipt: Notes is empty.
         let app = launchApp(["-SeedScans", "2", "-FixedDate", "2026-10-12"])
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 1)
