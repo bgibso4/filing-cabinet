@@ -1,7 +1,7 @@
 import Foundation
 
 /// Settings › Appearance: follow the phone, or stay light or dark whatever the phone does.
-public enum AppearanceChoice: String, CaseIterable {
+package enum AppearanceChoice: String, CaseIterable {
     case system
     case light
     case dark

@@ -20,8 +20,8 @@ package struct HeaderInsets: Sendable, Equatable {
 
     package init() {}
 
-    /// True with the content at its top under the bar, or pulled past it (measured: while the bar collapses, the content
-    /// runs ahead of the inset).
+    /// True with the content at its top under the bar, or pulled past it (measured: while the bar collapses, the
+    /// content runs ahead of the inset).
     package static func isAtTop(inset: CGFloat, contentOffset: CGFloat) -> Bool {
         contentOffset + inset <= topTolerance
     }
@@ -42,7 +42,7 @@ package struct HeaderInsets: Sendable, Equatable {
     package var largest: CGFloat? { expanded }
 
     /// True when the bar has been seen both ways and is collapsed now.
-    package var isCollapsed: Bool { motion != nil && current == collapsed }
+    package var isCollapsed: Bool { largeHeight != nil && current == collapsed }
 
     /// True when the bar is collapsed now by more than half the measured large title, the point past which UIKit's own
     /// snap collapses it (B6): a real collapse, not the bar laying out again a few points shorter. False until the
@@ -52,16 +52,18 @@ package struct HeaderInsets: Sendable, Equatable {
         return expanded - current > largeTitleHeight / 2
     }
 
-    /// Known once the bar has been seen both ways, so never built with a zero height.
-    package var motion: HeaderMotion? {
+    /// The large title's height as the bar's inset shows it: known once the bar has been seen both ways, so never zero.
+    package var largeHeight: CGFloat? {
         guard let expanded, let collapsed, expanded > collapsed else { return nil }
-        return HeaderMotion(largeHeight: expanded - collapsed)
+        return expanded - collapsed
     }
 
-    /// M8 for a scroll view `height` tall under the status bar. Until the bar has been seen both ways, all of it:
-    /// always enough to collapse it, since the expanded inset includes the large title.
+    /// M8 for a scroll view `height` tall under the status bar: content this tall can always scroll the large title
+    /// away, however short it is, since it is one viewport (under the collapsed bar) plus the large title. Until the
+    /// bar has been seen both ways, all of `height`: always enough to collapse it, since the expanded inset includes
+    /// the large title.
     package func minimumContentHeight(height: CGFloat) -> CGFloat {
-        guard let motion, let collapsed else { return height }
-        return motion.minimumContentHeight(viewport: height - collapsed)
+        guard let largeHeight, let collapsed else { return height }
+        return height - collapsed + largeHeight
     }
 }

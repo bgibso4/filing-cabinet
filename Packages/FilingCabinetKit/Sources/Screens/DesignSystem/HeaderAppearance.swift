@@ -2,7 +2,8 @@ import SwiftUI
 import UIKit
 
 /// The look of the system bar's own titles (plan 3, E9): the title in New York in both sizes, the subtitle in secondary
-/// text, on a clear bar so the back button is the system's glass one. Set once at launch, before the first bar exists.
+/// text, on a clear bar so the back button is the system's glass one. Set once at launch, before the first bar exists:
+/// the fonts are fixed at the text size then, and the colours follow light and dark live.
 ///
 /// SwiftUI ignores this appearance on a screen with `.toolbarBackground(.hidden, for: .navigationBar)`, so header
 /// screens don't use it: the clear appearance is what clears their bar.
@@ -47,8 +48,10 @@ public enum HeaderAppearance {
         ).lineHeight
     }
 
-    /// The token's font at the default text size, scaled for the setting as the system scales `style`. The bar keeps
-    /// its small title and subtitle at the default size whatever the setting, as Apple's bars do (M7).
+    /// The token's font at the default text size, scaled as the system scales `style` for the text size the app
+    /// launched at: the appearance is installed once, so a change of text size shows at the next launch. Launched at
+    /// the largest size, the small title and subtitle come out scaled (1.1 and 1.3 times, measured on Collections
+    /// at AX5), and the bar still fits them (`HeaderFitTests` measures at the default size).
     /// `serif` puts a token in New York that the design system keeps in SF elsewhere (the small title is headline).
     private static func font(_ token: Font, style: UIFont.TextStyle, serif: Bool = false) -> UIFont {
         UIFontMetrics(forTextStyle: style).scaledFont(for: defaultSize(token, serif: serif))

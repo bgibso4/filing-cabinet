@@ -13,7 +13,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
                              tested in Fast
-    Shared/                  HeaderMotion (title growth), HeaderRest, HeaderInsets, HeaderSettling: the header's maths
+    Shared/                  HeaderRest, HeaderInsets, HeaderSettling: the header's maths
     Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only

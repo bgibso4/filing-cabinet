@@ -17,7 +17,7 @@ public final class AppPreferences {
     }
 
     /// Light, dark or the phone's own; the app applies it at its root.
-    public var appearance: AppearanceChoice {
+    package var appearance: AppearanceChoice {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
     }
 

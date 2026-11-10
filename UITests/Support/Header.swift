@@ -1,4 +1,5 @@
 import Core
+import ScreenModels
 import XCTest
 
 /// The size a header's title shows at.
@@ -19,7 +20,7 @@ extension XCUIApplication {
 
     /// A collection's grid header.
     func header(_ collection: BuiltInCollection) -> XCUIElement {
-        header(collection.rawValue.capitalized)
+        header(CollectionText.name(collection))
     }
 
     /// The title text in `title`'s header: one element, small in the bar's row or large under it.
@@ -28,7 +29,7 @@ extension XCUIApplication {
     }
 
     func headerTitle(_ collection: BuiltInCollection) -> XCUIElement {
-        headerTitle(collection.rawValue.capitalized)
+        headerTitle(CollectionText.name(collection))
     }
 
     /// True once `title`'s header shows its title at `size`, within `timeout` seconds.
@@ -42,6 +43,6 @@ extension XCUIApplication {
     }
 
     func header(_ collection: BuiltInCollection, shows size: HeaderSize, within timeout: TimeInterval) -> Bool {
-        header(collection.rawValue.capitalized, shows: size, within: timeout)
+        header(CollectionText.name(collection), shows: size, within: timeout)
     }
 }

@@ -1,8 +1,9 @@
 import Core
 import Foundation
 
-/// Every collection string: names, descriptions, lifespans and empty states.
-package enum CollectionText {
+/// Every collection string: names, descriptions, lifespans and empty states. `name` is public for the UI tests, which
+/// find a grid's header by its title.
+public enum CollectionText {
     /// The names of Home's views.
     package static var recent: String { String(localized: "Recent", bundle: #bundle) }
     package static var allScans: String { String(localized: "All Scans", bundle: #bundle) }
@@ -17,7 +18,7 @@ package enum CollectionText {
             ? String(localized: "No scans", bundle: #bundle) : String(localized: "\(count) scans", bundle: #bundle)
     }
 
-    package static func name(_ collection: BuiltInCollection) -> String {
+    public static func name(_ collection: BuiltInCollection) -> String {
         switch collection {
         case .wallet: String(localized: "Wallet", bundle: #bundle)
         case .receipts: String(localized: "Receipts", bundle: #bundle)

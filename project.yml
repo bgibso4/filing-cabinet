@@ -91,7 +91,8 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
 
-  # Runs out of process against the installed app. Core is linked only for AccessibilityID (no resources, no host).
+  # Runs out of process against the installed app. Core is linked for AccessibilityID, ScreenModels for
+  # CollectionText.name (a grid header's title); no host.
   FilingCabinetUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -103,6 +104,8 @@ targets:
       - target: FilingCabinet
       - package: FilingCabinetKit
         product: Core
+      - package: FilingCabinetKit
+        product: ScreenModels
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES

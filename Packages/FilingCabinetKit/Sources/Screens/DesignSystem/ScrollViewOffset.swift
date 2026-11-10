@@ -2,15 +2,15 @@ import SwiftUI
 import UIKit
 
 /// Sets the top offset of the scroll view it sits in, above the top where SwiftUI's `ScrollPosition` stops
-/// (`HeaderScroll.scrollView(offset:)`): the system bar follows that offset as it follows a pull, which is the only way to
-/// expand a collapsed bar without a gesture. Placed inside a `ScrollView`'s content, so that scroll view is its nearest
-/// enclosing `UIScrollView`.
+/// (`HeaderScroll.scrollView(offset:)`): the system bar follows that offset as it follows a pull, which is the only way
+/// to expand a collapsed bar without a gesture. Placed inside a `ScrollView`'s content, so that scroll view is its
+/// nearest enclosing `UIScrollView`.
 struct ScrollViewOffset: UIViewRepresentable {
     /// An offset to set. `count` tells two asks for the same offset apart, so each one is carried out.
     struct Request: Equatable {
         let offset: CGFloat
-        /// Only while a push brings the screen in, at once, and back to the top when the push ends
-        /// (`HeaderScroll.pullDuringPush`).
+        /// Only while a transition (a push, a pop or a modal) brings the screen in, at once, and back to the top when
+        /// it ends (`HeaderScroll.pullDuringPush`).
         let duringPush: Bool
         let count: Int
     }
@@ -40,10 +40,11 @@ struct ScrollViewOffset: UIViewRepresentable {
         }
     }
 
-    /// A jump, the only move that lands before UIKit settles the bar for the push (an animated one waited for the push
-    /// to end, plan 3, E9). Outside a push (Home at launch, a snapshot) nothing would put the content back, so it is
-    /// left alone; at the push's end the content goes back to its top under the bar, where the scroll view puts it by
-    /// itself with animations on, but not with them off (UI tests).
+    /// A jump, the only move that lands before UIKit settles the bar for a transition (an animated one waited for the
+    /// transition to end, plan 3, E9). It acts during any transition the controller has, a push, a pop or a modal, not
+    /// only a push: the clamp at the end makes that harmless. Outside a transition (Home at launch, a snapshot) nothing
+    /// would put the content back, so it is left alone; at the transition's end the content goes back to its top under
+    /// the bar, where the scroll view puts it by itself with animations on, but not with them off (UI tests).
     private func pull(_ scrollView: UIScrollView, to offset: CGFloat) {
         let controller = sequence(first: scrollView as UIResponder, next: \.next).lazy
             .compactMap { $0 as? UIViewController }.first

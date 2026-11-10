@@ -14,13 +14,13 @@ private func collapsed() -> HeaderInsets {
 @Test func oneInsetSaysNothingAboutTheLargeTitle() {
     var insets = HeaderInsets()
     insets.record(170)
-    #expect(insets.motion == nil)
+    #expect(insets.largeHeight == nil)
     #expect(!insets.isCollapsed)
 }
 
 @Test func theInsetsDropIsTheLargeTitlesHeight() {
     let insets = collapsed()
-    #expect(insets.motion == HeaderMotion(largeHeight: 60))
+    #expect(insets.largeHeight == 60)
     #expect(insets.isCollapsed)
     #expect(insets.largest == 170)
 }
@@ -30,7 +30,7 @@ private func collapsed() -> HeaderInsets {
     insets.record(0)
     insets.record(170)
     insets.record(0)
-    #expect(insets.motion == nil)
+    #expect(insets.largeHeight == nil)
     #expect(insets.largest == 170)
 }
 
@@ -49,10 +49,10 @@ private func collapsed() -> HeaderInsets {
 @Test func aCollapsedBarFirstThenExpandedMeasuresTheSame() {
     var insets = HeaderInsets()
     insets.record(110)
-    #expect(insets.motion == nil)
+    #expect(insets.largeHeight == nil)
     insets.record(140)
     insets.record(170)
-    #expect(insets.motion == HeaderMotion(largeHeight: 60))
+    #expect(insets.largeHeight == 60)
     #expect(!insets.isCollapsed)
     #expect(insets.minimumContentHeight(height: 800) == 750)
 }

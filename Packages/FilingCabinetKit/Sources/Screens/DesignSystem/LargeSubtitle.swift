@@ -3,7 +3,9 @@ import UIKit
 
 /// Sets the large subtitle of the navigation item of the screen it sits in, in the design's subheadline (plan 3, E9):
 /// UIKit draws `navigationSubtitle` under the large title at the small subtitle's size. The item's attributed large
-/// subtitle wins over the string SwiftUI sets, and the bar carries it with the item through a push or pop.
+/// subtitle wins over the string SwiftUI sets, and the bar carries it with the item through a push or pop. The font is
+/// the one at the text size the app launched at, like the rest of the bar's fonts (`HeaderAppearance`), and the
+/// subtitle is only ever set, never cleared: every header's subtitle is a constant string.
 struct LargeSubtitle: UIViewControllerRepresentable {
     let text: String
 
@@ -33,7 +35,10 @@ struct LargeSubtitle: UIViewControllerRepresentable {
             let screen = sequence(first: self as UIViewController, next: \.parent).first {
                 $0.parent is UINavigationController
             }
-            guard let screen else { return }
+            guard let screen else {
+                ScreensLog.logger.error("No navigation controller around the header's screen to set its subtitle in")
+                return
+            }
             var subtitle = AttributedString(text)
             subtitle.uiKit.font = HeaderAppearance.largeSubtitleFont
             subtitle.uiKit.foregroundColor = HeaderAppearance.subtitleColor

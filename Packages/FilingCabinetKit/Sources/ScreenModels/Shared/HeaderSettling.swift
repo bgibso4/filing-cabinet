@@ -19,9 +19,9 @@ package enum HeaderScroll: Sendable, Equatable {
 /// nothing.
 ///
 /// A new screen resting large pulls its content down once as a push brings it in, so the push doesn't collapse its bar
-/// (see `arrive`), and expands its bar if the system collapses it anyway before the person has scrolled (see `expand`). A live change to large under
-/// a collapsed bar (a grid emptied on screen) pulls the content down to the expanded bar's inset, which expands it as a
-/// pull would. A live change to small settles again (Trash filling up).
+/// (see `arrive`), and expands its bar if the system collapses it anyway before the person has scrolled (see `expand`).
+/// A live change to large under a collapsed bar (a grid emptied on screen) pulls the content down to the expanded bar's
+/// inset, which expands it as a pull would. A live change to small settles again (Trash filling up).
 package struct HeaderSettling: Sendable, Equatable {
     private enum Phase: Sendable, Equatable {
         /// A new screen resting large, before its first report of the bar (see `arrive`).
@@ -83,8 +83,8 @@ package struct HeaderSettling: Sendable, Equatable {
     /// A new screen resting large, on its first report: it lays out under the bar of the screen it was pushed from, and
     /// UIKit collapses the bar for the whole push when the screen's own large header is taller (an empty grid's has a
     /// subtitle; Home's hasn't) and the content isn't above its top. Pulled down by a large title's height, the content
-    /// is above its top whatever the difference (a subtitle's line is shorter than the title's), so the bar opens to the
-    /// screen's own height (plan 3, E9, measured). A screen not being pushed (Home, a snapshot) ignores the pull.
+    /// is above its top whatever the difference (a subtitle's line is shorter than the title's), so the bar opens to
+    /// the screen's own height (plan 3, E9, measured). A screen not being pushed (Home, a snapshot) ignores the pull.
     private mutating func arrive(_ insets: HeaderInsets, inset: CGFloat) -> HeaderScroll? {
         phase = .watching
         guard insets.largeTitleHeight > 0 else { return nil }
@@ -94,7 +94,9 @@ package struct HeaderSettling: Sendable, Equatable {
     /// Resting large: a bar seen collapsed is expanded; one that is already expanded is left alone. A new screen keeps
     /// watching until the person touches or scrolls it, or it is covered (`stopWatching`): the system collapses its bar
     /// by itself on a push from a screen with a shorter large title (phone check F6), which `arrive` prevents; this
-    /// catches a collapse it didn't, after the push. After that, a collapse is the person's scroll up, and stays.
+    /// catches a collapse it didn't, after the push: a safety net for a push with no transition coordinator or a pull
+    /// that didn't take (no case seen since E9, plan E9 row). After that, a collapse is the person's scroll up, and
+    /// stays.
     private mutating func expand(_ insets: HeaderInsets, inset: CGFloat) -> HeaderScroll? {
         if phase == .arriving { return arrive(insets, inset: inset) }
         if phase == .watching {

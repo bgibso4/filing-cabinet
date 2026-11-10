@@ -7,12 +7,17 @@ import Testing
 @testable import ScreenModels
 @testable import TestSupport
 
-// Plan 3, E3: the bar's title slot on FC iPhone 17 is 314 pt beside the back button alone. The title is centred, so its
-// room is what is left between the two sides' widest button: 258 pt.
-private let roomBesideBack: CGFloat = 258
-// Plan 3, E8 (from E3's 222 pt slot, measured in the Trash snapshots): beside back and Select, the bar keeps the title
-// centred up to 176 pt of subtext ("7 scans · Deleted after 30 days", 176.4 pt, stayed centred; 184 pt didn't).
-private let centredRoomBesideBackAndSelect: CGFloat = 176
+// Plan 3, E9 (I1), measured on FC iPhone 17 (402 pt wide) from the accessibility frames of the system bar's buttons
+// (a probe UI test on Trash, in select mode and on a grid, 2026-11-09). The bar centres the title at x = 201, so its
+// room is twice the distance from the centre to the nearest button edge. The bar's own spacing beside the buttons isn't
+// subtracted: it wasn't measured. Trash's longest count (125 pt in 213) leaves 88 pt over. The probe also showed Core
+// Text's width of a subtext within 0.5 pt of the bar's frame for it.
+// Beside back alone, on a grid: back ends at x = 60, so 2 x (201 - 60).
+private let roomBesideBack: CGFloat = 282
+// Beside back and Select, on Trash: Select starts at x = 307.7, so 2 x (307.7 - 201), rounded down.
+private let roomBesideBackAndSelect: CGFloat = 213
+// While selecting, Cancel is wider and starts at x = 303.3, so 2 x (303.3 - 201), rounded down.
+private let roomBesideBackAndCancel: CGFloat = 204
 // Plan 3, E3 and E9: the bar draws the small subtitle in SF Pro Regular 12 pt with monospaced digits
 // (Tokens.Typography.caption, set as the bar's subtitle attributes by HeaderAppearance), at the default text size
 // whatever the setting (M7), so one size is the only one to measure.
@@ -64,11 +69,11 @@ private func everySubtext() throws -> [Subtext] {
     let today = Today(clock: clock)
     let collections = CollectionsModel(library: FakeLibrary(), today: today, calendar: clock.calendar)
     let besideSelect = [
-        Subtext(screen: "Trash", text: TrashModel.countLine(mostScans), room: centredRoomBesideBackAndSelect),
+        Subtext(screen: "Trash", text: TrashModel.countLine(mostScans), room: roomBesideBackAndSelect),
         Subtext(
             screen: "Trash, selecting",
             text: TrashModel.selectedLine(mostSelected),
-            room: centredRoomBesideBackAndSelect
+            room: roomBesideBackAndCancel
         ),
     ]
     let grids = try Lifespan.allCases.map { lifespan in

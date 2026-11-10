@@ -2,8 +2,9 @@ import ScreenModels
 import SwiftUI
 
 /// A screen's scroll view under its Passwords-style header (#62): the system bar's own title and subtitle (plan 3, E9),
-/// in our serif (`HeaderAppearance`), the large subtitle in the design's size (`LargeSubtitle`). Inner screens rest with the title small in the bar; pulling past halfway brings out the large
-/// title, which stays until a scroll up collapses it (B6, UIKit's own snap). Screens keep their own toolbar items.
+/// in our serif (`HeaderAppearance`), the large subtitle in the design's size (`LargeSubtitle`). Inner screens rest
+/// with the title small in the bar; pulling past halfway brings out the large title, which stays until a scroll up
+/// collapses it (B6, UIKit's own snap). Screens keep their own toolbar items.
 ///
 /// Keep one `HeaderScrollView` for a screen and change `rest` and `scrolls` on it as its content changes (an empty
 /// Trash filling up, a grid emptying): it settles again from where the bar is (`HeaderSettling`), collapsing the bar
@@ -96,9 +97,9 @@ struct HeaderScrollView<Content: View>: View {
     }
 }
 
-/// The system bar's subtitle, under the title in both sizes. The bar draws the large one with the small one's attributes
-/// (it ignores `largeSubtitleTextAttributes`, and a styled `Text` in `navigationSubtitle`), so the large one is also set
-/// as the navigation item's large attributed subtitle, in the design's subheadline (`LargeSubtitle`).
+/// The system bar's subtitle, under the title in both sizes. The bar draws the large one with the small one's
+/// attributes (it ignores `largeSubtitleTextAttributes`, and a styled `Text` in `navigationSubtitle`), so the large one
+/// is also set as the navigation item's large attributed subtitle, in the design's subheadline (`LargeSubtitle`).
 private struct Subtitle: ViewModifier {
     let subtitle: String?
 
@@ -113,8 +114,8 @@ private struct Subtitle: ViewModifier {
     }
 }
 
-/// What the header follows of the scroll: the bar's inset, and whether the content is at its top. Not the offset itself,
-/// so the screen doesn't update on every frame of a scroll under a collapsed bar.
+/// What the header follows of the scroll: the bar's inset, and whether the content is at its top. Not the offset
+/// itself, so the screen doesn't update on every frame of a scroll under a collapsed bar.
 private struct BarReport: Equatable {
     let inset: CGFloat
     let atTop: Bool
