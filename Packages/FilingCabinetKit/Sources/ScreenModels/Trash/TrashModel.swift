@@ -46,14 +46,29 @@ public final class TrashModel {
 
     package var isEmpty: Bool { shelf.trash.isEmpty }
 
-    /// "7 scans · each is deleted after 30 days here", "2 selected" while selecting (M24); nil when empty.
-    package var subtitle: String? {
-        if isSelecting { return String(localized: "\(selected.count) selected", bundle: #bundle) }
-        let count = shelf.trash.count
-        guard count > 0 else { return nil }
+    /// "7 scans · 30 days", or "No scans" when empty (E8); "2 selected" while selecting (M24).
+    package var subtitle: String {
+        isSelecting ? Self.selectedLine(selected.count) : Self.countLine(shelf.trash.count)
+    }
+
+    /// "7 scans · 30 days", "No scans" (E8, as Passwords' Recently Deleted). Short enough to stay centred beside Select
+    /// (B13).
+    static func countLine(_ count: Int) -> String {
+        guard count > 0 else { return CollectionText.scanCount(0) }
+        return String(localized: "\(CollectionText.scanCount(count)) · \(Lifecycle.trashDays) days", bundle: #bundle)
+    }
+
+    /// The notice above the tiles (E8); nil when Trash is empty, whose empty state says it already.
+    package var notice: String? {
+        guard !shelf.trash.isEmpty else { return nil }
         return String(
-            localized: "\(CollectionText.scanCount(count)) · each is deleted after \(Lifecycle.trashDays) days here",
+            localized: "Scans stay in Trash for \(Lifecycle.trashDays) days, then they’re permanently deleted.",
             bundle: #bundle)
+    }
+
+    /// "2 selected" (M24).
+    static func selectedLine(_ count: Int) -> String {
+        String(localized: "\(count) selected", bundle: #bundle)
     }
 
     /// The ticked scans that are still in Trash.

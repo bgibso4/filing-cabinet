@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Dark" : {},
+    "Light" : {},
+    "System" : {},
     "%lld months" : {
       "localizations" : {
         "en" : {
@@ -217,7 +220,8 @@
     "Empty Trash?" : {},
     "Deletes %@ permanently. This can’t be undone." : {},
     "Empty Trash" : {},
-    "%@ · each is deleted after %lld days here" : {},
+    "%@ · %lld days" : {},
+    "Scans stay in Trash for %lld days, then they’re permanently deleted." : {},
     "a week" : {},
     "a month" : {},
     "a year" : {},

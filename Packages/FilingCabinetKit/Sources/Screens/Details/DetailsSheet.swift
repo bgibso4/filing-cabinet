@@ -3,27 +3,29 @@ import ScreenModels
 import SwiftUI
 
 /// A scan's details over the viewer (07-01 … 07-08, ScanDetails.dc.html lines 33-137): its title, which renames in
-/// place, when it was scanned, its collection and its expiry. A compact sheet only as tall as its content; when the
-/// text is larger than the screen allows, the content scrolls under the grabber. It draws its own grabber, so a
-/// container only adds the sheet's surface and corners.
-public struct DetailsSheet: View {
+/// place, when it was scanned, its collection and its expiry. Only as tall as its content; when the text is larger
+/// than the screen allows, the content scrolls, cut off at the body's top edge just under the grabber. It draws its own
+/// grabber, and `DetailsPanel` adds the surface, corners and motion.
+///
+/// The grabber always drags the panel. The body scrolls first, as Apple's sheets do: a drag on it moves the panel only
+/// downward from its top (`DetailsMotion.bodyDragMovesPanel`). Neither drags while renaming, where it would fight the
+/// field's own.
+struct DetailsSheet: View {
     private let model: DetailsModel
-    /// The sheet's height, measured here; the viewer fits the page above it.
-    @Binding private var height: CGFloat
+    private let onDrag: (DetailsDrag) -> Void
+    /// The title field's focus, owned by `DetailsPanel`, which ends renaming on a tap outside the panel too.
+    private let isTitleFocused: FocusState<Bool>.Binding
 
     @State private var contentHeight: CGFloat?
+    /// Whether the body is scrolled to its top (or pulled past it); written only when that changes.
+    @State private var isBodyAtTop = true
     /// The title as typed while renaming.
     @State private var draft = ""
-    @FocusState private var isTitleFocused: Bool
     @Environment(\.dynamicTypeSize) private var typeSize
 
-    // ScanDetails.dc.html line 34: 8 pt above the grabber, 16 pt either side and 18 pt below the content.
-    private static let topPadding: CGFloat = 8
+    // ScanDetails.dc.html line 34: 16 pt either side and 18 pt below the content.
     private static let sidePadding: CGFloat = 16
     private static let bottomPadding: CGFloat = 18
-    // ScanDetails.dc.html line 35: the grabber is 36 by 5 pt.
-    private static let grabberWidth: CGFloat = 36
-    private static let grabberHeight: CGFloat = 5
     // ScanDetails.dc.html line 39: the title row is 44 pt tall at least, 8 pt below the grabber and 4 pt in, the
     // pencil 8 pt after the title.
     private static let titleMinHeight: CGFloat = 44
@@ -31,33 +33,41 @@ public struct DetailsSheet: View {
     private static let textInset: CGFloat = 4
     // ScanDetails.dc.html line 54: renaming, the label starts 10 pt below the grabber.
     private static let editorTop: CGFloat = 10
-    // The default-size sheet's height (07-01), shown for the instant before the real height is measured: 8 + 5 for the
-    // grabber, 8 + 44 for the title, 18 for the scanned line, 14 + 121 for the rows (two 60 pt rows and a hairline) and
-    // 18 below (ScanDetails.dc.html lines 34-97).
-    private static let unmeasuredHeight: CGFloat = 236
 
-    public init(model: DetailsModel, height: Binding<CGFloat>) {
+    init(model: DetailsModel, isTitleFocused: FocusState<Bool>.Binding, onDrag: @escaping (DetailsDrag) -> Void) {
         self.model = model
-        _height = height
+        self.isTitleFocused = isTitleFocused
+        self.onDrag = onDrag
     }
 
-    public var body: some View {
+    var body: some View {
         VStack(spacing: 0) {
-            grabber
+            DetailsGrabber(isEnabled: !model.isRenaming, onDrag: onDrag)
             ScrollView {
                 content.onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
             }
             .frame(maxHeight: contentHeight)
             .scrollBounceBehavior(.basedOnSize)
+            // Renaming at a large text size, the body scrolls, and a drag down on it takes the keyboard away.
+            .scrollDismissesKeyboard(.interactively)
+            .onScrollGeometryChange(
+                for: Bool.self,
+                of: { DetailsMotion.bodyIsAtTop(scrolled: $0.contentOffset.y + $0.contentInsets.top) },
+                action: { isBodyAtTop = $1 }
+            )
+            .gesture(
+                DetailsSwipe(
+                    begins: {
+                        !model.isRenaming
+                            && DetailsMotion.bodyDragMovesPanel(translation: $0, isBodyAtTop: isBodyAtTop)
+                    },
+                    onDrag: onDrag))
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier(AccessibilityID.Details.sheet)
-        .onChange(of: contentHeight, initial: true) { height = sheetHeight }
         .onChange(of: model.isRenaming, initial: true) { _, isRenaming in
             if isRenaming { draft = model.title }
         }
         // Leaving the field commits, as Return does.
-        .onChange(of: isTitleFocused) { _, isFocused in
+        .onChange(of: isTitleFocused.wrappedValue) { _, isFocused in
             if !isFocused { commitTitle() }
         }
         .onDisappear(perform: commitTitle)
@@ -77,33 +87,13 @@ public struct DetailsSheet: View {
         } message: { alert in
             Text(alert.message)
         }
-        .presentationDetents([.height(sheetHeight)])
-        // The sheet draws the mock's grabber itself: the system one is an unidentified button.
-        .presentationDragIndicator(.hidden)
-        .presentationBackground(Tokens.Color.bgSurface)
-        // The mocks don't dim the viewer: its back button still works with the sheet up.
-        .presentationBackgroundInteraction(.enabled)
-    }
-
-    /// The sheet's full height, or a stand-in until the content is measured.
-    private var sheetHeight: CGFloat {
-        guard let contentHeight else { return Self.unmeasuredHeight }
-        return Self.topPadding + Self.grabberHeight + contentHeight
-    }
-
-    private var grabber: some View {
-        Capsule()
-            .fill(Tokens.Color.chevron)
-            .frame(width: Self.grabberWidth, height: Self.grabberHeight)
-            .padding(.top, Self.topPadding)
-            .accessibilityHidden(true)
     }
 
     /// While renaming only the field shows (07-03).
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
             if model.isRenaming {
-                DetailsTitleEditor(text: $draft, isFocused: $isTitleFocused, onCommit: commitTitle)
+                DetailsTitleEditor(text: $draft, isFocused: isTitleFocused, onCommit: commitTitle)
                     .padding(.top, Self.editorTop)
             } else {
                 titleButton
@@ -157,13 +147,13 @@ public struct DetailsSheet: View {
 
     private func startRenaming() {
         model.startRenaming()
-        isTitleFocused = true
+        isTitleFocused.wrappedValue = true
     }
 
     /// Return, leaving the field or closing the sheet: the typed title is kept (a blank one keeps the old title).
     private func commitTitle() {
         guard model.isRenaming else { return }
         model.rename(draft)
-        isTitleFocused = false
+        isTitleFocused.wrappedValue = false
     }
 }

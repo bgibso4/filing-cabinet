@@ -1,49 +1,29 @@
 import SwiftUI
 
-/// A screen's scrolling content with a bar of buttons at the bottom centre (Scan, Empty Trash). At default sizes the bar
-/// floats over the content on a fade of the screen background (as a safe-area inset it pushes the scroll content up by
-/// its real size). At accessibility sizes the content is taller than the screen, so a row would rest half under the
-/// fade: the content ends where the bar's area begins instead, and the bar sits on the plain background.
+/// A screen's scrolling content with a bar of buttons at the bottom centre (Scan, Empty Trash). The bar floats over the
+/// content at every text size, with no fade: its Liquid Glass shows what scrolls under it (Ben, 2026-11-10). It is an
+/// overlay, not a safe-area inset: an inset's bar sits outside the screen's own view, where the screen's
+/// `accessibilityHidden` doesn't reach it and the accessibility audit can't resolve glass buttons (#59). The content's
+/// end is lifted by the bar's measured height, so the last row scrolls clear of it.
 struct BottomBarLayout<Content: View, Bar: View>: View {
     @ViewBuilder let content: Content
     @ViewBuilder let bar: Bar
 
-    // Home.dc.html: the fade behind the pill is solid from 38% of its height.
-    private var fadeSolidLocation: Double { 0.38 }
-
-    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var barHeight: CGFloat = 0
 
     var body: some View {
-        if typeSize.isAccessibilitySize {
-            VStack(spacing: 0) {
-                content
-                barArea(fades: false)
+        content
+            .safeAreaPadding(.bottom, barHeight)
+            .overlay(alignment: .bottom) {
+                bar
+                    .padding(.top, Tokens.Spacing.s4)
+                    .frame(maxWidth: .infinity)
+                    .onGeometryChange(for: CGFloat.self) {
+                        $0.size.height
+                    } action: {
+                        barHeight = $0
+                    }
             }
             .background(Tokens.Color.bgGrouped)
-        } else {
-            content
-                .background(Tokens.Color.bgGrouped)
-                .safeAreaInset(edge: .bottom, spacing: 0) { barArea(fades: true) }
-        }
-    }
-
-    private func barArea(fades: Bool) -> some View {
-        bar
-            .padding(.top, Tokens.Spacing.s4)
-            .frame(maxWidth: .infinity)
-            .background {
-                if fades {
-                    LinearGradient(
-                        stops: [
-                            .init(color: Tokens.Color.bgGrouped.opacity(0), location: 0),
-                            .init(color: Tokens.Color.bgGrouped, location: fadeSolidLocation),
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .ignoresSafeArea(edges: .bottom)
-                    .allowsHitTesting(false)
-                }
-            }
     }
 }

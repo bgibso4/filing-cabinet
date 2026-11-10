@@ -6,7 +6,7 @@ import XCTest
 private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bool] = [
     // At the largest text size the list is taller than the screen, and a row's label can start in the last point
     // of the window (the audit found "Notes" at y 872.7 in an 874 pt window). That text is scrolled out of view
-    // and sits under the Scan button's fade, so the audit samples background pixels and reports low contrast.
+    // and sits under the Scan button, so the audit samples background pixels and reports low contrast.
     // Only contrast, only an element that begins within 2 pt of the window's bottom edge or below it.
     { app, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
@@ -20,15 +20,6 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         let sheetText = [
             AccessibilityID.CameraOff.title, AccessibilityID.CameraOff.message, AccessibilityID.CameraOff.openSettings,
         ]
-        return sheetText.contains(element.identifier)
-    },
-    // The same iOS 27 report on the Details sheet over the viewer, also a floating sheet sized to its content, with its
-    // text intact (Task 6's snapshots and journey screenshots). Ben accepted this on 2026-11-08. Only textClipped, and only
-    // the two text elements the audit reported (the title and the scanned line), matched by identifier; any other
-    // screen's clipped text still fails.
-    { _, issue in
-        guard issue.auditType == .textClipped, let element = issue.element else { return false }
-        let sheetText = [AccessibilityID.Details.titleText, AccessibilityID.Details.scannedLine]
         return sheetText.contains(element.identifier)
     },
     // In dark mode the audit misreads the viewer header's white text on dark Liquid Glass and reports low contrast,
@@ -55,15 +46,15 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return glassButtons.contains(element.identifier)
     },
-    // Trash's glass bottom bar, reported with no element: on the Trash grid the bar sits in BottomBarLayout's
-    // .safeAreaInset, where the audit can't resolve the glass buttons to elements, so it reports their text as low
-    // contrast and as inaccessible text (hiding Empty Trash clears it). The viewer's .overlay bar, the same buttons,
-    // resolves fine. The real fix is to present the bar as an overlay (issue #59). Ben accepted this on 2026-11-08.
+    // Trash's glass bottom bar, reported with no element: on the Trash grid the audit can't resolve the glass buttons
+    // to elements, so it reports their text as low contrast and as inaccessible text (hiding Empty Trash clears it).
+    // The viewer's bar, the same buttons, resolves fine. Presenting the grid's bar as an overlay, as #59 proposed,
+    // didn't change it (2026-11-10). Ben accepted this on 2026-11-08.
     // Only contrast and element detection, only with no element, and only while the Trash screen is showing;
     // element-less issues on every other screen still fail.
     { app, issue in
         [.contrast, .elementDetection].contains(issue.auditType) && issue.element == nil
-            && app.staticTexts[AccessibilityID.Trash.header].exists
+            && app.header("Trash").exists
     },
 ]
 
@@ -76,6 +67,27 @@ func audit(_ app: XCUIApplication) throws {
         .dynamicType, .textClipped, .trait,
     ]
     try app.performAccessibilityAudit(for: types) { issue in
-        ignoredIssues.contains { $0(app, issue) }
+        let ignored = ignoredIssues.contains { $0(app, issue) }
+        if !ignored { attachDetails(of: issue, in: app) }
+        return ignored
     }
+}
+
+/// The audit's own failure names only the element's class ("SwiftUI.AccessibilityNode"), which can't tell a CI-only
+/// failure apart. Attaches what the exemptions match on: the element's label, identifier and frame, the window and the
+/// Scan button's frame.
+@MainActor
+private func attachDetails(of issue: XCUIAccessibilityAuditIssue, in app: XCUIApplication) {
+    let scan = [AccessibilityID.Home.scan, AccessibilityID.Grid.scan].lazy.map { app.buttons[$0] }.first { $0.exists }
+    let lines = [
+        "type: \(issue.auditType.rawValue) · \(issue.compactDescription)",
+        "detail: \(issue.detailedDescription)",
+        "element: \(issue.element.map { "'\($0.label)' id '\($0.identifier)' frame \($0.frame)" } ?? "none")",
+        "window: \(app.windows.firstMatch.frame)",
+        "scan: \(scan.map { "\($0.frame)" } ?? "none")",
+    ]
+    let attachment = XCTAttachment(string: lines.joined(separator: "\n"))
+    attachment.name = "Audit issue"
+    attachment.lifetime = .keepAlways
+    XCTContext.runActivity(named: "Audit issue: \(issue.compactDescription)") { $0.add(attachment) }
 }

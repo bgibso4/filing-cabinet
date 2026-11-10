@@ -6,6 +6,11 @@ extension XCUIElement {
         holds(NSPredicate(format: format, argumentArray: arguments), for: self, within: timeout)
     }
 
+    /// True once `condition` holds for this element, within `timeout` seconds of the call (see `holds`).
+    func satisfies(within timeout: TimeInterval, _ condition: @escaping @Sendable (XCUIElement) -> Bool) -> Bool {
+        holds(NSPredicate { object, _ in (object as? XCUIElement).map(condition) ?? false }, for: self, within: timeout)
+    }
+
     /// `waitForExistence`, without its idle first second.
     func appears(within timeout: TimeInterval) -> Bool {
         satisfies("exists == true", within: timeout)

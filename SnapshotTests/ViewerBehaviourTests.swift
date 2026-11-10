@@ -14,6 +14,10 @@ import UIKit
 @MainActor
 struct ViewerBehaviourTests {
     private static let deadline = Duration.seconds(5)
+    /// The default-size Details panel (07-01).
+    private static let panelHeight: CGFloat = 236
+    /// The bar's middle, where the pill sits and nothing else does: clear of the back button and above the page.
+    private static let pillBand = CGRect(x: 100, y: 62, width: 202, height: 44)
 
     private func scan(pages: Int) -> ScanSummary {
         ScanSummary(
@@ -46,6 +50,19 @@ struct ViewerBehaviourTests {
     private func close(_ window: UIWindow) {
         window.rootViewController = nil
         window.isHidden = true
+    }
+
+    /// The page's image on screen, in window coordinates.
+    private func pageFrame(in window: UIWindow) -> CGRect? {
+        func page(in view: UIView) -> UIImageView? {
+            if let image = view as? UIImageView, image.image != nil, view.superview is UIScrollView,
+                !image.bounds.isEmpty
+            {
+                return image
+            }
+            return view.subviews.lazy.compactMap { page(in: $0) }.first
+        }
+        return page(in: window).map { $0.convert($0.bounds, to: window) }
     }
 
     /// Polls until `condition` holds; false if it never did.
@@ -137,6 +154,49 @@ struct ViewerBehaviourTests {
         #expect(asked.isSubset(of: [0, 1, 9, 10, 11]), "\(asked.sorted())")
     }
 
+    /// #61: the page's fit follows Details' progress every frame, and the pill fades rather than leaving the bar.
+    @Test func pageFollowsDetailsProgress() async throws {
+        let scan = scan(pages: 1)
+        let pages = FakePageImages(images: [scan.id: [0: try #require(WindowPixels.image(.magenta))]])
+        let progress = DetailsProgress()
+        let viewer = model(scan)
+        let window = try host(
+            NavigationStack(path: .constant([0])) {
+                Color.clear.navigationDestination(for: Int.self) { _ in
+                    ProgressViewer(model: viewer, pages: pages, height: Self.panelHeight, progress: progress)
+                }
+            })
+        defer { close(window) }
+        #expect(try await eventually { pageFrame(in: window) != nil })
+
+        var bottoms: [CGFloat] = []
+        var pills: [[UInt8]] = []
+        for value: CGFloat in [0, 0.5, 1] {
+            progress.value = value
+            // Settled: the page has moved from where it was, and two reads in a row agree on the page and the bar.
+            var last: (bottom: CGFloat, pill: [UInt8])?
+            let settled = try await eventually {
+                let read = (
+                    bottom: try #require(pageFrame(in: window)).maxY,
+                    pill: try WindowPixels.rgba(of: window, in: Self.pillBand)
+                )
+                defer { last = read }
+                return read.bottom != bottoms.last && last.map { $0 == read } == true
+            }
+            #expect(settled, "progress \(value)")
+            let reading = try #require(last)
+            bottoms.append(reading.bottom)
+            pills.append(reading.pill)
+        }
+        #expect(bottoms[0] > bottoms[1] && bottoms[1] > bottoms[2], "\(bottoms)")
+        #expect(abs(bottoms[1] - (bottoms[0] + bottoms[2]) / 2) <= 1, "\(bottoms)")
+        // The pill shows at 0 and is gone at 1; at 0.5 it is half as far from gone.
+        let shown = WindowPixels.difference(pills[0], pills[2])
+        #expect(shown > 0)
+        let half = Double(WindowPixels.difference(pills[1], pills[2])) / Double(max(shown, 1))
+        #expect(abs(half - 0.5) < 0.1, "\(half)")
+    }
+
     @Test func aMissingScanPops() async throws {
         let expired = ScanSummary(
             id: ScanID(),
@@ -186,6 +246,29 @@ private struct ReevaluatedRoute<Content: View>: View {
         // Reading the tick is what runs this body again.
         _ = ticks.value
         return content(makeModel)
+    }
+}
+
+@Observable
+@MainActor
+private final class DetailsProgress {
+    var value: CGFloat = 0
+}
+
+/// The viewer with Details' progress changed in place, as `ViewerRoute` changes it every frame.
+private struct ProgressViewer: View {
+    let model: ViewerModel
+    let pages: FakePageImages
+    let height: CGFloat
+    let progress: DetailsProgress
+
+    var body: some View {
+        ViewerView(
+            model: model,
+            pages: pages,
+            thumbnails: FakeThumbnails(),
+            detailsHeight: height,
+            detailsProgress: progress.value)
     }
 }
 

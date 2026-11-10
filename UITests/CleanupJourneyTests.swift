@@ -30,7 +30,7 @@ final class CleanupJourneyTests: XCTestCase {
         try audit(app)
 
         banner.tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
+        XCTAssertTrue(app.header("Trash").appears(within: 5))
         let tiles = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Trash.tilePrefix))
         XCTAssertTrue(tiles.firstMatch.appears(within: 5))

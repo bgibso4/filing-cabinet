@@ -10,6 +10,13 @@ final class ScanJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Scan doesn't wait for iOS to say whether notes may be sent (CI run 42752032236: Scan stayed disabled 5.5 s
+    /// after a relaunch).
+    func testScanIsReadyWhileNotificationsHaveNotAnswered() {
+        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-NotificationsUnanswered"])
+        scanOnePage(in: app)
+    }
+
     func testScanReviewSaveShowsOnHome() throws {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         scanOnePage(in: app)
@@ -61,7 +68,7 @@ final class ScanJourneyTests: XCTestCase {
 
         let row = app.buttons[AccessibilityID.Home.collectionRow(.documents)]
         row.tap()
-        let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
+        let header = app.header(.documents)
         XCTAssertTrue(header.appears(within: 5))
         assertIdentifiers(AccessibilityID.Grid.all, in: app)
         try audit(app)
@@ -123,7 +130,7 @@ final class ScanJourneyTests: XCTestCase {
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
         XCTAssertTrue(tile.firstMatch.appears(within: 5))
         // Scan answers again, on the same grid.
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
+        XCTAssertTrue(app.header(.receipts).exists)
         app.buttons[AccessibilityID.Grid.back].tap()
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
         XCTAssertTrue(row.appears(within: 5))
@@ -134,7 +141,7 @@ final class ScanJourneyTests: XCTestCase {
     func testSaveToAnotherCollectionFromAGridCountsOnHome() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         saveFromInsideReceipts(in: app, choosing: "Wallet")
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.receipts).appears(within: 5))
         app.buttons[AccessibilityID.Grid.back].tap()
         waitForSaveToReturnHome(in: app, collection: .wallet)
     }
@@ -149,18 +156,22 @@ final class ScanJourneyTests: XCTestCase {
         let all = app.buttons[AccessibilityID.Home.allRow]
         XCTAssertTrue(all.appears(within: 30))
         all.tap()
-        let header = app.descendants(matching: .any)[AccessibilityID.Grid.header]
-        XCTAssertTrue(header.appears(within: 5))
+        XCTAssertTrue(app.header("All Scans").appears(within: 5))
+        // The newest tile, first in the grid; scrolled off the top, it is no longer hittable.
+        let first = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(first.appears(within: 5))
         app.swipeUp(velocity: .fast)
         app.swipeUp(velocity: .fast)
-        XCTAssertFalse(header.isHittable)
+        XCTAssertFalse(first.isHittable)
         finishCameraFromGrid(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
         XCTAssertTrue(save.disappears(within: 10))
         XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].appears(within: 5))
-        XCTAssertFalse(header.isHittable)
+        XCTAssertFalse(first.isHittable)
     }
 
     func testChooseADateSetsExpiry() {
@@ -307,7 +318,7 @@ extension ScanJourneyTests {
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
         XCTAssertTrue(row.appears(within: 5))
         row.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.receipts).appears(within: 5))
         finishCameraFromGrid(in: app)
         if let other {
             app.descendants(matching: .any)[Review.collection].tap()
@@ -328,7 +339,7 @@ extension ScanJourneyTests {
         XCTAssertTrue(finish.appears(within: 5))
         // The grid under the camera is out of the tree too, its Scan bar included.
         XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].disappears(within: 5))
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Grid.header].exists)
+        XCTAssertFalse(app.header(.receipts).exists)
         finish.tap()
         XCTAssertTrue(app.buttons[Review.save].appears(within: 5))
     }

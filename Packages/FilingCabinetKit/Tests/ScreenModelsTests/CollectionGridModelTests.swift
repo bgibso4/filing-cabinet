@@ -40,23 +40,23 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
             scan("Bluebird Café", .receipts, daysAgo: 2), scan("Work ID", .wallet),
         ])
     #expect(grid.title == "Receipts")
-    #expect(grid.subtitle == "3 scans · Kept 3 months")
+    #expect(grid.subtitle == "3 scans · 3 months")
     #expect(!grid.isEmpty)
     #expect(grid.tiles.map(\.title) == ["Corner Market", "Bluebird Café", "Harbor Gas"])
     #expect(grid.tiles.allSatisfy { $0.dot == nil })
     #expect(grid.tiles.first?.timeLeft == "3 months left")
     #expect(grid.tiles.first?.accessibilityLabel == "Corner Market, Receipts, 3 months left")
-    #expect(model(.collection(.wallet), [scan("Work ID", .wallet)]).subtitle == "1 scan · Kept forever")
+    #expect(model(.collection(.wallet), [scan("Work ID", .wallet)]).subtitle == "1 scan · Forever")
 }
 
 @Test func emptyReceiptsCopy() {
     let grid = model(.collection(.receipts))
     #expect(grid.isEmpty)
     #expect(grid.tiles.isEmpty)
-    #expect(grid.subtitle == "No scans · Kept 3 months")
+    #expect(grid.subtitle == "No scans · 3 months")
     #expect(grid.emptyTitle == "No receipts yet")
     #expect(grid.emptyBody == "Purchase receipts go here. Each one is kept 3 months, then moves to Trash.")
-    #expect(model(.collection(.throwaways)).subtitle == "No scans · Kept 1 week")
+    #expect(model(.collection(.throwaways)).subtitle == "No scans · 1 week")
 }
 
 @Test func emptyNotesAndDocumentsCopy() {
@@ -114,7 +114,7 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     ]
     let throwaways = model(.collection(.throwaways), scans)
     #expect(throwaways.tiles.map(\.title) == ["Kept"])
-    #expect(throwaways.subtitle == "1 scan · Kept 1 week")
+    #expect(throwaways.subtitle == "1 scan · 1 week")
     #expect(model(.collection(.receipts), scans).isEmpty)
     #expect(model(.all, scans).subtitle == "1 scan")
 }

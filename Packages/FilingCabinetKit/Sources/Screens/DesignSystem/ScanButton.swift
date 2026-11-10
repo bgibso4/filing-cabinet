@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// The Scan pill: graphite in light, near-white in dark, always labelled "Scan".
+/// The Scan pill: Liquid Glass tinted graphite in light, near-white in dark (plain glass while disabled), always
+/// labelled "Scan".
 struct ScanButton: View {
     private let identifier: String
     private let action: () -> Void
@@ -29,7 +30,7 @@ struct ScanButton: View {
             .foregroundStyle(isEnabled ? Tokens.Color.bgGrouped : Tokens.Color.textSecondary)
             .padding(.horizontal, Self.horizontalPadding)
             .frame(minHeight: min(scaledHeight, Self.maxHeight))
-            .background(isEnabled ? Tokens.Color.tint : Tokens.Color.bgWell, in: .capsule)
+            .glassEffect(isEnabled ? .regular.tint(Tokens.Color.tint).interactive() : .regular, in: .capsule)
             // One element for the whole pill, so the audit measures the text against the pill and not against a
             // frame that is exactly the glyphs.
             .accessibilityElement(children: .combine)

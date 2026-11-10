@@ -23,14 +23,16 @@ final class BrowseJourneyTests: XCTestCase {
         try audit(app)
 
         let rows =
-            BuiltInCollection.allCases.map(AccessibilityID.Home.collectionRow)
-            + [AccessibilityID.Home.recentRow, AccessibilityID.Home.allRow]
-        for row in rows {
+            BuiltInCollection.allCases.map { (AccessibilityID.Home.collectionRow($0), app.header($0)) }
+            + [
+                (AccessibilityID.Home.recentRow, app.header("Recent")),
+                (AccessibilityID.Home.allRow, app.header("All Scans")),
+            ]
+        for (row, header) in rows {
             let button = app.buttons[row]
             XCTAssertTrue(button.appears(within: 5), row)
             button.tap()
-            XCTAssertTrue(
-                app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5), row)
+            XCTAssertTrue(header.appears(within: 5), row)
             app.buttons[AccessibilityID.Grid.back].tap()
             XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5), row)
         }
@@ -66,6 +68,73 @@ final class BrowseJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// An empty collection rests with the large title showing and doesn't scroll (B5).
+    func testEmptyGridDoesNotScroll() {
+        let app = launchApp()
+        openReceipts(in: app)
+        assertEmptyReceiptsHoldStill(in: app)
+    }
+
+    /// A grid that empties while it is open (its only scan moved to Trash from the viewer, which pops back to it) comes
+    /// back with the large title showing, and holds still, as one opened empty does (B5).
+    func testAGridEmptiedFromTheViewerShowsTheLargeTitle() {
+        // Scan 2 is the seed's only receipt.
+        let app = launchApp(["-SeedScans", "2", "-FixedDate", "2026-10-12"])
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 1)
+        openReceipts(in: app)
+        XCTAssertTrue(app.header(.receipts, shows: .small, within: 5), "The grid didn't rest small")
+        tiles(in: app).firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
+
+        app.buttons[AccessibilityID.Viewer.trash].tap()
+        let confirm = app.buttons.matching(
+            NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Viewer.trash)
+        ).firstMatch
+        XCTAssertTrue(confirm.appears(within: 5))
+        confirm.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
+
+        assertEmptyReceiptsHoldStill(in: app)
+    }
+
+    /// The state an empty collection opened after one with scans must end in: the bar taller than the full collection's
+    /// collapsed one and the large title showing. Not F6's regression test: on the phone the push's animation
+    /// collapsed the bar and neither title showed, but `-UITest` turns animations off, so this journey can't catch that
+    /// collapse (`HeaderSettlingTests` does).
+    func testAnEmptyCollectionAfterAFullOneEndsWithTheBarExpanded() {
+        // Scan 1 is the seed's only wallet card, scan 2 its only receipt: Notes is empty.
+        let app = launchApp(["-SeedScans", "2", "-FixedDate", "2026-10-12"])
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 1)
+        open(.wallet, in: app)
+        XCTAssertTrue(app.header(.wallet, shows: .small, within: 5), "The full grid didn't rest small")
+        let collapsedBar = app.navigationBars.firstMatch.frame.height
+        app.buttons[AccessibilityID.Grid.back].tap()
+
+        open(.notes, in: app)
+        XCTAssertTrue(app.staticTexts["No notes yet"].appears(within: 5))
+        XCTAssertTrue(app.header(.notes, shows: .large, within: 5), "The large title isn't showing")
+        XCTAssertGreaterThan(app.navigationBars.firstMatch.frame.height, collapsedBar, "The bar is collapsed")
+    }
+
+    /// The large title shows, and stays; drags either way move neither it nor the empty state.
+    private func assertEmptyReceiptsHoldStill(in app: XCUIApplication, line: UInt = #line) {
+        let title = app.headerTitle(.receipts)
+        let empty = app.staticTexts["No receipts yet"]
+        XCTAssertTrue(empty.appears(within: 5), line: line)
+        XCTAssertTrue(app.header(.receipts, shows: .large, within: 5), "The large title isn't showing", line: line)
+        // Still large once the bar has had time to settle.
+        XCTAssertFalse(app.header(.receipts, shows: .small, within: 1), "The bar collapsed", line: line)
+        let frames = (title: title.frame, empty: empty.frame)
+
+        for distance in [-300.0, 300.0] {
+            empty.drag(by: distance)
+            XCTAssertEqual(title.frame, frames.title, "The title moved after a \(distance) pt drag", line: line)
+            XCTAssertEqual(empty.frame, frames.empty, "The empty state moved after a \(distance) pt drag", line: line)
+            let large = app.header(.receipts, shows: .large, within: 0)
+            XCTAssertTrue(large, "The bar collapsed after a \(distance) pt drag", line: line)
+        }
+    }
+
     func testEdgeSwipeGoesBackFromTheGrid() {
         let app = seededApp()
         openReceipts(in: app)
@@ -77,7 +146,7 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp()
         openReceipts(in: app)
         tiles(in: app).firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].disappears(within: 5))
+        XCTAssertTrue(app.header(.receipts).disappears(within: 5))
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
         // One page: no strip.
         XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Viewer.strip].exists)
@@ -101,12 +170,18 @@ final class BrowseJourneyTests: XCTestCase {
         assertPageLabel("Page 2 of 3", in: app)
 
         // Leaving and coming back to the app evaluates the root again; the viewer stays on its page.
+        // `activate()` returns while iOS still scales the window up from its icon: the app is already
+        // running in the foreground and Back already hittable, but Back's frame is where the scaled window put
+        // it, so a tap then lands below the button once the window settles. Wait for the window's resting frame.
+        let window = app.windows.firstMatch
+        let restingFrame = NSValue(cgRect: window.frame)
         XCUIDevice.shared.press(.home)
         app.activate()
+        XCTAssertTrue(window.satisfies("frame == %@", restingFrame, within: 5), "The window never settled")
         assertPageLabel("Page 2 of 3", in: app)
 
         app.buttons[AccessibilityID.Viewer.back].tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
     func testAuditAtLargestTextOfTheViewer() throws {
@@ -130,7 +205,7 @@ final class BrowseJourneyTests: XCTestCase {
         let app = seededApp()
         openThreePageScan(in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
     func testEdgeSwipeGoesBackFromALaterPage() {
@@ -139,7 +214,7 @@ final class BrowseJourneyTests: XCTestCase {
         app.windows.firstMatch.swipeLeft()
         assertPageLabel("Page 2 of 3", in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
     func testEdgeSwipeGoesBackFromAZoomedPage() {
@@ -148,7 +223,7 @@ final class BrowseJourneyTests: XCTestCase {
         // The page says it is zoomed once the zoom has finished; only then is the swipe a test of a zoomed page.
         zoomTheFirstPage(in: app)
         edgeSwipeBack(in: app)
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
     func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() throws {
@@ -182,7 +257,7 @@ final class BrowseJourneyTests: XCTestCase {
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
         XCTAssertTrue(row.appears(within: 5))
         row.tap()
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(collection).appears(within: 5))
     }
 
     /// The seed's Documents scans have three pages.

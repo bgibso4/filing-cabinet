@@ -13,9 +13,15 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
                              tested in Fast
+    Shared/                  HeaderRest, HeaderInsets, HeaderSettling: the header's maths
+    Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only
+    DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
+                             own titles, styled by HeaderAppearance)
     DesignSystem/Generated/  generated tokens (never hand-edit)
+    Details/                 DetailsPanel (the panel that replaces the system sheet), DetailsGrabber
+    Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
                              ReaderComparisonTests (the bake-off report, not a gate)
@@ -80,6 +86,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
 | `-TextReader text\|documents` | which Vision reader understands pages |
 | `-Notifications authorized\|denied\|notDetermined` | a fake notification center answers with that authorization |
+| `-NotificationsUnanswered` | a fake notification center never answers what iOS allows (a stuck notification service) |
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-SeedTrash <n>` | saves `n` synthetic scans at launch and moves scan `i` to Trash on today − `i` |

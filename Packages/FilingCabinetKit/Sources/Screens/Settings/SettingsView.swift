@@ -9,11 +9,7 @@ public struct SettingsView: View {
     private let model: SettingsModel
     private let onOpenCollections: () -> Void
 
-    // Settings2.dc.html lines 17 and 26: the title starts 12 pt under the 44 pt back button. The system bar is 10 pt
-    // taller than the mock's button, so 2 pt are left to add (as on Trash).
-    private static let titleTopGap: CGFloat = 2
-    // Settings2.dc.html lines 27 and 30: 6 pt under the title, then 22 pt above each group.
-    private static let titleBottomGap: CGFloat = 6
+    // Settings2.dc.html line 30: 22 pt above each group; the first one is 22 pt under the bar now the title is in it.
     private static let groupGap: CGFloat = 22
     // Settings2.dc.html line 32: rows are at least 50 pt tall.
     private static let rowMinHeight: CGFloat = 50
@@ -35,16 +31,16 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        ScrollView {
+        HeaderScrollView(
+            title: Text("Settings", bundle: #bundle),
+            subtitle: nil,
+            rest: .small
+        ) {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Settings", bundle: #bundle)
-                    .font(Tokens.Typography.largeTitle)
-                    .tracking(Tokens.Typography.largeTitleTracking)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.top, Self.titleTopGap)
                 group { collectionsRow }
-                    .padding(.top, Self.titleBottomGap + Self.groupGap)
+                    .padding(.top, Self.groupGap)
+                group { appearanceRow }
+                    .padding(.top, Self.groupGap)
                 group { notificationsRow }
                     .padding(.top, Self.groupGap)
                 Text(model.footer)
@@ -57,9 +53,9 @@ public struct SettingsView: View {
             .padding(.horizontal, Tokens.Spacing.s4)
             .padding(.bottom, Tokens.Spacing.s8)
         }
+        // It fits the screen: a bounce shows no scroll bar (phone check F4).
+        .scrollIndicators(.hidden)
         .background(Tokens.Color.bgGrouped)
-        // The system bar, clear, as on the grids: the back button is the system's glass one and swipe back works.
-        .toolbarBackground(.hidden, for: .navigationBar)
         .task { await model.refreshAuthorization() }
         // Someone may come back from iPhone Settings having turned notifications on or off.
         .onChange(of: scenePhase) { _, phase in
@@ -89,6 +85,38 @@ public struct SettingsView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.Settings.collections)
+    }
+
+    /// The row, with a clear system menu button over it as the one accessibility element (as "Keep scans for").
+    private var appearanceRow: some View {
+        row(icon: "circle.lefthalf.filled") {
+            Text("Appearance", bundle: #bundle)
+                .font(Tokens.Typography.body)
+                .foregroundStyle(Tokens.Color.textPrimary)
+        } trailing: {
+            Text(model.appearance.title)
+                .font(Tokens.Typography.body)
+                .foregroundStyle(Tokens.Color.textSecondary)
+            MenuChevrons()
+        }
+        .accessibilityHidden(true)
+        .overlay {
+            MenuButton(
+                label: String(localized: "Appearance", bundle: #bundle),
+                value: model.appearance.title,
+                identifier: AccessibilityID.Settings.appearance,
+                menu: appearanceMenu)
+        }
+    }
+
+    /// System, Light and Dark, with a check on the current one.
+    private func appearanceMenu() -> UIMenu {
+        UIMenu(
+            children: AppearanceChoice.allCases.map { choice in
+                let action = UIAction(title: choice.title) { _ in model.setAppearance(choice) }
+                action.state = choice == model.appearance ? .on : .off
+                return action
+            })
     }
 
     /// The switch carries the name and note for VoiceOver; the text beside it is only drawn, so it can sit above the

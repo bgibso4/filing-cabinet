@@ -129,6 +129,40 @@ private struct SettingsHarness {
     #expect(AppPreferences(defaults: empty.defaults).cleanupSeenThrough == nil)
 }
 
+// MARK: - Appearance
+
+@MainActor
+@Test func appearanceDefaultsToSystemAndRoundTripsEachChoice() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    #expect(AppPreferences(defaults: fresh.defaults).appearance == .system)
+    for choice in AppearanceChoice.allCases {
+        AppPreferences(defaults: fresh.defaults).appearance = choice
+        #expect(AppPreferences(defaults: fresh.defaults).appearance == choice)
+    }
+}
+
+@MainActor
+@Test func anUnknownStoredAppearanceFollowsThePhone() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    fresh.defaults.set("sepia", forKey: "appearance")
+    #expect(AppPreferences(defaults: fresh.defaults).appearance == .system)
+}
+
+@MainActor
+@Test func settingTheAppearanceChangesWhatSettingsShowsAndKeepsIt() throws {
+    let harness = try SettingsHarness(.authorized)
+    #expect(harness.model.appearance == .system)
+    harness.model.setAppearance(.dark)
+    #expect(harness.model.appearance == .dark)
+    #expect(harness.preferences.appearance == .dark)
+}
+
+@Test func appearanceChoicesAreTitledForTheMenu() {
+    #expect(AppearanceChoice.allCases.map(\.title) == ["System", "Light", "Dark"])
+}
+
 // MARK: - Collections
 
 @MainActor

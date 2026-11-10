@@ -16,6 +16,11 @@ public final class AppPreferences {
         didSet { defaults.set(cleanupSeenThrough?.storageValue, forKey: Key.cleanupSeenThrough) }
     }
 
+    /// Light, dark or the phone's own; the app applies it at its root.
+    package var appearance: AppearanceChoice {
+        didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// Whether cleanup notes reach the person: they want them and iOS allows them.
@@ -26,6 +31,7 @@ public final class AppPreferences {
     public init(defaults: UserDefaults) {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
+        appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
         }
@@ -33,6 +39,7 @@ public final class AppPreferences {
 
     private enum Key {
         static let notificationsOn = "notificationsOn"
+        static let appearance = "appearance"
         static let cleanupSeenThrough = "cleanupSeenThrough"
     }
 }

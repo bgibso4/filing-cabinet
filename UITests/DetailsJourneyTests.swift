@@ -64,6 +64,150 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertEqual(header.label, "Groceries, details")
     }
 
+    /// Renaming ends with a tap outside the field, as Return does: on the page above the panel (which doesn't close
+    /// Details), or on the panel around the field. A tap on the field itself keeps renaming.
+    func testATapOutsideTheFieldEndsRenaming() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        openDetails(in: app)
+        let title = app.buttons[AccessibilityID.Details.title]
+        let field = app.textFields[AccessibilityID.Details.titleField]
+
+        title.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.appears(within: 5))
+        field.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.exists, "A tap on the field ended renaming")
+        app.buttons[AccessibilityID.Details.clearTitle].tap()
+        field.typeText("Groceries")
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+        XCTAssertTrue(title.appears(within: 5))
+        XCTAssertEqual(title.label, "Rename Groceries")
+        XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].exists, "Details closed")
+
+        // On the panel, under the field: the hint.
+        title.tap()
+        XCTAssertTrue(field.appears(within: 5))
+        field.typeText(" list")
+        app.staticTexts["Suggested from the scan’s text. Search finds it by title and text."].tap()
+        XCTAssertTrue(title.appears(within: 5))
+        XCTAssertEqual(title.label, "Rename Groceries list")
+        XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
+    }
+
+    /// Info opens Details over the pill, and dragging it down brings the pill back (#61).
+    func testInfoOpensAndClosesDetails() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        XCTAssertTrue(header.isHittable)
+
+        app.buttons[AccessibilityID.Viewer.details].tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].appears(within: 5))
+        // Faded out, and out of VoiceOver's way, so nothing can reach it.
+        XCTAssertTrue(header.disappears(within: 5))
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Details.sheet].disappears(within: 5))
+        XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
+    }
+
+    /// A swipe up on the page raises Details under the finger, and a drag down on its grabber closes it (#61, B10).
+    func testSwipeUpOpensDetailsAndSwipeDownCloses() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        let centre = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        centre.press(forDuration: 0.05, thenDragTo: centre.withOffset(CGVector(dx: 0, dy: -300)))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertTrue(sheet.appears(within: 5))
+        // Fully up once the pill has left: the sheet's frame is where it rests, not where it is mid-motion.
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        XCTAssertTrue(header.disappears(within: 5))
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(sheet.disappears(within: 5))
+        XCTAssertTrue(header.satisfies("exists == true AND hittable == true", within: 5))
+    }
+
+    /// With Details up, a swipe down on the page closes it, like Photos (#71); zoomed in, the same swipe pans the page
+    /// and Details stays.
+    func testASwipeDownOnThePageClosesDetailsUnlessZoomed() {
+        let app = seededApp()
+        openAReceipt(in: app)
+        openDetails(in: app)
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
+        let swipeDown = {
+            let start = app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 300)))
+        }
+
+        page.doubleTap()
+        XCTAssertTrue(page.satisfies("value == %@", "Zoomed", within: 5), "The page never reported being zoomed")
+        swipeDown()
+        XCTAssertTrue(sheet.exists, "A drag on a zoomed page closed Details")
+        page.doubleTap()
+        XCTAssertTrue(page.satisfies("value != %@", "Zoomed", within: 5), "The page never zoomed back out")
+
+        swipeDown()
+        XCTAssertTrue(sheet.disappears(within: 5))
+    }
+
+    /// At the largest text, after a move, Details is taller than the screen. Its body scrolls first, as Apple's sheets
+    /// do: up, Undo comes into reach; down while scrolled, it scrolls back and the panel stays. The grabber always drags
+    /// the panel.
+    func testTheBodyScrollsBeforeThePanelMovesAtTheLargestText() {
+        let app = seededApp(largestText: true)
+        openAReceipt(in: app)
+        openDetails(in: app)
+        choose("Documents", from: AccessibilityID.Details.collection, in: app)
+        let undo = app.buttons[AccessibilityID.Details.undo]
+        XCTAssertTrue(undo.appears(within: 5))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertGreaterThan(
+            undo.frame.maxY, sheet.frame.maxY, "Undo should start cut off by the panel, or this test proves nothing")
+
+        // Scrolled up, Undo comes fully into the panel, which stays up: the pill only comes back once Details drops.
+        let header = app.descendants(matching: .any)[AccessibilityID.Viewer.header]
+        let body = app.buttons[AccessibilityID.Details.title].coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        body.press(forDuration: 0.05, thenDragTo: body.withOffset(CGVector(dx: 0, dy: -400)))
+        XCTAssertLessThanOrEqual(undo.frame.maxY, sheet.frame.maxY)
+        XCTAssertTrue(undo.isHittable)
+        XCTAssertFalse(header.exists)
+
+        // Dragged down while scrolled, the body scrolls back rather than the panel moving.
+        let middle = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        middle.press(forDuration: 0.05, thenDragTo: middle.withOffset(CGVector(dx: 0, dy: 200)))
+        XCTAssertTrue(sheet.exists)
+        XCTAssertFalse(header.exists)
+        XCTAssertGreaterThan(undo.frame.maxY, sheet.frame.maxY)
+
+        app.swipeDownOnSheet()
+        XCTAssertTrue(sheet.disappears(within: 5))
+    }
+
+    /// At the largest text, after a move, the body scrolls; at its top, a drag down on it moves the panel and closes it,
+    /// as Apple's sheets do.
+    func testADragDownOnTheBodyAtItsTopClosesDetailsAtTheLargestText() {
+        let app = seededApp(largestText: true)
+        openAReceipt(in: app)
+        openDetails(in: app)
+        choose("Documents", from: AccessibilityID.Details.collection, in: app)
+        let undo = app.buttons[AccessibilityID.Details.undo]
+        XCTAssertTrue(undo.appears(within: 5))
+        let sheet = app.descendants(matching: .any)[AccessibilityID.Details.sheet]
+        XCTAssertGreaterThan(
+            undo.frame.maxY, sheet.frame.maxY, "The body should overflow, or this test proves nothing")
+
+        let middle = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        middle.press(
+            forDuration: 0.05,
+            thenDragTo: app.windows.firstMatch.coordinate(
+                withNormalizedOffset: CGVector(dx: 0.5, dy: 1)))
+        XCTAssertTrue(sheet.disappears(within: 5))
+    }
+
     /// 06-04: Trash asks in a popover from the button; Move to Trash pops back to a grid with one fewer tile.
     func testMoveToTrashFromTheViewer() {
         let app = seededApp()
@@ -109,7 +253,7 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertTrue(sheet.disappears(within: 5))
         XCTAssertTrue(
             app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.receipts).appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
     }
 
@@ -158,7 +302,8 @@ final class DetailsJourneyTests: XCTestCase {
                 AccessibilityID.Details.sheet, AccessibilityID.Details.title, AccessibilityID.Details.collection,
                 AccessibilityID.Details.expiry,
             ], in: app)
-        XCTAssertFalse(app.descendants(matching: .any)[AccessibilityID.Viewer.header].exists)
+        // The pill fades as Details rises, and leaves VoiceOver once it is up.
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
     }
 
     private func choose(_ item: String, from menu: String, in app: XCUIApplication) {

@@ -28,8 +28,8 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         assertIdentifiers(
             [
-                AccessibilityID.Grid.back, AccessibilityID.Trash.header, AccessibilityID.Trash.select,
-                AccessibilityID.Trash.emptyTrash,
+                AccessibilityID.Grid.back, "Trash", AccessibilityID.Trash.select,
+                AccessibilityID.Trash.notice, AccessibilityID.Trash.emptyTrash,
             ], in: app)
         // Soonest gone first: the scan moved 4 days ago has 26 days left.
         XCTAssertEqual(tiles(in: app).firstMatch.label, "Trashed scan 5, Throwaways, 26 days left")
@@ -38,7 +38,7 @@ final class TrashJourneyTests: XCTestCase {
         try restoreByLongPress(in: app)
         askDeleteNowByLongPress(in: app)
         try deleteTwoBySelecting(in: app)
-        try emptyTrash(in: app)
+        try emptyTrash(in: app, deleting: "2 scans")
 
         // Home: the restored scan is back in Throwaways, and Trash shows no number.
         app.buttons[AccessibilityID.Grid.back].tap()
@@ -46,6 +46,20 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(trashRow.appears(within: 5))
         XCTAssertEqual(trashRow.label, "Trash")
         XCTAssertEqual(app.buttons[AccessibilityID.Home.collectionRow(.throwaways)].label, "Throwaways, 2")
+    }
+
+    /// Trash emptied while it is open changes in place: one header, which comes out large and holds still, with Select
+    /// greyed out (B5, B14). "No scans" under it is proven in Fast and the trash_empty snapshot.
+    func testEmptyingTrashInPlaceShowsTheLargeTitle() throws {
+        let app = seededApp()
+        openTrash(in: app)
+        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
+        XCTAssertTrue(app.header("Trash", shows: .small, within: 5), "Trash didn't rest small")
+        // E8: the notice reads as one plain line of text.
+        XCTAssertEqual(
+            app.staticTexts[AccessibilityID.Trash.notice].label,
+            "Scans stay in Trash for 30 days, then they’re permanently deleted.")
+        try emptyTrash(in: app, deleting: "5 scans")
     }
 
     func testAuditAtLargestTextTrash() throws {
@@ -61,7 +75,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         openFirstTile(in: app)
         // Audit entry 2 is scoped to the Trash screen by its header: under the viewer it is gone.
-        XCTAssertFalse(app.staticTexts[AccessibilityID.Trash.header].exists)
+        XCTAssertFalse(app.header("Trash").exists)
         try audit(app)
     }
 
@@ -100,7 +114,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.TrashViewer.restore].appears(within: 5))
 
         app.buttons[AccessibilityID.TrashViewer.restore].tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
+        XCTAssertTrue(app.header("Trash").appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: 4))
         XCTAssertFalse(
             tiles(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "Trashed scan 5,")).firstMatch
@@ -137,7 +151,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(deleteOne.appears(within: 5))
         XCTAssertTrue(confirmButton("Delete", besides: tile.identifier, in: app).exists)
         attachScreenshot("trash-tile-delete-now", of: app)
-        dismissPopover(tapping: app.staticTexts[AccessibilityID.Trash.header])
+        dismissPopover(tapping: app.headerTitle("Trash"))
         XCTAssertTrue(deleteOne.disappears(within: 5))
 
         app.buttons[AccessibilityID.Trash.select].tap()
@@ -152,13 +166,16 @@ final class TrashJourneyTests: XCTestCase {
     private func deleteTwoBySelecting(in app: XCUIApplication) throws {
         app.buttons[AccessibilityID.Trash.select].tap()
         XCTAssertTrue(app.buttons["Cancel"].appears(within: 5))
+        // Audited before ticking: the audit reads the last ticked tile's caption as "contrast nearly passed", every run,
+        // though the same caption passes unticked (#79). The bar's glass buttons are an overlay since 2026-11-10, so the
+        // audit now names that caption instead of reporting it with no element under the Trash exemption.
+        try audit(app)
         tiles(in: app).element(boundBy: 0).tap()
         tiles(in: app).element(boundBy: 1).tap()
         XCTAssertTrue(app.staticTexts["2 selected"].appears(within: 5))
         assertIdentifiers([AccessibilityID.Trash.deleteSelected, AccessibilityID.Trash.restoreSelected], in: app)
         XCTAssertEqual(app.buttons[AccessibilityID.Trash.deleteSelected].label, "Delete 2")
         XCTAssertEqual(app.buttons[AccessibilityID.Trash.restoreSelected].label, "Restore 2")
-        try audit(app)
         app.buttons[AccessibilityID.Trash.deleteSelected].tap()
         let deleteTwo = app.staticTexts["Delete 2 scans permanently?"]
         XCTAssertTrue(deleteTwo.appears(within: 5))
@@ -169,18 +186,40 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.Trash.emptyTrash].appears(within: 5))
     }
 
-    /// Empty Trash asks first, then the empty state shows.
-    private func emptyTrash(in app: XCUIApplication) throws {
+    /// Empty Trash asks first, then the empty state shows, in place: the large title comes out over "No scans" and the
+    /// screen holds still (B5), and Select stays, greyed out (B14).
+    private func emptyTrash(in app: XCUIApplication, deleting scans: String) throws {
         app.buttons[AccessibilityID.Trash.emptyTrash].tap()
         let empty = app.staticTexts["Empty Trash?"]
         XCTAssertTrue(empty.appears(within: 5))
-        XCTAssertTrue(app.staticTexts["Deletes 2 scans permanently. This can’t be undone."].exists)
+        XCTAssertTrue(app.staticTexts["Deletes \(scans) permanently. This can’t be undone."].exists)
         attachScreenshot("trash-empty-trash", of: app)
         confirmButton("Empty Trash", besides: AccessibilityID.Trash.emptyTrash, in: app).tap()
         XCTAssertTrue(app.staticTexts["Trash is empty"].appears(within: 5))
         XCTAssertEqual(tiles(in: app).count, 0)
-        XCTAssertFalse(app.buttons[AccessibilityID.Trash.select].exists)
+        XCTAssertFalse(app.staticTexts[AccessibilityID.Trash.notice].exists, "The notice stayed on an empty Trash")
+        let select = app.buttons[AccessibilityID.Trash.select]
+        XCTAssertTrue(select.exists)
+        XCTAssertFalse(select.isEnabled)
+        assertEmptyTrashHoldsStill(in: app)
         try audit(app)
+    }
+
+    /// The large title shows, and stays; drags either way move neither it nor the empty state.
+    private func assertEmptyTrashHoldsStill(in app: XCUIApplication) {
+        let title = app.headerTitle("Trash")
+        let empty = app.staticTexts["Trash is empty"]
+        XCTAssertTrue(app.header("Trash", shows: .large, within: 5), "The large title isn't showing")
+        // Still large once the bar has had time to settle.
+        XCTAssertFalse(app.header("Trash", shows: .small, within: 1), "The bar collapsed")
+        let frames = (title: title.frame, empty: empty.frame)
+        for distance in [-300.0, 300.0] {
+            empty.drag(by: distance)
+            XCTAssertEqual(title.frame, frames.title, "The title moved after a \(distance) pt drag")
+            XCTAssertEqual(empty.frame, frames.empty, "The empty state moved after a \(distance) pt drag")
+            XCTAssertTrue(
+                app.header("Trash", shows: .large, within: 0), "The bar collapsed after a \(distance) pt drag")
+        }
     }
 
     /// Home's Trash row, with its count.
@@ -188,7 +227,7 @@ final class TrashJourneyTests: XCTestCase {
         let row = app.buttons[AccessibilityID.Home.trashRow]
         XCTAssertTrue(row.label.contains("Trash") && row.label.contains("5"), row.label)
         row.tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
+        XCTAssertTrue(app.header("Trash").appears(within: 5))
     }
 
     /// The soonest-gone tile opens the Trash viewer.

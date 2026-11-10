@@ -48,8 +48,8 @@ final class TrashSnapshotTests: XCTestCase {
         try assertScreens(Fixtures.library(.trash), testName: "trash_list")
     }
 
-    /// Ten scans: the last row rests under Empty Trash, behind its fade, and scrolls clear of it (Ben, 2026-11-08). The
-    /// large-text layout ends the grid above the bar, so only light and dark.
+    /// Ten scans: the last row rests under Empty Trash's glass and scrolls clear of it (Ben, 2026-11-08; no fade since
+    /// 2026-11-10). Light and dark; trash_list covers the largest text.
     @MainActor
     func testUnderTheBar() throws {
         for variant in SnapshotConfig.variants where !variant.size.isAccessibilitySize {

@@ -141,7 +141,7 @@ private func shelf(_ scans: [ScanSummary], lifespans: CollectionLifespans = .def
     let home = HomeModel(library: library, today: todayModel, calendar: newYork)
     #expect(home.rows.first { $0.collection == .receipts }?.detail == .subtitle("Purchase receipts · 1 month"))
     let grid = CollectionGridModel(kind: .collection(.receipts), library: library, today: todayModel, calendar: newYork)
-    #expect(grid.subtitle == "No scans · Kept 1 month")
+    #expect(grid.subtitle == "No scans · 1 month")
 }
 
 @Test func collectionNouns() {

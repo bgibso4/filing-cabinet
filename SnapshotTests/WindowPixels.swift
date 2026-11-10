@@ -40,9 +40,22 @@ enum WindowPixels {
 
     /// Whether any of the window's pixels is the colour.
     static func shows(_ colour: Colour, in window: UIWindow) throws -> Bool {
+        let pixels = try rgba(of: window, in: window.bounds)
+        return stride(from: 0, to: pixels.count, by: 4).contains { offset in
+            colour.matches(red: pixels[offset], green: pixels[offset + 1], blue: pixels[offset + 2])
+        }
+    }
+
+    /// The summed per-channel difference between two renderings of the same area, from `rgba`.
+    static func difference(_ first: [UInt8], _ second: [UInt8]) -> Int {
+        zip(first, second).reduce(0) { sum, pair in sum + abs(Int(pair.0) - Int(pair.1)) }
+    }
+
+    /// The window's pixels in `rect`, at one pixel a point, as RGBA bytes.
+    static func rgba(of window: UIWindow, in rect: CGRect) throws -> [UInt8] {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
-        let rendered = UIGraphicsImageRenderer(bounds: window.bounds, format: format).image { _ in
+        let rendered = UIGraphicsImageRenderer(bounds: rect, format: format).image { _ in
             window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
         }
         guard let image = rendered.cgImage else { throw NoRenderedImage() }
@@ -60,9 +73,7 @@ enum WindowPixels {
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         else { throw NoRenderedImage() }
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-        return stride(from: 0, to: pixels.count, by: 4).contains { offset in
-            colour.matches(red: pixels[offset], green: pixels[offset + 1], blue: pixels[offset + 2])
-        }
+        return pixels
     }
 
     private struct NoRenderedImage: Error {}

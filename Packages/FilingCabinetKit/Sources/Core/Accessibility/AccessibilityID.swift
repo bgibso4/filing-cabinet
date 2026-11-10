@@ -7,7 +7,7 @@ public enum AccessibilityID {
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
         public static let trashRow = "home.trash"
-        /// The gear beside the title.
+        /// The gear in the bar, on the row above the large title (B9).
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
         public static let cleanupBanner = "home.cleanupBanner"
@@ -17,7 +17,8 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings, cleanupBanner] + BuiltInCollection.allCases.map(collectionRow)
+            [scan, recentRow, allRow, trashRow, settings, cleanupBanner]
+                + BuiltInCollection.allCases.map(collectionRow)
         }
     }
 
@@ -25,7 +26,6 @@ public enum AccessibilityID {
         /// The system back button (the grid keeps the navigation bar so swipe back works). SwiftUI can't set its
         /// identifier, so this is the one UIKit gives it.
         public static let back = "BackButton"
-        public static let header = "grid.header"
         public static let scan = "grid.scan"
         /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
         public static let tilePrefix = "grid.tile."
@@ -35,7 +35,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [back, header, scan]
+            [back, scan]
         }
     }
 
@@ -128,9 +128,10 @@ public enum AccessibilityID {
     }
 
     public enum Trash {
-        public static let header = "trash.header"
-        /// Select, or Cancel while selecting; not while Trash is empty.
+        /// Select, or Cancel while selecting; always there, greyed out while Trash is empty (B14).
         public static let select = "trash.select"
+        /// How long scans stay, above the tiles; not while Trash is empty (E8).
+        public static let notice = "trash.notice"
         /// Only while not selecting and Trash has scans.
         public static let emptyTrash = "trash.emptyTrash"
         /// Only while selecting.
@@ -144,7 +145,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [header, select, emptyTrash, deleteSelected, restoreSelected]
+            [select, notice, emptyTrash, deleteSelected, restoreSelected]
         }
     }
 
@@ -163,15 +164,17 @@ public enum AccessibilityID {
     /// Settings from Home's gear (10-01).
     public enum Settings {
         public static let collections = "settings.collections"
+        public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
 
         public static var all: [String] {
-            [collections, notifications]
+            [collections, appearance, notifications]
         }
     }
 
     /// Settings › Collections (10-02): one row per collection.
     public enum Collections {
+
         public static func row(_ collection: BuiltInCollection) -> String {
             "collections.\(collection.rawValue)"
         }

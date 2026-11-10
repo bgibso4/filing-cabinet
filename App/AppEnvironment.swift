@@ -96,7 +96,8 @@ final class AppEnvironment {
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
-            forcesReduceMotion: options.reduceMotion
+            forcesReduceMotion: options.reduceMotion,
+            preferences: preferences
         )
     }
 
@@ -142,7 +143,7 @@ final class AppEnvironment {
     }
 
     /// Clears what an interrupted save left behind, deletes what has had its 30 days in Trash, and only then seeds
-    /// (`-SeedScans`, `-SeedTrash`) and enables Scan.
+    /// (`-SeedScans`, `-SeedTrash`) and enables Scan. Then reads what iOS allows for Home's banner.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
@@ -173,8 +174,9 @@ final class AppEnvironment {
                 }
             }
         #endif
-        await banner.refreshAuthorization()
+        // Before asking iOS about notifications: Scan doesn't need the answer, and iOS can be slow to give it.
         isReady = true
+        await banner.refreshAuthorization()
     }
 
     /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
@@ -218,9 +220,12 @@ final class AppEnvironment {
         return defaults
     }
 
-    /// The system's notifications, or a scripted answer for `-Notifications`.
+    /// The system's notifications, or a scripted answer for `-Notifications` (none for `-NotificationsUnanswered`).
     private static func notificationCenter(options: LaunchOptions) -> any CleanupNotifying {
         #if DEBUG
+            if options.notificationsUnanswered {
+                return FakeNotificationCenter(authorization: options.notifications ?? .notDetermined, answers: false)
+            }
             if let authorization = options.notifications {
                 return FakeNotificationCenter(authorization: authorization)
             }
