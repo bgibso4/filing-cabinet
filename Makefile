@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-lint unused ci ci-checks ci-sim full-run unused-run check-resolved compare-readers device-perf
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers device-perf
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -48,7 +48,9 @@ generate:
 	xcodegen generate --quiet
 	mkdir -p $(RESOLVED_DEST) && cp Package.resolved $(RESOLVED_DEST)/Package.resolved
 
+# Anything that builds into $(DERIVED) first drops make retest's record of the last good build (build-fingerprint.sh).
 build: sim generate
+	scripts/build-fingerprint.sh forget
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 
@@ -69,19 +71,39 @@ format:
 	swift format format --in-place --recursive $(SWIFT_DIRS)
 
 # Record snapshot references on the pinned simulator. Review the diff before committing.
-# A non-zero exit is expected: the library reports recording as a failure. Re-run `make full` to confirm green.
-# ONLY narrows it to some snapshot classes.
+# Rewrites only references that fail the comparison (SnapshotConfig's tolerance) or are missing, so pixel noise in
+# classes you didn't touch stays out of the diff. SNAPSHOT_RECORD=all rewrites every reference it runs.
+# A non-zero exit is expected: the library reports recording as a failure. Run `make retest ONLY=<the classes>` to
+# confirm green. ONLY narrows it to some snapshot classes.
+SNAPSHOT_RECORD ?= failed
 snapshots-record: sim generate
-	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=all xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
+	scripts/build-fingerprint.sh forget
+	set -o pipefail; TEST_RUNNER_SNAPSHOT_TESTING_RECORD=$(SNAPSHOT_RECORD) xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
 		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(or $(TEST_ARGS),-only-testing:FilingCabinetSnapshotTests) \
 		| $(BEAUTIFY)
 
-# Everything on the simulator: package tests, snapshot tests and UI tests. ONLY and SKIP narrow it (TEST_ARGS).
-full: generate full-run
+# Simulator test runs, all through scripts/sim-tests.sh. It builds once, runs test-without-building and appends a line
+# per run to .build/test-runs.log. The run policy (AGENTS.md): retest while fixing, affected at the end of a task,
+# full ALL=1 once before a PR.
+#   make full ONLY="<Target/Class> …"  just those (SKIP= leaves some out); a whole-suite run needs ALL=1
+#   make affected                      the classes the branch's changes touch (scripts/test-map.txt; BASE=<ref>)
+#   make retest [ONLY=…]               no build; refuses when the sources changed since the last build
+SIM_TESTS = ONLY='$(ONLY)' SKIP='$(SKIP)' ALL='$(ALL)' BASE='$(BASE)' SIM_DEST='$(SIM_DEST)' XCB_FLAGS='$(XCB_FLAGS)' \
+	PROJECT='$(PROJECT)' DERIVED='$(DERIVED)' scripts/sim-tests.sh
 
-full-run: sim
-	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme FilingCabinet \
-		-destination '$(SIM_DEST)' -derivedDataPath $(DERIVED) $(TEST_ARGS) | $(BEAUTIFY)
+full: sim generate
+	@$(SIM_TESTS) full
+
+affected: sim generate
+	@$(SIM_TESTS) affected
+
+retest: sim
+	@$(SIM_TESTS) retest
+
+# What the accessibility audits found in the newest test results (RESULT=<.xcresult> for another): the issues, and
+# which exemptions were used and which weren't.
+audit-report:
+	@scripts/audit-report.sh $(RESULT)
 
 # Side by side: SCREEN=<design/screens stem> REF=<snapshot png> -> build/compare/<stem>.png
 compare:
@@ -138,6 +160,10 @@ device-perf: generate
 test-hooks:
 	bats scripts/hooks/tests
 
+# bats tests for the test-run scripts (affected, sim-tests, audit-report).
+test-scripts:
+	bats scripts/tests
+
 # Fixture tests for the SwiftLint custom rules.
 test-lint:
 	scripts/test-lint-rules.sh
@@ -162,7 +188,7 @@ ci: ci-checks ci-sim
 ci-checks: generate
 	@test -z "$$(git status --porcelain -- Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Generated Packages/FilingCabinetKit/Sources/Screens/Resources/Tokens.xcassets App/Assets.xcassets)" || { \
 		echo "error: generated files differ from the committed ones: run make generate and commit." >&2; exit 1; }
-	$(MAKE) --no-print-directory lint test-hooks test-lint
+	$(MAKE) --no-print-directory lint test-hooks test-scripts test-lint
 	set -o pipefail; xcodebuild $(XCB_FLAGS) build-for-testing -project $(PROJECT) -scheme Fast -destination 'platform=macOS' \
 		-derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	$(MAKE) --no-print-directory unused-run
@@ -198,6 +224,7 @@ ci-sim: ONLY = $(SHARD_ONLY_$(SHARD))
 ci-sim: SKIP = $(SHARD_SKIP_$(SHARD))
 ci-sim: generate
 	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
+	scripts/build-fingerprint.sh forget
 	# The simulator boots while the tests build, and the tests wait until it has finished booting. Left to xcodebuild
 	# on a slow CI runner, the UI test runner once started before accessibility had loaded and failed before any
 	# test ran (#43). By ID: the CI image has an iPhone 17 for more than one iOS version.

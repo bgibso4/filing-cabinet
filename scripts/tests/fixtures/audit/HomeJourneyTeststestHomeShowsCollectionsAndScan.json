@@ -1,0 +1,66 @@
+{
+  "testRuns": [
+    {
+      "activities": [
+        {
+          "title": "Start Test at 2026-11-10 09:18:50.676"
+        },
+        {
+          "title": "Set Up"
+        },
+        {
+          "title": "Open com.cadre.filingcabinet",
+          "childActivities": [
+            {
+              "title": "Launch com.cadre.filingcabinet",
+              "childActivities": [
+                {
+                  "title": "Terminate com.cadre.filingcabinet:5120"
+                },
+                {
+                  "title": "Setting up automation session"
+                },
+                {
+                  "title": "Wait for com.cadre.filingcabinet to idle"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Checking existence of `\"home.collection.wallet\" Any`"
+        },
+        {
+          "title": "Checking existence of `\"home.collection.receipts\" Any`"
+        },
+        {
+          "title": "Checking existence of `\"home.collection.notes\" Any`"
+        },
+        {
+          "title": "Checking existence of `\"home.collection.documents\" Any`"
+        },
+        {
+          "title": "Checking existence of `\"home.collection.throwaways\" Any`"
+        },
+        {
+          "title": "Checking existence of `\"home.scan\" Button`"
+        },
+        {
+          "title": "Find the \"home.scan\" Button"
+        },
+        {
+          "title": "Find the \"home.scan\" Button"
+        },
+        {
+          "title": "Find the Target Application 'com.cadre.filingcabinet'"
+        },
+        {
+          "title": "Audit exemptions declared · deep-text-under-scan, camera-off-sheet-clipped, dark-viewer-header, trash-glass-buttons, trash-bar-unresolved, grid-select-unresolved"
+        },
+        {
+          "title": "Tear Down"
+        }
+      ]
+    }
+  ]
+}

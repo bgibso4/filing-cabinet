@@ -1,0 +1,48 @@
+{
+  "testRuns": [
+    {
+      "activities": [
+        {
+          "title": "Start Test at 2026-11-10 09:18:43.660"
+        },
+        {
+          "title": "Set Up"
+        },
+        {
+          "title": "Open com.cadre.filingcabinet",
+          "childActivities": [
+            {
+              "title": "Launch com.cadre.filingcabinet",
+              "childActivities": [
+                {
+                  "title": "Terminate com.cadre.filingcabinet:5108"
+                },
+                {
+                  "title": "Setting up automation session"
+                },
+                {
+                  "title": "Wait for com.cadre.filingcabinet to idle"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Checking existence of `\"home.scan\" Button`"
+        },
+        {
+          "title": "Find the \"home.scan\" Button"
+        },
+        {
+          "title": "Audit exemptions declared · deep-text-under-scan, camera-off-sheet-clipped, dark-viewer-header, trash-glass-buttons, trash-bar-unresolved, grid-select-unresolved"
+        },
+        {
+          "title": "Tear Down"
+        },
+        {
+          "title": "Audit exemption used · dark-viewer-header · contrast · id 'viewer.header.title'"
+        }
+      ]
+    }
+  ]
+}

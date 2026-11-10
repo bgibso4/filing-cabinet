@@ -17,7 +17,7 @@ permissions:
 jobs:
   # Which jobs to run. checks always runs. The simulator suite (about 15 min on 3 runners) runs on main, and on a PR
   # once it is ready for review, unless the PR changes only docs/ and Markdown. While a PR is a draft, run the touched
-  # tests locally: make full ONLY="<Target/Class> ...". design/ is code: design/tokens.json generates the tokens.
+  # tests locally: make affected. design/ is code: design/tokens.json generates the tokens.
   plan:
     runs-on: ubuntu-latest
     outputs:
