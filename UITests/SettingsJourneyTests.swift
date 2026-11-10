@@ -92,25 +92,23 @@ final class SettingsJourneyTests: XCTestCase {
         attachScreenshot("notifications-back-from-iphone-settings", of: app)
     }
 
-    /// The bar's small title is the header in both states (M6, amended): hittable while it shows, faded (not hittable)
-    /// once a pull brings out the large title. The large title stays after the pull ends (B6) until a scroll up
-    /// collapses it again.
+    /// Collections rests with its title small; a pull brings out the large title, which stays after the pull ends (B6)
+    /// until a scroll up collapses it again.
     func testPullingDownGrowsTheTitleAndItStays() {
         let app = seededApp()
         openSettings(in: app)
         app.buttons[AccessibilityID.Settings.collections].tap()
         assertIdentifiers(AccessibilityID.Collections.all, in: app)
-        let header = app.staticTexts[AccessibilityID.Collections.header]
-        XCTAssertTrue(header.satisfies("isHittable == true", within: 5))
+        XCTAssertTrue(app.header("Collections", shows: .small, within: 5))
 
         let list = app.buttons[AccessibilityID.Collections.row(.receipts)]
         list.drag(by: 200)
-        XCTAssertTrue(header.satisfies("isHittable == false", within: 5))
+        XCTAssertTrue(app.header("Collections", shows: .large, within: 5))
         // Still large once the drag has ended and the bar has settled.
-        XCTAssertFalse(header.satisfies("isHittable == true", within: 1))
+        XCTAssertFalse(app.header("Collections", shows: .small, within: 1))
 
         list.drag(by: -300)
-        XCTAssertTrue(header.satisfies("isHittable == true", within: 5))
+        XCTAssertTrue(app.header("Collections", shows: .small, within: 5))
 
         app.buttons[AccessibilityID.Collections.row(.receipts)].tap()
         assertIdentifiers(AccessibilityID.CollectionSettings.all, in: app)

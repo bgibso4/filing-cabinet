@@ -253,7 +253,7 @@ final class DetailsJourneyTests: XCTestCase {
         XCTAssertTrue(sheet.disappears(within: 5))
         XCTAssertTrue(
             app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
-        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Grid.header].appears(within: 5))
+        XCTAssertTrue(app.header(.receipts).appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
     }
 

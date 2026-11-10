@@ -103,8 +103,9 @@ private func report(
 @Test func restingLargeAndStillExpandsABarThatCollapsesByItself() {
     var settling = HeaderSettling(rest: .large, scrolls: false)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 68.67)
-    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
+    insets.largeTitleHeight = 68.67
+    // The arrival's pull (`restingLargeANewScreenPullsOnItsFirstReport`): the collapse here is one it didn't prevent.
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == .pullDuringPush(offset: -(164.67 + 68.67)))
     #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
     #expect(report(&settling, &insets, inset: 184.67, atTop: true) == nil)
 }
@@ -113,25 +114,27 @@ private func report(
 @Test func restingLargeAndScrollingExpandsABarThatCollapsesBeforeAnyScroll() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 68.67)
-    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
+    insets.largeTitleHeight = 68.67
+    // The arrival's pull (`restingLargeANewScreenPullsOnItsFirstReport`): the collapse here is one it didn't prevent.
+    #expect(report(&settling, &insets, inset: 164.67, atTop: true) == .pullDuringPush(offset: -(164.67 + 68.67)))
     #expect(report(&settling, &insets, inset: 116, atTop: true) == .scrollView(offset: -164.67))
 }
 
-/// Home's bar first lays out a few points taller (168, then 164.67, measured): not a collapse, so nothing is asked.
+/// The bar laying out again a few points shorter (168, then 164.67, measured under the old titles): not a collapse.
 @Test func restingLargeTheBarLayingOutShorterIsNoCollapse() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 48.67)
-    #expect(report(&settling, &insets, inset: 168, atTop: true) == nil)
+    insets.largeTitleHeight = 48.67
+    _ = report(&settling, &insets, inset: 168, atTop: true)  // the arrival's pull
     #expect(report(&settling, &insets, inset: 164.67, atTop: true) == nil)
 }
 
-/// Home rests large and scrolls: once the person has scrolled, a collapse is theirs, and stays.
+/// An empty grid at an accessibility size rests large and scrolls: once the person has scrolled, a collapse is theirs,
+/// and stays.
 @Test func restingLargeACollapseAfterAScrollStays() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 48.67)
+    insets.largeTitleHeight = 48.67
     _ = report(&settling, &insets, inset: 164.67, atTop: true)
     #expect(report(&settling, &insets, inset: 140) == nil)
     #expect(report(&settling, &insets, inset: 116) == nil)
@@ -139,24 +142,24 @@ private func report(
     #expect(report(&settling, &insets, inset: 116) == nil)
 }
 
-/// A pull down and release on an unscrolled Home stays at its top all the way, so only the touch itself ends the watch
+/// A pull down and release on an unscrolled screen stays at its top all the way, so only the touch itself ends the watch
 /// (review N1): the bar the person pulled taller and let go of is theirs, and nothing snaps it open.
 @Test func restingLargeATouchEndsTheWatch() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 48.67)
+    insets.largeTitleHeight = 48.67
     _ = report(&settling, &insets, inset: 164.67, atTop: true)
     settling.stopWatching()
     #expect(report(&settling, &insets, inset: 200, atTop: true) == nil)
     #expect(report(&settling, &insets, inset: 116, atTop: true) == nil)
 }
 
-/// Covered by a pushed screen, Home's bar collapses with the shared bar (seen under -UITest): the watch has ended by
-/// then (review N2), so Home asks for no scroll off screen.
+/// Covered by a pushed screen, its bar collapses with the shared bar (seen under -UITest): the watch has ended by then
+/// (review N2), so it asks for no scroll off screen.
 @Test func restingLargeACoveredScreenAsksNothing() {
     var settling = HeaderSettling(rest: .large, scrolls: true)
     var insets = HeaderInsets()
-    insets.recordLargeTitle(height: 48.67)
+    insets.largeTitleHeight = 48.67
     _ = report(&settling, &insets, inset: 168, atTop: true)
     _ = report(&settling, &insets, inset: 164.67, atTop: true)
     settling.stopWatching()
@@ -172,4 +175,16 @@ private func report(
     settling.stopWatching()
     settling.update(rest: .large, scrolls: false)
     #expect(settling.target(insets: insets, inset: 110) == .scrollView(offset: -170))
+}
+
+/// An empty grid pushed from Home (plan 3, E9, measured): it first lays out under Home's shorter bar (168), and UIKit
+/// collapses the bar for the whole push unless the content is above its top by then. So a new screen resting large
+/// pulls its content down by a large title's height on its first report, and the bar opens to its own height (188.33).
+@Test func restingLargeANewScreenPullsOnItsFirstReport() {
+    var settling = HeaderSettling(rest: .large, scrolls: false)
+    var insets = HeaderInsets()
+    insets.largeTitleHeight = 41
+    #expect(report(&settling, &insets, inset: 0) == nil)
+    #expect(report(&settling, &insets, inset: 168, atTop: true) == .pullDuringPush(offset: -209))
+    #expect(report(&settling, &insets, inset: 188.33, atTop: true) == nil)
 }

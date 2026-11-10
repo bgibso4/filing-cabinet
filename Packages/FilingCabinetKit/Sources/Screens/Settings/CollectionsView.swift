@@ -33,8 +33,7 @@ public struct CollectionsView: View {
     public var body: some View {
         HeaderScrollView(
             title: Text("Collections", bundle: #bundle),
-            subtitle: Text(model.subtitle),
-            identifier: AccessibilityID.Collections.header,
+            subtitle: model.subtitle,
             rest: rest
         ) {
             VStack(alignment: .leading, spacing: 0) {

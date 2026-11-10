@@ -50,8 +50,7 @@ public struct CollectionGridView: View {
             // One header for both states, so a grid emptying on screen changes its rest in place (HeaderScrollView).
             HeaderScrollView(
                 title: Text(model.title),
-                subtitle: Text(model.subtitle),
-                identifier: AccessibilityID.Grid.header,
+                subtitle: model.subtitle,
                 rest: model.isEmpty ? .large : .small,
                 // Empty holds still (B5), except at accessibility sizes, where the empty state's text can run past the
                 // Scan button and has to scroll to be read whole.

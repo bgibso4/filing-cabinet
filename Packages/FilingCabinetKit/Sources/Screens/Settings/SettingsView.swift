@@ -34,7 +34,6 @@ public struct SettingsView: View {
         HeaderScrollView(
             title: Text("Settings", bundle: #bundle),
             subtitle: nil,
-            identifier: AccessibilityID.Settings.header,
             rest: .small
         ) {
             VStack(alignment: .leading, spacing: 0) {

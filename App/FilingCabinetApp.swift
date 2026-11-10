@@ -9,6 +9,10 @@ struct FilingCabinetApp: App {
     @State private var generation = 0
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        HeaderAppearance.install()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView(dependencies: environment.root, canScan: environment.isReady)

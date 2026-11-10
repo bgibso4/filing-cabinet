@@ -9,8 +9,8 @@ extension ScanJourneyTests {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         let scan = app.buttons[AccessibilityID.Home.scan]
         let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
-        // Home's bar isn't inside Home's view, so the root's hiding doesn't reach it: its items hide themselves.
-        let bar = [app.buttons[AccessibilityID.Home.settings], app.staticTexts[AccessibilityID.Home.header]]
+        // Home's bar isn't inside Home's view, so the root's hiding doesn't reach it: the bar is hidden on its own.
+        let bar = [app.buttons[AccessibilityID.Home.settings], app.header("Filing Cabinet")]
 
         // Under the camera, then under review.
         openCamera(in: app)

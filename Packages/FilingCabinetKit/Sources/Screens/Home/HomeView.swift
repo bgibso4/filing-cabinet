@@ -12,8 +12,6 @@ public struct HomeView: View {
     private let onScan: () -> Void
     private let onOpen: (AppRoute) -> Void
 
-    @Environment(\.captureLayerIsUp) private var captureLayerIsUp
-
     // Home.dc.html: the section-header rows are at least this tall.
     private static let headerMinHeight: CGFloat = 44
     // Home.dc.html line 366: gap above "Collections" is 18 pt on first launch and 6 pt once there are scans.
@@ -42,7 +40,6 @@ public struct HomeView: View {
             HeaderScrollView(
                 title: Text("Filing Cabinet", bundle: #bundle),
                 subtitle: nil,
-                identifier: AccessibilityID.Home.header,
                 rest: .large
             ) {
                 content
@@ -62,7 +59,6 @@ public struct HomeView: View {
                     }
                 }
                 .accessibilityIdentifier(AccessibilityID.Home.settings)
-                .modifier(HiddenUnderCapture(isHidden: captureLayerIsUp))
             }
         }
     }

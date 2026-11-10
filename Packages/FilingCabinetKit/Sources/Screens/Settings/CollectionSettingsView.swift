@@ -27,8 +27,7 @@ public struct CollectionSettingsView: View {
         // No badge beside the title (plan 3, M2): Passwords has none.
         HeaderScrollView(
             title: Text(model.title),
-            subtitle: Text(model.countLine),
-            identifier: AccessibilityID.CollectionSettings.header,
+            subtitle: model.countLine,
             rest: .small
         ) {
             VStack(alignment: .leading, spacing: 0) {

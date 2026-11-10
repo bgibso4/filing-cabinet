@@ -50,26 +50,24 @@ final class HomeJourneyTests: XCTestCase {
         XCTAssertGreaterThan(scrollBars.count, 0, "All Scans showed no scroll bar")
     }
 
-    /// Home rests large under the gear and collapses on scroll, like Passwords' root (B9, M11). The small bar title is
-    /// the header in both states (M6, amended): hidden under the large title at rest, hittable once collapsed.
+    /// Home rests large under the gear and collapses on scroll, like Passwords' root (B9, M11): the system bar's own
+    /// title, large at rest and small once collapsed (plan 3, E9).
     func testTitleCollapsesOnScroll() {
         let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"])
         let receipts = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
         waitForSeeding(of: receipts, count: 3)
-        let header = app.staticTexts[AccessibilityID.Home.header]
-        XCTAssertTrue(header.appears(within: 5))
-        XCTAssertTrue(header.satisfies("isHittable == false", within: 5))
+        XCTAssertTrue(app.header("Filing Cabinet", shows: .large, within: 5))
 
         receipts.drag(by: -300)
-        XCTAssertTrue(header.satisfies("isHittable == true", within: 5))
+        XCTAssertTrue(app.header("Filing Cabinet", shows: .small, within: 5))
 
         app.buttons[AccessibilityID.Home.collectionRow(.wallet)].drag(by: 300)
-        XCTAssertTrue(header.satisfies("isHittable == false", within: 5))
+        XCTAssertTrue(app.header("Filing Cabinet", shows: .large, within: 5))
 
         let gear = app.buttons[AccessibilityID.Home.settings]
         XCTAssertEqual(gear.label, "Settings")
         gear.tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Settings.header].appears(within: 5))
+        XCTAssertTrue(app.header("Settings").appears(within: 5))
     }
 
     func testAuditAtLargestTextOfHome() throws {

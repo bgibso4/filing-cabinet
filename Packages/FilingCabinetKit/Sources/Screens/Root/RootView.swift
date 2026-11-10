@@ -27,6 +27,7 @@ public struct RootView: View {
                 onOpen: { path.append($0) }
             )
             .accessibilityHidden(isCapturing.wrappedValue)
+            .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue))
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)

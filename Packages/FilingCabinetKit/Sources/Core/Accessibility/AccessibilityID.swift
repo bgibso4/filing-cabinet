@@ -7,8 +7,6 @@ public enum AccessibilityID {
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
         public static let trashRow = "home.trash"
-        /// The bar's small title, the header element in both of its states (M6).
-        public static let header = "home.header"
         /// The gear in the bar, on the row above the large title (B9).
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
@@ -19,7 +17,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [header, scan, recentRow, allRow, trashRow, settings, cleanupBanner]
+            [scan, recentRow, allRow, trashRow, settings, cleanupBanner]
                 + BuiltInCollection.allCases.map(collectionRow)
         }
     }
@@ -28,7 +26,6 @@ public enum AccessibilityID {
         /// The system back button (the grid keeps the navigation bar so swipe back works). SwiftUI can't set its
         /// identifier, so this is the one UIKit gives it.
         public static let back = "BackButton"
-        public static let header = "grid.header"
         public static let scan = "grid.scan"
         /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
         public static let tilePrefix = "grid.tile."
@@ -38,7 +35,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [back, header, scan]
+            [back, scan]
         }
     }
 
@@ -131,7 +128,6 @@ public enum AccessibilityID {
     }
 
     public enum Trash {
-        public static let header = "trash.header"
         /// Select, or Cancel while selecting; always there, greyed out while Trash is empty (B14).
         public static let select = "trash.select"
         /// How long scans stay, above the tiles; not while Trash is empty (E8).
@@ -149,7 +145,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [header, select, notice, emptyTrash, deleteSelected, restoreSelected]
+            [select, notice, emptyTrash, deleteSelected, restoreSelected]
         }
     }
 
@@ -167,44 +163,37 @@ public enum AccessibilityID {
 
     /// Settings from Home's gear (10-01).
     public enum Settings {
-        /// The bar's small title, the header element in both of its states (M6).
-        public static let header = "settings.header"
         public static let collections = "settings.collections"
         public static let notifications = "settings.notifications"
 
         public static var all: [String] {
-            [header, collections, notifications]
+            [collections, notifications]
         }
     }
 
     /// Settings › Collections (10-02): one row per collection.
     public enum Collections {
-        public static let header = "collections.header"
 
         public static func row(_ collection: BuiltInCollection) -> String {
             "collections.\(collection.rawValue)"
         }
 
         public static var all: [String] {
-            [header] + BuiltInCollection.allCases.map(row)
+            BuiltInCollection.allCases.map(row)
         }
     }
 
     /// One collection's settings (10-03).
     public enum CollectionSettings {
-        public static let header = "collectionSettings.header"
         public static let keepScansFor = "collectionSettings.keepScansFor"
 
         public static var all: [String] {
-            [header, keepScansFor]
+            [keepScansFor]
         }
     }
 
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
-
-    /// The small subtitle beside a header's small bar title, which the audit reports on its own.
-    public static func headerSubtitle(_ header: String) -> String { "\(header).subtitle" }
 
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {

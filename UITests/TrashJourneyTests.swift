@@ -28,7 +28,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         assertIdentifiers(
             [
-                AccessibilityID.Grid.back, AccessibilityID.Trash.header, AccessibilityID.Trash.select,
+                AccessibilityID.Grid.back, "Trash", AccessibilityID.Trash.select,
                 AccessibilityID.Trash.notice, AccessibilityID.Trash.emptyTrash,
             ], in: app)
         // Soonest gone first: the scan moved 4 days ago has 26 days left.
@@ -54,9 +54,7 @@ final class TrashJourneyTests: XCTestCase {
         let app = seededApp()
         openTrash(in: app)
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
-        XCTAssertTrue(
-            app.staticTexts[AccessibilityID.Trash.header].satisfies("isHittable == true", within: 5),
-            "Trash didn't rest small")
+        XCTAssertTrue(app.header("Trash", shows: .small, within: 5), "Trash didn't rest small")
         // E8: the notice reads as one plain line of text.
         XCTAssertEqual(
             app.staticTexts[AccessibilityID.Trash.notice].label,
@@ -77,7 +75,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
         openFirstTile(in: app)
         // Audit entry 2 is scoped to the Trash screen by its header: under the viewer it is gone.
-        XCTAssertFalse(app.staticTexts[AccessibilityID.Trash.header].exists)
+        XCTAssertFalse(app.header("Trash").exists)
         try audit(app)
     }
 
@@ -116,7 +114,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.TrashViewer.restore].appears(within: 5))
 
         app.buttons[AccessibilityID.TrashViewer.restore].tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
+        XCTAssertTrue(app.header("Trash").appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: 4))
         XCTAssertFalse(
             tiles(in: app).matching(NSPredicate(format: "label BEGINSWITH %@", "Trashed scan 5,")).firstMatch
@@ -153,7 +151,7 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(deleteOne.appears(within: 5))
         XCTAssertTrue(confirmButton("Delete", besides: tile.identifier, in: app).exists)
         attachScreenshot("trash-tile-delete-now", of: app)
-        dismissPopover(tapping: app.staticTexts[AccessibilityID.Trash.header])
+        dismissPopover(tapping: app.headerTitle("Trash"))
         XCTAssertTrue(deleteOne.disappears(within: 5))
 
         app.buttons[AccessibilityID.Trash.select].tap()
@@ -204,20 +202,20 @@ final class TrashJourneyTests: XCTestCase {
         try audit(app)
     }
 
-    /// The bar's small title (the header element, M6 amended) is faded out because the large title shows, and stays so;
-    /// drags either way move neither it nor the empty state.
+    /// The large title shows, and stays; drags either way move neither it nor the empty state.
     private func assertEmptyTrashHoldsStill(in app: XCUIApplication) {
-        let header = app.staticTexts[AccessibilityID.Trash.header]
+        let title = app.headerTitle("Trash")
         let empty = app.staticTexts["Trash is empty"]
-        XCTAssertTrue(header.satisfies("isHittable == false", within: 5), "The large title isn't showing")
+        XCTAssertTrue(app.header("Trash", shows: .large, within: 5), "The large title isn't showing")
         // Still large once the bar has had time to settle.
-        XCTAssertFalse(header.satisfies("isHittable == true", within: 1), "The bar collapsed")
-        let frames = (header: header.frame, empty: empty.frame)
+        XCTAssertFalse(app.header("Trash", shows: .small, within: 1), "The bar collapsed")
+        let frames = (title: title.frame, empty: empty.frame)
         for distance in [-300.0, 300.0] {
             empty.drag(by: distance)
-            XCTAssertEqual(header.frame, frames.header, "The header moved after a \(distance) pt drag")
+            XCTAssertEqual(title.frame, frames.title, "The title moved after a \(distance) pt drag")
             XCTAssertEqual(empty.frame, frames.empty, "The empty state moved after a \(distance) pt drag")
-            XCTAssertFalse(header.isHittable, "The bar collapsed after a \(distance) pt drag")
+            XCTAssertTrue(
+                app.header("Trash", shows: .large, within: 0), "The bar collapsed after a \(distance) pt drag")
         }
     }
 
@@ -226,7 +224,7 @@ final class TrashJourneyTests: XCTestCase {
         let row = app.buttons[AccessibilityID.Home.trashRow]
         XCTAssertTrue(row.label.contains("Trash") && row.label.contains("5"), row.label)
         row.tap()
-        XCTAssertTrue(app.staticTexts[AccessibilityID.Trash.header].appears(within: 5))
+        XCTAssertTrue(app.header("Trash").appears(within: 5))
     }
 
     /// The soonest-gone tile opens the Trash viewer.

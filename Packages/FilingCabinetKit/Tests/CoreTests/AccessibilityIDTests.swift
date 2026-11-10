@@ -36,7 +36,6 @@ import Testing
 }
 
 @Test func gridIdentifiersArePrefixedAndTilesAreCheckedByPrefix() {
-    #expect(AccessibilityID.Grid.header.hasPrefix("grid."))
     #expect(AccessibilityID.Grid.scan.hasPrefix("grid."))
     // The back button is the system's, so its identifier is the system's too.
     #expect(AccessibilityID.Grid.back == "BackButton")

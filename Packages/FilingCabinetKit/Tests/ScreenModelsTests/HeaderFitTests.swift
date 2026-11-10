@@ -13,8 +13,9 @@ private let roomBesideBack: CGFloat = 258
 // Plan 3, E8 (from E3's 222 pt slot, measured in the Trash snapshots): beside back and Select, the bar keeps the title
 // centred up to 176 pt of subtext ("7 scans · Deleted after 30 days", 176.4 pt, stayed centred; 184 pt didn't).
 private let centredRoomBesideBackAndSelect: CGFloat = 176
-// Plan 3, E3: the bar draws the subtitle in SF Pro Regular 12 pt with monospaced digits (Tokens.Typography.caption), at
-// the default text size whatever the setting (M7), so one size is the only one to measure.
+// Plan 3, E3 and E9: the bar draws the small subtitle in SF Pro Regular 12 pt with monospaced digits
+// (Tokens.Typography.caption, set as the bar's subtitle attributes by HeaderAppearance), at the default text size
+// whatever the setting (M7), so one size is the only one to measure.
 private let subtitlePointSize: CGFloat = 12
 // B13: the longest form of a count is four digits.
 private let mostScans = 9_999

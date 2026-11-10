@@ -1,8 +1,8 @@
 import ScreenModels
 import SwiftUI
 
-/// A screen's scroll view under its Passwords-style header (#62): the system bar, with the title in our serif in both
-/// sizes (`HeaderTitle`). Inner screens rest with the title small in the bar; pulling past halfway brings out the large
+/// A screen's scroll view under its Passwords-style header (#62): the system bar's own title and subtitle (plan 3, E9),
+/// in our serif (`HeaderAppearance`), the large subtitle in the design's size (`LargeSubtitle`). Inner screens rest with the title small in the bar; pulling past halfway brings out the large
 /// title, which stays until a scroll up collapses it (B6, UIKit's own snap). Screens keep their own toolbar items.
 ///
 /// Keep one `HeaderScrollView` for a screen and change `rest` and `scrolls` on it as its content changes (an empty
@@ -11,13 +11,11 @@ import SwiftUI
 /// tell that bar from an expanded one, and would rest scrolled under it.
 struct HeaderScrollView<Content: View>: View {
     private let title: Text
-    private let subtitle: Text?
-    private let identifier: String
+    private let subtitle: String?
     private let rest: HeaderRest
     private let scrolls: Bool
     private let content: Content
 
-    @Environment(\.captureLayerIsUp) private var captureLayerIsUp
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var position = ScrollPosition(y: 0)
     @State private var insets = HeaderInsets()
@@ -27,15 +25,13 @@ struct HeaderScrollView<Content: View>: View {
 
     init(
         title: Text,
-        subtitle: Text?,
-        identifier: String,
+        subtitle: String?,
         rest: HeaderRest,
         scrolls: Bool = true,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
         self.subtitle = subtitle
-        self.identifier = identifier
         self.rest = rest
         self.scrolls = scrolls
         self.content = content()
@@ -71,29 +67,16 @@ struct HeaderScrollView<Content: View>: View {
             if let inset = last.inset { settle(inset) }
         }
         .navigationTitle(title)
+        .modifier(Subtitle(subtitle: subtitle))
         .toolbarTitleDisplayMode(.large)
-        // Clear, so the back button is the system's glass one and swipe back works (hiding the bar turns it off).
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar {
-            HeaderTitle(
-                title: title,
-                subtitle: subtitle,
-                identifier: identifier,
-                growth: growth,
-                isHidden: captureLayerIsUp,
-                typeSize: typeSize,
-                onLargeTitleHeight: { insets.recordLargeTitle(height: $0) }
-            )
-        }
     }
-
-    private var growth: CGFloat { insets.growth(resting: rest) }
 
     private func minimumContentHeight(_ proxy: GeometryProxy) -> CGFloat {
         scrolls ? insets.minimumContentHeight(height: proxy.size.height + proxy.safeAreaInsets.top) : 0
     }
 
     private func arrive(_ report: BarReport) {
+        insets.largeTitleHeight = HeaderAppearance.largeTitleHeight(at: typeSize)
         insets.record(report.inset, atTop: report.atTop)
         last.inset = report.inset
         settle(report.inset)
@@ -102,8 +85,30 @@ struct HeaderScrollView<Content: View>: View {
     private func settle(_ inset: CGFloat) {
         switch settling.target(insets: insets, inset: inset) {
         case .content(let offset): position.scrollTo(y: offset)
-        case .scrollView(let offset): offsetRequest = .init(offset: offset, count: (offsetRequest?.count ?? 0) + 1)
+        case .scrollView(let offset): request(offset, duringPush: false)
+        case .pullDuringPush(let offset): request(offset, duringPush: true)
         case nil: break
+        }
+    }
+
+    private func request(_ offset: CGFloat, duringPush: Bool) {
+        offsetRequest = .init(offset: offset, duringPush: duringPush, count: (offsetRequest?.count ?? 0) + 1)
+    }
+}
+
+/// The system bar's subtitle, under the title in both sizes. The bar draws the large one with the small one's attributes
+/// (it ignores `largeSubtitleTextAttributes`, and a styled `Text` in `navigationSubtitle`), so the large one is also set
+/// as the navigation item's large attributed subtitle, in the design's subheadline (`LargeSubtitle`).
+private struct Subtitle: ViewModifier {
+    let subtitle: String?
+
+    func body(content: Content) -> some View {
+        if let subtitle {
+            content
+                .navigationSubtitle(Text(subtitle))
+                .background(LargeSubtitle(text: subtitle))
+        } else {
+            content
         }
     }
 }

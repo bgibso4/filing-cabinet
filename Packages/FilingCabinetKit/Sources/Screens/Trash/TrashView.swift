@@ -39,8 +39,7 @@ public struct TrashView: View {
             // One header for every state, so Trash emptying on screen changes its rest in place (HeaderScrollView).
             HeaderScrollView(
                 title: Text("Trash", bundle: #bundle),
-                subtitle: subtitle,
-                identifier: AccessibilityID.Trash.header,
+                subtitle: model.subtitle,
                 rest: model.isEmpty ? .large : .small,
                 // Empty holds still (B5), except at accessibility sizes, where the empty state's text runs past the
                 // screen and has to scroll to be read whole (E6).
@@ -65,13 +64,6 @@ public struct TrashView: View {
             }
         }
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
-    }
-
-    /// While selecting, "2 selected" is in the primary colour and semibold (Trash.dc.html line 245).
-    private var subtitle: Text {
-        Text(model.subtitle)
-            .fontWeight(model.isSelecting ? .semibold : .regular)
-            .foregroundStyle(model.isSelecting ? Tokens.Color.textPrimary : Tokens.Color.textSecondary)
     }
 
     private var grid: some View {
