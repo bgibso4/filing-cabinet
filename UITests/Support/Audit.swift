@@ -87,6 +87,27 @@ func audit(_ app: XCUIApplication) throws {
         .dynamicType, .textClipped, .trait,
     ]
     try app.performAccessibilityAudit(for: types) { issue in
-        ignoredIssues.contains { $0(app, issue) }
+        let ignored = ignoredIssues.contains { $0(app, issue) }
+        if !ignored { attachDetails(of: issue, in: app) }
+        return ignored
     }
+}
+
+/// The audit's own failure names only the element's class ("SwiftUI.AccessibilityNode"), which can't tell a CI-only
+/// failure apart. Attaches what the exemptions match on: the element's label, identifier and frame, the window and the
+/// Scan bar's top edge.
+@MainActor
+private func attachDetails(of issue: XCUIAccessibilityAuditIssue, in app: XCUIApplication) {
+    let scan = [AccessibilityID.Home.scan, AccessibilityID.Grid.scan].lazy.map { app.buttons[$0] }.first { $0.exists }
+    let lines = [
+        "type: \(issue.auditType.rawValue) · \(issue.compactDescription)",
+        "detail: \(issue.detailedDescription)",
+        "element: \(issue.element.map { "'\($0.label)' id '\($0.identifier)' frame \($0.frame)" } ?? "none")",
+        "window: \(app.windows.firstMatch.frame)",
+        "scan: \(scan.map { "\($0.frame), bar top \($0.frame.minY - barTopPadding)" } ?? "none")",
+    ]
+    let attachment = XCTAttachment(string: lines.joined(separator: "\n"))
+    attachment.name = "Audit issue"
+    attachment.lifetime = .keepAlways
+    XCTContext.runActivity(named: "Audit issue: \(issue.compactDescription)") { $0.add(attachment) }
 }
