@@ -102,6 +102,10 @@ public struct CollectionGridView: View {
     }
 
     private func moveSelected() {
+        // The move ends select mode, which takes away the bar the confirmation hangs on, possibly before the dialog
+        // writes its dismissal back: cleared first, so it can't come up again unasked on the next Select (review M2).
+        // Not an onChange of isSelecting: one after the toolbar dropped the bar's Select (seen in the UI tests).
+        isConfirmingMove = false
         if let announcement = model.moveSelectedToTrash() {
             AccessibilityNotification.Announcement(announcement).post()
         }

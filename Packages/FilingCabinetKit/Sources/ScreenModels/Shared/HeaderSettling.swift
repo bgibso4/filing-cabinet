@@ -5,7 +5,7 @@ package enum HeaderScroll: Sendable, Equatable {
     /// To this offset of the content, as SwiftUI's scroll position measures it (0 is the top under the bar).
     case content(offset: CGFloat)
     /// To this raw top offset of the scroll view, above the top where SwiftUI's scroll position stops. The bar follows
-    /// it as it follows a pull, so a collapsed bar expands. While a transition brings the screen in (a pop back to a grid
+    /// it as it follows a pull, so a collapsed bar expands. While a push or pop brings the screen in (a pop back to a grid
     /// emptied under the viewer), UIKit holds the bar for the transition and doesn't follow an animated offset (#74):
     /// then it is a jump to `duringTransition`, as `pullDuringPush`.
     case scrollView(offset: CGFloat, duringTransition: CGFloat)
@@ -42,6 +42,10 @@ package struct HeaderSettling: Sendable, Equatable {
     private var rest: HeaderRest
     private var scrolls: Bool
     private var phase: Phase
+
+    /// How far a reported inset may sit from the expand's target and still be that inset: the bar lays out to a third of
+    /// a point (3x screens), so the same bar can report 191.67 and 192 (as `HeaderInsets.topTolerance`, review M3).
+    private static let insetTolerance: CGFloat = 0.5
 
     package init(rest: HeaderRest, scrolls: Bool) {
         self.rest = rest
@@ -127,10 +131,10 @@ package struct HeaderSettling: Sendable, Equatable {
     /// of its top, and the large title too high, under the back button (#75): the pull follows the bar to the inset it
     /// opens to; the bar is open by then, so during a transition too it goes straight to the top under it, not past it
     /// (measured: past it, the large title showed a title's height low for the rest of the pop). A shorter inset is the
-    /// bar not yet open (held for a pop, #74), and is waited for.
+    /// bar not yet open (held for a pop, #74), and is waited for; one within `insetTolerance` of the target is it.
     private mutating func follow(inset: CGFloat, target: CGFloat) -> HeaderScroll? {
-        guard inset > target else {
-            if inset == target { phase = .settled }
+        guard inset > target + Self.insetTolerance else {
+            if inset >= target - Self.insetTolerance { phase = .settled }
             return nil
         }
         phase = .expanding(inset)

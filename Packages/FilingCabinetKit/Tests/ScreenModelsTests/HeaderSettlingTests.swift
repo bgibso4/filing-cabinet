@@ -121,6 +121,22 @@ private func report(
     #expect(report(&settling, &insets, inset: 192) == nil)
 }
 
+/// The bar laying out a third of a point off the expand's target (192.33 for 192) is the target: the expand settles
+/// rather than following it again (review M3).
+@Test func aLiveExpandSettlesWithinAThirdOfAPoint() {
+    var settling = HeaderSettling(rest: .small, scrolls: true)
+    var insets = HeaderInsets()
+    insets.largeTitleHeight = 40.57
+    _ = report(&settling, &insets, inset: 168)
+    _ = report(&settling, &insets, inset: 116)
+    settling.update(rest: .large, scrolls: false)
+    _ = settling.target(insets: insets, inset: 116)
+    #expect(report(&settling, &insets, inset: 192) == .scrollView(offset: -192, duringTransition: -192))
+    #expect(report(&settling, &insets, inset: 192.33) == nil)
+    // Settled: the bar laying out taller again (a pull) asks nothing.
+    #expect(report(&settling, &insets, inset: 230) == nil)
+}
+
 /// A touch while the bar opens makes the bar the person's: the expand stops following it.
 @Test func aTouchEndsALiveExpand() {
     var settling = HeaderSettling(rest: .small, scrolls: true)

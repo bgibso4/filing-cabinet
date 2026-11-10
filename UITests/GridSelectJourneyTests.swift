@@ -1,4 +1,5 @@
 import Core
+import ScreenModels
 import XCTest
 
 /// Select on a collection grid (#68), as in Trash: tick scans, then Move to Trash in Scan's place.
@@ -40,7 +41,7 @@ final class GridSelectJourneyTests: XCTestCase {
         XCTAssertEqual(move.label, "Move 2 to Trash")
         // Not audited in select mode: the audit reports the bar's glass Cancel pill as low contrast with no element
         // (FC Speed iPhone 17, 2026-11-09; Select passes). Trash's exemptions cover the same pill there only, and
-        // widening them needs Ben's OK. The grid with Select is audited in BrowseJourneyTests.
+        // widening them needs Ben's OK. BrowseJourneyTests audits the grid with Select, but only when not selecting.
 
         move.tap()
         let message = app.staticTexts["These 2 receipts move to Trash. You can restore them for 30 days."]
@@ -49,14 +50,55 @@ final class GridSelectJourneyTests: XCTestCase {
         shot.name = "grid-move-2-to-trash"
         shot.lifetime = .keepAlways
         add(shot)
-        app.buttons.matching(
-            NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Grid.moveToTrash)
-        ).firstMatch.tap()
+        confirmMove(in: app)
 
         XCTAssertTrue(tiles(in: app).satisfies("count == %d", 1, within: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.Grid.scan].appears(within: 5))
         XCTAssertEqual(select.label, "Select")
         XCTAssertFalse(move.exists)
+
+        // Select again: the confirmation the move answered doesn't come back by itself (review M2).
+        select.tap()
+        XCTAssertTrue(app.staticTexts["0 selected"].appears(within: 5))
+        XCTAssertFalse(
+            app.staticTexts["This receipt moves to Trash. You can restore it for 30 days."].appears(within: 1))
+        XCTAssertFalse(message.exists)
+    }
+
+    /// The grid emptied by its own selection (its only card moved to Trash) comes out with the large title, the
+    /// system's gap under the back button, and Select greyed out, as an empty grid opened from Home (review I3).
+    func testMovingTheLastScanShowsTheEmptyGridLarge() {
+        // Scan 1 is the seed's only wallet card.
+        let app = launchApp(["-SeedScans", "1", "-FixedDate", "2026-10-12"])
+        let row = app.buttons[AccessibilityID.Home.collectionRow(.wallet)]
+        waitForSeeding(of: row, count: 1)
+        row.tap()
+        XCTAssertTrue(app.header(.wallet, shows: .small, within: 5), "The grid didn't rest small")
+        let select = app.buttons[AccessibilityID.Grid.select]
+        select.tap()
+        tiles(in: app).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["1 selected"].appears(within: 5))
+        app.buttons[AccessibilityID.Grid.moveToTrash].tap()
+        XCTAssertTrue(app.staticTexts["This card moves to Trash. You can restore it for 30 days."].appears(within: 5))
+        confirmMove(in: app)
+
+        XCTAssertTrue(app.staticTexts["No cards yet"].appears(within: 5))
+        XCTAssertTrue(app.header(.wallet, shows: .large, within: 5), "The large title isn't showing")
+        XCTAssertFalse(app.header(.wallet, shows: .small, within: 1), "The bar collapsed")
+        XCTAssertEqual(
+            app.largeTitleGap(CollectionText.name(.wallet)),
+            largeTitleGap,
+            accuracy: largeTitleGapTolerance,
+            "The large title isn't the system's gap under the back button")
+        XCTAssertEqual(select.label, "Select")
+        XCTAssertFalse(select.isEnabled)
+    }
+
+    /// The confirmation's Move to Trash, beside the bar's button of the same name.
+    private func confirmMove(in app: XCUIApplication) {
+        app.buttons.matching(
+            NSPredicate(format: "label == %@ AND identifier != %@", "Move to Trash", AccessibilityID.Grid.moveToTrash)
+        ).firstMatch.tap()
     }
 
     private func tiles(in app: XCUIApplication) -> XCUIElementQuery {
