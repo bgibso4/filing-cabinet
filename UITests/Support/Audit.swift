@@ -65,6 +65,29 @@ private let exemptions: [AuditExemption] = [
         let select = app.buttons[AccessibilityID.Grid.select]
         return select.exists && select.label == "Cancel"
     },
+    // The iOS 27 glass misread is reported in either of two forms for the same control, and which one varies from run
+    // to run and simulator to simulator: as an issue with no element, or resolved to the glass control itself. On
+    // 2026-11-10 (test-runs PR) the grid's select-mode pill was reported as `grid.select` in 5 runs and with no element
+    // in 2, on the same simulator; the viewer's dark bars with no element on one simulator and as the header's title on
+    // another. Each existing exemption covered only the form first seen, so these audits passed or failed by luck
+    // (CI passed; this Mac failed). The two below cover the other form: the grid's Cancel pill (as Trash's
+    // `trash.select`) and the viewer's dark glass bars (as `dark-viewer-header`), whose text and icons read clearly in
+    // the audit's own screenshots. Added under Ben's standing call to exempt the glass misread to unblock while tracked
+    // (#59); awaiting his review.
+    // Only contrast, and only the grid's Select pill while it reads Cancel.
+    AuditExemption(name: "grid-select-pill") { app, issue in
+        guard issue.auditType == .contrast, issue.element?.identifier == AccessibilityID.Grid.select else {
+            return false
+        }
+        return app.buttons[AccessibilityID.Grid.select].label == "Cancel"
+    },
+    // Only contrast, only with no element, only in dark mode, and only while the viewer's header shows.
+    AuditExemption(name: "dark-viewer-unresolved") { app, issue in
+        guard issue.auditType == .contrast, issue.element == nil, XCUIDevice.shared.appearance == .dark else {
+            return false
+        }
+        return app.descendants(matching: .any)[AccessibilityID.Viewer.header].exists
+    },
 ]
 
 /// The only call site of `performAccessibilityAudit`. Audit types are listed explicitly, not left to the default.
