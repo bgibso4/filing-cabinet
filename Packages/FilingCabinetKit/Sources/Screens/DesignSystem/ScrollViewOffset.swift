@@ -8,10 +8,11 @@ import UIKit
 struct ScrollViewOffset: UIViewRepresentable {
     /// An offset to set. `count` tells two asks for the same offset apart, so each one is carried out.
     struct Request: Equatable {
-        let offset: CGFloat
-        /// Only while a transition (a push, a pop or a modal) brings the screen in, at once, and back to the top when
-        /// it ends (`HeaderScroll.pullDuringPush`).
-        let duringPush: Bool
+        /// Outside a transition, animated to this offset; nil leaves the content alone then.
+        let offset: CGFloat?
+        /// While a transition (a push, a pop or a modal) brings the screen in, at once to this offset, and back to the
+        /// top when it ends (`HeaderScroll.pullDuringPush`); nil leaves the content alone then.
+        let duringTransition: CGFloat?
         let count: Int
     }
 
@@ -31,13 +32,19 @@ struct ScrollViewOffset: UIViewRepresentable {
             return
         }
         context.coordinator.done = request
-        if request.duringPush {
-            pull(scrollView, to: request.offset)
-        } else {
+        if let pull = request.duringTransition, let transition = Self.transition(around: scrollView) {
+            self.pull(scrollView, to: pull, during: transition)
+        } else if let offset = request.offset {
             // Animated: the bar follows an animated offset all the way, but snapped a jump straight back (simulator,
             // Task 4).
-            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: request.offset), animated: true)
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: offset), animated: true)
         }
+    }
+
+    /// The transition the scroll view's controller is in, if any.
+    private static func transition(around scrollView: UIScrollView) -> (any UIViewControllerTransitionCoordinator)? {
+        sequence(first: scrollView as UIResponder, next: \.next).lazy
+            .compactMap { $0 as? UIViewController }.first?.transitionCoordinator
     }
 
     /// A jump, the only move that lands before UIKit settles the bar for a transition (an animated one waited for the
@@ -45,10 +52,9 @@ struct ScrollViewOffset: UIViewRepresentable {
     /// only a push: the clamp at the end makes that harmless. Outside a transition (Home at launch, a snapshot) nothing
     /// would put the content back, so it is left alone; at the transition's end the content goes back to its top under
     /// the bar, where the scroll view puts it by itself with animations on, but not with them off (UI tests).
-    private func pull(_ scrollView: UIScrollView, to offset: CGFloat) {
-        let controller = sequence(first: scrollView as UIResponder, next: \.next).lazy
-            .compactMap { $0 as? UIViewController }.first
-        guard let transition = controller?.transitionCoordinator else { return }
+    private func pull(
+        _ scrollView: UIScrollView, to offset: CGFloat, during transition: any UIViewControllerTransitionCoordinator
+    ) {
         scrollView.contentOffset.y = offset
         transition.animate(alongsideTransition: nil) { _ in
             let top = -scrollView.adjustedContentInset.top

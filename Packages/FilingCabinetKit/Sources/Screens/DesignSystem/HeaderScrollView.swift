@@ -86,14 +86,15 @@ struct HeaderScrollView<Content: View>: View {
     private func settle(_ inset: CGFloat) {
         switch settling.target(insets: insets, inset: inset) {
         case .content(let offset): position.scrollTo(y: offset)
-        case .scrollView(let offset): request(offset, duringPush: false)
-        case .pullDuringPush(let offset): request(offset, duringPush: true)
+        case .scrollView(let offset, let duringTransition): request(offset, duringTransition: duringTransition)
+        case .pullDuringPush(let offset): request(nil, duringTransition: offset)
         case nil: break
         }
     }
 
-    private func request(_ offset: CGFloat, duringPush: Bool) {
-        offsetRequest = .init(offset: offset, duringPush: duringPush, count: (offsetRequest?.count ?? 0) + 1)
+    private func request(_ offset: CGFloat?, duringTransition: CGFloat?) {
+        offsetRequest = .init(
+            offset: offset, duringTransition: duringTransition, count: (offsetRequest?.count ?? 0) + 1)
     }
 }
 
