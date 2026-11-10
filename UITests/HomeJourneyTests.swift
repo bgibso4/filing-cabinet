@@ -74,6 +74,11 @@ final class HomeJourneyTests: XCTestCase {
         let app = launchApp(largestText: true)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].isHittable)
+        // Settled before the audit: Home at rest with its title large, and the row the Scan bar cuts (Receipts at this
+        // size) resolvable. On a slow CI runner the audit otherwise reported that row with no element, so the cut-row
+        // exemption couldn't match it.
+        XCTAssertTrue(app.header("Filing Cabinet", shows: .large, within: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.collectionRow(.receipts)].appears(within: 5))
         try audit(app)
     }
 }
