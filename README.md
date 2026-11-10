@@ -18,7 +18,8 @@ Requires Xcode 27, XcodeGen, SwiftLint and Periphery (`make setup` checks for th
 make setup   # install the pre-commit hook, generate the project
 make build   # build for the pinned simulator (FC iPhone 17: iPhone 17, iOS 27.0)
 make fast    # unit tests on macOS, no simulator
-make full    # everything on the simulator: package, snapshot and UI tests
+make affected  # the simulator tests your changes touch
+make full ALL=1  # everything on the simulator: package, snapshot and UI tests
 make ci      # everything CI runs
 ```
 

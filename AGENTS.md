@@ -48,19 +48,23 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make generate` | token generator + XcodeGen; copies `Package.resolved` into the project |
 | `make build` | build the app for the pinned simulator (`FC iPhone 17`: an iPhone 17 on iOS 27.0, this project's own; `SIM_DEVICE=` overrides) |
 | `make fast` | Fast tests on macOS, no simulator |
-| `make full` | everything on the simulator: package, snapshot and UI tests. `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out) |
+| `make affected` | the snapshot and UI test classes the branch's changes touch (`scripts/test-map.txt`; `BASE=<ref>` diffs against another ref). The end-of-task run |
+| `make retest` | re-run without building: `ONLY="<Target/Class[/test]> …"`, or the affected classes. Refuses when the sources changed since the last build. The while-fixing run |
+| `make full` | simulator tests: `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out). A whole suite (no `ONLY`, or a whole target) needs `ALL=1`: everything, package, snapshot and UI tests, once before a PR |
+| `make audit-report` | every accessibility audit issue and exemption use in the newest test results (`RESULT=<.xcresult>` for another) |
 | `make ci` | everything CI runs: `ci-checks`, then `ci-sim` |
 | `make ci-checks` | generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, Periphery, changed snapshots, `check-resolved` |
 | `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` and `SHARD=browse` (the two longest UI classes; scan also runs the Trash and Settings journeys, browse the snapshot tests) and `SHARD=main` (everything else) |
 | `make lint` / `make format` | SwiftLint + swift-format strict lint / apply swift-format |
 | `make unused` | Periphery dead-code scan |
-| `make snapshots-record` | re-record snapshot references on the pinned simulator (`ONLY=` for some classes) |
+| `make snapshots-record` | re-record the snapshot references that fail or are missing, on the pinned simulator (`ONLY=` for some classes; `SNAPSHOT_RECORD=all` rewrites every one) |
 | `make compare SCREEN=<design png stem> REF=<snapshot png>` | side by side, written to `build/compare/` |
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |
 | `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
 | `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
+| `make test-scripts` | bats tests for the test-run scripts (`affected`, `retest`, `audit-report`) |
 | `make test-lint` | fixture tests for the SwiftLint custom rules |
 | `make check-resolved` | fail if Xcode rewrote the resolved packages |
 
@@ -108,11 +112,23 @@ Four units with narrow interfaces: Capture → Understanding → Classification 
 **A task is done** when:
 1. the app builds,
 2. the Fast tests pass,
-3. the snapshot and UI tests for the screens it touched pass,
+3. `make affected` passes (the snapshot and UI tests for what it touched),
 4. lint and format are clean,
 5. for anything visual, the hand-off lists the image paths the agent actually opened (snapshot, `make compare` output or simulator screenshot).
 
 **A branch is done** when the **Full** suite is green in CI and the whole-branch review has passed.
+
+### Run policy
+
+The simulator suites are slow, so run the narrowest one that answers the question:
+
+| When | Run |
+|---|---|
+| While fixing: re-running a failing class or test, or after re-recording snapshots, with no source change since the last build | `make retest ONLY="<Target/Class[/test]>"` |
+| At the end of a task | `make affected` (`BASE=<the task's first commit>^` for just the task's changes) |
+| Once before a PR goes ready for review | `make full ALL=1`, or let CI's Full suite run |
+
+Run tests through these targets, not `xcodebuild test` or XcodeBuildMCP's test tools: the targets keep the build check `retest` relies on and the run log (`.build/test-runs.log`). To learn what an audit flagged, run `make audit-report` rather than exporting the results by hand; it also lists the exemptions no audit used.
 
 Anything not checked is stated plainly in the hand-off ("didn't verify X because Y"). Before claiming any of this, agents dispatch `ios-verifier` for evidence.
 
