@@ -126,6 +126,8 @@ public struct CollectionGridView: View {
                     isSelected: selected.contains(tile.id)
                 ) {
                     if model.isSelecting { model.toggle(tile.id) } else { onOpen(tile.id) }
+                } onToggleFavorite: {
+                    model.toggleFavorite(tile.id)
                 }
             }
         }

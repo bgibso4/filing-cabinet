@@ -26,6 +26,7 @@ enum Tokens {
         static let collWallet = SwiftUI.Color("coll-wallet", bundle: .module)
         static let destructive = SwiftUI.Color("destructive", bundle: .module)
         static let expirySoon = SwiftUI.Color("expiry-soon", bundle: .module)
+        static let markGround = SwiftUI.Color("mark-ground", bundle: .module)
         static let scanGround = SwiftUI.Color("scan-ground", bundle: .module)
         static let separator = SwiftUI.Color("separator", bundle: .module)
         static let switchKnobOff = SwiftUI.Color("switch-knob-off", bundle: .module)

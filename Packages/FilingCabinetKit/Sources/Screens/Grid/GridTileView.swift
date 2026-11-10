@@ -4,7 +4,7 @@ import ScreenModels
 import SwiftUI
 
 /// One scan in a grid: its thumbnail, title and time left. A tap opens it, or ticks it while selecting (#68, as in
-/// Trash). VoiceOver reads it as one element.
+/// Trash). A favourite wears a heart. VoiceOver reads it as one element, with Favorite as an action.
 struct GridTileView: View {
     let tile: GridTile
     let shape: CollectionGridModel.TileShape
@@ -15,6 +15,8 @@ struct GridTileView: View {
     let isSelected: Bool
     /// Opens the scan, or ticks it while selecting.
     let onTap: () -> Void
+    /// VoiceOver's Favorite or Remove from Favorites on the tile (P2).
+    let onToggleFavorite: () -> Void
 
     // Collection.dc.html line 317: Wallet's tiles are 1.55 wide per 1 tall, every other tile is 3:4.
     private static let cardAspect: CGFloat = 1.55
@@ -25,6 +27,10 @@ struct GridTileView: View {
     private static let dotGap: CGFloat = 5
 
     @Environment(\.dynamicTypeSize) private var typeSize
+
+    private var favoriteActionName: Text {
+        tile.isFavorite ? Text("Remove from Favorites", bundle: #bundle) : Text("Favorite", bundle: #bundle)
+    }
 
     var body: some View {
         Button(action: onTap) {
@@ -37,6 +43,7 @@ struct GridTileView: View {
                 )
                 .aspectRatio(shape == .card ? Self.cardAspect : Self.pageAspect, contentMode: .fit)
                 .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                .favoriteMark(tile.isFavorite)
                 .selectionMark(isSelecting: isSelecting, isSelected: isSelected)
                 HStack(spacing: Self.dotGap) {
                     if let dot = tile.dot { CollectionDot(collection: dot) }
@@ -61,6 +68,7 @@ struct GridTileView: View {
         .accessibilityLabel(tile.accessibilityLabel)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(AccessibilityID.Grid.tile(tile.id))
+        .accessibilityAction(named: favoriteActionName, onToggleFavorite)
         .onAppear { prefetcher.tileAppeared(tile.id) }
         .onDisappear { prefetcher.tileDisappeared(tile.id) }
     }

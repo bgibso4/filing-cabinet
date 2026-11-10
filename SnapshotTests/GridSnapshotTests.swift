@@ -26,9 +26,19 @@ final class GridSnapshotTests: XCTestCase {
         }
     }
 
+    /// The home set with its two newest receipts favourited: hearts on the first tiles of Receipts and All Scans
+    /// (05-07's mark, M13).
+    @MainActor
+    private func libraryWithFavorites() throws -> FakeLibrary {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(true, for: Fixtures.newestReceipts(2))
+        return library
+    }
+
     @MainActor
     func testReceipts() throws {
-        try SnapshotHost.assertScreen(grid(.collection(.receipts), Fixtures.library(.home)), testName: "grid_receipts")
+        try SnapshotHost.assertScreen(
+            grid(.collection(.receipts), try libraryWithFavorites()), testName: "grid_receipts")
     }
 
     @MainActor
@@ -49,7 +59,7 @@ final class GridSnapshotTests: XCTestCase {
 
     @MainActor
     func testAll() throws {
-        try SnapshotHost.assertScreen(grid(.all, Fixtures.library(.home)), testName: "grid_all")
+        try SnapshotHost.assertScreen(grid(.all, try libraryWithFavorites()), testName: "grid_all")
     }
 
     /// #68: Receipts selecting, its first two ticked, with Move 2 to Trash in Scan's place. No mock: it mirrors Trash's

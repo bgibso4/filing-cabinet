@@ -45,7 +45,10 @@ final class TrashSnapshotTests: XCTestCase {
 
     @MainActor
     func testList() throws {
-        try assertScreens(Fixtures.library(.trash), testName: "trash_list")
+        // Two favourites keep their hearts in Trash (05-07's mark, M13).
+        let library = Fixtures.library(.trash)
+        try library.setFavorite(true, for: library.scans.prefix(2).map(\.id))
+        try assertScreens(library, testName: "trash_list")
     }
 
     /// Ten scans: the last row rests under Empty Trash's glass and scrolls clear of it (Ben, 2026-11-08; no fade since
