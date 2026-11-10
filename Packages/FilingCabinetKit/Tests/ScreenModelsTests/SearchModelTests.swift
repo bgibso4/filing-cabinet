@@ -315,3 +315,16 @@ private struct Fixture {
     #expect(fixture.search("pharmacy") == [receipt.id])
     #expect(fixture.model.results.first?.snippet == "CITY PHARMACY")
 }
+
+@MainActor
+@Test func searchSavesAgainAfterClear() throws {
+    let fixture = try Fixture([Seed("Bike lock")])
+    defer { fixture.cleanUp() }
+    fixture.model.query = "bike"
+    fixture.model.submit()
+    fixture.model.clearSearches()
+    #expect(fixture.history.recentSearches.isEmpty)
+    fixture.model.submit()
+    #expect(fixture.history.recentSearches == ["bike"])
+    #expect(fixture.analytics.events == [.searchSaved(resultCount: 1), .searchSaved(resultCount: 1)])
+}

@@ -124,6 +124,12 @@ package final class SearchModel {
         filter = nil
     }
 
+    /// Recent searches' Clear (08-02): empties them, so the next search is kept and reported afresh.
+    package func clearSearches() {
+        history.clearSearches()
+        lastSaved = nil
+    }
+
     /// The keyboard's Search: keeps the search (M5).
     package func submit() {
         save()
