@@ -1,36 +1,16 @@
 import Core
 import XCTest
 
-/// BottomBarLayout's padding above the Scan button (Tokens.Spacing.s4): where the content ends at accessibility sizes.
-private let barTopPadding: CGFloat = 16
-
 /// Issues the audit may ignore. Each entry needs a comment with the reason it is a false positive.
 @MainActor
 private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bool] = [
     // At the largest text size the list is taller than the screen, and a row's label can start in the last point
     // of the window (the audit found "Notes" at y 872.7 in an 874 pt window). That text is scrolled out of view
-    // and sits under the Scan button's fade, so the audit samples background pixels and reports low contrast.
+    // and sits under the Scan button, so the audit samples background pixels and reports low contrast.
     // Only contrast, only an element that begins within 2 pt of the window's bottom edge or below it.
     { app, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
         return element.frame.minY >= app.windows.firstMatch.frame.maxY - 2
-    },
-    // The same scrolled-out text at accessibility sizes, where the content ends at the top of the Scan bar's area
-    // instead of under a fade (BottomBarLayout). A row label cut by that edge keeps its whole frame, so the audit
-    // samples the bar area under it (the grey glyph of a disabled Scan) and reports low contrast, though the visible
-    // part is full contrast (Home's "Notes" with 60 scans, Plan 3 Task 6 evidence). Approved by Ben 2026-11-09, Plan 3
-    // Task 6 (#59). Only contrast, only at an accessibility text size, and only an element whose frame crosses the bar
-    // area's top edge: the Scan button's top less the bar's 16 pt top padding (Tokens.Spacing.s4 in BottomBarLayout).
-    { app, issue in
-        guard issue.auditType == .contrast, let element = issue.element,
-            app.launchArguments.contains(where: { $0.hasPrefix("UICTContentSizeCategoryAccessibility") })
-        else { return false }
-        let scan = [AccessibilityID.Home.scan, AccessibilityID.Grid.scan].lazy.map { app.buttons[$0] }.first {
-            $0.exists
-        }
-        guard let scan else { return false }
-        let barTop = scan.frame.minY - barTopPadding
-        return element.frame.minY < barTop && element.frame.maxY > barTop
     },
     // On iOS 27 the audit reports text as clipped on any floating sheet (any detent shorter than .large), even with the
     // text intact. Ben chose the mocks' compact camera-off sheet knowing this (2026-11-06). Only textClipped, and only
@@ -66,10 +46,10 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         ]
         return glassButtons.contains(element.identifier)
     },
-    // Trash's glass bottom bar, reported with no element: on the Trash grid the bar sits in BottomBarLayout's
-    // .safeAreaInset, where the audit can't resolve the glass buttons to elements, so it reports their text as low
-    // contrast and as inaccessible text (hiding Empty Trash clears it). The viewer's .overlay bar, the same buttons,
-    // resolves fine. The real fix is to present the bar as an overlay (issue #59). Ben accepted this on 2026-11-08.
+    // Trash's glass bottom bar, reported with no element: on the Trash grid the audit can't resolve the glass buttons
+    // to elements, so it reports their text as low contrast and as inaccessible text (hiding Empty Trash clears it).
+    // The viewer's bar, the same buttons, resolves fine. Presenting the grid's bar as an overlay, as #59 proposed,
+    // didn't change it (2026-11-10). Ben accepted this on 2026-11-08.
     // Only contrast and element detection, only with no element, and only while the Trash screen is showing;
     // element-less issues on every other screen still fail.
     { app, issue in
@@ -95,7 +75,7 @@ func audit(_ app: XCUIApplication) throws {
 
 /// The audit's own failure names only the element's class ("SwiftUI.AccessibilityNode"), which can't tell a CI-only
 /// failure apart. Attaches what the exemptions match on: the element's label, identifier and frame, the window and the
-/// Scan bar's top edge.
+/// Scan button's frame.
 @MainActor
 private func attachDetails(of issue: XCUIAccessibilityAuditIssue, in app: XCUIApplication) {
     let scan = [AccessibilityID.Home.scan, AccessibilityID.Grid.scan].lazy.map { app.buttons[$0] }.first { $0.exists }
@@ -104,7 +84,7 @@ private func attachDetails(of issue: XCUIAccessibilityAuditIssue, in app: XCUIAp
         "detail: \(issue.detailedDescription)",
         "element: \(issue.element.map { "'\($0.label)' id '\($0.identifier)' frame \($0.frame)" } ?? "none")",
         "window: \(app.windows.firstMatch.frame)",
-        "scan: \(scan.map { "\($0.frame), bar top \($0.frame.minY - barTopPadding)" } ?? "none")",
+        "scan: \(scan.map { "\($0.frame)" } ?? "none")",
     ]
     let attachment = XCTAttachment(string: lines.joined(separator: "\n"))
     attachment.name = "Audit issue"
