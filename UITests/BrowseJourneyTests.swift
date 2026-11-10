@@ -73,6 +73,10 @@ final class BrowseJourneyTests: XCTestCase {
         let app = launchApp()
         openReceipts(in: app)
         assertEmptyReceiptsHoldStill(in: app)
+        // Select stays, greyed out, as in an empty Trash (#68).
+        let select = app.buttons[AccessibilityID.Grid.select]
+        XCTAssertTrue(select.exists)
+        XCTAssertFalse(select.isEnabled)
     }
 
     /// A grid that empties while it is open (its only scan moved to Trash from the viewer, which pops back to it) comes

@@ -60,7 +60,12 @@ public struct TrashView: View {
             // the text size changes: the bar doesn't restyle a button it already holds, so Select would keep the old
             // size (the largest-text audit's Dynamic Type check finds it).
             ToolbarItem(placement: .topBarTrailing) {
-                selectButton.disabled(model.isEmpty && !model.isSelecting).id(typeSize)
+                SelectButton(
+                    isSelecting: model.isSelecting,
+                    identifier: AccessibilityID.Trash.select,
+                    action: model.toggleSelecting
+                )
+                .disabled(model.isEmpty && !model.isSelecting).id(typeSize)
             }
         }
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
@@ -96,15 +101,6 @@ public struct TrashView: View {
         let item = GridItem(.flexible(), spacing: Self.columnGap, alignment: .top)
         return Array(
             repeating: item, count: typeSize.isAccessibilitySize ? Self.largeTextColumnCount : Self.columnCount)
-    }
-
-    /// Select, or Cancel while selecting: the system draws it as a glass pill beside the back button.
-    private var selectButton: some View {
-        Button(action: model.toggleSelecting) {
-            model.isSelecting ? Text("Cancel", bundle: #bundle) : Text("Select", bundle: #bundle)
-        }
-        .font(Tokens.Typography.headline)
-        .accessibilityIdentifier(AccessibilityID.Trash.select)
     }
 
     private var emptyTrashButton: some View {

@@ -12,10 +12,8 @@ public final class TrashModel {
     private var asked: TrashConfirmation?
     /// Set when a write fails; the action changed nothing (M18).
     package private(set) var editAlert: EditAlert?
-    package private(set) var isSelecting = false
-
-    /// What was ticked; `selected` drops any scan no longer in Trash.
-    private var ticked: Set<ScanID> = []
+    /// Select mode; `selected` drops any scan no longer in Trash.
+    private var selection = ScanSelection()
 
     @ObservationIgnored private let library: any ScanLibrary
     @ObservationIgnored private let today: Today
@@ -48,7 +46,7 @@ public final class TrashModel {
 
     /// "7 scans · 30 days", or "No scans" when empty (E8); "2 selected" while selecting (M24).
     package var subtitle: String {
-        isSelecting ? Self.selectedLine(selected.count) : Self.countLine(shelf.trash.count)
+        isSelecting ? ScanSelection.selectedLine(selected.count) : Self.countLine(shelf.trash.count)
     }
 
     /// "7 scans · 30 days", "No scans" (E8, as Passwords' Recently Deleted). Short enough to stay centred beside Select
@@ -66,13 +64,10 @@ public final class TrashModel {
             bundle: #bundle)
     }
 
-    /// "2 selected" (M24).
-    static func selectedLine(_ count: Int) -> String {
-        String(localized: "\(count) selected", bundle: #bundle)
-    }
-
     /// The ticked scans that are still in Trash.
-    package var selected: Set<ScanID> { ticked.intersection(shelf.trash.map(\.id)) }
+    package var selected: Set<ScanID> { selection.selected(among: shelf.trash.map(\.id)) }
+
+    package var isSelecting: Bool { selection.isSelecting }
 
     /// "Delete 2", or "Delete" for none or one.
     package var deleteTitle: String {
@@ -101,14 +96,12 @@ public final class TrashModel {
     /// Select / Cancel. Leaving select mode forgets the ticks, and either way any question still pending is dropped: it
     /// belongs to the other mode's controls.
     public func toggleSelecting() {
-        isSelecting.toggle()
-        ticked = []
+        selection.toggleSelecting()
         asked = nil
     }
 
     public func toggle(_ id: ScanID) {
-        guard isSelecting else { return }
-        if ticked.contains(id) { ticked.remove(id) } else { ticked.insert(id) }
+        selection.toggle(id)
     }
 
     // MARK: Actions
@@ -126,7 +119,7 @@ public final class TrashModel {
             return nil
         }
         analytics.send(.scansRestored(count: scans.count))
-        finish()
+        selection.finish()
         if let only = scans.first, scans.count == 1 {
             return String(localized: "Restored to \(CollectionText.name(only.collection))", bundle: #bundle)
         }
@@ -204,7 +197,7 @@ public final class TrashModel {
             editAlert = EditAlert()
             return nil
         }
-        finish()
+        selection.finish()
         return count == 1
             ? String(localized: "Deleted", bundle: #bundle)
             : String(localized: "Deleted \(count) scans", bundle: #bundle)
@@ -220,11 +213,5 @@ public final class TrashModel {
     private var shelf: LibraryShelf {
         LibraryShelf(
             scans: library.scans, lifespans: library.lifespans, today: today.day, calendar: calendar)
-    }
-
-    /// An action ends select mode.
-    private func finish() {
-        isSelecting = false
-        ticked = []
     }
 }

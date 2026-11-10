@@ -115,7 +115,7 @@ package struct HeaderSettling: Sendable, Equatable {
             }
             return insets.hasCollapsedTheLargeTitle ? insets.largest.map { Self.expansion(to: $0, insets) } : nil
         }
-        if case .expanding(let target) = phase { return follow(insets, inset: inset, target: target) }
+        if case .expanding(let target) = phase { return follow(inset: inset, target: target) }
         phase = .settled
         guard insets.isCollapsed, let largest = insets.largest else { return nil }
         phase = .expanding(largest)
@@ -128,7 +128,7 @@ package struct HeaderSettling: Sendable, Equatable {
     /// opens to; the bar is open by then, so during a transition too it goes straight to the top under it, not past it
     /// (measured: past it, the large title showed a title's height low for the rest of the pop). A shorter inset is the
     /// bar not yet open (held for a pop, #74), and is waited for.
-    private mutating func follow(_ insets: HeaderInsets, inset: CGFloat, target: CGFloat) -> HeaderScroll? {
+    private mutating func follow(inset: CGFloat, target: CGFloat) -> HeaderScroll? {
         guard inset > target else {
             if inset == target { phase = .settled }
             return nil

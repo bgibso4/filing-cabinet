@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The tick on a Trash tile while selecting (Trash.dc.html line 53): a white-ringed circle, filled with a tick once the
-/// scan is selected. The tile's traits tell VoiceOver, so the circle is hidden from it.
-struct TrashCheckCircle: View {
+/// The tick on a tile's thumbnail while selecting (Trash.dc.html line 53), in Trash and the grids (#68): a white-ringed
+/// circle, filled with a tick once the scan is selected. The tile's traits tell VoiceOver, so the circle is hidden from
+/// it.
+struct SelectionCheckCircle: View {
     let isOn: Bool
 
     // Trash.dc.html line 53: a 24 pt circle with a 1.5 pt white ring and a 12 pt tick, 6 pt in from the corner.
@@ -30,5 +31,29 @@ struct TrashCheckCircle: View {
             }
             .padding(Self.inset)
             .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// A tile's thumbnail in select mode: faded once ticked, with the check circle in its bottom trailing corner.
+    /// Apply it after clipping the thumbnail, so the circle isn't clipped.
+    func selectionMark(isSelecting: Bool, isSelected: Bool) -> some View {
+        modifier(SelectionMark(isSelecting: isSelecting, isSelected: isSelected))
+    }
+}
+
+private struct SelectionMark: ViewModifier {
+    let isSelecting: Bool
+    let isSelected: Bool
+
+    // Trash.dc.html line 49: a ticked scan's image fades to 75%.
+    private static let selectedImageOpacity = 0.75
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isSelected ? Self.selectedImageOpacity : 1)
+            .overlay(alignment: .bottomTrailing) {
+                if isSelecting { SelectionCheckCircle(isOn: isSelected) }
+            }
     }
 }

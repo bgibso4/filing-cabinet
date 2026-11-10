@@ -14,7 +14,7 @@ import Testing
 // Text's width of a subtext within 0.5 pt of the bar's frame for it.
 // Beside back alone, on a grid: back ends at x = 60, so 2 x (201 - 60).
 private let roomBesideBack: CGFloat = 282
-// Beside back and Select, on Trash: Select starts at x = 307.7, so 2 x (307.7 - 201), rounded down.
+// Beside back and Select, on Trash and the grids (#68): Select starts at x = 307.7, so 2 x (307.7 - 201), rounded down.
 private let roomBesideBackAndSelect: CGFloat = 213
 // While selecting, Cancel is wider and starts at x = 303.3, so 2 x (303.3 - 201), rounded down.
 private let roomBesideBackAndCancel: CGFloat = 204
@@ -72,7 +72,7 @@ private func everySubtext() throws -> [Subtext] {
         Subtext(screen: "Trash", text: TrashModel.countLine(mostScans), room: roomBesideBackAndSelect),
         Subtext(
             screen: "Trash, selecting",
-            text: TrashModel.selectedLine(mostSelected),
+            text: ScanSelection.selectedLine(mostSelected),
             room: roomBesideBackAndCancel
         ),
     ]
@@ -81,12 +81,17 @@ private func everySubtext() throws -> [Subtext] {
             kind: .collection(.documents),
             library: try fullLibrary(lifespan, clock: clock),
             today: today,
-            calendar: clock.calendar
+            calendar: clock.calendar,
+            analytics: RecordingAnalytics()
         )
-        return Subtext(screen: "Documents' grid, \(lifespan)", text: grid.subtitle, room: roomBesideBack)
+        return Subtext(screen: "Documents' grid, \(lifespan)", text: grid.subtitle, room: roomBesideBackAndSelect)
     }
     let allScans = CollectionGridModel(
-        kind: .all, library: try fullLibrary(.forever, clock: clock), today: today, calendar: clock.calendar)
+        kind: .all,
+        library: try fullLibrary(.forever, clock: clock),
+        today: today,
+        calendar: clock.calendar,
+        analytics: RecordingAnalytics())
     let settings = CollectionSettingsModel(
         collection: .documents,
         library: try fullLibrary(.forever, clock: clock),
@@ -94,14 +99,17 @@ private func everySubtext() throws -> [Subtext] {
         calendar: clock.calendar,
         analytics: RecordingAnalytics()
     )
-    let recent = CollectionGridModel(kind: .recent, library: FakeLibrary(), today: today, calendar: clock.calendar)
+    let recent = CollectionGridModel(
+        kind: .recent, library: FakeLibrary(), today: today, calendar: clock.calendar, analytics: RecordingAnalytics())
+    let besideGridSelect = [
+        Subtext(screen: "Recent", text: recent.subtitle, room: roomBesideBackAndSelect),
+        Subtext(screen: "All Scans", text: allScans.subtitle, room: roomBesideBackAndSelect),
+    ]
     let besideBack = [
-        Subtext(screen: "Recent", text: recent.subtitle, room: roomBesideBack),
-        Subtext(screen: "All Scans", text: allScans.subtitle, room: roomBesideBack),
         Subtext(screen: "Collections", text: collections.subtitle, room: roomBesideBack),
         Subtext(screen: "A collection's settings", text: settings.countLine, room: roomBesideBack),
     ]
-    return besideSelect + grids + besideBack
+    return besideSelect + grids + besideGridSelect + besideBack
 }
 
 /// B13: the small title never drops or cuts its subtext, so every subtext, in its longest form, fits between the bar's

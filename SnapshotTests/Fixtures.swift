@@ -33,6 +33,12 @@ enum Fixtures {
         FakeLibrary(scans: entries(set).map(\.summary))
     }
 
+    /// The home set's `count` newest receipts, newest first: the first tiles of its Receipts grid (the receipts are
+    /// built youngest first, from `receiptAges`).
+    static func newestReceipts(_ count: Int) -> [ScanID] {
+        Array(homeEntries.filter { $0.image.hasPrefix("scan-r-") }.prefix(count).map(\.summary.id))
+    }
+
     static let thumbnails = FakeThumbnails(images: allImages)
     static let pages = FakePageImages(images: allImages)
 

@@ -3,14 +3,18 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// One scan in a grid: its thumbnail, title and time left. VoiceOver reads it as one element.
+/// One scan in a grid: its thumbnail, title and time left. A tap opens it, or ticks it while selecting (#68, as in
+/// Trash). VoiceOver reads it as one element.
 struct GridTileView: View {
     let tile: GridTile
     let shape: CollectionGridModel.TileShape
     let showsWideScanWhole: Bool
     let thumbnails: any ThumbnailProviding
     let prefetcher: GridPrefetcher
-    let onOpen: () -> Void
+    let isSelecting: Bool
+    let isSelected: Bool
+    /// Opens the scan, or ticks it while selecting.
+    let onTap: () -> Void
 
     // Collection.dc.html line 317: Wallet's tiles are 1.55 wide per 1 tall, every other tile is 3:4.
     private static let cardAspect: CGFloat = 1.55
@@ -23,7 +27,7 @@ struct GridTileView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        Button(action: onOpen) {
+        Button(action: onTap) {
             VStack(alignment: .leading, spacing: Self.rowGap) {
                 ThumbnailView(
                     id: tile.id,
@@ -33,6 +37,7 @@ struct GridTileView: View {
                 )
                 .aspectRatio(shape == .card ? Self.cardAspect : Self.pageAspect, contentMode: .fit)
                 .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                .selectionMark(isSelecting: isSelecting, isSelected: isSelected)
                 HStack(spacing: Self.dotGap) {
                     if let dot = tile.dot { CollectionDot(collection: dot) }
                     Text(tile.title)
@@ -54,6 +59,7 @@ struct GridTileView: View {
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(tile.accessibilityLabel)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier(AccessibilityID.Grid.tile(tile.id))
         .onAppear { prefetcher.tileAppeared(tile.id) }
         .onDisappear { prefetcher.tileDisappeared(tile.id) }

@@ -103,7 +103,11 @@ struct GridPerformanceTests {
     private static func allScans(_ scans: [ScanSummary], thumbnails: FakeThumbnails) -> some View {
         let library = FakeLibrary(scans: scans)
         let model = CollectionGridModel(
-            kind: .all, library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
+            kind: .all,
+            library: library,
+            today: Today(clock: Fixtures.clock),
+            calendar: Fixtures.clock.calendar,
+            analytics: RecordingAnalytics())
         return NavigationStack {
             CollectionGridView(model: model, thumbnails: thumbnails, canScan: true, onOpen: { _ in }, onScan: {})
         }

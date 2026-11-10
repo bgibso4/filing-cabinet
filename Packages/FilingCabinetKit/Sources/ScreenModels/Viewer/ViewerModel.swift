@@ -111,10 +111,7 @@ public final class ViewerModel {
 
     /// The Trash button's confirmation (06-04): "This receipt moves to Trash. You can restore it for 30 days."
     package var trashMessage: String {
-        let noun = scan.map { CollectionText.noun($0.collection, count: 1) } ?? CollectionText.scansNoun(count: 1)
-        return String(
-            localized: "This \(noun) moves to Trash. You can restore it for \(Lifecycle.trashDays) days.",
-            bundle: #bundle)
+        MoveToTrashText.message(count: 1, collection: scan?.collection)
     }
 
     /// The confirmation's Move to Trash. True once the scan is in Trash (the view pops); false with `editAlert` when

@@ -53,14 +53,6 @@ struct ViewerBottomBar: View {
             diameter: Self.trashDiameter,
             action: { isConfirmingTrash = true }
         )
-        .sensoryFeedback(.warning, trigger: isConfirmingTrash) { _, isConfirming in isConfirming }
-        // Anchored to the button, the dialog comes up from it as a popover with no Cancel, like Photos (06-04).
-        .confirmationDialog(
-            Text("Move to Trash", bundle: #bundle), isPresented: $isConfirmingTrash, titleVisibility: .hidden
-        ) {
-            Button(action: onTrash) { Text("Move to Trash", bundle: #bundle) }
-        } message: {
-            Text(trashMessage)
-        }
+        .moveToTrashConfirmation(isPresented: $isConfirmingTrash, message: trashMessage, move: onTrash)
     }
 }
