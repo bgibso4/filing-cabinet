@@ -22,7 +22,7 @@ struct HomeFavoritesRow: View {
     private static let cardSize = CGSize(width: 148, height: 96)
     private static let largeCardSize = CGSize(width: 240, height: 155)
     // Home.dc.html line 89: 8 pt between cards, which scroll under the screen's 16 pt margins.
-    private static let cardGap: CGFloat = 8
+    private static let cardGap = Tokens.Spacing.s2
     // Home.dc.html line 90: 6 pt between a card's picture and its title.
     private static let titleGap: CGFloat = 6
 
@@ -48,7 +48,6 @@ struct HomeFavoritesRow: View {
                         .font(Tokens.Typography.headline)
                         .foregroundStyle(Tokens.Color.textSecondary)
                 }
-                .frame(minHeight: Self.headerMinHeight)
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)

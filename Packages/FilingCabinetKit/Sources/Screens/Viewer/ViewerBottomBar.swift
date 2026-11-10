@@ -17,7 +17,7 @@ struct ViewerBottomBar: View {
     // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons, 4 pt apart.
     private static let pillPadding: CGFloat = 10
     private static let pillButtonDiameter: CGFloat = 52
-    private static let pillButtonGap: CGFloat = 4
+    private static let pillButtonGap = Tokens.Spacing.s1
     // ScanView.dc.html line 267: Trash is 56 pt.
     private static let trashDiameter: CGFloat = 56
 

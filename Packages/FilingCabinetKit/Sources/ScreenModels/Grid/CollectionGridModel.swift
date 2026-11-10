@@ -171,21 +171,25 @@ public final class CollectionGridModel {
 
     /// A tile's VoiceOver Favorite or Remove from Favorites: flips the scan's heart. A failed write shows the edit
     /// alert and changes nothing (P2). In Favorites, a kept tile favourited again goes back to its place rather than
-    /// last, so a slip is one tap to undo (M9).
+    /// last, so a slip is one tap to undo (M9): a second write. Should only that one fail, the alert shows and the scan
+    /// stays a favourite, last.
     package func toggleFavorite(_ id: ScanID) {
         let shown = built.shown
         guard let scan = shown.first(where: { $0.id == id }) else { return }
         let isFavorite = !scan.isFavorite
         do {
             try library.setFavorite(isFavorite, for: [id])
-            if isFavorite && kind == .favorites {
-                try library.reorderFavorites(shown.filter { $0.isFavorite || $0.id == id }.map(\.id))
-            }
         } catch {
             editAlert = EditAlert()
             return
         }
         analytics.send(.favoritesChanged(isFavorite: isFavorite, count: 1))
+        guard isFavorite && kind == .favorites else { return }
+        do {
+            try library.reorderFavorites(shown.filter { $0.isFavorite || $0.id == id }.map(\.id))
+        } catch {
+            editAlert = EditAlert()
+        }
     }
 
     /// The edit alert's OK.
@@ -208,6 +212,8 @@ public final class CollectionGridModel {
         let built = BuiltShelf(
             scans: scans, lifespans: lifespans, day: day, shelf: shelf, shown: shown(on: shelf))
         builtShelf = built
+        // The one place Favorites remembers what it showed (M9).
+        if kind == .favorites { lastShown = built.shown.map(\.id) }
         return built
     }
 
@@ -217,9 +223,7 @@ public final class CollectionGridModel {
         case .recent: return shelf.recent
         case .all: return shelf.visible
         case .favorites:
-            let shown = Self.keepingUnfavorited(shelf.favorites, lastShown: lastShown, visible: shelf.visible)
-            lastShown = shown.map(\.id)
-            return shown
+            return Self.keepingUnfavorited(shelf.favorites, lastShown: lastShown, visible: shelf.visible)
         }
     }
 

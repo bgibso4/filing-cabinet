@@ -3,10 +3,10 @@ import Foundation
 import Library
 import Observation
 
-/// What Home shows: the first favourites, the collections with their counts, and the Recent and All Scans views. With no visible scan
-/// it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read from the
-/// library and from `Today`, so the numbers move when either does, except while held: under the capture layer Home
-/// keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
+/// What Home shows: the first favourites, the collections with their counts, and the Recent and All Scans views. With
+/// no visible scan it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read
+/// from the library and from `Today`, so the numbers move when either does, except while held: under the capture layer
+/// Home keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
 @Observable
 public final class HomeModel {
     private let library: any ScanLibrary

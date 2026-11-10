@@ -83,3 +83,24 @@ private func favorites(_ titles: String...) -> [ScanSummary] {
     harness.grid.toggleFavorite(harness.grid.tiles[0].id)
     #expect(harness.grid.tiles.map(\.isUnfavorited) == [false])
 }
+
+/// Re-favouriting with a favourite in Trash: the visible order comes back exactly and no two favourites share a number,
+/// but the trashed one now sits before the re-favourited scan, not after it (un-favouriting cleared the scan's number,
+/// M1). So after a Restore, T shows before B. Pinned here for Task 6.
+@Test func refavoritingWithAFavoriteInTrash() throws {
+    var made = favorites("A", "B", "T", "C")
+    made[2].trashedDay = CalendarDay(year: 2026, month: 10, day: 10)
+    let harness = GridHarness(.favorites, made)
+    #expect(harness.grid.tiles.map(\.title) == ["A", "B", "C"])
+    let scanB = harness.grid.tiles[1].id
+
+    harness.grid.toggleFavorite(scanB)
+    harness.grid.toggleFavorite(scanB)
+
+    #expect(harness.grid.tiles.map(\.title) == ["A", "B", "C"])
+    let numbers = harness.library.scans.compactMap(\.favoriteOrder)
+    #expect(numbers.count == 4)
+    #expect(Set(numbers).count == numbers.count)
+    let everyFavorite = harness.library.scans.filter(\.isFavorite).sorted(by: ScanSummary.favoritesOrder)
+    #expect(everyFavorite.map(\.id) == [made[0].id, made[2].id, scanB, made[3].id])
+}

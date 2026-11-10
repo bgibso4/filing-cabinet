@@ -53,8 +53,8 @@ Packages/FilingCabinetKit/Sources/Screens/ ScreensTests
 Packages/FilingCabinetKit/Tests/ScreensTests/ ScreensTests
 
 # Screens (views in Screens/, their models in ScreenModels/).
-Packages/FilingCabinetKit/Sources/Screens/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests
-Packages/FilingCabinetKit/Sources/ScreenModels/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests
+Packages/FilingCabinetKit/Sources/Screens/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests FavoritesJourneyTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Trash/ TrashJourneyTests TrashSnapshotTests CleanupJourneyTests FavoritesJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Grid/ BrowseJourneyTests GridSelectJourneyTests GridSnapshotTests GridPerformanceTests ThumbnailRedrawTests FavoritesJourneyTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Grid/ BrowseJourneyTests GridSelectJourneyTests GridSnapshotTests GridPerformanceTests ThumbnailRedrawTests FavoritesJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Home/ HomeJourneyTests BrowseJourneyTests CleanupJourneyTests HomeSnapshotTests FavoritesJourneyTests
