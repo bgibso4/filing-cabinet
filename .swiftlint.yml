@@ -3,6 +3,7 @@
 excluded:
   - "**/Generated/**"
   - "**/.build"
+  - .claude/worktrees
   - scripts/lint-fixtures
   - scripts/lint-negatives
 
