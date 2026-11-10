@@ -227,7 +227,12 @@ public struct ViewerView: View {
             Group {
                 switch model.mode {
                 case .library:
-                    ViewerBottomBar(onDetails: onDetails, trashMessage: model.trashMessage, onTrash: moveToTrash)
+                    ViewerBottomBar(
+                        isFavorite: model.isFavorite,
+                        onToggleFavorite: model.toggleFavorite,
+                        onDetails: onDetails,
+                        trashMessage: model.trashMessage,
+                        onTrash: moveToTrash)
                 case .trash:
                     TrashViewerChrome(model: model, onRestored: onRestored)
                 }

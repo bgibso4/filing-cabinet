@@ -74,6 +74,31 @@ final class GridSnapshotTests: XCTestCase {
             testName: "grid_select")
     }
 
+    /// 05-07 and 05-12: the mocks' favourites the home set has (it has no Laptop warranty or Wifi password), in the
+    /// mocks' order, each with its heart.
+    @MainActor
+    func testFavorites() throws {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(
+            true,
+            for: Fixtures.homeScans(
+                titled: "Driver’s license",
+                "Lease 2026",
+                "Insurance card",
+                "Gym membership",
+                "Vaccine record",
+                "Car registration",
+                "Library card",
+                "Passport"))
+        try SnapshotHost.assertScreen(grid(.favorites, library), testName: "grid_favorites")
+    }
+
+    /// Favorites with none: the heart badge, "No favorites yet" (Collection.dc.html's favorites set).
+    @MainActor
+    func testFavoritesEmpty() throws {
+        try SnapshotHost.assertScreen(grid(.favorites, Fixtures.library(.home)), testName: "grid_favorites_empty")
+    }
+
     @MainActor
     func testEmpty() throws {
         try SnapshotHost.assertScreen(grid(.collection(.receipts), FakeLibrary()), testName: "grid_empty")

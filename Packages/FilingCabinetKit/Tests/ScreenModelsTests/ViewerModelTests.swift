@@ -264,3 +264,36 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
     #expect(viewer.confirmation == nil)
     #expect(!viewer.isMissing)
 }
+
+// MARK: Favorite
+
+@Test func toggleFavoriteFlipsIt() {
+    let scan = summary("Lease 2026", .documents, pages: 3)
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, analytics: analytics)
+    #expect(!viewer.isFavorite)
+
+    viewer.toggleFavorite()
+    #expect(viewer.isFavorite)
+    #expect(analytics.events == [.favoritesChanged(isFavorite: true, count: 1)])
+
+    viewer.toggleFavorite()
+    #expect(!viewer.isFavorite)
+    #expect(analytics.events.last == .favoritesChanged(isFavorite: false, count: 1))
+}
+
+@Test func failedFavoriteShowsTheAlert() {
+    let scan = summary("Lease 2026", .documents, pages: 3)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, library: library, analytics: analytics)
+    library.failNextEdit = .writeFailed
+
+    viewer.toggleFavorite()
+
+    #expect(!viewer.isFavorite)
+    #expect(viewer.editAlert == EditAlert())
+    #expect(analytics.events.isEmpty)
+    viewer.dismissEditAlert()
+    #expect(viewer.editAlert == nil)
+}

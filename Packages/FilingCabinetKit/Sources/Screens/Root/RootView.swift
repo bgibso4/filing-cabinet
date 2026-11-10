@@ -22,6 +22,7 @@ public struct RootView: View {
         NavigationStack(path: $path) {
             HomeView(
                 model: dependencies.home,
+                thumbnails: dependencies.thumbnails,
                 canScan: canScan,
                 onScan: { Task { await flow.scan(from: .home, preselected: nil) } },
                 onOpen: { path.append($0) }

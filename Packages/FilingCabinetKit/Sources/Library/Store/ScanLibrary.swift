@@ -50,7 +50,6 @@ public protocol ScanLibrary: AnyObject {
     /// left alone. Numbers never clash, Trash included (M3); a stored tie is renumbered first (B11).
     func setFavorite(_ isFavorite: Bool, for ids: [ScanID]) throws(LibraryError)
 
-    // periphery:ignore - Task 6 (Plan 4) calls it from Favorites; remove this when it lands
     /// Puts the visible favourites in the order of `ids`. Favourites in Trash keep their places; a visible favourite
     /// missing from `ids` keeps its place after them; an id that isn't a favourite is ignored (M3).
     func reorderFavorites(_ ids: [ScanID]) throws(LibraryError)

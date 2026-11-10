@@ -43,7 +43,7 @@ struct GridTileView: View {
                 )
                 .aspectRatio(shape == .card ? Self.cardAspect : Self.pageAspect, contentMode: .fit)
                 .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
-                .favoriteMark(tile.isFavorite)
+                .favoriteMark(tile.isFavorite, isUnfavorited: tile.isUnfavorited)
                 .selectionMark(isSelecting: isSelecting, isSelected: isSelected)
                 HStack(spacing: Self.dotGap) {
                     if let dot = tile.dot { CollectionDot(collection: dot) }

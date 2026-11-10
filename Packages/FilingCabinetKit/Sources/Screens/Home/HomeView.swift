@@ -4,10 +4,11 @@ import ScreenModels
 import SwiftUI
 
 /// Home: the title, resting large under the bar's Settings gear and collapsing on scroll like Passwords' root (B9,
-/// M11), the five collections with their counts, the Recent, All Scans and Trash views, and the Scan button. Before
+/// M11), the Favorites row (02-01), the five collections with their counts, the Recent, All Scans and Trash views, and the Scan button. Before
 /// the first scan it shows the collections' descriptions instead.
 public struct HomeView: View {
     private let model: HomeModel
+    private let thumbnails: any ThumbnailProviding
     private let canScan: Bool
     private let onScan: () -> Void
     private let onOpen: (AppRoute) -> Void
@@ -27,9 +28,14 @@ public struct HomeView: View {
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
-        model: HomeModel, canScan: Bool, onScan: @escaping () -> Void, onOpen: @escaping (AppRoute) -> Void
+        model: HomeModel,
+        thumbnails: any ThumbnailProviding,
+        canScan: Bool,
+        onScan: @escaping () -> Void,
+        onOpen: @escaping (AppRoute) -> Void
     ) {
         self.model = model
+        self.thumbnails = thumbnails
         self.canScan = canScan
         self.onScan = onScan
         self.onOpen = onOpen
@@ -68,6 +74,15 @@ public struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let banner = model.banner {
                 cleanupBanner(banner)
+            }
+            let favorites = model.favorites
+            if !favorites.isEmpty {
+                HomeFavoritesRow(
+                    favorites: favorites,
+                    opensGrid: model.favoritesOpensGrid,
+                    thumbnails: thumbnails,
+                    onOpenGrid: { onOpen(.favorites) },
+                    onOpen: { onOpen(.scan($0)) })
             }
             Text("Collections", bundle: #bundle)
                 .font(Tokens.Typography.title2)
@@ -154,21 +169,33 @@ private final class PreviewLibrary: ScanLibrary {
     func searchText(for id: ScanID) -> String? { nil }
 }
 
+/// No thumbnails: the preview library has no scans.
+private struct PreviewThumbnails: ThumbnailProviding {
+    func cachedThumbnail(for id: ScanID, page: Int) -> CGImage? { nil }
+    func thumbnail(for id: ScanID, page: Int) async -> CGImage? { nil }
+}
+
 @MainActor
 private func previewModel() -> HomeModel {
     HomeModel(library: PreviewLibrary(), today: Today(clock: .system), calendar: AppClock.system.calendar)
 }
 
 #Preview("Light") {
-    NavigationStack { HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in }) }
+    NavigationStack {
+        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+    }
 }
 
 #Preview("Dark") {
-    NavigationStack { HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in }) }
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Accessibility 5") {
-    NavigationStack { HomeView(model: previewModel(), canScan: true, onScan: {}, onOpen: { _ in }) }
-        .dynamicTypeSize(.accessibility5)
+    NavigationStack {
+        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+    }
+    .dynamicTypeSize(.accessibility5)
 }

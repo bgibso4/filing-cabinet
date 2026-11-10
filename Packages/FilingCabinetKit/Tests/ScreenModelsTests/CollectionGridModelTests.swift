@@ -201,12 +201,18 @@ struct GridHarness {
     let analytics = RecordingAnalytics()
     let library: FakeLibrary
     let grid: CollectionGridModel
+    private let clock = AppClock.fixed(noon, calendar: utc)
 
     init(_ kind: GridKind, _ summaries: [ScanSummary]) {
-        let clock = AppClock.fixed(noon, calendar: utc)
         library = FakeLibrary(scans: summaries, clock: clock)
         grid = CollectionGridModel(
             kind: kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
+    }
+
+    /// The same grid opened again: a new model over the same library, as the screen builds when it is pushed.
+    func reopened() -> CollectionGridModel {
+        CollectionGridModel(
+            kind: grid.kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
     }
 }
 

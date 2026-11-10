@@ -11,9 +11,17 @@ public enum AccessibilityID {
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
         public static let cleanupBanner = "home.cleanupBanner"
+        /// "Favorites ›" over the Favorites row, only with 3 or more favourites (M18), so not in `all`.
+        public static let favoritesLink = "home.favoritesLink"
+        /// Every Favorites card's identifier starts with this; cards are checked by prefix, not listed in `all`.
+        public static let favoritePrefix = "home.favorite."
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
+        }
+
+        public static func favorite(_ id: ScanID) -> String {
+            favoritePrefix + id.uuid.uuidString
         }
 
         public static var all: [String] {
@@ -103,10 +111,12 @@ public enum AccessibilityID {
         public static let strip = "viewer.strip"
         /// The bottom bar's Info button, which opens Details as the header pill does.
         public static let details = "viewer.details"
+        /// The heart, left of Info in the centre pill (06-01).
+        public static let favorite = "viewer.favorite"
         public static let trash = "viewer.trash"
 
         public static var all: [String] {
-            [back, header, page, strip, details, trash]
+            [back, header, page, strip, details, favorite, trash]
         }
     }
 
@@ -204,7 +214,8 @@ public enum AccessibilityID {
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.
-        Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
+        Home.all + [Home.favoritesLink] + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip]
+            + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all

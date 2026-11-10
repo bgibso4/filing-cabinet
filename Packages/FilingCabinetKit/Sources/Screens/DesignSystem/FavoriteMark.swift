@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// The heart on a favourite tile's thumbnail (Collection.dc.html line 64): a white heart on a dark round badge, 5 pt in
-/// from the top-right corner. A mark, not a button (M13): the tile's label says "favorite", so VoiceOver skips it.
+/// from the top-right corner; empty on a tile Favorites keeps after un-favouriting (M9). A mark, not a button (M13):
+/// the tile's label says "favorite" or "not a favorite", so VoiceOver skips it.
 struct FavoriteMark: View {
     let isFilled: Bool
 
@@ -29,10 +30,11 @@ struct FavoriteMark: View {
 }
 
 extension View {
-    /// A favourite tile's thumbnail with the heart in its top trailing corner. Apply it after clipping the thumbnail.
-    func favoriteMark(_ isFavorite: Bool) -> some View {
+    /// A favourite tile's thumbnail with the heart in its top trailing corner, or an empty heart on a tile Favorites
+    /// keeps (M9). Apply it after clipping the thumbnail.
+    func favoriteMark(_ isFavorite: Bool, isUnfavorited: Bool = false) -> some View {
         overlay(alignment: .topTrailing) {
-            if isFavorite { FavoriteMark(isFilled: true) }
+            if isFavorite || isUnfavorited { FavoriteMark(isFilled: isFavorite) }
         }
     }
 }

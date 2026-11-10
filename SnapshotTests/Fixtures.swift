@@ -39,11 +39,16 @@ enum Fixtures {
         Array(homeEntries.filter { $0.image.hasPrefix("scan-r-") }.prefix(count).map(\.summary.id))
     }
 
+    /// The home set's first scan with each title, in the order given: favourites for Home's row and the Favorites grid.
+    static func homeScans(titled titles: String...) -> [ScanID] {
+        titles.compactMap { title in homeEntries.first { $0.title == title }?.summary.id }
+    }
+
     static let thumbnails = FakeThumbnails(images: allImages)
     static let pages = FakePageImages(images: allImages)
 
-    /// ScanView.dc.html line 332: the lease, three pages, kept forever.
-    static let lease = viewerScan("Lease 2026", .documents, daysAgo: 7, pageCount: 3)
+    /// ScanView.dc.html line 332: the lease, three pages, kept forever, a favourite (06-01's filled heart).
+    static let lease = viewerScan("Lease 2026", .documents, daysAgo: 7, pageCount: 3, favoriteOrder: 0)
     /// ScanView.dc.html line 330: added Jul 19, 2026, so 5 days left of its 90 on Oct 12.
     static let receipt = viewerScan("Corner Market", .receipts, daysAgo: 85, pageCount: 1)
 
@@ -73,6 +78,8 @@ enum Fixtures {
     private struct Entry {
         let summary: ScanSummary
         let image: String
+        /// The summary's title, which only the package can read.
+        let title: String
     }
 
     // Collection.dc.html lines 219-222: the receipt stores and the ages of the 23 receipts. Tallow Electric has no
@@ -170,7 +177,7 @@ enum Fixtures {
             expiryOverride: nil,
             pageCount: 1,
             trashedDay: trashedDay)
-        return Entry(summary: summary, image: image)
+        return Entry(summary: summary, image: image, title: title)
     }
 
     /// Moved to Trash `30 - daysLeft` days ago, from a scan made a while before.
@@ -191,7 +198,7 @@ enum Fixtures {
     }
 
     private static func viewerScan(
-        _ title: String, _ collection: BuiltInCollection, daysAgo: Int, pageCount: Int
+        _ title: String, _ collection: BuiltInCollection, daysAgo: Int, pageCount: Int, favoriteOrder: Int? = nil
     ) -> ScanSummary {
         ScanSummary(
             id: ScanID(),
@@ -199,7 +206,8 @@ enum Fixtures {
             collection: collection,
             scannedAt: clock.calendar.date(byAdding: .day, value: -daysAgo, to: clock.now()) ?? clock.now(),
             expiryOverride: nil,
-            pageCount: pageCount)
+            pageCount: pageCount,
+            favoriteOrder: favoriteOrder)
     }
 
     // MARK: Images

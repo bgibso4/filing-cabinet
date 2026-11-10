@@ -24,8 +24,8 @@ public final class ViewerModel {
     /// Whether the current page is zoomed past 1×; the page writes it.
     package var isPageZoomed = false
 
-    /// Set when Move to Trash fails to save; the scan stays (M18).
-    private var moveAlert: EditAlert?
+    /// Set when Move to Trash or the heart fails to save; the scan stays as it was (M18).
+    private var ownAlert: EditAlert?
 
     package let id: ScanID
     package let mode: Mode
@@ -85,7 +85,7 @@ public final class ViewerModel {
     }
 
     /// Set when an edit fails to save; the scan stays where it is (M18).
-    package var editAlert: EditAlert? { moveAlert ?? trash?.editAlert }
+    package var editAlert: EditAlert? { ownAlert ?? trash?.editAlert }
 
     package var pageLabel: String {
         String(localized: "Page \(currentPage + 1) of \(pageCount)", bundle: #bundle)
@@ -122,7 +122,7 @@ public final class ViewerModel {
         do {
             try library.moveToTrash([id])
         } catch {
-            moveAlert = EditAlert()
+            ownAlert = EditAlert()
             return false
         }
         analytics.send(.scanMovedToTrash(collection: scan.collection))
@@ -131,8 +131,27 @@ public final class ViewerModel {
 
     /// The edit alert's OK.
     package func dismissEditAlert() {
-        moveAlert = nil
+        ownAlert = nil
         trash?.dismissEditAlert()
+    }
+
+    // MARK: Favorite
+
+    /// The bottom bar's heart (06-01).
+    package var isFavorite: Bool { scan?.isFavorite ?? false }
+
+    /// The heart: favourites the scan, or takes it out of Favorites. A failed write shows the edit alert and changes
+    /// nothing, as Move to Trash does.
+    package func toggleFavorite() {
+        guard let scan else { return }
+        let isFavorite = !scan.isFavorite
+        do {
+            try library.setFavorite(isFavorite, for: [id])
+        } catch {
+            ownAlert = EditAlert()
+            return
+        }
+        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: 1))
     }
 
     // MARK: Opened from Trash

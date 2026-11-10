@@ -3,7 +3,7 @@ import Foundation
 import Library
 import Observation
 
-/// What Home shows: the collections with their counts, and the Recent and All Scans views. With no visible scan
+/// What Home shows: the first favourites, the collections with their counts, and the Recent and All Scans views. With no visible scan
 /// it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read from the
 /// library and from `Today`, so the numbers move when either does, except while held: under the capture layer Home
 /// keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
@@ -67,6 +67,14 @@ public final class HomeModel {
         ]
     }
 
+    /// Favorites' first 10, in its own order, for the row under the title (02-01, M18); empty without favourites.
+    package var favorites: [HomeFavorite] {
+        shelf.favorites.prefix(Self.favoritesShown).map { HomeFavorite(id: $0.id, title: $0.title) }
+    }
+
+    /// "Favorites ›" opens the Favorites grid from 3 favourites; with 1 or 2 the header is plain (M18).
+    package var favoritesOpensGrid: Bool { shelf.favorites.count >= Self.favoritesForLink }
+
     /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
     package func hold() {
         // A second hold keeps the first snapshot, so a save made under the layer still counts as new on release.
@@ -87,6 +95,10 @@ public final class HomeModel {
             pulses[collection, default: 0] += 1
         }
     }
+
+    // M18: the row shows at most 10 favourites, and links to the grid from 3.
+    private static let favoritesShown = 10
+    private static let favoritesForLink = 3
 
     private var shelf: LibraryShelf {
         LibraryShelf(

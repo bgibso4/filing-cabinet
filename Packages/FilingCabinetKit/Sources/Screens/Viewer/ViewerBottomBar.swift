@@ -1,9 +1,11 @@
 import Core
 import SwiftUI
 
-/// The viewer's bottom bar (ScanView.dc.html lines 260-268): Info in a glass pill at the centre, which opens Details,
-/// and Trash at the trailing edge, which asks first (06-04). Share and Favorite come with Plan 4.
+/// The viewer's bottom bar (ScanView.dc.html lines 260-268): the heart and Info in a glass pill at the centre (06-01),
+/// and Trash at the trailing edge, which asks first (06-04). Info opens Details. Share comes later in Plan 4.
 struct ViewerBottomBar: View {
+    let isFavorite: Bool
+    let onToggleFavorite: () -> Void
     let onDetails: () -> Void
     /// What Trash's confirmation says.
     let trashMessage: String
@@ -12,9 +14,10 @@ struct ViewerBottomBar: View {
 
     @State private var isConfirmingTrash = false
 
-    // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons.
+    // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons, 4 pt apart.
     private static let pillPadding: CGFloat = 10
-    private static let infoDiameter: CGFloat = 52
+    private static let pillButtonDiameter: CGFloat = 52
+    private static let pillButtonGap: CGFloat = 4
     // ScanView.dc.html line 267: Trash is 56 pt.
     private static let trashDiameter: CGFloat = 56
 
@@ -26,21 +29,36 @@ struct ViewerBottomBar: View {
     }
 
     private var infoPill: some View {
-        Button(action: onDetails) {
-            Image(systemName: "info.circle")
+        HStack(spacing: Self.pillButtonGap) {
+            pillButton(systemImage: isFavorite ? "heart.fill" : "heart", action: onToggleFavorite)
+                .accessibilityLabel(
+                    isFavorite
+                        ? Text("Remove from Favorites", bundle: #bundle) : Text("Add to Favorites", bundle: #bundle)
+                )
+                .accessibilityAddTraits(isFavorite ? .isSelected : [])
+                .accessibilityIdentifier(AccessibilityID.Viewer.favorite)
+                // Requirements 06 · Haptics: a light tap on favouriting, as on choosing from a menu.
+                .sensoryFeedback(.selection, trigger: isFavorite)
+            pillButton(systemImage: "info.circle", action: onDetails)
+                .accessibilityLabel(Text("Details", bundle: #bundle))
+                .accessibilityIdentifier(AccessibilityID.Viewer.details)
+        }
+        .padding(.horizontal, Self.pillPadding)
+        .padding(.vertical, (Self.trashDiameter - Self.pillButtonDiameter) / 2)
+        .glassEffect(.regular.interactive(), in: .capsule)
+    }
+
+    private func pillButton(systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
                 // Title 2 is closest to the mock's 24 pt glyph.
                 .font(Tokens.Typography.title2.weight(.regular))
                 .foregroundStyle(Tokens.Color.textPrimary)
-                .frame(minWidth: Self.infoDiameter, minHeight: Self.infoDiameter)
+                .frame(minWidth: Self.pillButtonDiameter, minHeight: Self.pillButtonDiameter)
                 .fixedSize()
-                .padding(.horizontal, Self.pillPadding)
-                .padding(.vertical, (Self.trashDiameter - Self.infoDiameter) / 2)
-                .glassEffect(.regular.interactive(), in: .capsule)
-                .contentShape(.capsule)
+                .contentShape(.circle)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("Details", bundle: #bundle))
-        .accessibilityIdentifier(AccessibilityID.Viewer.details)
     }
 
     private var trashButton: some View {

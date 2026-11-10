@@ -12,7 +12,8 @@ final class HomeSnapshotTests: XCTestCase {
     @MainActor
     private func home(_ library: FakeLibrary) -> some View {
         let model = HomeModel(library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
-        return rooted(HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in }))
+        return rooted(
+            HomeView(model: model, thumbnails: Fixtures.thumbnails, canScan: true, onScan: {}, onOpen: { _ in }))
     }
 
     @MainActor
@@ -28,6 +29,23 @@ final class HomeSnapshotTests: XCTestCase {
     @MainActor
     func testHomeWithScans() throws {
         try SnapshotHost.assertScreen(home(Fixtures.library(.home)), testName: "home_scans")
+    }
+
+    /// 02-01 with the mocks' first three favourites: "Favorites ›" links to the grid (M18).
+    @MainActor
+    func testHomeWithFavorites() throws {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(
+            true, for: Fixtures.homeScans(titled: "Driver’s license", "Lease 2026", "Insurance card"))
+        try SnapshotHost.assertScreen(home(library), testName: "home_favorites")
+    }
+
+    /// Home.dc.html with two favourites: the header is plain, with no chevron (M18).
+    @MainActor
+    func testHomeWithTwoFavorites() throws {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(true, for: Fixtures.homeScans(titled: "Driver’s license", "Lease 2026"))
+        try SnapshotHost.assertScreen(home(library), testName: "home_two_favorites")
     }
 
     /// 02-04 and 02-07 without Search and Favorites (later plans): notes are blocked, so four Throwaways that went to
@@ -49,6 +67,8 @@ final class HomeSnapshotTests: XCTestCase {
         await banner.refreshAuthorization()
         let model = HomeModel(library: library, today: today, calendar: Fixtures.clock.calendar, banner: banner)
         try SnapshotHost.assertScreen(
-            rooted(HomeView(model: model, canScan: true, onScan: {}, onOpen: { _ in })), testName: "home_banner")
+            rooted(
+                HomeView(model: model, thumbnails: Fixtures.thumbnails, canScan: true, onScan: {}, onOpen: { _ in })),
+            testName: "home_banner")
     }
 }

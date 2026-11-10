@@ -222,3 +222,43 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
 
     #expect(home.banner == nil)
 }
+
+// MARK: Favorites
+
+/// `count` receipts titled "Favorite 0"…, numbered so Favorites' order is `order`'s.
+private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSummary] {
+    (0..<count).map { index in
+        ScanSummary(
+            id: ScanID(),
+            title: "Favorite \(index)",
+            collection: .receipts,
+            scannedAt: noon,
+            expiryOverride: nil,
+            pageCount: 1,
+            favoriteOrder: order(index))
+    }
+}
+
+@Test func favoritesRowFollowsFavoritesOrder() {
+    // Numbered backwards: the last made is the first favourite.
+    let home = model(scans(.wallet, 2) + favorites(3) { 2 - $0 })
+    #expect(home.favorites.map(\.title) == ["Favorite 2", "Favorite 1", "Favorite 0"])
+}
+
+@Test func rowShowsAtMostTen() {
+    let all = favorites(12)
+    let home = model(all)
+    #expect(home.favorites.map(\.id) == all.prefix(10).map(\.id))
+}
+
+@Test func linkOnlyFromThree() {
+    #expect(!model(favorites(1)).favoritesOpensGrid)
+    #expect(!model(favorites(2)).favoritesOpensGrid)
+    #expect(model(favorites(3)).favoritesOpensGrid)
+}
+
+@Test func noFavoritesNoRow() {
+    let home = model(scans(.receipts, 4))
+    #expect(home.favorites.isEmpty)
+    #expect(!home.favoritesOpensGrid)
+}
