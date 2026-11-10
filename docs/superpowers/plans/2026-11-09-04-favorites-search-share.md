@@ -37,6 +37,7 @@ None open. All four were answered on 2026-11-10 (B7–B10, under Agreed).
 | B11 | **Two favourites never share a number, and nothing crashes if they somehow do** (Ben, 2026-11-10). The store enforces it (M3). If a tie ever turns up, the tied favourites are shown one after the other, and the next write renumbers them. | 2, 3 |
 | B9 | **Search's presentation is decided after Task 1's spike** (was Q4; Ben, 2026-11-10). Keep 02-01's look, with the field under the title, for now. Ben may later move search to the bottom if Apple Intelligence makes search good. That is a later spike, not this plan, and not an issue yet. | 1, 9 |
 | B10 | **No Sort** (was Q2; Ben, 2026-11-10, after the high-fidelity mocks: "I don't think we need the sort. I don't think it's gonna add much for us."). Neither 05-01's sort button nor 05-08's menu is built. Every grid stays newest first, and Favorites is always in your own order, dragged. The bar keeps #68's Select alone. | 3, 6 |
+| B12 | **The Select bar is A1** (was P4; Ben, 2026-11-10, from the mock https://claude.ai/artifact/4ANmKiX4mA8oraWp4m3Vnm): Share in a 56 pt glass circle at the leading edge, Move to Trash in the middle as a regular Liquid Glass pill with ink text (not the filled black pill), Favorite in a 56 pt glass circle at the trailing edge. Ben: "I don't really like the dark and white buttons down there." Where "Move 387 to Trash" doesn't fit (thousands, larger text), the pill says "Move to Trash"; the count is under the title. | 12 |
 
 ### My calls (not discussed; veto any before its task starts)
 
@@ -401,12 +402,12 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 
 **Interfaces:**
 - Consumes: #68's selection (the selected ids, its bottom bar), `ScanLibrary.setFavorite`, `ScanPDF`.
-- Produces: in the selection's bar, Share (`ShareLink(items:)`, one PDF per scan, M10's names) and Favorite: "Favorite" when any selected scan isn't one, "Remove from Favorites" when all are. Favouriting ends select mode, as #68's other actions do. No long-press menu is added (P1).
+- Produces: the selection's bar per B12 (A1): Share (`ShareLink(items:)`, one PDF per scan, M10's names) in a glass circle leading, Move to Trash as a glass pill with ink text in the middle (no longer `FilledPillButton`; Scan keeps it), and Favorite in a glass circle trailing: "Favorite" when any selected scan isn't one, "Remove from Favorites" when all are. Favouriting ends select mode, as #68's other actions do. No long-press menu is added (P1).
 
-- [ ] **Step 1: Read #68 as merged** and fit this task's names to it. #68's bar is one filled pill, Move to Trash, in Scan's place (`CollectionGridView.moveBar`). If it has no room for two more actions, stop and ask Ben with a mock rather than choosing (P4).
+- [ ] **Step 1: Read #68 as merged** and fit this task's names to it. #68's bar is one filled pill, Move to Trash, in Scan's place (`CollectionGridView.moveBar`). Ben chose the layout (B12, A1); no stop needed.
 - [ ] **Step 2: Write the failing tests:** the selection model's `favoriteLabelFollowsTheSelection` and `favoritingSeveralKeepsScreenOrder`; `FavoritesJourneyTests.testFavoritingASelection` (select 3 in All Scans, Favorite, each tile has a heart and Home's row has 3 cards). Run. Expected: FAIL.
 - [ ] **Step 3: Implement.**
-- [ ] **Step 4: Re-record** #68's selecting snapshot(s) with the two new actions; open them and list the paths.
+- [ ] **Step 4: Re-record** `grid_select` (light, dark, ax5) with A1's bar, and add a model test that the pill's title drops the count when it doesn't fit (or the view picks "Move to Trash" via `ViewThatFits`); open them against the A1 mock and list the paths.
 - [ ] **Step 5: Run** `make fast` and `make full ONLY="FilingCabinetSnapshotTests/GridSnapshotTests FilingCabinetUITests/FavoritesJourneyTests FilingCabinetUITests/BrowseJourneyTests"`. Expected: PASS.
 - [ ] **Step 6: Commit** `Grid: share and favourite a selection`, naming each reference.
 
@@ -431,8 +432,8 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 | P1 | Library grid tiles get no long-press menu. #68 added none and the mocks draw one only in Trash (09-03). You favourite from the viewer, a selection and VoiceOver; the drag in Favorites is a plain long-press lift. | Mine, pre-flight 2026-11-10; Ben may veto | 1, 3, 6, 12 |
 | P2 | A tile's VoiceOver Favorite calls `CollectionGridModel.toggleFavorite`, so the alert and analytics live in one place. | Mine, pre-flight | 4 |
 | P3 | Three Review Focus numbers in Tasks 5, 6 and 10 corrected (6, 3, 5). | Mine, pre-flight | 5, 6, 10 |
-| P4 | Task 12 keeps its stop: #68's selection bar is one pill, so Share and Favorite beside Move to Trash need Ben's choice from a mock. | Mine, pre-flight; Ben decides | 12 |
+| P4 | Task 12's bar needed Ben's choice: settled as B12 (A1). | Ben, 2026-11-10 | 12 |
 | P5 | Favorites doesn't drag while selecting: a tap ticks, as #68. | Mine, pre-flight | 1, 6 |
 | P6 | CI's `SHARD=main` already takes every class outside the scan and browse shards, so `ExportJourneyTests` needs no Makefile change. | Mine, pre-flight | 11 |
-| P7 | If Ben hasn't chosen the selection bar (P4, mock: https://claude.ai/artifact/4ANmKiX4mA8oraWp4m3Vnm) when Task 12 comes up, Task 12 waits and Task 13's docs and checks go first. | Mine, pre-flight | 12, 13 |
+| P7 | (Withdrawn: Ben chose A1, B12, so Task 12 doesn't wait.) | Mine, pre-flight | 12 |
 | P8 | With Ben's phone away, Task 1's search timing runs on the simulator with half the budget (8 ms) as margin; the phone number is taken in Task 13 and E3 updated. | Mine, pre-flight | 1, 8, 13 |
