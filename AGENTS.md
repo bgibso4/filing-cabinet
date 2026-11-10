@@ -17,7 +17,8 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
   Sources/Screens/           SwiftUI views and design system. iOS-only
-    DesignSystem/            tokens and shared views; HeaderScrollView and HeaderTitle give every screen its header
+    DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
+                             own titles, styled by HeaderAppearance)
     DesignSystem/Generated/  generated tokens (never hand-edit)
     Details/                 DetailsPanel (the panel that replaces the system sheet), DetailsGrabber
     Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
