@@ -101,7 +101,7 @@ Before release, separately: the issues labelled before-release (#25, #26, #40, #
 - Snapshots: every changed reference is named in its commit message with the reason. Alerts, menus, the share sheet and the keyboard are never snapshotted.
 - UI tests: waits go through `UITests/Support/Wait.swift`; seeded tests through `UITests/Support/Seeding.swift`. Classes launch once; `fresh: true` only when a cold process is the point. Prove logic in Fast, looks in snapshots, and only flows in UI tests. Never widen a threshold or timeout; never ship a known flake.
 - No document content in analytics or logs (`privacy: .private` for titles and text, as today).
-- Every simulator run uses `SIM_DEVICE="FC iPhone 17"`. A task finishes on `make fast`, `make build`, `make lint`, `make unused` and `make full ONLY="…"` for the classes it lists.
+- Every simulator run uses `SIM_DEVICE="FC iPhone 17"`. A task finishes on `make fast`, `make build`, `make lint`, `make unused`, `make full ONLY="…"` for the classes it lists and `make affected` (AGENTS.md run policy, P9). While fixing, re-run with `make retest ONLY="…"`. Every new UI or snapshot test class gets a line in `scripts/test-map.txt` on the Screens/ScreenModels rows its screen uses, and a new source folder gets its own row; `make test-scripts` checks it. Audit findings come from `make audit-report`.
 - Timebox: 45–60 minutes per fix round, then revert to the last green commit and report. Each task is well under 2 hours.
 
 ## Review Focus
@@ -419,7 +419,7 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 - Modify: `AGENTS.md` (map: `Library/Export`, `ScreenModels/Search`, `Screens/Search`; launch flags `-SeedFavorites`, `-Photos`), `CLAUDE.md` ("Where we are"), this plan's Decisions (everything decided during execution)
 
 - [ ] **Step 1: Update the docs** listed above; check every path and command named in `AGENTS.md` exists.
-- [ ] **Step 2: One local `make full`**, then push and mark the PR ready so CI runs the simulator suite. Dispatch `ios-verifier` for the evidence.
+- [ ] **Step 2: One local `make full ALL=1`** (a bare `make full` refuses; P9), then push and mark the PR ready so CI runs the simulator suite. Dispatch `ios-verifier` for the evidence.
 - [ ] **Step 3: Phone check with Ben** (`make device`, phone unpaired for camera use), fast rounds for small fixes (B5). (a) Heart a scan in the viewer: the light tap, the card on Home, the tile's heart. (b) Favorites: drag to reorder with a long press, check Home follows, un-favourite inside and leave. (c) Move a favourite to Trash, see its heart, restore it. (d) Search: type, filter, open a result and come back, recent searches and recently viewed, with about 200 seeded scans. (e) Share a 20-page scan to Files and to Messages; Save to Photos (the first-time ask), Copy Text and paste in Notes. (f) A selection: share and favourite. (g) VoiceOver: a tile reads "favorite" and offers Favorite; the heart button's state; search rows. (h) Dark mode and the largest text on Home, Favorites and Search. Note anything Ben changes in the Decisions table.
 - [ ] **Step 4: Commit** `Docs: Plan 4 favourites, search and share`. The PR body names what the plan made visible (Plan 1's A2 and Plan 2's M14 controls). It merges after CI's Full suite and the whole-branch review pass.
 
@@ -437,3 +437,4 @@ UITests/        FavoritesJourneyTests, SearchJourneyTests, ExportJourneyTests (n
 | P6 | CI's `SHARD=main` already takes every class outside the scan and browse shards, so `ExportJourneyTests` needs no Makefile change. | Mine, pre-flight | 11 |
 | P7 | (Withdrawn: Ben chose A1, B12, so Task 12 doesn't wait.) | Mine, pre-flight | 12 |
 | P8 | With Ben's phone away, Task 1's search timing runs on the simulator with half the budget (8 ms) as margin; the phone number is taken in Task 13 and E3 updated. | Mine, pre-flight | 1, 8, 13 |
+| P9 | PR #81 brought the run policy: `make retest` while fixing, `make affected` at each task's end, `make full ALL=1` once before the PR. New test classes and source folders go in `scripts/test-map.txt`. The two audit exemptions waiting on Ben (grid-select-pill, dark-viewer-unresolved) are left as they are. | Mine, at the merge of main | all |
