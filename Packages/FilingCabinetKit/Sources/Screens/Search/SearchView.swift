@@ -25,6 +25,8 @@ public struct SearchView: View {
     private static let fieldTrailing: CGFloat = 6
     private static let fieldGap: CGFloat = 10
     private static let closeDiameter = Tokens.Spacing.tapMin
+    // My call (no large-text mock): the field grows to three lines at most.
+    private static let fieldLines = 3
     // Search.dc.html line 28: the field's clear button is 32 pt.
     private static let clearQuerySize: CGFloat = 32
     // Search.dc.html line 46: the filters sit 10 pt under the field.
@@ -90,11 +92,14 @@ public struct SearchView: View {
             }
             TextField(
                 text: query,
-                prompt: Text("Search all scans", bundle: #bundle).foregroundStyle(Tokens.Color.textSecondary),
+                prompt: prompt.foregroundStyle(Tokens.Color.textSecondary),
                 axis: .vertical
             ) {
                 Text("Search all scans", bundle: #bundle)
             }
+            // It grows down rather than clip at large text sizes (a one-line field failed the audit's clipped-text
+            // check at the largest size), up to three lines.
+            .lineLimit(Self.fieldLines)
             .font(Tokens.Typography.body)
             .foregroundStyle(Tokens.Color.textPrimary)
             .focused($isFocused)
@@ -122,20 +127,18 @@ public struct SearchView: View {
         .background(Tokens.Color.bgSurface, in: .capsule)
     }
 
-    /// The field's text. The field grows down rather than clip at large text sizes (a one-line field failed the
-    /// audit's clipped-text check at the largest size), so its Return types a line break instead of submitting: the
-    /// break is taken as the keyboard's Search (M5) and never reaches the query.
+    /// "Search all scans" (Search.dc.html line 25); at accessibility sizes just "Search", as Home's field says: the
+    /// growing field shows its placeholder on one line, and the full one was cut to "Search all…".
+    private var prompt: Text {
+        typeSize.isAccessibilitySize ? Text("Search", bundle: #bundle) : Text("Search all scans", bundle: #bundle)
+    }
+
+    /// The field's text, through the model, which takes a Return typed at the end as the keyboard's Search.
     private var query: Binding<String> {
         Binding(
             get: { model.query },
             set: { text in
-                guard text.contains(where: \.isNewline) else {
-                    model.query = text
-                    return
-                }
-                model.query = text.filter { !$0.isNewline }
-                model.submit()
-                isFocused = false
+                if model.edit(text) { isFocused = false }
             })
     }
 

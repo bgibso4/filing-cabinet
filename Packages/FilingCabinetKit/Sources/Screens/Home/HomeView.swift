@@ -82,7 +82,7 @@ public struct HomeView: View {
                     favorites: favorites,
                     opensGrid: model.favoritesOpensGrid,
                     thumbnails: thumbnails,
-                    onOpenGrid: { onOpen(.favorites) },
+                    onOpenGrid: { onOpen(.grid(.favorites)) },
                     onOpen: { onOpen(.scan($0)) })
             }
             Text("Collections", bundle: #bundle)
@@ -119,7 +119,7 @@ public struct HomeView: View {
     private var collections: some View {
         VStack(spacing: 0) {
             ForEach(Array(model.rows.enumerated()), id: \.element.id) { index, row in
-                HomeRowView(row: row, showsSeparator: index > 0) { onOpen(.collection(row.collection)) }
+                HomeRowView(row: row, showsSeparator: index > 0) { onOpen(.grid(.collection(row.collection))) }
             }
         }
         .background(Tokens.Color.bgSurface, in: .rect(cornerRadius: Tokens.Radius.surface))
@@ -141,8 +141,8 @@ public struct HomeView: View {
 
     private func route(for row: HomeViewRow) -> AppRoute {
         switch row.kind {
-        case .recent: .recent
-        case .all: .all
+        case .recent: .grid(.recent)
+        case .all: .grid(.all)
         case .trash: .trash
         }
     }

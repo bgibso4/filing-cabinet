@@ -94,7 +94,8 @@ struct SearchResultRow: View {
                 .font(Tokens.Typography.subheadline)
                 .foregroundStyle(Tokens.Color.textSecondary)
                 .lineLimit(lineLimit)
-            HStack(spacing: Self.dotGap) {
+            // At large text the line wraps, and the dot stays with its first line (as the viewer's header).
+            HStack(alignment: typeSize.isAccessibilitySize ? .firstTextBaseline : .center, spacing: Self.dotGap) {
                 CollectionDot(collection: result.collection)
                 Text(result.detail)
                     .font(Tokens.Typography.footnote)

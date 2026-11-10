@@ -239,6 +239,52 @@ private struct Fixture {
     #expect(fixture.analytics.events == [.searchSaved(resultCount: 2)])
 }
 
+/// The field grows to more lines at large text sizes, so its Return types a line break: one typed at the end is the
+/// keyboard's Search (M5).
+@MainActor
+@Test func returnAtTheEndSubmits() throws {
+    let fixture = try Fixture([Seed("Bike lock")])
+    defer { fixture.cleanUp() }
+    #expect(fixture.model.edit("bike") == false)
+    #expect(fixture.model.edit("bike\n") == true)
+    #expect(fixture.model.query == "bike")
+    #expect(fixture.history.recentSearches == ["bike"])
+}
+
+/// Return in the middle of the text doesn't search: the break becomes a space.
+@MainActor
+@Test func returnMidTextDoesNotSubmit() throws {
+    let fixture = try Fixture([Seed("Bike lock")])
+    defer { fixture.cleanUp() }
+    fixture.model.query = "bikelock"
+    #expect(fixture.model.edit("bike\nlock") == false)
+    #expect(fixture.model.query == "bike lock")
+    #expect(fixture.history.recentSearches.isEmpty)
+}
+
+/// A pasted multi-line text keeps its words apart and isn't kept as a search.
+@MainActor
+@Test func pastedLinesBecomeWords() throws {
+    let fixture = try Fixture([Seed("Harlow Property")])
+    defer { fixture.cleanUp() }
+    #expect(fixture.model.edit("Harlow\nProperty\n") == false)
+    #expect(fixture.model.query == "Harlow Property ")
+    #expect(fixture.model.results.count == 1)
+    #expect(fixture.history.recentSearches.isEmpty)
+    #expect(fixture.analytics.events.isEmpty)
+}
+
+/// Return on an empty field searches nothing and keeps nothing.
+@MainActor
+@Test func returnOnAnEmptyFieldKeepsNothing() throws {
+    let fixture = try Fixture([Seed("Bike lock")])
+    defer { fixture.cleanUp() }
+    #expect(fixture.model.edit("\n") == true)
+    #expect(fixture.model.query.isEmpty)
+    #expect(fixture.history.recentSearches.isEmpty)
+    #expect(fixture.analytics.events.isEmpty)
+}
+
 @MainActor
 @Test func aSearchIsReportedOnce() throws {
     let lock = Seed("Bike lock")

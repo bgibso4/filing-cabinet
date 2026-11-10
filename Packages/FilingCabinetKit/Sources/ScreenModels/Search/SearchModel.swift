@@ -166,6 +166,19 @@ public final class SearchModel {
         lastSaved = nil
     }
 
+    /// The field's new text. The field grows to more lines at large text sizes, so its Return types a line break: one
+    /// typed at the end of the query is the keyboard's Search, which submits and leaves the query as it was. Any other
+    /// break (a paste, a Return mid-text) becomes a space, so the words stay apart, and keeps nothing. True when it
+    /// submitted, so the field can let the keyboard go.
+    package func edit(_ text: String) -> Bool {
+        if text.last?.isNewline == true, text.dropLast() == query {
+            submit()
+            return true
+        }
+        query = String(text.map { $0.isNewline ? " " : $0 })
+        return false
+    }
+
     /// The keyboard's Search: keeps the search (M5).
     package func submit() {
         save()

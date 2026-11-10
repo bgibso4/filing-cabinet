@@ -103,8 +103,8 @@ public struct RootView: View {
     @ViewBuilder
     private func screen(_ route: AppRoute) -> some View {
         switch route {
-        case .collection, .recent, .all, .favorites:
-            if let kind = route.gridKind { grid(kind) }
+        case .grid(let kind):
+            grid(kind)
         case .trash:
             GridRoute(makeModel: dependencies.makeTrash) { model in
                 TrashView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.trashedScan($0)) })
