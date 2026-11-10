@@ -19,8 +19,6 @@ public final class FakeLibrary: ScanLibrary {
     package private(set) var saved: [ScanDraft] = []
     /// The latest search text per saved scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
-    /// Each scan's text, from its draft or its latest update.
-    private var texts: [ScanID: String] = [:]
 
     /// Today, for Trash days.
     private let clock: AppClock
@@ -47,7 +45,6 @@ public final class FakeLibrary: ScanLibrary {
             throw failure
         }
         saved.append(draft)
-        texts[draft.id] = draft.searchText
         let summary = ScanSummary(
             id: draft.id,
             title: draft.title,
@@ -64,7 +61,6 @@ public final class FakeLibrary: ScanLibrary {
     public func updateSearchText(_ text: String, for id: ScanID) {
         guard scans.contains(where: { $0.id == id }) else { return }
         searchTextUpdates[id] = text
-        texts[id] = text
     }
 
     public func rename(_ id: ScanID, to title: String) throws(LibraryError) {
@@ -134,11 +130,16 @@ public final class FakeLibrary: ScanLibrary {
     }
 
     public func searchTexts() -> [ScanID: String] {
-        texts.filter { id, _ in scans.contains { $0.id == id } }
+        Dictionary(uniqueKeysWithValues: scans.compactMap { scan in text(of: scan.id).map { (scan.id, $0) } })
     }
 
     public func searchText(for id: ScanID) -> String? {
-        searchTexts()[id]
+        scans.contains { $0.id == id } ? text(of: id) : nil
+    }
+
+    /// The scan's latest text update, else its draft's text.
+    private func text(of id: ScanID) -> String? {
+        searchTextUpdates[id] ?? saved.last { $0.id == id }?.searchText
     }
 
     /// Stores the numbers `FavoriteNumbering` worked out, as the real store does: nothing to change writes nothing.

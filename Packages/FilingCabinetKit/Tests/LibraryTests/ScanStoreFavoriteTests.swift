@@ -84,10 +84,31 @@ private func forcing(_ orders: [ScanID: Int], in container: ModelContainer) thro
     try store.setFavorite(true, for: ids)
     try store.moveToTrash([ids[1]])
 
-    try store.reorderFavorites([ids[3], ids[2], ids[0]])
+    // B is in Trash, so its id is ignored: the visible slots 0, 2 and 3 take D, C and A; B keeps slot 1.
+    try store.reorderFavorites([ids[3], ids[1], ids[2], ids[0]])
 
-    // The visible slots 0, 2 and 3 take D, C and A; B keeps slot 1.
     #expect(orders(ids, in: store) == [3, 1, 2, 0])
+}
+
+@MainActor
+@Test func reorderKeepsExpiredFavoritesInPlace() async throws {
+    let store = try makeStore()
+    // B's own last day was Oct 11: expired, but never moved to Trash, so it isn't visible either.
+    let scans = [
+        draft("A", scannedAt: noon(10, 10)),
+        draft("B", scannedAt: noon(10, 9), expiryOverride: .lastDay(day(10, 11))),
+        draft("C", scannedAt: noon(10, 8)),
+    ]
+    for scan in scans { try await store.save(scan) }
+    let ids = scans.map(\.id)
+    try store.setFavorite(true, for: ids)
+    #expect(store.scans.first { $0.id == ids[1] }?.trashedDay == nil)
+    #expect(place(of: ids[1], in: store) == .trash(daysLeft: 30, entered: day(10, 12)))
+
+    try store.reorderFavorites([ids[2], ids[0]])
+
+    // The visible slots 0 and 2 take C and A; B keeps slot 1.
+    #expect(orders(ids, in: store) == [2, 1, 0])
 }
 
 @MainActor
