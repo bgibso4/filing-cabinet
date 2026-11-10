@@ -10,12 +10,22 @@ setup() {
   FIX="$BATS_TEST_TMPDIR/repo"
   mkdir -p "$FIX/scripts" "$FIX/UITests" "$FIX/SnapshotTests"
   cp "$REPO/scripts/test-map.txt" "$FIX/scripts/"
-  printf 'final class TrashJourneyTests: XCTestCase {}\n' >"$FIX/UITests/TrashJourneyTests.swift"
   printf 'final class CleanupJourneyTests: XCTestCase {}\n' >"$FIX/UITests/CleanupJourneyTests.swift"
   printf 'final class ScanJourneyTests: XCTestCase {}\n' >"$FIX/UITests/ScanJourneyTests.swift"
   printf 'extension ScanJourneyTests {}\n' >"$FIX/UITests/ScanJourneyTests+EditTrashRestore.swift"
   printf 'final class TrashSnapshotTests: XCTestCase {}\n' >"$FIX/SnapshotTests/TrashSnapshotTests.swift"
   printf 'struct ViewerBehaviourTests {}\n' >"$FIX/SnapshotTests/ViewerBehaviourTests.swift"
+  # A string catalog, a screen that uses one of its strings, and the identifiers with one test that uses Trash's.
+  STRINGS="Packages/FilingCabinetKit/Sources/ScreenModels/Localizable.xcstrings"
+  IDS="Packages/FilingCabinetKit/Sources/Core/Accessibility/AccessibilityID.swift"
+  mkdir -p "$FIX/$(dirname "$STRINGS")" "$FIX/$(dirname "$IDS")" "$FIX/Packages/FilingCabinetKit/Sources/Screens/Trash"
+  catalog "$(keys a a a a)" >"$FIX/$STRINGS"
+  printf 'Button(String(localized: "Empty Trash"))\nText("\\(count) scans · \\(name)")\n' \
+    >"$FIX/Packages/FilingCabinetKit/Sources/Screens/Trash/TrashView.swift"
+  printf 'public enum AccessibilityID {\n    public enum Home {\n        public static let scan = "home.scan"\n    }\n\n    public enum Trash {\n        public static let select = "trash.select"\n    }\n\n    public static func pill(_ id: String) -> String { id }\n}\n' \
+    >"$FIX/$IDS"
+  printf 'final class TrashJourneyTests: XCTestCase { let id = AccessibilityID.Trash.select }\n' \
+    >"$FIX/UITests/TrashJourneyTests.swift"
   git -C "$FIX" init -q -b main
   git -C "$FIX" config user.email t@example.com
   git -C "$FIX" config user.name t
@@ -26,6 +36,14 @@ setup() {
 }
 
 TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/TrashJourneyTests')"
+
+# The fixture catalog's four keys, with these comments: Empty Trash, Gone, "%lld scans · %@" (in code as an
+# interpolation) and "%@ default" (in no code).
+keys() {
+  printf '"Empty Trash" : { "comment" : "%s" }, "Gone" : { "comment" : "%s" }, ' "$1" "$2"
+  printf '"%%lld scans · %%@" : { "comment" : "%s" }, "%%@ default" : { "comment" : "%s" }' "$3" "$4"
+}
+catalog() { printf '{ "sourceLanguage" : "en", "strings" : { %s }, "version" : "1.0" }\n' "$1"; }
 
 # Commits a change to each path given (creating it if needed).
 change() {
@@ -112,4 +130,56 @@ change() {
   run "$AFFECTED" --check-map
   [ "$status" -eq 1 ]
   [[ "$output" == *"the map names GhostTests"* ]]
+}
+
+@test "a copy change runs the classes of the screens that use it" {
+  catalog "$(keys b a a a)" >"$STRINGS"
+  git commit -qam copy
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "$TRASH" ]
+}
+
+@test "a changed format string finds the interpolation that uses it" {
+  catalog "$(keys a a b a)" >"$STRINGS"
+  git commit -qam copy
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "$TRASH" ]
+}
+
+@test "a changed string no code names runs everything" {
+  catalog "$(keys a a a b)" >"$STRINGS"
+  git commit -qam copy
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ALL" ]
+  [[ "$stderr" == *"%@ default"* ]]
+}
+
+@test "a removed string no code uses runs nothing" {
+  printf '{ "sourceLanguage" : "en", "strings" : { %s }, "version" : "1.0" }\n' \
+    '"Empty Trash" : { "comment" : "a" }, "%lld scans · %@" : { "comment" : "a" }, "%@ default" : { "comment" : "a" }' \
+    >"$STRINGS"
+  git commit -qam copy
+  run --separate-stderr "$AFFECTED" main
+  [ -z "$output" ]
+}
+
+@test "an identifier change runs the tests that use its screen's identifiers" {
+  sed -i '' 's/"trash.select"/"trash.choose"/' "$IDS"
+  git commit -qam ids
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "FilingCabinetUITests/TrashJourneyTests" ]
+}
+
+@test "an identifier change no test uses runs nothing" {
+  sed -i '' 's/"home.scan"/"home.scanButton"/' "$IDS"
+  git commit -qam ids
+  run --separate-stderr "$AFFECTED" main
+  [ -z "$output" ]
+}
+
+@test "an identifier change outside a screen's enum runs everything" {
+  sed -i '' 's/-> String { id }/-> String { id + ".pill" }/' "$IDS"
+  git commit -qam ids
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "ALL" ]
 }

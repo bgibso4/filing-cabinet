@@ -45,10 +45,86 @@ map_targets() {
 	done < <(rules)
 }
 
+ids_file="Packages/FilingCabinetKit/Sources/Core/Accessibility/AccessibilityID.swift"
+
+# An extended regular expression matching a format key's text in code: each placeholder (%@, %lld, %1$@, %.1f, …)
+# as an interpolation, \( … \).
+interpolation_pattern() {
+	printf '%s' "$1" | sed -E 's/[][\.*^$+?(){}|/]/\\&/g' |
+		sed -E 's/%([0-9]+\\\$)?(@|lld|ld|lu|d|f|\\\.[0-9]f)/\\\\\\([^"]*\\)/g'
+}
+
+# A string catalog: the changed keys, each through the Swift files that name it. A changed key no code names (a
+# format string, built at run time) runs everything; a removed one no code names runs nothing.
+string_targets() {
+	local path="$1" old changed key present files found=""
+	old="$(git show "$merge_base:$path" 2>/dev/null)" && [ -f "$path" ] || { echo ALL; return; }
+	changed="$(jq -rn --argjson a "$old" --slurpfile b "$path" '
+		($a.strings) as $o | ($b[0].strings) as $n
+		| (($o | keys) + ($n | keys) | unique)[] as $k | select($o[$k] != $n[$k]) | "\($k)\t\($n | has($k))"')"
+	while IFS=$'\t' read -r key present; do
+		[ -n "$key" ] || continue
+		files="$(grep -rlF --include='*.swift' -- "\"$key\"" Packages/FilingCabinetKit/Sources App 2>/dev/null || true)"
+		# A format key ("%lld scans") is written in code as an interpolation ("\(count) scans").
+		if [ -z "$files" ] && [[ "$key" == *%* ]]; then
+			files="$(grep -rlE --include='*.swift' -- "\"$(interpolation_pattern "$key")\"" Packages/FilingCabinetKit/Sources App \
+				2>/dev/null || true)"
+		fi
+		if [ -z "$files" ]; then
+			[ "$present" = true ] || continue
+			echo "no code names the changed string \"$key\": running everything" >&2
+			echo ALL
+			return
+		fi
+		for file in $files; do found+="$(targets_for "$file")"$'\n'; done
+	done <<<"$changed"
+	[ -n "$(echo "$found" | grep .)" ] && echo "$found" | grep . || echo NONE
+}
+
+# The screen enums (AccessibilityID.<Screen>) that changed lines of one side of a diff fall in; TOP for a line outside
+# them. Reads line numbers on stdin.
+namespaces_at() {
+	awk 'NR == FNR { want[$1] = 1; next }
+		/^    (public )?enum [A-Za-z0-9_]+/ { split($0, w, " "); ns = (w[1] == "public" ? w[3] : w[2]) }
+		(FNR in want) && $0 !~ /^[[:space:]]*$/ { print (ns == "" ? "TOP" : ns) }
+		/^    }/ { ns = "" }' - "$1"
+}
+
+# The identifiers: the test classes that use a changed screen enum's identifiers. A change outside the screen enums,
+# or to identifiers UI test support uses, runs everything.
+identifier_targets() {
+	local path="$1" old ranges namespaces ns files found=""
+	old="$(mktemp)"
+	git show "$merge_base:$path" >"$old" 2>/dev/null && [ -f "$path" ] || { echo ALL; return; }
+	# Hunk headers "@@ -a,b +c,d @@": old lines a..a+b-1 and new lines c..c+d-1 changed.
+	ranges="$(git diff -U0 "$merge_base" -- "$path" | sed -nE 's/^@@ -([0-9]+)(,([0-9]+))? \+([0-9]+)(,([0-9]+))? @@.*/\1 \3 \4 \6/p')"
+	namespaces="$({
+		awk -F, '{ n = ($2 == "" ? 1 : $2); for (i = 0; i < n; i++) print $1 + i }' <<<"$ranges" | namespaces_at "$old"
+		awk -F, '{ n = ($4 == "" ? 1 : $4); for (i = 0; i < n; i++) print $3 + i }' <<<"$ranges" | namespaces_at "$path"
+	} | sort -u)"
+	rm -f "$old"
+	if grep -qx TOP <<<"$namespaces"; then
+		echo ALL
+		return
+	fi
+	for ns in $namespaces; do
+		pattern="AccessibilityID\.$ns([^A-Za-z0-9_]|$)"
+		if grep -lqE "$pattern" UITests/Support/*.swift 2>/dev/null; then
+			echo ALL
+			return
+		fi
+		files="$(grep -lE "$pattern" UITests/*.swift SnapshotTests/*.swift 2>/dev/null || true)"
+		for file in $files; do found+="$(types_in_file "$file")"$'\n'; done
+	done
+	[ -n "$(echo "$found" | grep .)" ] && echo "$found" | grep . || echo NONE
+}
+
 # What one changed path runs: classes, ALL, or nothing.
 targets_for() {
 	local path="$1" found
 	case "$path" in
+	*/Localizable.xcstrings) found="$(string_targets "$path")" ;;
+	"$ids_file") found="$(identifier_targets "$path")" ;;
 	SnapshotTests/__Snapshots__/*)
 		found="$(echo "$path" | cut -d/ -f3)"
 		;;
