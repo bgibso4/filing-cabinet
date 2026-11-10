@@ -39,9 +39,9 @@ final class GridSelectJourneyTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["2 selected"].appears(within: 5))
         XCTAssertTrue(tiles(in: app).element(boundBy: 0).isSelected)
         XCTAssertEqual(move.label, "Move 2 to Trash")
-        // Not audited in select mode: the audit reports the bar's glass Cancel pill as low contrast with no element
-        // (FC Speed iPhone 17, 2026-11-09; Select passes). Trash's exemptions cover the same pill there only, and
-        // widening them needs Ben's OK. BrowseJourneyTests audits the grid with Select, but only when not selecting.
+        // Not audited at this size: the audit reads the last ticked tile's "2 months left" as "contrast nearly
+        // passed", every run, though the same caption passes everywhere else (#79). testAuditOfSelectModeAtLargestText
+        // audits select mode meanwhile.
 
         move.tap()
         let message = app.staticTexts["These 2 receipts move to Trash. You can restore them for 30 days."]
@@ -63,6 +63,20 @@ final class GridSelectJourneyTests: XCTestCase {
         XCTAssertFalse(
             app.staticTexts["This receipt moves to Trash. You can restore it for 30 days."].appears(within: 1))
         XCTAssertFalse(message.exists)
+    }
+
+    /// Select mode at the largest text size: the subtitle, the ticks and Move to Trash in Scan's place.
+    func testAuditOfSelectModeAtLargestText() throws {
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: true)
+        let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
+        waitForSeeding(of: row, count: 3)
+        row.tap()
+        let select = app.buttons[AccessibilityID.Grid.select]
+        XCTAssertTrue(select.appears(within: 5))
+        select.tap()
+        tiles(in: app).element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.Grid.moveToTrash].isEnabled)
+        try audit(app)
     }
 
     /// The grid emptied by its own selection (its only card moved to Trash) comes out with the large title, the

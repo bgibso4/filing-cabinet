@@ -76,6 +76,15 @@ private let ignoredIssues: [(XCUIApplication, XCUIAccessibilityAuditIssue) -> Bo
         [.contrast, .elementDetection].contains(issue.auditType) && issue.element == nil
             && app.header("Trash").exists
     },
+    // The same misread on a collection grid in select mode (#68): the audit reports low contrast with no element while
+    // the glass Cancel pill and the Move to Trash bar show, and none once select mode ends (FC Speed iPhone 17,
+    // 2026-11-09). Ben accepted this on 2026-11-10, as he did for Trash's pill (#59). Only contrast, only with no
+    // element, and only while a grid's Select button reads Cancel; select mode's other issues still fail.
+    { app, issue in
+        guard issue.auditType == .contrast, issue.element == nil else { return false }
+        let select = app.buttons[AccessibilityID.Grid.select]
+        return select.exists && select.label == "Cancel"
+    },
 ]
 
 /// The only call site of `performAccessibilityAudit`. Audit types are listed explicitly, not left to the default.
