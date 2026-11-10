@@ -29,7 +29,7 @@ public struct CollectionGridView: View {
     @State private var firstFrame: OSSignpostIntervalState? = ScreensLog.signposter.beginInterval("Grid first frame")
     @State private var prefetcher = GridPrefetcher()
     @State private var isConfirmingMove = false
-    /// Counts drops in Favorites, for a light tap as each one lands.
+    /// Counts the drops in Favorites that changed the order, for a light tap as each one lands.
     @State private var drops = 0
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
@@ -145,8 +145,7 @@ public struct CollectionGridView: View {
                 case .before(let id): id
                 case .end: nil
                 }
-            model.moveFavorites(difference.sources, before: destination)
-            drops += 1
+            if model.moveFavorites(difference.sources, before: destination) { drops += 1 }
         }
         .sensoryFeedback(.selection, trigger: drops)
         .padding(.top, Self.gridTopGap)

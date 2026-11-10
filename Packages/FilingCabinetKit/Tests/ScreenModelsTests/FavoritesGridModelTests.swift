@@ -198,3 +198,29 @@ private func favorites(_ titles: String...) -> [ScanSummary] {
 
     #expect(harness.reopened().tiles.map(\.title) == ["Passport", "License"])
 }
+
+/// Task 6 review: a favourite dropped just before a kept tile lands where it already was among the favourites, so
+/// nothing is written and nothing says it moved (no haptic).
+@Test func dropBeforeAKeptTileChangesNothing() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    harness.grid.toggleFavorite(tiles[1].id)
+    harness.library.failNextEdit = .writeFailed
+
+    let moved = harness.grid.moveFavorites([tiles[0].id], before: tiles[1].id)
+
+    #expect(!moved)
+    #expect(harness.library.failNextEdit == .writeFailed, "nothing written")
+    #expect(harness.grid.editAlert == nil)
+    #expect(harness.grid.tiles.map(\.title) == ["License", "Lease", "Passport"])
+}
+
+/// Task 6 review: the drop's haptic plays only for a drop that changed the order and was saved.
+@Test func moveSaysWhetherTheOrderChanged() {
+    let harness = GridHarness(.favorites, favorites("License", "Lease", "Passport"))
+    let tiles = harness.grid.tiles
+    #expect(!harness.grid.moveFavorites([tiles[1].id], before: tiles[1].id), "onto itself")
+    #expect(harness.grid.moveFavorites([tiles[2].id], before: tiles[0].id))
+    harness.library.failNextEdit = .writeFailed
+    #expect(!harness.grid.moveFavorites([tiles[0].id], before: nil), "a failed write")
+}

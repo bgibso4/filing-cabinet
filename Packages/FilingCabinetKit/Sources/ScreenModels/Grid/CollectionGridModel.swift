@@ -200,14 +200,21 @@ public final class CollectionGridModel {
 
     /// A drop in Favorites (M8): the tiles `sources` go just before `destination` (nil: at the end), and the store
     /// takes the favourites' new order (M3). A kept tile isn't a favourite (M9), so the store leaves it out and it
-    /// stays in its place. A failed write shows the edit alert and changes nothing.
-    package func moveFavorites(_ sources: [ScanID], before destination: ScanID?) {
-        let order = FavoriteReorder.order(built.shown.map(\.id), moving: sources, before: destination)
+    /// stays in its place. A failed write shows the edit alert and changes nothing. True when the favourites' order
+    /// changed (the drop's haptic); a drop that leaves it as it was writes nothing.
+    @discardableResult
+    package func moveFavorites(_ sources: [ScanID], before destination: ScanID?) -> Bool {
+        let shown = built.shown
+        let favorites = Set(Self.favoriteIDs(shown))
+        let order = FavoriteReorder.order(shown.map(\.id), moving: sources, before: destination)
+        guard order.filter(favorites.contains) != Self.favoriteIDs(shown) else { return false }
         do {
             try library.reorderFavorites(order)
         } catch {
             editAlert = EditAlert()
+            return false
         }
+        return true
     }
 
     /// VoiceOver's Move earlier: the favourite swaps places with the favourite before it (a kept tile isn't one).
