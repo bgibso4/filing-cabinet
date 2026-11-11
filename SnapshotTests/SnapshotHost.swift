@@ -25,6 +25,9 @@ enum SnapshotHost {
             }
             let controller = UIHostingController(rootView: view.dynamicTypeSize(variant.size))
             controller.overrideUserInterfaceStyle = variant.style
+            // The text size as a trait too, not only in SwiftUI's environment: with the trait left at the device's
+            // size, a text could now and then be drawn at that size inside an ax5 layout (#84).
+            controller.traitOverrides.preferredContentSizeCategory = UIContentSizeCategory(variant.size)
             window.rootViewController = controller
             window.makeKeyAndVisible()
             settle()
