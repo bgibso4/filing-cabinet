@@ -91,6 +91,21 @@ private let exemptions: [AuditExemption] = [
         guard issue.auditType == .contrast, issue.element == nil else { return false }
         return app.buttons[AccessibilityID.Home.scan].exists
     },
+    // Home's favourite cards are mostly an image of the scanned page, and the contrast of a document's own printing is
+    // out of the app's hands. The audit reports low contrast on a card (label 'Sample scan 1', the thumbnail plus its
+    // title) though every text in it is black on white in the audit's own element screenshot; it happens at the default
+    // text size too, and with realistic seeded pages (2026-11-10). Ben accepted this on 2026-11-10 (plan 4, B14; #59).
+    // The element the audit resolves reports id '' (not the card's `Home.favoritePrefix` identifier), so it is matched
+    // by position: only contrast, and only an element whose frame lies within a favourite card's frame (cards found by
+    // that identifier prefix, as FavoritesJourneyTests does). Any other element, any other issue on a card, and
+    // element-less issues still fail.
+    AuditExemption(name: "home-favorite-card") { app, issue in
+        guard issue.auditType == .contrast, let element = issue.element else { return false }
+        let cards = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Home.favoritePrefix)
+        ).allElementsBoundByIndex
+        return cards.contains { $0.frame.insetBy(dx: -1, dy: -1).contains(element.frame) }
+    },
     // Only contrast, only with no element, only in dark mode, and only while the viewer's header shows.
     AuditExemption(name: "dark-viewer-unresolved") { app, issue in
         guard issue.auditType == .contrast, issue.element == nil, XCUIDevice.shared.appearance == .dark else {
