@@ -54,7 +54,7 @@ public final class HomeModel {
         }
     }
 
-    /// Favorites (B16), Recent, All Scans and Trash. With no visible scan only Trash shows, and only while something is
+    /// Recent, Favorites (B16), All Scans and Trash. With no visible scan only Trash shows, and only while something is
     /// in it (M7). Favorites shows with the others, with no number while there are none, as an empty Trash does.
     public var viewRows: [HomeViewRow] {
         let shelf = shelf
@@ -63,8 +63,8 @@ public final class HomeModel {
         guard !shelf.visible.isEmpty else { return shelf.trash.isEmpty ? [] : [trash] }
         let favorites = shelf.favorites.count
         return [
-            HomeViewRow(kind: .favorites, name: CollectionText.favorites, count: favorites == 0 ? nil : favorites),
             HomeViewRow(kind: .recent, name: CollectionText.recent, count: nil),
+            HomeViewRow(kind: .favorites, name: CollectionText.favorites, count: favorites == 0 ? nil : favorites),
             HomeViewRow(kind: .all, name: CollectionText.allScans, count: shelf.visible.count),
             trash,
         ]

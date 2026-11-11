@@ -67,8 +67,8 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     let home = model(all)
     #expect(!home.isEmpty)
     #expect(home.rows.map(\.detail) == [.count(6), .count(23), .count(41), .count(18), .count(3)])
-    #expect(home.viewRows.map(\.name) == ["Favorites", "Recent", "All Scans", "Trash"])
-    #expect(home.viewRows.map(\.kind) == [.favorites, .recent, .all, .trash])
+    #expect(home.viewRows.map(\.name) == ["Recent", "Favorites", "All Scans", "Trash"])
+    #expect(home.viewRows.map(\.kind) == [.recent, .favorites, .all, .trash])
     // No favourites and an empty Trash show no number.
     #expect(home.viewRows.map(\.count) == [nil, nil, 91, nil])
 }
@@ -115,7 +115,7 @@ private func allScansCount(_ home: HomeModel) -> Int? {
         return scan
     }
     let home = model(scans(.receipts, 3) + scans(.throwaways, 2, daysAgo: 8) + moved)
-    #expect(home.viewRows.map(\.kind) == [.favorites, .recent, .all, .trash])
+    #expect(home.viewRows.map(\.kind) == [.recent, .favorites, .all, .trash])
     #expect(home.viewRows.map(\.count) == [nil, nil, 3, 3])
 }
 
@@ -259,7 +259,7 @@ private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSumma
     #expect(model(favorites(1)).favorites.count == 1)
 }
 
-/// B16: Favorites leads the views list with the library's favourites; one in Trash waits there and isn't counted.
+/// B16: Favorites follows Recent in the views list, with the library's favourites; one in Trash waits there and isn't counted.
 @Test func favoritesViewRowCountsTheLibrarysFavorites() {
     let trashed = favorites(1).map { scan in
         var scan = scan
@@ -267,9 +267,10 @@ private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSumma
         return scan
     }
     let home = model(scans(.wallet, 2) + favorites(4) + trashed)
-    #expect(home.viewRows.first?.kind == .favorites)
-    #expect(home.viewRows.first?.name == "Favorites")
-    #expect(home.viewRows.first?.count == 4)
+    let row = home.viewRows.first { $0.kind == .favorites }
+    #expect(home.viewRows.map(\.kind) == [.recent, .favorites, .all, .trash])
+    #expect(row?.name == "Favorites")
+    #expect(row?.count == 4)
 }
 
 @Test func noFavoritesNoRow() {

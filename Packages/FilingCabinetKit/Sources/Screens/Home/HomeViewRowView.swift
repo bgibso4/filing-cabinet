@@ -2,7 +2,7 @@ import Core
 import ScreenModels
 import SwiftUI
 
-/// One row of the views card (Favorites, Recent, All Scans, Trash): neutral badge, name, optional count and a chevron.
+/// One row of the views card (Recent, Favorites, All Scans, Trash): neutral badge, name, optional count and a chevron.
 struct HomeViewRowView: View {
     let row: HomeViewRow
     let showsSeparator: Bool

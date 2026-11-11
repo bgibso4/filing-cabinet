@@ -1,4 +1,4 @@
-/// One row of Home's views card: Favorites, Recent, All Scans or Trash.
+/// One row of Home's views card: Recent, Favorites, All Scans or Trash.
 public struct HomeViewRow: Identifiable, Equatable, Sendable {
     public enum Kind: Equatable, Sendable {
         case favorites

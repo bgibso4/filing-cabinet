@@ -3,7 +3,7 @@
 public enum AccessibilityID {
     public enum Home {
         public static let scan = "home.scan"
-        /// Favorites in the views card (B16), first, whenever the card shows.
+        /// Favorites in the views card (B16), after Recent, whenever the card shows.
         public static let favoritesRow = "home.favorites"
         public static let recentRow = "home.recent"
         public static let allRow = "home.all"
