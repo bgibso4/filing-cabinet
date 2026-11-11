@@ -3,11 +3,14 @@ import ScreenModels
 import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
-/// covers it while a scan is in the camera or in review; the camera-off sheet slides over it.
+/// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
+/// over it.
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
     @State private var path: [AppRoute] = []
+    /// True while Search covers Home.
+    @State private var isSearching = false
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -25,10 +28,12 @@ public struct RootView: View {
                 thumbnails: dependencies.thumbnails,
                 canScan: canScan,
                 onScan: { Task { await flow.scan(from: .home, preselected: nil) } },
+                onSearch: openSearch,
                 onOpen: { path.append($0) }
             )
-            .accessibilityHidden(isCapturing.wrappedValue)
-            .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue))
+            // Both covers are clear, so Home stays in the window under them; out of the accessibility tree meanwhile.
+            .accessibilityHidden(isCapturing.wrappedValue || isSearching)
+            .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching))
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
@@ -52,6 +57,16 @@ public struct RootView: View {
                 // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
                 // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
+        }
+        .fullScreenCover(isPresented: $isSearching) {
+            SearchCover(
+                makeModel: dependencies.makeSearch,
+                thumbnails: dependencies.thumbnails,
+                viewer: { viewer($0, .library) },
+                onClosed: { isSearching = false }
+            )
+            // Search draws its own rise and fade over Home, which shows through as it does.
+            .presentationBackground(.clear)
         }
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
@@ -124,11 +139,14 @@ public struct RootView: View {
         case .collectionSettings(let collection):
             GridRoute(
                 makeModel: { dependencies.makeCollectionSettings(collection) }, content: CollectionSettingsView.init)
-        case .search:
-            GridRoute(makeModel: dependencies.makeSearch) { model in
-                SearchView(model: model, thumbnails: dependencies.thumbnails, onOpen: { path.append(.scan($0)) })
-            }
         }
+    }
+
+    /// Puts up the cover without its own slide: Search rises by itself (SearchCover).
+    private func openSearch() {
+        var cut = Transaction()
+        cut.disablesAnimations = true
+        withTransaction(cut) { isSearching = true }
     }
 
     /// The mode decides the viewer's controls: opened from Trash, ViewerView shows nothing that opens Details.

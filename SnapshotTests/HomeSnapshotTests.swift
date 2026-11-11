@@ -13,7 +13,9 @@ final class HomeSnapshotTests: XCTestCase {
     private func home(_ library: FakeLibrary) -> some View {
         let model = HomeModel(library: library, today: Today(clock: Fixtures.clock), calendar: Fixtures.clock.calendar)
         return rooted(
-            HomeView(model: model, thumbnails: Fixtures.thumbnails, canScan: true, onScan: {}, onOpen: { _ in }))
+            HomeView(
+                model: model, thumbnails: Fixtures.thumbnails, canScan: true, onScan: {}, onSearch: {}, onOpen: { _ in }
+            ))
     }
 
     @MainActor
@@ -68,7 +70,13 @@ final class HomeSnapshotTests: XCTestCase {
         let model = HomeModel(library: library, today: today, calendar: Fixtures.clock.calendar, banner: banner)
         try SnapshotHost.assertScreen(
             rooted(
-                HomeView(model: model, thumbnails: Fixtures.thumbnails, canScan: true, onScan: {}, onOpen: { _ in })),
+                HomeView(
+                    model: model,
+                    thumbnails: Fixtures.thumbnails,
+                    canScan: true,
+                    onScan: {},
+                    onSearch: {},
+                    onOpen: { _ in })),
             testName: "home_banner")
     }
 }

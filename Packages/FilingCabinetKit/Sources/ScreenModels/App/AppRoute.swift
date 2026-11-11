@@ -11,6 +11,4 @@ public enum AppRoute: Hashable {
     case settings
     case collections
     case collectionSettings(BuiltInCollection)
-    /// Search, from Home's field (M14, E1).
-    case search
 }

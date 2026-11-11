@@ -41,7 +41,12 @@ final class SearchSnapshotTests: XCTestCase {
         model.filter = filter
         return NavigationStack(path: .constant([0])) {
             Color.clear.navigationDestination(for: Int.self) { _ in
-                SearchView(model: model, thumbnails: Fixtures.thumbnails, focusesOnArrival: false, onOpen: { _ in })
+                SearchView(
+                    model: model,
+                    thumbnails: Fixtures.thumbnails,
+                    focusesOnArrival: false,
+                    onOpen: { _ in },
+                    onClose: {})
             }
         }
     }

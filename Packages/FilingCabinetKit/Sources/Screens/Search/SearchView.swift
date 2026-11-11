@@ -3,16 +3,16 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// Search, pushed from Home's field (M14, E1): its own field at the top, focused on arrival, and an X back to Home;
-/// the filters under it; then what `SearchModel` says to show (08-01…08-06). No Scan. A result opens the viewer on
-/// the same stack, and back returns here with the query and results kept.
+/// Search, risen over Home from Home's field (M14, E1, B17): its own field at the top, focused on arrival, and an X
+/// back to Home; the filters under it; then what `SearchModel` says to show (08-01…08-06). No Scan. A result opens the
+/// viewer on Search's stack, and back returns here with the query and results kept.
 public struct SearchView: View {
     @Bindable private var model: SearchModel
     private let thumbnails: any ThumbnailProviding
     private let focusesOnArrival: Bool
     private let onOpen: (ScanID) -> Void
+    private let onClose: () -> Void
 
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
     @FocusState private var isFocused: Bool
     /// Set on the first appearance: coming back from the viewer leaves the keyboard down.
@@ -46,12 +46,14 @@ public struct SearchView: View {
         model: SearchModel,
         thumbnails: any ThumbnailProviding,
         focusesOnArrival: Bool = true,
-        onOpen: @escaping (ScanID) -> Void
+        onOpen: @escaping (ScanID) -> Void,
+        onClose: @escaping () -> Void
     ) {
         self.model = model
         self.thumbnails = thumbnails
         self.focusesOnArrival = focusesOnArrival
         self.onOpen = onOpen
+        self.onClose = onClose
     }
 
     public var body: some View {
@@ -64,7 +66,7 @@ public struct SearchView: View {
                     label: Text("Close search", bundle: #bundle),
                     identifier: AccessibilityID.Search.close,
                     diameter: Self.closeDiameter,
-                    action: { dismiss() })
+                    action: onClose)
             }
             .padding(.horizontal, Tokens.Spacing.s4)
             SearchFilterChips(selection: $model.filter)

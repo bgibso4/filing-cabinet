@@ -11,6 +11,7 @@ public struct HomeView: View {
     private let thumbnails: any ThumbnailProviding
     private let canScan: Bool
     private let onScan: () -> Void
+    private let onSearch: () -> Void
     private let onOpen: (AppRoute) -> Void
 
     // Home.dc.html: the section-header rows are at least this tall.
@@ -26,18 +27,21 @@ public struct HomeView: View {
     private static let bannerTopOverlap: CGFloat = -8
     private static let bannerBottomOverlap: CGFloat = -6
 
-    /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
+    /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished). `onSearch` opens Search,
+    /// which rises over Home rather than being pushed (B17).
     public init(
         model: HomeModel,
         thumbnails: any ThumbnailProviding,
         canScan: Bool,
         onScan: @escaping () -> Void,
+        onSearch: @escaping () -> Void,
         onOpen: @escaping (AppRoute) -> Void
     ) {
         self.model = model
         self.thumbnails = thumbnails
         self.canScan = canScan
         self.onScan = onScan
+        self.onSearch = onSearch
         self.onOpen = onOpen
     }
 
@@ -75,7 +79,7 @@ public struct HomeView: View {
             if let banner = model.banner {
                 cleanupBanner(banner)
             }
-            HomeSearchField { onOpen(.search) }
+            HomeSearchField(onOpen: onSearch)
             let favorites = model.favorites
             if !favorites.isEmpty {
                 HomeFavoritesRow(
@@ -184,20 +188,38 @@ private func previewModel() -> HomeModel {
 
 #Preview("Light") {
     NavigationStack {
-        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+        HomeView(
+            model: previewModel(),
+            thumbnails: PreviewThumbnails(),
+            canScan: true,
+            onScan: {},
+            onSearch: {},
+            onOpen: { _ in })
     }
 }
 
 #Preview("Dark") {
     NavigationStack {
-        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+        HomeView(
+            model: previewModel(),
+            thumbnails: PreviewThumbnails(),
+            canScan: true,
+            onScan: {},
+            onSearch: {},
+            onOpen: { _ in })
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Accessibility 5") {
     NavigationStack {
-        HomeView(model: previewModel(), thumbnails: PreviewThumbnails(), canScan: true, onScan: {}, onOpen: { _ in })
+        HomeView(
+            model: previewModel(),
+            thumbnails: PreviewThumbnails(),
+            canScan: true,
+            onScan: {},
+            onSearch: {},
+            onOpen: { _ in })
     }
     .dynamicTypeSize(.accessibility5)
 }
