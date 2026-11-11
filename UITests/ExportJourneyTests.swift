@@ -57,7 +57,9 @@ final class ExportJourneyTests: XCTestCase {
         XCTAssertEqual(share.label, "Share")
         share.tap()
 
-        // The sheet's header names what is shared after the scan (M10).
+        // The sheet's header names what is shared after the scan (M10). Both identifiers are UIKit's own, not API: the
+        // share sheet exposes no public one, and its caption's text alone also matches the viewer's header. Expect
+        // them to change with an iOS update before the app does; read the new ones from the failure's tree.
         let sheet = app.otherElements["ActivityListView"]
         XCTAssertTrue(sheet.appears(within: 10))
         let caption = app.otherElements["LP.CaptionBar.TopCaption"]

@@ -35,8 +35,7 @@ final class SearchJourneyTests: XCTestCase {
         assertIdentifiers(AccessibilityID.Search.all + [AccessibilityID.Search.clearQuery], in: app)
         try audit(app)
 
-        app.buttons[AccessibilityID.Search.close].tap()
-        XCTAssertTrue(app.header("Filing Cabinet", shows: .large, within: 5), "the X returns to Home, resting large")
+        closeSearch(in: app)
         openSearch(in: app)
         let recent = app.buttons[AccessibilityID.Search.recent(0)]
         XCTAssertTrue(recent.satisfies("label == %@", "scan 4", within: 5), recent.label)
@@ -44,6 +43,23 @@ final class SearchJourneyTests: XCTestCase {
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Search.viewedPrefix)
         ).firstMatch
         XCTAssertTrue(viewed.satisfies("label == %@", "Sample scan 4", within: 5), viewed.label)
+        closeSearch(in: app)
+    }
+
+    /// With Reduce Motion, Search fades rather than slides, and the X's fade is its only way back to Home (a full-screen
+    /// cover can't be swiped away), so its completion must land: open, type, a result and back, then the X (I4).
+    func testReduceMotionSearchClosesToHome() {
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12", "-ReduceMotion"])
+        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
+        openSearch(in: app).typeText("scan 4")
+        let first = results(in: app).firstMatch
+        XCTAssertTrue(first.appears(within: 5))
+        first.tap()
+        XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
+        app.buttons[AccessibilityID.Viewer.back].tap()
+        XCTAssertTrue(first.appears(within: 5), "back shows the results")
+        closeSearch(in: app)
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.search].isHittable, "Home takes taps again")
     }
 
     /// M17: nothing in the chosen collection, though Notes has it, and Search all scans finds it there.
@@ -64,6 +80,7 @@ final class SearchJourneyTests: XCTestCase {
         XCTAssertTrue(results(in: app).firstMatch.satisfies("label BEGINSWITH %@", "Sample scan 8,", within: 5))
         XCTAssertTrue(app.buttons[AccessibilityID.Search.chip(nil)].isSelected)
         XCTAssertFalse(wallet.isSelected)
+        closeSearch(in: app)
     }
 
     /// A recent search fills the field; Clear empties the list (M5).
@@ -87,6 +104,7 @@ final class SearchJourneyTests: XCTestCase {
         clear.tap()
         XCTAssertTrue(recent.disappears(within: 5))
         XCTAssertFalse(clear.exists)
+        closeSearch(in: app)
     }
 
     /// At the largest text, with results and the keyboard down: the keyboard's suggestion bar fails the audit by
@@ -98,6 +116,7 @@ final class SearchJourneyTests: XCTestCase {
         XCTAssertTrue(results(in: app).firstMatch.appears(within: 5))
         XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
         try audit(app)
+        closeSearch(in: app)
     }
 
     // MARK: Steps
@@ -118,6 +137,13 @@ final class SearchJourneyTests: XCTestCase {
         let field = app.textFields[AccessibilityID.Search.field]
         XCTAssertTrue(field.appears(within: 5))
         return field
+    }
+
+    /// The X, back to Home resting large. Every test ends on Home, so the next one's relaunch never has to take a
+    /// presented cover down.
+    private func closeSearch(in app: XCUIApplication) {
+        app.buttons[AccessibilityID.Search.close].tap()
+        XCTAssertTrue(app.header("Filing Cabinet", shows: .large, within: 5), "the X returns to Home, resting large")
     }
 
     private func results(in app: XCUIApplication) -> XCUIElementQuery {
