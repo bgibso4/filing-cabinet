@@ -3,10 +3,10 @@ import Foundation
 import Library
 import Observation
 
-/// What Home shows: the collections with their counts, and the Recent and All Scans views. With no visible scan
-/// it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read from the
-/// library and from `Today`, so the numbers move when either does, except while held: under the capture layer Home
-/// keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
+/// What Home shows: the first favourites, the collections with their counts, and the Recent and All Scans views. With
+/// no visible scan it shows the first-launch rows instead (M14). Expired scans are not counted (M5); everything is read
+/// from the library and from `Today`, so the numbers move when either does, except while held: under the capture layer
+/// Home keeps showing the library as it was, so a save lands on Home after the layer slides away (P5).
 @Observable
 public final class HomeModel {
     private let library: any ScanLibrary
@@ -54,17 +54,25 @@ public final class HomeModel {
         }
     }
 
-    /// Recent, All Scans and Trash. With no visible scan only Trash shows, and only while something is in it (M7).
+    /// Recent, Favorites (B16), All Scans and Trash. With no visible scan only Trash shows, and only while something is
+    /// in it (M7). Favorites shows with the others, with no number while there are none, as an empty Trash does.
     public var viewRows: [HomeViewRow] {
         let shelf = shelf
         let trash = HomeViewRow(
             kind: .trash, name: CollectionText.trash, count: shelf.trash.isEmpty ? nil : shelf.trash.count)
         guard !shelf.visible.isEmpty else { return shelf.trash.isEmpty ? [] : [trash] }
+        let favorites = shelf.favorites.count
         return [
             HomeViewRow(kind: .recent, name: CollectionText.recent, count: nil),
+            HomeViewRow(kind: .favorites, name: CollectionText.favorites, count: favorites == 0 ? nil : favorites),
             HomeViewRow(kind: .all, name: CollectionText.allScans, count: shelf.visible.count),
             trash,
         ]
+    }
+
+    /// Favorites' first 10, in its own order, for the row under the title (02-01, M18); empty without favourites.
+    package var favorites: [HomeFavorite] {
+        shelf.favorites.prefix(Self.favoritesShown).map { HomeFavorite(id: $0.id, title: $0.title) }
     }
 
     /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
@@ -87,6 +95,9 @@ public final class HomeModel {
             pulses[collection, default: 0] += 1
         }
     }
+
+    // M18: the row shows at most 10 favourites. Its header links to the grid whenever it shows (B15).
+    private static let favoritesShown = 10
 
     private var shelf: LibraryShelf {
         LibraryShelf(

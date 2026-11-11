@@ -2,9 +2,8 @@ import Core
 
 /// Where the root navigation stack can go from Home.
 public enum AppRoute: Hashable {
-    case collection(BuiltInCollection)
-    case recent
-    case all
+    /// A collection, Recent, All Scans or Favorites: `GridKind` is the one list of grids.
+    case grid(GridKind)
     case trash
     case scan(ScanID)
     /// A scan opened from Trash, with Restore and Delete now.

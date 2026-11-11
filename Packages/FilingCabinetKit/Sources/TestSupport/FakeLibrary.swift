@@ -19,6 +19,8 @@ public final class FakeLibrary: ScanLibrary {
     package private(set) var saved: [ScanDraft] = []
     /// The latest search text per saved scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
+    /// How many times one scan's text was read, so a test can tell a cached read from a fetch.
+    @ObservationIgnored package private(set) var searchTextReads = 0
 
     /// Today, for Trash days.
     private let clock: AppClock
@@ -34,6 +36,7 @@ public final class FakeLibrary: ScanLibrary {
     }
 
     public private(set) var lifespans: CollectionLifespans = .defaults
+    public private(set) var searchTextRevision = 0
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
         if saveDelay > .zero {
@@ -61,6 +64,7 @@ public final class FakeLibrary: ScanLibrary {
     public func updateSearchText(_ text: String, for id: ScanID) {
         guard scans.contains(where: { $0.id == id }) else { return }
         searchTextUpdates[id] = text
+        searchTextRevision += 1
     }
 
     public func rename(_ id: ScanID, to title: String) throws(LibraryError) {
@@ -116,6 +120,38 @@ public final class FakeLibrary: ScanLibrary {
         let changed = lifespans.setting(lifespan, for: collection)
         return scans.count {
             $0.entersTrash(ifLifespansChangeTo: changed, from: lifespans, today: clock.today, in: clock.calendar)
+        }
+    }
+
+    public func setFavorite(_ isFavorite: Bool, for ids: [ScanID]) throws(LibraryError) {
+        try setFavoriteOrders(FavoriteNumbering.setting(isFavorite, for: ids, in: scans))
+    }
+
+    public func reorderFavorites(_ ids: [ScanID]) throws(LibraryError) {
+        try setFavoriteOrders(
+            FavoriteNumbering.reordering(
+                ids, in: scans, lifespans: lifespans, today: clock.today, calendar: clock.calendar))
+    }
+
+    public func searchTexts() -> [ScanID: String] {
+        Dictionary(uniqueKeysWithValues: scans.compactMap { scan in text(of: scan.id).map { (scan.id, $0) } })
+    }
+
+    public func searchText(for id: ScanID) -> String? {
+        searchTextReads += 1
+        return scans.contains { $0.id == id } ? text(of: id) : nil
+    }
+
+    /// The scan's latest text update, else its draft's text.
+    private func text(of id: ScanID) -> String? {
+        searchTextUpdates[id] ?? saved.last { $0.id == id }?.searchText
+    }
+
+    /// Stores the numbers `FavoriteNumbering` worked out, as the real store does: nothing to change writes nothing.
+    private func setFavoriteOrders(_ orders: [ScanID: Int?]) throws(LibraryError) {
+        guard !orders.isEmpty else { return }
+        try edit(Array(orders.keys)) { scan in
+            if let order = orders[scan.id] { scan.favoriteOrder = order }
         }
     }
 

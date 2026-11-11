@@ -29,6 +29,8 @@ final class AppEnvironment {
     @ObservationIgnored let clock: AppClock
     @ObservationIgnored let today: Today
     @ObservationIgnored let store: ScanStore
+    /// Shared PDFs, in the temporary folder (M20).
+    @ObservationIgnored private let export: ScanExport
     @ObservationIgnored let lifecycle: AppLifecycleModel
     @ObservationIgnored let banner: CleanupBanner
     @ObservationIgnored let notifier: CleanupNotifier
@@ -55,19 +57,19 @@ final class AppEnvironment {
         let clock = options.fixedDate.map { AppClock.fixed($0, calendar: AppClock.system.calendar) } ?? .system
         let location = Self.libraryLocation(isUITest: options.isUITest)
         let fileSystem = LocalFileSystem()
-        let store = Self.makeStore(
-            location: location,
-            inMemory: options.isUITest,
-            pageFileSystem: Self.pageFileSystem(fileSystem, options: options),
-            clock: clock
-        )
+        let files = PageFileStore(location: location, fileSystem: Self.pageFileSystem(fileSystem, options: options))
+        let store = Self.makeStore(location: location, inMemory: options.isUITest, files: files, clock: clock)
+        let export = ScanExport(files: files)
+        self.export = export
         self.analytics = analytics
         self.clock = clock
         let today = Today(clock: clock)
         self.today = today
         self.store = store
         lifecycle = AppLifecycleModel(analytics: analytics)
-        let preferences = AppPreferences(defaults: Self.preferencesDefaults(isUITest: options.isUITest))
+        let defaults = Self.preferencesDefaults(isUITest: options.isUITest)
+        let preferences = AppPreferences(defaults: defaults)
+        let history = SearchHistory(defaults: defaults)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
         let banner = CleanupBanner(
@@ -75,24 +77,23 @@ final class AppEnvironment {
         self.banner = banner
         notifier = CleanupNotifier(
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
+        let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
             flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
-            makeGrid: { Self.makeGrid($0, store: store, today: today, clock: clock, analytics: analytics) },
+            makeGrid: Self.gridMaker(store: store, today: today, clock: clock, analytics: analytics, export: export),
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
-            makeViewer: { id, mode in
-                ViewerModel(
-                    id: id, library: store, today: today, calendar: clock.calendar, analytics: analytics, mode: mode)
-            },
-            makeDetails: { id in
-                DetailsModel(id: id, library: store, today: today, clock: clock, analytics: analytics)
-            },
+            makeViewer: Self.viewerMaker(
+                store: store, today: today, clock: clock, analytics: analytics, with: viewerShared),
+            makeDetails: { DetailsModel(id: $0, library: store, today: today, clock: clock, analytics: analytics) },
             makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
             makeCollectionSettings: {
                 CollectionSettingsModel(
                     collection: $0, library: store, today: today, calendar: clock.calendar, analytics: analytics)
             },
+            makeSearch: Self.searchMaker(
+                store: store, today: today, clock: clock, analytics: analytics, history: history),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
@@ -101,10 +102,22 @@ final class AppEnvironment {
         )
     }
 
-    private static func makeGrid(
-        _ kind: GridKind, store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics
-    ) -> CollectionGridModel {
-        CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics)
+    /// Makes a grid's model; `export` makes the PDFs its selection shares.
+    private static func gridMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, export: ScanExport
+    ) -> (GridKind) -> CollectionGridModel {
+        { kind in
+            CollectionGridModel(
+                kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics, export: export
+            )
+        }
+    }
+
+    /// Makes Search's model, keeping what it saves in the app-wide history the viewer records into.
+    private static func searchMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
+    ) -> () -> SearchModel {
+        { SearchModel(library: store, today: today, clock: clock, history: history, analytics: analytics) }
     }
 
     /// The scan flow, with its reader built here so the reader flags apply from launch.
@@ -148,17 +161,19 @@ final class AppEnvironment {
         return Self.make(arguments: arguments)
     }
 
-    /// Clears what an interrupted save left behind, deletes what has had its 30 days in Trash, and only then seeds
-    /// (`-SeedScans`, `-SeedTrash`) and enables Scan. Then reads what iOS allows for Home's banner.
+    /// Clears what an interrupted save left behind and any exported PDF a share left (M20), deletes what has had its 30
+    /// days in Trash, and only then seeds
+    /// (`-SeedScans` with `-SeedFavorites`, `-SeedTrash`) and enables Scan. Then reads what iOS allows for Home's banner.
     func launch() async {
         guard !hasLaunched else { return }
         hasLaunched = true
-        await store.removeOrphanedFiles()
+        await LaunchCleanup(store: store, export: export).run()
         await purgeTrash()
         #if DEBUG
             if let count = options.seedScans {
                 do {
-                    try await LibrarySeed.seed(store, count: count, clock: clock)
+                    try await LibrarySeed.seed(
+                        store, count: count, favorites: options.seedFavorites ?? 0, clock: clock)
                 } catch {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
@@ -241,13 +256,11 @@ final class AppEnvironment {
 
     /// On disk, or in memory for UI tests.
     private static func makeStore(
-        location: LibraryLocation, inMemory: Bool, pageFileSystem: any FileSystem, clock: AppClock
+        location: LibraryLocation, inMemory: Bool, files: PageFileStore, clock: AppClock
     ) -> ScanStore {
         do {
             let container = try ScanStore.makeContainer(storeURL: inMemory ? nil : location.storeURL)
-            return ScanStore(
-                container: container, files: PageFileStore(location: location, fileSystem: pageFileSystem), clock: clock
-            )
+            return ScanStore(container: container, files: files, clock: clock)
         } catch {
             // Running on without the store would lose every scan saved this session.
             logger.fault("The library store could not be opened: \(error.localizedDescription, privacy: .private)")
@@ -285,5 +298,41 @@ final class AppEnvironment {
             }
         #endif
         return .vision
+    }
+}
+
+/// The viewer, and what it sends out of the app.
+extension AppEnvironment {
+    /// What every viewer shares with the app: Search's history, and what Share and More send scans out with.
+    private struct ViewerShared {
+        let history: SearchHistory
+        let export: ScanExport
+        let photos: any PhotoSaving
+    }
+
+    /// Makes the viewer for a scan, opened from the library (which records it in Search's history) or from Trash.
+    private static func viewerMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, with shared: ViewerShared
+    ) -> (ScanID, ViewerModel.Mode) -> ViewerModel {
+        { id, mode in
+            ViewerModel(
+                id: id,
+                library: store,
+                today: today,
+                calendar: clock.calendar,
+                analytics: analytics,
+                history: shared.history,
+                export: shared.export,
+                photos: shared.photos,
+                mode: mode)
+        }
+    }
+
+    /// The system's Photos, or a scripted answer for `-Photos`, so a UI test never sees the system prompt.
+    private static func photoSaving(options: LaunchOptions) -> any PhotoSaving {
+        #if DEBUG
+            if let authorization = options.photos { return FakePhotoSaving(authorization) }
+        #endif
+        return SystemPhotoSaving()
     }
 }

@@ -15,7 +15,8 @@ final class GridSnapshotTests: XCTestCase {
             library: library,
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            export: Fixtures.export)
         change(model)
         // Pushed on a navigation stack, because the back button is the system's and only a pushed screen has one.
         return NavigationStack(path: .constant([0])) {
@@ -26,9 +27,19 @@ final class GridSnapshotTests: XCTestCase {
         }
     }
 
+    /// The home set with its two newest receipts favourited: hearts on the first tiles of Receipts and All Scans
+    /// (05-07's mark, M13).
+    @MainActor
+    private func libraryWithFavorites() throws -> FakeLibrary {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(true, for: Fixtures.newestReceipts(2))
+        return library
+    }
+
     @MainActor
     func testReceipts() throws {
-        try SnapshotHost.assertScreen(grid(.collection(.receipts), Fixtures.library(.home)), testName: "grid_receipts")
+        try SnapshotHost.assertScreen(
+            grid(.collection(.receipts), try libraryWithFavorites()), testName: "grid_receipts")
     }
 
     @MainActor
@@ -49,7 +60,7 @@ final class GridSnapshotTests: XCTestCase {
 
     @MainActor
     func testAll() throws {
-        try SnapshotHost.assertScreen(grid(.all, Fixtures.library(.home)), testName: "grid_all")
+        try SnapshotHost.assertScreen(grid(.all, try libraryWithFavorites()), testName: "grid_all")
     }
 
     /// #68: Receipts selecting, its first two ticked, with Move 2 to Trash in Scan's place. No mock: it mirrors Trash's
@@ -62,6 +73,31 @@ final class GridSnapshotTests: XCTestCase {
                 Fixtures.newestReceipts(2).forEach(model.toggle)
             },
             testName: "grid_select")
+    }
+
+    /// 05-07 and 05-12: the mocks' favourites the home set has (it has no Laptop warranty or Wifi password), in the
+    /// mocks' order, each with its heart.
+    @MainActor
+    func testFavorites() throws {
+        let library = Fixtures.library(.home)
+        try library.setFavorite(
+            true,
+            for: Fixtures.homeScans(
+                titled: "Driver’s license",
+                "Lease 2026",
+                "Insurance card",
+                "Gym membership",
+                "Vaccine record",
+                "Car registration",
+                "Library card",
+                "Passport"))
+        try SnapshotHost.assertScreen(grid(.favorites, library), testName: "grid_favorites")
+    }
+
+    /// Favorites with none: the heart badge, "No favorites yet" (Collection.dc.html's favorites set).
+    @MainActor
+    func testFavoritesEmpty() throws {
+        try SnapshotHost.assertScreen(grid(.favorites, Fixtures.library(.home)), testName: "grid_favorites_empty")
     }
 
     @MainActor

@@ -7,6 +7,7 @@ public enum CollectionText {
     /// The names of Home's views.
     package static var recent: String { String(localized: "Recent", bundle: #bundle) }
     package static var allScans: String { String(localized: "All Scans", bundle: #bundle) }
+    package static var favorites: String { String(localized: "Favorites", bundle: #bundle) }
     package static var trash: String { String(localized: "Trash", bundle: #bundle) }
 
     /// Recent's subtitle.
@@ -115,6 +116,7 @@ public enum CollectionText {
         case .collection(.throwaways): String(localized: "No throwaways", bundle: #bundle)
         case .recent: String(localized: "Nothing recent", bundle: #bundle)
         case .all: String(localized: "No scans yet", bundle: #bundle)
+        case .favorites: String(localized: "No favorites yet", bundle: #bundle)
         }
     }
 
@@ -138,6 +140,8 @@ public enum CollectionText {
                 bundle: #bundle)
         case .recent: String(localized: "Scans from the last 30 days show up here.", bundle: #bundle)
         case .all: String(localized: "Every scan shows up here, newest first.", bundle: #bundle)
+        case .favorites:
+            String(localized: "Tap the heart on a scan to keep it one tap from Home.", bundle: #bundle)
         }
     }
 }

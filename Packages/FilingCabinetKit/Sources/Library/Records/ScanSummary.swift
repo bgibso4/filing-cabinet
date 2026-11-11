@@ -12,6 +12,8 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
     package let pageCount: Int
     /// The day the scan went to Trash; nil while it is in the library.
     package var trashedDay: CalendarDay?
+    /// The scan's place in Favorites, lower first; nil when it isn't a favourite. Read through `favoritesOrder`.
+    package var favoriteOrder: Int?
 
     public init(
         id: ScanID,
@@ -20,7 +22,8 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
         scannedAt: Date,
         expiryOverride: ExpiryOverride?,
         pageCount: Int,
-        trashedDay: CalendarDay? = nil
+        trashedDay: CalendarDay? = nil,
+        favoriteOrder: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -29,6 +32,23 @@ public struct ScanSummary: Sendable, Hashable, Identifiable {
         self.expiryOverride = expiryOverride
         self.pageCount = pageCount
         self.trashedDay = trashedDay
+        self.favoriteOrder = favoriteOrder
+    }
+}
+
+extension ScanSummary {
+    package var isFavorite: Bool { favoriteOrder != nil }
+
+    /// The one reading order of favourites (B11): `favoriteOrder`, then newest first, then by ID, so even two
+    /// favourites on one number always read the same way. Scans that aren't favourites come after.
+    package static func favoritesOrder(_ lhs: ScanSummary, _ rhs: ScanSummary) -> Bool {
+        if lhs.favoriteOrder != rhs.favoriteOrder {
+            guard let left = lhs.favoriteOrder else { return false }
+            guard let right = rhs.favoriteOrder else { return true }
+            return left < right
+        }
+        if lhs.scannedAt != rhs.scannedAt { return lhs.scannedAt > rhs.scannedAt }
+        return lhs.id.uuid.uuidString < rhs.id.uuid.uuidString
     }
 }
 

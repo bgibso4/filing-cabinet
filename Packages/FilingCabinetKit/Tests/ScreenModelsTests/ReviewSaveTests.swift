@@ -64,7 +64,8 @@ private func slowTwoPageReview() -> ReviewHarness {
     )
 }
 
-private let bothPagesText = "CITY PHARMACY\nTOTAL 12.40\nCORNER MARKET"
+/// Two pages, a blank line between them (M11).
+private let bothPagesText = "CITY PHARMACY\nTOTAL 12.40\n\nCORNER MARKET"
 
 @Test(.timeLimit(.minutes(1)))
 func discardDuringASaveIsIgnored() async throws {
@@ -125,7 +126,7 @@ func savedDraftCarriesEverything() async {
     #expect(draft?.expiryOverride == .lifespan(.week))
     #expect(draft?.scannedAt == ReviewHarness.now)
     #expect(draft?.pages == [ReviewHarness.page1, ReviewHarness.page2])
-    #expect(draft?.searchText == "CITY PHARMACY\nTOTAL 12.40\nCORNER MARKET")
+    #expect(draft?.searchText == bothPagesText)
     #expect(saved?.announcement == "Saved to Receipts")
 }
 

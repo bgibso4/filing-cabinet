@@ -28,7 +28,8 @@ struct ThumbnailRedrawTests {
             library: FakeLibrary(scans: [scan]),
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            export: Fixtures.export)
         let picture = try #require(WindowPixels.image(.magenta))
         let view = CollectionGridView(
             model: model,

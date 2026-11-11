@@ -10,9 +10,27 @@ package struct GridTile: Identifiable, Equatable {
     package let isSoon: Bool
     /// The collection's dot, in the grids that mix collections (05-04); nil in a single collection's grid.
     package let dot: BuiltInCollection?
+    /// Marked with a heart (M13).
+    package let isFavorite: Bool
+    /// Taken out of Favorites while Favorites is on screen: the tile stays, with an empty heart, until the screen goes
+    /// (M9).
+    package let isUnfavorited: Bool
+    /// VoiceOver's Move earlier and Move later: a favourite in Favorites, not while selecting, with a favourite before
+    /// (or after) it.
+    package let canMoveEarlier: Bool
+    package let canMoveLater: Bool
 
     package init(
-        id: ScanID, title: String, collectionName: String, timeLeft: String, isSoon: Bool, dot: BuiltInCollection?
+        id: ScanID,
+        title: String,
+        collectionName: String,
+        timeLeft: String,
+        isSoon: Bool,
+        dot: BuiltInCollection?,
+        isFavorite: Bool = false,
+        isUnfavorited: Bool = false,
+        canMoveEarlier: Bool = false,
+        canMoveLater: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -20,10 +38,18 @@ package struct GridTile: Identifiable, Equatable {
         self.timeLeft = timeLeft
         self.isSoon = isSoon
         self.dot = dot
+        self.isFavorite = isFavorite
+        self.isUnfavorited = isUnfavorited
+        self.canMoveEarlier = canMoveEarlier
+        self.canMoveLater = canMoveLater
     }
 
-    /// What VoiceOver reads for the whole tile: "Corner Market, Receipts, 2 days left".
+    /// What VoiceOver reads for the whole tile: "Corner Market, Receipts, 2 days left", then ", favorite" (M13), or
+    /// ", not a favorite" for a tile kept in Favorites (M9, Collection.dc.html's `unfav` state).
     package var accessibilityLabel: String {
-        String(localized: "\(title), \(collectionName), \(timeLeft)", bundle: #bundle)
+        let label = String(localized: "\(title), \(collectionName), \(timeLeft)", bundle: #bundle)
+        if isFavorite { return String(localized: "\(label), favorite", bundle: #bundle) }
+        if isUnfavorited { return String(localized: "\(label), not a favorite", bundle: #bundle) }
+        return label
     }
 }

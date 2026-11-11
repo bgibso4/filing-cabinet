@@ -28,6 +28,30 @@
         }
       }
     },
+    "%lld scans in %@" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan in %@" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans in %@" } }
+            }
+          }
+        }
+      }
+    },
+    "%lld scans in %@ mention “%@”." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld scan in %@ mentions “%@”." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld scans in %@ mention “%@”." } }
+            }
+          }
+        }
+      }
+    },
     "%lld scans moved to Trash" : {
       "localizations" : {
         "en" : {
@@ -150,10 +174,16 @@
     "No documents yet" : {},
     "No throwaways" : {},
     "Nothing recent" : {},
+    "Favorites" : {},
+    "No favorites yet" : {},
+    "Tap the heart on a scan to keep it one tap from Home." : {},
+    "%@, favorite" : {},
+    "%@, not a favorite" : {},
     "No scans" : {},
     "No scans yet" : {},
     "Last 30 days" : {},
     "%@, %@, %@" : {},
+    "%@, %@, %@, %@" : {},
     "IDs and cards go here, like your license and insurance card. They’re kept forever." : {},
     "Purchase receipts go here. Each one is kept 3 months, then moves to Trash." : {},
     "Handwritten and class notes go here. They’re kept forever." : {},
@@ -201,6 +231,8 @@
     "Move to Trash" : {},
     "Move %lld to Trash" : {},
     "Moved %lld scans to Trash" : {},
+    "Favorite" : {},
+    "Remove from Favorites" : {},
     "%lld selected" : {},
     "Delete %lld" : {},
     "Delete" : {},
@@ -240,7 +272,17 @@
     "A note when scans move to Trash" : {},
     "Filing Cabinet %@ · Private by design" : {},
     "How long each one keeps scans" : {},
-    "Counted from each scan’s date." : {}
+    "Counted from each scan’s date." : {},
+    "No results in %@" : {},
+    "No results for “%@”" : {},
+    "Search reads the words on every scan. Check the spelling or try another word." : {},
+    "%lld scans in %@ and %@ mention “%@”." : {},
+    "%lld scans in other collections mention “%@”." : {},
+    "Saved to Photos" : {},
+    "Saved to Files" : {},
+    "Copied" : {},
+    "Couldn’t save to Photos" : {},
+    "Couldn’t save to Files" : {}
   },
   "version" : "1.0"
 }

@@ -15,7 +15,12 @@ public protocol ScanLibrary: AnyObject {
     /// Saves the draft's files and record, all or nothing. Throws `.diskFull` or `.writeFailed`.
     func save(_ draft: ScanDraft) async throws(LibraryError)
 
-    /// Sets the scan's search text once reading finishes. A failure is logged; the scan stays saved.
+    /// Goes up each time `updateSearchText` stores a text, so Search can follow texts without `scans` changing (and
+    /// every grid redrawing).
+    var searchTextRevision: Int { get }
+
+    /// Sets the scan's search text once reading finishes, and bumps `searchTextRevision`. A failure is logged; the
+    /// scan stays saved.
     func updateSearchText(_ text: String, for id: ScanID)
 
     func rename(_ id: ScanID, to title: String) throws(LibraryError)
@@ -45,4 +50,18 @@ public protocol ScanLibrary: AnyObject {
 
     /// How many scans in the library `setLifespan` would send to Trash today.
     func scansExpiring(ifLifespan lifespan: Lifespan, for collection: BuiltInCollection) -> Int
+
+    /// Favourites the scans, last and in the order of `ids` (B8), or un-favourites them. A scan already as asked is
+    /// left alone. Numbers never clash, Trash included (M3); a stored tie is renumbered first (B11).
+    func setFavorite(_ isFavorite: Bool, for ids: [ScanID]) throws(LibraryError)
+
+    /// Puts the visible favourites in the order of `ids`. Favourites in Trash keep their places; a visible favourite
+    /// missing from `ids` keeps its place after them; an id that isn't a favourite is ignored (M3).
+    func reorderFavorites(_ ids: [ScanID]) throws(LibraryError)
+
+    /// Every scan's recognized text, Trash included, as read, in one fetch. Empty when the fetch fails.
+    func searchTexts() -> [ScanID: String]
+
+    /// The scan's recognized text, as read; nil when there is no such scan or the fetch fails.
+    func searchText(for id: ScanID) -> String?
 }

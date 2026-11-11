@@ -16,7 +16,7 @@ private let utc: Calendar = {
 
 private let noon = CalendarDay(year: 2026, month: 10, day: 12).date(in: utc).addingTimeInterval(12 * 3600)
 
-private func scan(_ title: String, _ collection: BuiltInCollection, daysAgo: Int = 0) -> ScanSummary {
+func scan(_ title: String, _ collection: BuiltInCollection, daysAgo: Int = 0) -> ScanSummary {
     ScanSummary(
         id: ScanID(),
         title: title,
@@ -33,7 +33,8 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
         library: FakeLibrary(scans: summaries),
         today: Today(clock: clock),
         calendar: utc,
-        analytics: RecordingAnalytics())
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
 }
 
 @Test func receiptsSubtitleAndTilesNewestFirst() {
@@ -155,7 +156,12 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     let today = Today(clock: clock)
     let library = FakeLibrary(scans: [scan("Coat check", .throwaways, daysAgo: 5)])
     let grid = CollectionGridModel(
-        kind: .collection(.throwaways), library: library, today: today, calendar: utc, analytics: RecordingAnalytics())
+        kind: .collection(.throwaways),
+        library: library,
+        today: today,
+        calendar: utc,
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
     #expect(grid.tiles.map(\.timeLeft) == ["2 days left"])
 
     now.set(noon.addingTimeInterval(86_400))
@@ -170,7 +176,12 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     let library = FakeLibrary()
     let clock = AppClock.fixed(noon, calendar: utc)
     let grid = CollectionGridModel(
-        kind: .all, library: library, today: Today(clock: clock), calendar: utc, analytics: RecordingAnalytics())
+        kind: .all,
+        library: library,
+        today: Today(clock: clock),
+        calendar: utc,
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
     #expect(grid.isEmpty)
 
     let changed = Mutex(false)
@@ -197,16 +208,35 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
 
 /// A grid with its library and analytics, for select mode.
 @MainActor
-private struct GridHarness {
+struct GridHarness {
     let analytics = RecordingAnalytics()
     let library: FakeLibrary
     let grid: CollectionGridModel
+    private let clock = AppClock.fixed(noon, calendar: utc)
 
-    init(_ kind: GridKind, _ summaries: [ScanSummary]) {
-        let clock = AppClock.fixed(noon, calendar: utc)
+    private let export: ScanExport
+
+    init(_ kind: GridKind, _ summaries: [ScanSummary], export: ScanExport = ExportFolder().export) {
         library = FakeLibrary(scans: summaries, clock: clock)
+        self.export = export
         grid = CollectionGridModel(
-            kind: kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
+            kind: kind,
+            library: library,
+            today: Today(clock: clock),
+            calendar: utc,
+            analytics: analytics,
+            export: export)
+    }
+
+    /// The same grid opened again: a new model over the same library, as the screen builds when it is pushed.
+    func reopened() -> CollectionGridModel {
+        CollectionGridModel(
+            kind: grid.kind,
+            library: library,
+            today: Today(clock: clock),
+            calendar: utc,
+            analytics: analytics,
+            export: export)
     }
 }
 
@@ -223,14 +253,14 @@ private var threeReceipts: [ScanSummary] {
     #expect(grid.isSelecting)
     #expect(grid.subtitle == "0 selected")
     #expect(!grid.canAct)
-    #expect(grid.moveTitle == "Move to Trash")
+    #expect(grid.moveTitles[0] == "Move to Trash")
     grid.toggle(grid.tiles[0].id)
     #expect(grid.canAct)
     #expect(grid.subtitle == "1 selected")
-    #expect(grid.moveTitle == "Move to Trash")
+    #expect(grid.moveTitles[0] == "Move to Trash")
     #expect(grid.moveMessage == "This receipt moves to Trash. You can restore it for 30 days.")
     grid.toggle(grid.tiles[1].id)
-    #expect(grid.moveTitle == "Move 2 to Trash")
+    #expect(grid.moveTitles[0] == "Move 2 to Trash")
     #expect(grid.moveMessage == "These 2 receipts move to Trash. You can restore them for 30 days.")
     grid.toggleSelecting()
     #expect(!grid.isSelecting)
@@ -317,5 +347,5 @@ private var threeReceipts: [ScanSummary] {
     grid.toggle(grid.tiles[1].id)
     try harness.library.moveToTrash([leaving])
     #expect(grid.selected.count == 1)
-    #expect(grid.moveTitle == "Move to Trash")
+    #expect(grid.moveTitles[0] == "Move to Trash")
 }

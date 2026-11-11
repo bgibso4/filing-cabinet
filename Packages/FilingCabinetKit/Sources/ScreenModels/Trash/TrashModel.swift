@@ -38,7 +38,8 @@ public final class TrashModel {
                 title: scan.title,
                 collection: scan.collection,
                 daysLeftText: TimeLeftText.text(.days(daysLeft)),
-                isSoon: Lifecycle.isTrashSoon(daysLeft: daysLeft))
+                isSoon: Lifecycle.isTrashSoon(daysLeft: daysLeft),
+                isFavorite: scan.isFavorite)
         }
     }
 

@@ -28,6 +28,7 @@ struct TrashTileView: View {
             VStack(alignment: .leading, spacing: Self.rowGap) {
                 thumbnail
                     .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                    .favoriteMark(tile.isFavorite)
                     .selectionMark(isSelecting: model.isSelecting, isSelected: isSelected)
                     .onGeometryChange(for: CGSize.self, of: \.size) { thumbnailSize = $0 }
                 HStack(spacing: Self.dotGap) {

@@ -2,7 +2,7 @@ import Core
 import ScreenModels
 import SwiftUI
 
-/// One row of the views card (Recent, All Scans, Trash): neutral badge, name, optional count and a chevron.
+/// One row of the views card (Recent, Favorites, All Scans, Trash): neutral badge, name, optional count and a chevron.
 struct HomeViewRowView: View {
     let row: HomeViewRow
     let showsSeparator: Bool
@@ -25,7 +25,7 @@ struct HomeViewRowView: View {
             .frame(minHeight: Self.minHeight)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressButtonStyle.row)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(identifier)
     }
@@ -83,6 +83,7 @@ struct HomeViewRowView: View {
 
     private var symbol: String {
         switch row.kind {
+        case .favorites: ViewSymbol.favorites
         case .recent: ViewSymbol.recent
         case .all: ViewSymbol.all
         case .trash: ViewSymbol.trash
@@ -91,6 +92,7 @@ struct HomeViewRowView: View {
 
     private var identifier: String {
         switch row.kind {
+        case .favorites: AccessibilityID.Home.favoritesRow
         case .recent: AccessibilityID.Home.recentRow
         case .all: AccessibilityID.Home.allRow
         case .trash: AccessibilityID.Home.trashRow

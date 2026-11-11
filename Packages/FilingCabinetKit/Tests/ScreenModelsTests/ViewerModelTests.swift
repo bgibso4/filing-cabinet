@@ -33,6 +33,8 @@ private func model(
     library: FakeLibrary? = nil,
     today: Today? = nil,
     analytics: RecordingAnalytics = RecordingAnalytics(),
+    // Only `appeared()` writes to it, and the tests that call that pass their own.
+    history: SearchHistory = SearchHistory(defaults: .standard),
     mode: ViewerModel.Mode = .library
 ) -> ViewerModel {
     ViewerModel(
@@ -41,6 +43,9 @@ private func model(
         today: today ?? Today(clock: clock),
         calendar: utc,
         analytics: analytics,
+        history: history,
+        export: ExportFolder().export,
+        photos: FakePhotoSaving(),
         mode: mode)
 }
 
@@ -263,4 +268,64 @@ private func trashed(_ title: String, _ collection: BuiltInCollection = .throwaw
     viewer.cancelConfirmation()
     #expect(viewer.confirmation == nil)
     #expect(!viewer.isMissing)
+}
+
+// MARK: Favorite
+
+@Test func toggleFavoriteFlipsIt() {
+    let scan = summary("Lease 2026", .documents, pages: 3)
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, analytics: analytics)
+    #expect(!viewer.isFavorite)
+
+    viewer.toggleFavorite()
+    #expect(viewer.isFavorite)
+    #expect(analytics.events == [.favoritesChanged(isFavorite: true, count: 1)])
+
+    viewer.toggleFavorite()
+    #expect(!viewer.isFavorite)
+    #expect(analytics.events.last == .favoritesChanged(isFavorite: false, count: 1))
+}
+
+@Test func failedFavoriteShowsTheAlert() {
+    let scan = summary("Lease 2026", .documents, pages: 3)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let analytics = RecordingAnalytics()
+    let viewer = model(scan, library: library, analytics: analytics)
+    library.failNextEdit = .writeFailed
+
+    viewer.toggleFavorite()
+
+    #expect(!viewer.isFavorite)
+    #expect(viewer.editAlert == EditAlert())
+    #expect(analytics.events.isEmpty)
+    viewer.dismissEditAlert()
+    #expect(viewer.editAlert == nil)
+}
+
+@MainActor
+@Test func appearingInTheLibraryRecordsItOncePerOpen() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let history = SearchHistory(defaults: fresh.defaults)
+    let lease = summary("Lease 2026", .documents)
+    let note = summary("Bio 210", .notes)
+    let library = FakeLibrary(scans: [lease, note], clock: clock)
+    let viewer = model(lease, library: library, history: history)
+    // Made, not yet on screen: a destination the stack evaluates again records nothing.
+    #expect(history.recentlyViewed.isEmpty)
+    viewer.appeared()
+    model(note, library: library, history: history).appeared()
+    // Back to the first viewer, still the same open: it doesn't jump ahead again.
+    viewer.appeared()
+    #expect(history.recentlyViewed == [note.id, lease.id])
+}
+
+@MainActor
+@Test func appearingFromTrashRecordsNothing() throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let history = SearchHistory(defaults: fresh.defaults)
+    model(trashed("Coat check", daysAgo: 2), history: history, mode: .trash).appeared()
+    #expect(history.recentlyViewed.isEmpty)
 }

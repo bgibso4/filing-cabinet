@@ -3,6 +3,8 @@
 public enum AccessibilityID {
     public enum Home {
         public static let scan = "home.scan"
+        /// Favorites in the views card (B16), after Recent, whenever the card shows.
+        public static let favoritesRow = "home.favorites"
         public static let recentRow = "home.recent"
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
@@ -11,13 +13,23 @@ public enum AccessibilityID {
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
         public static let cleanupBanner = "home.cleanupBanner"
+        /// "Favorites ›" over the Favorites row, only with a favourite (B15), so not in `all`.
+        public static let favoritesLink = "home.favoritesLink"
+        /// Every Favorites card's identifier starts with this; cards are checked by prefix, not listed in `all`.
+        public static let favoritePrefix = "home.favorite."
+        /// The drawn search field under the title (02-01): it opens Search.
+        public static let search = "home.search"
 
         public static func collectionRow(_ collection: BuiltInCollection) -> String {
             "home.collection.\(collection.rawValue)"
         }
 
+        public static func favorite(_ id: ScanID) -> String {
+            favoritePrefix + id.uuid.uuidString
+        }
+
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings, cleanupBanner]
+            [scan, favoritesRow, recentRow, allRow, trashRow, settings, cleanupBanner, search]
                 + BuiltInCollection.allCases.map(collectionRow)
         }
     }
@@ -31,6 +43,10 @@ public enum AccessibilityID {
         public static let select = "grid.select"
         /// Only while selecting, in Scan's place.
         public static let moveToTrash = "grid.moveToTrash"
+        /// Only while selecting, leading: shares the selection as PDFs (B12).
+        public static let share = "grid.share"
+        /// Only while selecting, trailing: Favorite or Remove from Favorites for the selection (B12).
+        public static let favorite = "grid.favorite"
         /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
         public static let tilePrefix = "grid.tile."
 
@@ -103,10 +119,16 @@ public enum AccessibilityID {
         public static let strip = "viewer.strip"
         /// The bottom bar's Info button, which opens Details as the header pill does.
         public static let details = "viewer.details"
+        /// The heart, left of Info in the centre pill (06-01).
+        public static let favorite = "viewer.favorite"
         public static let trash = "viewer.trash"
+        /// Share, at the bar's leading edge (06-01).
+        public static let share = "viewer.share"
+        /// The "•••" at the top's trailing edge, which opens More (06-03).
+        public static let more = "viewer.more"
 
         public static var all: [String] {
-            [back, header, page, strip, details, trash]
+            [back, header, page, strip, details, favorite, trash, share, more]
         }
     }
 
@@ -198,15 +220,58 @@ public enum AccessibilityID {
         }
     }
 
+    /// Search, pushed from Home's field (08-01…08-06).
+    public enum Search {
+        public static let field = "search.field"
+        /// The X beside the field: back to Home.
+        public static let close = "search.close"
+        /// The field's own clear button, only while it holds text (08-03).
+        public static let clearQuery = "search.clearQuery"
+        /// Recent searches' Clear, only while there are some (08-02).
+        public static let clear = "search.clear"
+        /// "Search all scans", only when the chosen collection has nothing and others have (08-05).
+        public static let searchAll = "search.searchAll"
+        /// Every result row's identifier starts with this; rows are checked by prefix, not listed in `all`.
+        public static let resultPrefix = "search.result."
+        /// Every recently viewed scan's identifier starts with this.
+        public static let viewedPrefix = "search.viewed."
+        /// Every recent search's identifier starts with this, then its place in the list (0 is the newest).
+        public static let recentPrefix = "search.recent."
+
+        /// A filter chip: All for nil, otherwise the collection.
+        public static func chip(_ collection: BuiltInCollection?) -> String {
+            "search.chip.\(collection?.rawValue ?? "all")"
+        }
+
+        public static func result(_ id: ScanID) -> String {
+            resultPrefix + id.uuid.uuidString
+        }
+
+        public static func viewed(_ id: ScanID) -> String {
+            viewedPrefix + id.uuid.uuidString
+        }
+
+        public static func recent(_ index: Int) -> String {
+            recentPrefix + String(index)
+        }
+
+        /// What Search always shows: the field, the X and every chip.
+        public static var all: [String] {
+            [field, close, chip(nil)] + BuiltInCollection.allCases.map(chip)
+        }
+    }
+
     /// A page pill's title line, inside the pill's combined element: the audit reports it on its own.
     public static func pillTitle(_ pill: String) -> String { "\(pill).title" }
 
     /// Every screen's identifiers, so a test can check they are unique across the app.
     public static var all: [String] {
         // The viewer's back button is the grid's: one system identifier, counted once.
-        Home.all + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip] + ExpiryDate.all
+        Home.all + [Home.favoritesLink] + Grid.all + Camera.all + CameraOff.all + Review.all + [Review.strip]
+            + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all
+            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll]
     }
 }

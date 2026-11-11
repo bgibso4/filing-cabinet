@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The Scan pill (see `FilledPillButton`), always labelled "Scan".
+/// The Scan pill (`PillButton`, filled), always labelled "Scan".
 struct ScanButton: View {
     private let identifier: String
     private let action: () -> Void
@@ -11,7 +11,7 @@ struct ScanButton: View {
     }
 
     var body: some View {
-        FilledPillButton(identifier: identifier, action: action) {
+        PillButton(style: .filled, identifier: identifier, action: action) {
             HStack(spacing: Tokens.Spacing.s2) {
                 Image(systemName: "text.viewfinder")
                 Text("Scan", bundle: #bundle)

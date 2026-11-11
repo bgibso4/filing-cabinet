@@ -12,6 +12,7 @@ setup() {
   printf 'struct TokensTests {}\n' >"$FIX/Packages/FilingCabinetKit/Tests/ScreensTests/TokensTests.swift"
   cp "$REPO/scripts/test-map.txt" "$FIX/scripts/"
   printf 'final class CleanupJourneyTests: XCTestCase {}\n' >"$FIX/UITests/CleanupJourneyTests.swift"
+  printf 'final class FavoritesJourneyTests: XCTestCase {}\n' >"$FIX/UITests/FavoritesJourneyTests.swift"
   printf 'final class ScanJourneyTests: XCTestCase {}\n' >"$FIX/UITests/ScanJourneyTests.swift"
   printf 'extension ScanJourneyTests {}\n' >"$FIX/UITests/ScanJourneyTests+EditTrashRestore.swift"
   printf 'final class TrashSnapshotTests: XCTestCase {}\n' >"$FIX/SnapshotTests/TrashSnapshotTests.swift"
@@ -36,7 +37,7 @@ setup() {
   cd "$FIX"
 }
 
-TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/TrashJourneyTests\nScreensTests')"
+TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/FavoritesJourneyTests\nFilingCabinetUITests/TrashJourneyTests\nScreensTests')"
 
 # The fixture catalog's four keys, with these comments: Empty Trash, Gone, "%lld scans · %@" (in code as an
 # interpolation) and "%@ default" (in no code).

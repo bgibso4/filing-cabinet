@@ -81,6 +81,40 @@ private let exemptions: [AuditExemption] = [
         }
         return app.buttons[AccessibilityID.Grid.select].label == "Cancel"
     },
+    // At the largest text size Home's search field and Favorites row make it taller, so a collection label lands under
+    // the opaque Scan pill. iOS 27's audit samples the pill's pixels and reports low contrast, in either of two forms
+    // from run to run: with no element, or resolved to the row beneath the pill (label "2" or "Wallet" at y≈777 in
+    // the 2026-11-10 and 11-11 whole-suite runs, which passed on retest). An equal-height invisible spacer reproduces
+    // it, so it is the layout and not the field (#59). Ben accepted the misread on 2026-11-10 (plan 4, B13: no-element
+    // form); the controller widened it to the element form on 2026-11-11 (final review I1), which Ben may narrow. #83,
+    // the fade behind Scan, is the likely real fix.
+    // Only contrast, only while Home shows with nothing over it (its Scan button hittable, and neither the camera-off
+    // sheet nor Search up), and only with no element or an element whose frame meets the Scan pill's. A grid's Scan
+    // button has its own identifier; any other issue on Home, and any element clear of the pill, still fails.
+    AuditExemption(name: "home-scan-unresolved") { app, issue in
+        guard issue.auditType == .contrast else { return false }
+        let scan = app.buttons[AccessibilityID.Home.scan]
+        let covered = [AccessibilityID.CameraOff.title, AccessibilityID.Search.field].contains {
+            app.descendants(matching: .any)[$0].exists
+        }
+        guard scan.exists, scan.isHittable, !covered else { return false }
+        return issue.element.map { $0.frame.intersects(scan.frame) } ?? true
+    },
+    // Home's favourite cards are mostly an image of the scanned page, and the contrast of a document's own printing is
+    // out of the app's hands. The audit reports low contrast on a card (label 'Sample scan 1', the thumbnail plus its
+    // title) though every text in it is black on white in the audit's own element screenshot; it happens at the default
+    // text size too, and with realistic seeded pages (2026-11-10). Ben accepted this on 2026-11-10 (plan 4, B14; #59).
+    // The element the audit resolves reports id '' (not the card's `Home.favoritePrefix` identifier), so it is matched
+    // by position: only contrast, and only an element whose frame lies within a favourite card's frame (cards found by
+    // that identifier prefix, as FavoritesJourneyTests does). Any other element, any other issue on a card, and
+    // element-less issues still fail.
+    AuditExemption(name: "home-favorite-card") { app, issue in
+        guard issue.auditType == .contrast, let element = issue.element else { return false }
+        let cards = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Home.favoritePrefix)
+        ).allElementsBoundByIndex
+        return cards.contains { $0.frame.insetBy(dx: -1, dy: -1).contains(element.frame) }
+    },
     // Only contrast, only with no element, only in dark mode, and only while the viewer's header shows.
     AuditExemption(name: "dark-viewer-unresolved") { app, issue in
         guard issue.auditType == .contrast, issue.element == nil, XCUIDevice.shared.appearance == .dark else {
@@ -100,8 +134,10 @@ func audit(_ app: XCUIApplication) throws {
             attachDetails(of: issue, in: app)
             return false
         }
-        let id = issue.element?.identifier ?? "none"
-        note("Audit exemption used · \(exemption.name) · \(name(of: issue)) · id '\(id)'")
+        // The label and frame show which form an exemption caught (no element, or the one it resolved to).
+        let element =
+            issue.element.map { "id '\($0.identifier)' · label '\($0.label)' · frame \($0.frame)" } ?? "id 'none'"
+        note("Audit exemption used · \(exemption.name) · \(name(of: issue)) · \(element)")
         return true
     }
 }

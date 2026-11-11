@@ -5,7 +5,7 @@ import Foundation
 enum ExpiryText {
     /// "Jan 9", or "Jan 9, 2027" when the year isn't today's.
     static func untilDate(_ day: CalendarDay, today: CalendarDay, clock: AppClock) -> String {
-        day.year == today.year ? DayText.monthDay(day, clock: clock) : DayText.monthDayYear(day, clock: clock)
+        DayText.monthDay(day, today: today, clock: clock)
     }
 
     /// The Review row's value: "3 months · until Jan 9", "Kept forever" or, for a chosen date, "Until Mar 3".

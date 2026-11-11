@@ -14,15 +14,7 @@ struct GlassCircleButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(font)
-                .foregroundStyle(Tokens.Color.textPrimary)
-                .padding(Tokens.Spacing.s2)
-                .frame(minWidth: diameter, minHeight: diameter)
-                // Always its full size, so a tight layout can't squash the circle under a large glyph.
-                .fixedSize()
-                .glassEffect(.regular.interactive(), in: .circle)
-                .contentShape(.circle)
+            GlassCircleLabel(systemImage: systemImage, font: font, diameter: diameter)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

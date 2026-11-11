@@ -13,10 +13,13 @@ public enum LibrarySeed {
     private static let documentPageCount = 3
 
     /// Saves `count` scans, cycling through the five collections in display order: one page each, more in Documents.
-    /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first.
+    /// Each scan's search text is the lines its pages show ("Sample scan 1", "Page 1"), so Search finds real words.
+    /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
+    /// favourites, in seed order.
     @MainActor
-    public static func seed(_ store: ScanStore, count: Int, clock: AppClock) async throws {
-        _ = try await save(store, count: count, titled: "Sample scan", clock: clock)
+    public static func seed(_ store: ScanStore, count: Int, favorites: Int = 0, clock: AppClock) async throws {
+        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock)
+        try store.setFavorite(true, for: Array(ids.prefix(favorites)))
     }
 
     /// Saves `count` scans as `seed` does, then moves scan `n` to Trash on the day it was scanned, `n` days before
@@ -40,8 +43,9 @@ public enum LibrarySeed {
         for index in 0..<count {
             let title = "\(prefix) \(index + 1)"
             let collection = collections[index % collections.count]
-            let pages = (1...(collection == .documents ? documentPageCount : 1)).map { number in
-                SyntheticPages.page(lines: [(title, titleSize), ("Page \(number)", titleSize)], size: pageSize)
+            let pageLines = (1...(collection == .documents ? documentPageCount : 1)).map { [title, "Page \($0)"] }
+            let pages = pageLines.map { lines in
+                SyntheticPages.page(lines: lines.map { ($0, titleSize) }, size: pageSize)
             }
             let scannedAt = clock.calendar.date(byAdding: .day, value: -index, to: now) ?? now
             let id = ScanID()
@@ -53,7 +57,9 @@ public enum LibrarySeed {
                     scannedAt: scannedAt,
                     expiryOverride: nil,
                     pages: pages,
-                    searchText: title
+                    // What reading the pages finds, as the reader joins it: each page's lines, a blank line between
+                    // pages.
+                    searchText: pageLines.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
                 ))
             ids.append(id)
         }

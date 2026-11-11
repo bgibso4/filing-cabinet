@@ -23,6 +23,12 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case cleanupRan(deleted: Int)
     /// Settings › Collections › a collection's "Keep scans for".
     case lifespanChanged(collection: BuiltInCollection, lifespan: Lifespan)
+    /// Favorite or Remove from Favorites, from the viewer, a selection or a tile's VoiceOver action (M19).
+    case favoritesChanged(isFavorite: Bool, count: Int)
+    /// Scans left the app: shared, saved to Photos or Files, or their text copied (M19).
+    case scansExported(kind: ExportKind, count: Int)
+    /// Search found this many scans for a word the person kept (M19). Never the word.
+    case searchSaved(resultCount: Int)
 
     public var name: String {
         switch self {
@@ -41,6 +47,9 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .trashEmptied: "trashEmptied"
         case .cleanupRan: "cleanupRan"
         case .lifespanChanged: "lifespanChanged"
+        case .favoritesChanged: "favoritesChanged"
+        case .scansExported: "scansExported"
+        case .searchSaved: "searchSaved"
         }
     }
 
@@ -60,6 +69,11 @@ public enum AnalyticsEvent: Sendable, Equatable {
             [.count: .int(count)]
         case .lifespanChanged(let collection, let lifespan):
             [.collection: .token(.init(collection)), .lifespan: .token(.init(lifespan))]
+        case .favoritesChanged(let isFavorite, let count):
+            [.isFavorite: .bool(isFavorite), .count: .token(.init(CountBucket(count)))]
+        case .scansExported(let kind, let count):
+            [.kind: .token(.init(kind)), .count: .token(.init(CountBucket(count)))]
+        case .searchSaved(let resultCount): [.resultCount: .token(.init(CountBucket(resultCount)))]
         }
     }
 }

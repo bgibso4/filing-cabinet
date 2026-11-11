@@ -41,6 +41,11 @@ struct LibraryShelf {
         visible.filter { scanDay($0).days(until: today, in: calendar) < 30 }
     }
 
+    /// The hearted scans still in the library, in Favorites' order (M3, M6). Favourites in Trash wait there.
+    var favorites: [ScanSummary] {
+        visible.filter(\.isFavorite).sorted(by: ScanSummary.favoritesOrder)
+    }
+
     func `in`(_ collection: BuiltInCollection) -> [ScanSummary] {
         visible.filter { $0.collection == collection }
     }

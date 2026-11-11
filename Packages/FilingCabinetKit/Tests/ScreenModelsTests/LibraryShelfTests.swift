@@ -145,7 +145,8 @@ private func shelf(_ scans: [ScanSummary], lifespans: CollectionLifespans = .def
         library: library,
         today: todayModel,
         calendar: newYork,
-        analytics: RecordingAnalytics())
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
     #expect(grid.subtitle == "No scans · 1 month")
 }
 

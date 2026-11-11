@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plan 3 (viewer and header polish) is built on branch `plan-3`; no PR yet.** Plans 1 and 2 are merged. The plan is `docs/superpowers/plans/2026-11-08-03-viewer-and-header-polish.md`. What is left: the phone check with Ben, the whole-branch review, the PR and CI's Full suite. Then merge.
+**Phase: Plan 4 (favorites, search and share) is implemented on branch `plan-4`; the PR waits for the whole-branch review and Ben's phone check.** Plans 1–3 are merged. The plan is `docs/superpowers/plans/2026-11-09-04-favorites-search-share.md`; progress is in its SDD ledger.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.

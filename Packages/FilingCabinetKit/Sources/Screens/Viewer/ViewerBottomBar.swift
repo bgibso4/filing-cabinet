@@ -1,9 +1,16 @@
 import Core
+import Library
 import SwiftUI
 
-/// The viewer's bottom bar (ScanView.dc.html lines 260-268): Info in a glass pill at the centre, which opens Details,
-/// and Trash at the trailing edge, which asks first (06-04). Share and Favorite come with Plan 4.
+/// The viewer's bottom bar (ScanView.dc.html lines 260-268): Share at the leading edge (06-01), the heart and Info in a
+/// glass pill at the centre, and Trash at the trailing edge, which asks first (06-04). Info opens Details.
 struct ViewerBottomBar: View {
+    /// What Share sends: the scan as a PDF (M10); nil once the scan has gone.
+    let sharedPDF: ScanPDF?
+    /// The share sheet's preview title.
+    let title: String
+    let isFavorite: Bool
+    let onToggleFavorite: () -> Void
     let onDetails: () -> Void
     /// What Trash's confirmation says.
     let trashMessage: String
@@ -12,45 +19,73 @@ struct ViewerBottomBar: View {
 
     @State private var isConfirmingTrash = false
 
-    // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons.
+    // ScanView.dc.html line 263: the pill is 10 pt either side of its 52 pt buttons, 4 pt apart.
     private static let pillPadding: CGFloat = 10
-    private static let infoDiameter: CGFloat = 52
-    // ScanView.dc.html line 267: Trash is 56 pt.
-    private static let trashDiameter: CGFloat = 56
+    private static let pillButtonDiameter: CGFloat = 52
+    private static let pillButtonGap = Tokens.Spacing.s1
+    // ScanView.dc.html line 267: Trash is a circle the size of Share's (`ShareCircle`).
+    private static let circleDiameter = ShareCircle.diameter
+    private static let circleFont = ShareCircle.font
 
     var body: some View {
         ZStack {
             infoPill
-            trashButton.frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                shareButton
+                Spacer(minLength: 0)
+                trashButton
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var shareButton: some View {
+        if let sharedPDF {
+            ShareCircle(
+                items: [sharedPDF], preview: { _ in SharePreview(title) }, identifier: AccessibilityID.Viewer.share)
         }
     }
 
     private var infoPill: some View {
-        Button(action: onDetails) {
-            Image(systemName: "info.circle")
+        HStack(spacing: Self.pillButtonGap) {
+            pillButton(systemImage: isFavorite ? "heart.fill" : "heart", action: onToggleFavorite)
+                .accessibilityLabel(
+                    isFavorite
+                        ? Text("Remove from Favorites", bundle: #bundle) : Text("Add to Favorites", bundle: #bundle)
+                )
+                .accessibilityAddTraits(isFavorite ? .isSelected : [])
+                .accessibilityIdentifier(AccessibilityID.Viewer.favorite)
+                // Requirements 06 · Haptics: a light tap on favouriting, as on choosing from a menu.
+                .sensoryFeedback(.selection, trigger: isFavorite)
+            pillButton(systemImage: "info.circle", action: onDetails)
+                .accessibilityLabel(Text("Details", bundle: #bundle))
+                .accessibilityIdentifier(AccessibilityID.Viewer.details)
+        }
+        .padding(.horizontal, Self.pillPadding)
+        .padding(.vertical, (Self.circleDiameter - Self.pillButtonDiameter) / 2)
+        .glassEffect(.regular.interactive(), in: .capsule)
+    }
+
+    private func pillButton(systemImage: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
                 // Title 2 is closest to the mock's 24 pt glyph.
                 .font(Tokens.Typography.title2.weight(.regular))
                 .foregroundStyle(Tokens.Color.textPrimary)
-                .frame(minWidth: Self.infoDiameter, minHeight: Self.infoDiameter)
+                .frame(minWidth: Self.pillButtonDiameter, minHeight: Self.pillButtonDiameter)
                 .fixedSize()
-                .padding(.horizontal, Self.pillPadding)
-                .padding(.vertical, (Self.trashDiameter - Self.infoDiameter) / 2)
-                .glassEffect(.regular.interactive(), in: .capsule)
-                .contentShape(.capsule)
+                .contentShape(.circle)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(Text("Details", bundle: #bundle))
-        .accessibilityIdentifier(AccessibilityID.Viewer.details)
     }
 
     private var trashButton: some View {
         GlassCircleButton(
             systemImage: "trash",
-            // Title 2 is closest to the mock's 23 pt glyph.
-            font: Tokens.Typography.title2.weight(.regular),
+            font: Self.circleFont,
             label: Text("Move to Trash", bundle: #bundle),
             identifier: AccessibilityID.Viewer.trash,
-            diameter: Self.trashDiameter,
+            diameter: Self.circleDiameter,
             action: { isConfirmingTrash = true }
         )
         .moveToTrashConfirmation(isPresented: $isConfirmingTrash, message: trashMessage, move: onTrash)

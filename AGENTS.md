@@ -9,19 +9,23 @@ App/                         app target: entry point, environment wiring, Info.p
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
+    Photos/                  the Save to Photos seam (PhotoSaving) and its errors
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
+    Export/                  a scan as a PDF (ScanPDF), temporary export files and their launch cleanup
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
                              tested in Fast
     Shared/                  HeaderRest, HeaderInsets, HeaderSettling: the header's maths
     Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
+    Search/                  search matching (text folded once), history, recently viewed, the Search model
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
                              own titles, styled by HeaderAppearance)
     DesignSystem/Generated/  generated tokens (never hand-edit)
     Details/                 DetailsPanel (the panel that replaces the system sheet), DetailsGrabber
     Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
+    Search/                  the Search screen: our own field, filter chips, result rows
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
                              ReaderComparisonTests (the bake-off report, not a gate)
@@ -94,8 +98,10 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FixedDate yyyy-MM-dd` | the clock stands still at noon UTC that day |
 | `-SeedScans <n>` | saves `n` synthetic scans at launch |
 | `-SeedTrash <n>` | saves `n` synthetic scans at launch and moves scan `i` to Trash on today − `i` |
+| `-SeedFavorites <n>` | with `-SeedScans`, the first `n` seeded scans are favourites, in seed order |
+| `-Photos authorized\|denied` | a fake Photos answers Save to Photos with that access, so no system prompt shows |
 | `-FailSave` | the next page write fails with a full disk |
-| `-ReduceMotion` | the capture layer fades rather than slides, and Home's count doesn't pop |
+| `-ReduceMotion` | the capture layer and Search fade rather than slide, and Home's count doesn't pop |
 
 UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.
 

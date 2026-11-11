@@ -35,7 +35,10 @@ struct ViewerBehaviourTests {
             library: FakeLibrary(scans: [scan]),
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            history: Fixtures.searchHistory(),
+            export: Fixtures.export,
+            photos: Fixtures.photos)
     }
 
     private func host(_ view: some View) throws -> UIWindow {
@@ -103,7 +106,10 @@ struct ViewerBehaviourTests {
                 library: library,
                 today: today,
                 calendar: Fixtures.clock.calendar,
-                analytics: RecordingAnalytics())
+                analytics: RecordingAnalytics(),
+                history: Fixtures.searchHistory(),
+                export: Fixtures.export,
+                photos: Fixtures.photos)
             made.models.append(model)
             return model
         } content: { makeModel in

@@ -3,12 +3,12 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// A scan, like Photos: its pages, a back button, a header pill, the page strip and the bottom bar. Per A2 there is no
-/// More button. The pill and Info open Details, and so does a swipe up on a page at rest, under the finger (M5); a
+/// A scan, like Photos: its pages, a back button, a header pill, More (06-03), the page strip and the bottom bar. The
+/// pill and Info open Details, and so does a swipe up on a page at rest, under the finger (M5); a
 /// swipe down there closes it (#71). As it rises (`detailsProgress`) the pill, strip and bar fade away (B2) and the
 /// page fits above it, a step every frame (07-01, #61). Opened from Trash (09-04) it has Close for back, a pill with
 /// the days left in Trash that opens nothing (a scan in Trash is read-only until restored), and Delete now and Restore
-/// for the bar.
+/// for the bar, and no Share or More (a scan in Trash is read-only).
 public struct ViewerView: View {
     @Bindable private var model: ViewerModel
     private let pages: any PageImageProviding
@@ -53,10 +53,15 @@ public struct ViewerView: View {
     @State private var bottomControlsHeight: CGFloat = 0
     /// The pill's own height where it sits below the bar, nil until measured.
     @State private var belowBarHeaderHeight: CGFloat?
+    /// More's Save to Files: the system's file exporter is up.
+    @State private var isSavingToFiles = false
+    /// Counts saves and copies, for the success tap (M12).
+    @State private var exportsDone = 0
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.openURL) private var openURL
 
     public init(
         model: ViewerModel,
@@ -113,6 +118,11 @@ public struct ViewerView: View {
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
+                if !isFromTrash {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ViewerMoreMenu(model: model, onSaveToFiles: { isSavingToFiles = true }, onExported: exported)
+                    }
+                }
             }
             // The bar can't hold the pill above the default text size, which wraps instead of cutting off (requirements 06 · Accessibility).
             // As Details rises it gives up its room, so the page grows into it, and it leaves once Details is up.
@@ -133,6 +143,17 @@ public struct ViewerView: View {
                 if isMissing { dismiss() }
             }
             .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
+            .fileExporter(
+                isPresented: $isSavingToFiles,
+                item: model.savedPDF,
+                defaultFilename: model.savedPDF?.suggestedFileName,
+                onCompletion: { result in
+                    if model.savedToFiles(result) { exported(ExportText.savedToFiles) }
+                },
+                onCancellation: model.exportEnded
+            )
+            .photosAccessOffAlert(isPresented: $model.isPhotosAccessOff, openURL: openURL)
+            .sensoryFeedback(.success, trigger: exportsDone)
             // Ready before the swipe: a page's first frame reads the cache.
             .task(id: model.currentPage) {
                 for page in model.neighbouringPages {
@@ -227,7 +248,14 @@ public struct ViewerView: View {
             Group {
                 switch model.mode {
                 case .library:
-                    ViewerBottomBar(onDetails: onDetails, trashMessage: model.trashMessage, onTrash: moveToTrash)
+                    ViewerBottomBar(
+                        sharedPDF: model.sharedPDF,
+                        title: model.title,
+                        isFavorite: model.isFavorite,
+                        onToggleFavorite: model.toggleFavorite,
+                        onDetails: onDetails,
+                        trashMessage: model.trashMessage,
+                        onTrash: moveToTrash)
                 case .trash:
                     TrashViewerChrome(model: model, onRestored: onRestored)
                 }
@@ -239,6 +267,12 @@ public struct ViewerView: View {
     /// Trash's confirmed move: the view pops as the scan leaves the library.
     private func moveToTrash() {
         if model.moveToTrash() { MovedToTrash.announce() }
+    }
+
+    /// A save or copy succeeded: no note (the app's no-notes rule), a success tap and what VoiceOver hears (M12).
+    private func exported(_ announcement: String) {
+        exportsDone += 1
+        AccessibilityNotification.Announcement(announcement).post()
     }
 
     /// Back to Trash.

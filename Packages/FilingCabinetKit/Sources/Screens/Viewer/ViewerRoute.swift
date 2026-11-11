@@ -61,6 +61,10 @@ public struct ViewerRoute: View {
             }
         }
         .background { springDriver }
+        .onAppear { model.appeared() }
+        // A share sheet's file has been handed over by the time the viewer leaves: it goes (M20). ShareLink says nothing
+        // when its sheet closes, so this is the end of a share.
+        .onDisappear { model.exportEnded() }
         // Once the scan leaves the library (Trash, or midnight passing its last day) the panel closes as the viewer
         // pops (Review Focus 2).
         .onChange(of: details?.isMissing ?? false) { _, isMissing in

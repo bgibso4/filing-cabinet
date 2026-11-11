@@ -5,8 +5,8 @@ import SwiftUI
 import os
 
 /// A collection, Recent or All Scans: a back button, the title in the bar (resting small, #62; large and still when
-/// empty, B5), a lazy grid of scans (or the empty state) and Scan. Select picks several scans and Move to Trash, in
-/// Scan's place, moves them (#68, as Trash's select mode).
+/// empty, B5), a lazy grid of scans (or the empty state) and Scan. Select picks several scans; in Scan's place, Share
+/// sends them, Move to Trash moves them and the heart favourites them (#68, as Trash's select mode; B12).
 public struct CollectionGridView: View {
     private let model: CollectionGridModel
     private let thumbnails: any ThumbnailProviding
@@ -23,12 +23,20 @@ public struct CollectionGridView: View {
     private static let contentEndGap: CGFloat = 34
     // Collection.dc.html line 35: the empty state is centred with 90 pt extra below it.
     private static let emptyBottomGap: CGFloat = 90
+    // .superpowers/plandoc/p4/index.html lines 37-38 and 141-143: the heart is a glass circle the size of Share's
+    // (`ShareCircle`), 16 pt in from the edge as Share is.
+    private static let circleDiameter = ShareCircle.diameter
+    private static let circleFont = ShareCircle.font
 
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Open from the moment the grid is first built until its first `onAppear`.
     @State private var firstFrame: OSSignpostIntervalState? = ScreensLog.signposter.beginInterval("Grid first frame")
     @State private var prefetcher = GridPrefetcher()
     @State private var isConfirmingMove = false
+    /// Counts the drops in Favorites that changed the order, for a light tap as each one lands.
+    @State private var drops = 0
+    /// Counts the selection's saved favourites, for a light tap on each (requirements 06 · Haptics, as the viewer's).
+    @State private var favorited = 0
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -52,7 +60,7 @@ public struct CollectionGridView: View {
             canScan: canScan,
             scanIdentifier: AccessibilityID.Grid.scan,
             onScan: onScan,
-            replacement: model.isSelecting ? moveBar : nil
+            replacement: model.isSelecting ? selectBar : nil
         ) {
             // One header for both states, so a grid emptying on screen changes its rest in place (HeaderScrollView).
             HeaderScrollView(
@@ -68,7 +76,10 @@ public struct CollectionGridView: View {
             .onChange(of: tiles.map(\.id), initial: true) { _, ids in
                 prefetcher.update(ids: ids, provider: thumbnails)
             }
-            .onDisappear { prefetcher.stop() }
+            .onDisappear {
+                prefetcher.stop()
+                model.exportEnded()
+            }
         }
         .toolbar {
             // Always there, greyed out while the grid is empty, as in Trash (B14); as Cancel it stays on, should the
@@ -83,18 +94,76 @@ public struct CollectionGridView: View {
                 .disabled(model.isEmpty && !model.isSelecting).id(typeSize)
             }
         }
+        // On the screen, not the heart: favouriting ends select mode, which takes the heart away.
+        .sensoryFeedback(.selection, trigger: favorited)
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
         .onAppear(perform: endFirstFrame)
     }
 
-    /// Move to Trash in Scan's place while selecting, in Scan's filled pill, off until a scan is ticked (M24). It asks
-    /// first, as the viewer's Trash button does (06-04, M19).
-    private var moveBar: some View {
-        FilledPillButton(identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
-            Text(model.moveTitle)
+    /// The bar in Scan's place while selecting (B12, A1): Share, Move to Trash and the heart, all glass, all off until
+    /// a scan is ticked (M24). At accessibility sizes the pill takes a row of its own above the circles, so its title
+    /// keeps the width and never breaks mid-word, as Trash's bar stacks (no mock; Ben to confirm).
+    private var selectBar: some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: Tokens.Spacing.s3) {
+                    moveButton
+                    HStack {
+                        shareButton
+                        Spacer(minLength: 0)
+                        favoriteButton
+                    }
+                }
+            } else {
+                HStack(spacing: Tokens.Spacing.s3) {
+                    shareButton
+                    moveButton.frame(maxWidth: .infinity)
+                    favoriteButton
+                }
+            }
         }
+        // .superpowers/plandoc/p4/index.html lines 141 and 143: the circles are 16 pt in from the edges.
+        .padding(.horizontal, Tokens.Spacing.s4)
         .disabled(!model.canAct)
+    }
+
+    /// One PDF per selected scan (B7, M10).
+    private var shareButton: some View {
+        ShareCircle(
+            items: model.sharedPDFs,
+            preview: { SharePreview($0.suggestedFileName) },
+            identifier: AccessibilityID.Grid.share)
+    }
+
+    /// "Move 2 to Trash", or "Move to Trash" where the count doesn't fit (B12, `moveTitles`). It asks first, as the viewer's Trash
+    /// button does (06-04, M19).
+    private var moveButton: some View {
+        PillButton(style: .glass, identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
+            // The first title that fits on one line; the last one wraps if even it doesn't.
+            let titles = model.moveTitles
+            ViewThatFits(in: .horizontal) {
+                ForEach(titles.indices, id: \.self) { index in
+                    Text(titles[index]).lineLimit(index == titles.count - 1 ? nil : 1)
+                }
+            }
+        }
         .moveToTrashConfirmation(isPresented: $isConfirmingMove, message: model.moveMessage, move: moveSelected)
+    }
+
+    /// Favorite, or Remove from Favorites when every selected scan is one; either ends select mode.
+    private var favoriteButton: some View {
+        GlassCircleButton(
+            systemImage: model.selectionIsFavorite ? "heart.fill" : "heart",
+            font: Self.circleFont,
+            label: Text(model.favoriteTitle),
+            identifier: AccessibilityID.Grid.favorite,
+            diameter: Self.circleDiameter,
+            action: favoriteSelected
+        )
+    }
+
+    private func favoriteSelected() {
+        if model.favoriteSelected() { favorited += 1 }
     }
 
     private func confirmMove() {
@@ -126,9 +195,26 @@ public struct CollectionGridView: View {
                     isSelected: selected.contains(tile.id)
                 ) {
                     if model.isSelecting { model.toggle(tile.id) } else { onOpen(tile.id) }
+                } onToggleFavorite: {
+                    model.toggleFavorite(tile.id)
+                } onMoveEarlier: {
+                    model.moveFavoriteEarlier(tile.id)
+                } onMoveLater: {
+                    model.moveFavoriteLater(tile.id)
                 }
             }
+            .reorderable()
         }
+        // Only Favorites has an order of your own (M8); not while selecting, where a tap ticks (P5).
+        .reorderContainer(for: GridTile.self, isEnabled: model.kind == .favorites && !model.isSelecting) { difference in
+            let destination: ScanID? =
+                switch difference.destination.position {
+                case .before(let id): id
+                case .end: nil
+                }
+            if model.moveFavorites(difference.sources, before: destination) { drops += 1 }
+        }
+        .sensoryFeedback(.selection, trigger: drops)
         .padding(.top, Self.gridTopGap)
         .padding(.horizontal, Tokens.Spacing.s4)
         .padding(.bottom, Self.contentEndGap)

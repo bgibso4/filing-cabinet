@@ -5,6 +5,8 @@ import Foundation
 public enum LibraryError: Error, Equatable {
     case diskFull
     case writeFailed
+    /// One of a scan's page files is not on disk (an export could not read it).
+    case pageMissing
 
     /// Classifies a file-system error.
     init(_ error: any Error) {

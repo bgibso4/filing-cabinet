@@ -14,6 +14,9 @@ final class ViewerSnapshotTests: XCTestCase {
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
             analytics: RecordingAnalytics(),
+            history: Fixtures.searchHistory(),
+            export: Fixtures.export,
+            photos: Fixtures.photos,
             mode: mode)
         // Pushed on a navigation stack, because the back button is the system's and only a pushed screen has one.
         return NavigationStack(path: .constant([0])) {

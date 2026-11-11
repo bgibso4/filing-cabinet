@@ -52,7 +52,10 @@ final class DetailsSnapshotTests: XCTestCase {
             library: library,
             today: today,
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            history: Fixtures.searchHistory(),
+            export: Fixtures.export,
+            photos: Fixtures.photos)
         let details = DetailsModel(
             id: scan.id, library: library, today: today, clock: Fixtures.clock, analytics: RecordingAnalytics())
         change(details)
