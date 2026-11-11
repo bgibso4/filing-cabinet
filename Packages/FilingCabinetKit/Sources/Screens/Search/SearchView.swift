@@ -248,7 +248,7 @@ public struct SearchView: View {
 
     /// Opening a result keeps the search (M5); the viewer records the scan as viewed.
     private func open(_ id: ScanID) {
-        model.opened(id)
+        model.opened()
         onOpen(id)
     }
 }

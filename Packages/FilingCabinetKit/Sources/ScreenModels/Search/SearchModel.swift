@@ -132,6 +132,9 @@ public final class SearchModel {
     /// The matches in the filter's collection, as rows.
     package var results: [SearchResult] {
         let day = today.day
+        let signpost = ScreenModelsLog.signposter.beginInterval(
+            "Search results", id: ScreenModelsLog.signposter.makeSignpostID())
+        defer { ScreenModelsLog.signposter.endInterval("Search results", signpost) }
         return shown.map { entry, hit in
             let place = place(entry.scan, today: day)
             return SearchResult(
@@ -185,7 +188,7 @@ public final class SearchModel {
     }
 
     /// A result was opened: keeps the search (M5). The viewer records the scan as viewed.
-    package func opened(_: ScanID) {
+    package func opened() {
         save()
     }
 
@@ -240,6 +243,9 @@ public final class SearchModel {
 
     /// Reads every text in one fetch, and folds only the titles and texts that differ from the last index's.
     private func makeIndex() -> Index {
+        let signpost = ScreenModelsLog.signposter.beginInterval(
+            "Search index", id: ScreenModelsLog.signposter.makeSignpostID())
+        defer { ScreenModelsLog.signposter.endInterval("Search index", signpost) }
         let scans = library.scans
         let lifespans = library.lifespans
         let day = today.day

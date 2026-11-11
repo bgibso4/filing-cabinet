@@ -292,7 +292,7 @@ private struct Fixture {
     defer { fixture.cleanUp() }
     fixture.model.query = "bike  lock"
     fixture.model.submit()
-    fixture.model.opened(lock.id)
+    fixture.model.opened()
     fixture.model.query = "bike lock "
     fixture.model.submit()
     #expect(fixture.history.recentSearches == ["bike lock"])
@@ -308,7 +308,7 @@ private struct Fixture {
     let fixture = try Fixture([lock, Seed("Bike pump")])
     defer { fixture.cleanUp() }
     _ = fixture.search("bike", in: .wallet)
-    fixture.model.opened(lock.id)
+    fixture.model.opened()
     #expect(fixture.history.recentSearches == ["bike"])
     #expect(fixture.analytics.events == [.searchSaved(resultCount: 1)])
 }
@@ -320,7 +320,7 @@ private struct Fixture {
     defer { fixture.cleanUp() }
     _ = fixture.search("straße bike")
     fixture.model.submit()
-    fixture.model.opened(lock.id)
+    fixture.model.opened()
     #expect(fixture.analytics.events.count == 1)
     for event in fixture.analytics.events {
         let described = "\(event.name) \(event.payload)"
