@@ -16,6 +16,7 @@ enum Tokens {
         static let badgeWallet = SwiftUI.Color("badge-wallet", bundle: .module)
         static let bgFill = SwiftUI.Color("bg-fill", bundle: .module)
         static let bgGrouped = SwiftUI.Color("bg-grouped", bundle: .module)
+        static let bgPressed = SwiftUI.Color("bg-pressed", bundle: .module)
         static let bgSurface = SwiftUI.Color("bg-surface", bundle: .module)
         static let bgWell = SwiftUI.Color("bg-well", bundle: .module)
         static let chevron = SwiftUI.Color("chevron", bundle: .module)

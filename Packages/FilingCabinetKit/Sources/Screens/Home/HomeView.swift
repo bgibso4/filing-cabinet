@@ -126,6 +126,8 @@ public struct HomeView: View {
             }
         }
         .background(Tokens.Color.bgSurface, in: .rect(cornerRadius: Tokens.Radius.surface))
+        // A pressed row's fill keeps to the card's corners (B18).
+        .clipShape(.rect(cornerRadius: Tokens.Radius.surface))
     }
 
     @ViewBuilder
@@ -138,6 +140,8 @@ public struct HomeView: View {
                 }
             }
             .background(Tokens.Color.bgSurface, in: .rect(cornerRadius: Tokens.Radius.surface))
+            // A pressed row's fill keeps to the card's corners (B18).
+            .clipShape(.rect(cornerRadius: Tokens.Radius.surface))
             .padding(.top, Self.viewsTopGap)
         }
     }

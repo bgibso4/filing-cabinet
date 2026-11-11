@@ -34,7 +34,7 @@ struct HomeRowView: View {
             .frame(minHeight: Self.minHeight)
             .contentShape(.rect)
         }
-        .buttonStyle(PressButtonStyle())
+        .buttonStyle(PressButtonStyle.row)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(AccessibilityID.Home.collectionRow(row.collection))
         .onChange(of: row.pulse) {

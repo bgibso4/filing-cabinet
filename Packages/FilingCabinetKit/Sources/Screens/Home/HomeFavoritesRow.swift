@@ -96,7 +96,7 @@ struct HomeFavoritesRow: View {
             .frame(width: size.width, alignment: .leading)
             .contentShape(.rect)
         }
-        .buttonStyle(PressButtonStyle())
+        .buttonStyle(PressButtonStyle.card)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(favorite.title)
         .accessibilityIdentifier(AccessibilityID.Home.favorite(favorite.id))
