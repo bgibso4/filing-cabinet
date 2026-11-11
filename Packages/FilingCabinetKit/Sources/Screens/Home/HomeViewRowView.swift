@@ -25,7 +25,7 @@ struct HomeViewRowView: View {
             .frame(minHeight: Self.minHeight)
             .contentShape(.rect)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressButtonStyle())
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier(identifier)
     }
