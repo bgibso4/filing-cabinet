@@ -81,6 +81,16 @@ private let exemptions: [AuditExemption] = [
         }
         return app.buttons[AccessibilityID.Grid.select].label == "Cancel"
     },
+    // At the largest text size Home's search field and Favorites row make it taller, so a collection label lands under
+    // the opaque Scan pill. iOS 27's audit samples the pill's pixels and reports low contrast with no element; an
+    // equal-height invisible spacer reproduces it, so it is the layout and not the field (#59). Ben accepted this on
+    // 2026-11-10 (plan 4, B13); #83, the fade behind Scan, is the likely real fix. Only contrast, only with no element,
+    // and only while Home's Scan button shows (a grid's Scan button has its own identifier, Search has none); an
+    // element-less issue on any other screen, and any other issue on Home, still fails.
+    AuditExemption(name: "home-scan-unresolved") { app, issue in
+        guard issue.auditType == .contrast, issue.element == nil else { return false }
+        return app.buttons[AccessibilityID.Home.scan].exists
+    },
     // Only contrast, only with no element, only in dark mode, and only while the viewer's header shows.
     AuditExemption(name: "dark-viewer-unresolved") { app, issue in
         guard issue.auditType == .contrast, issue.element == nil, XCUIDevice.shared.appearance == .dark else {
