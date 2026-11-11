@@ -231,6 +231,8 @@
     "Move to Trash" : {},
     "Move %lld to Trash" : {},
     "Moved %lld scans to Trash" : {},
+    "Favorite" : {},
+    "Remove from Favorites" : {},
     "%lld selected" : {},
     "Delete %lld" : {},
     "Delete" : {},

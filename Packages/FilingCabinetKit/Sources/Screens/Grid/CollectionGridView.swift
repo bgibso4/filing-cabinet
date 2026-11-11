@@ -5,8 +5,8 @@ import SwiftUI
 import os
 
 /// A collection, Recent or All Scans: a back button, the title in the bar (resting small, #62; large and still when
-/// empty, B5), a lazy grid of scans (or the empty state) and Scan. Select picks several scans and Move to Trash, in
-/// Scan's place, moves them (#68, as Trash's select mode).
+/// empty, B5), a lazy grid of scans (or the empty state) and Scan. Select picks several scans; in Scan's place, Share
+/// sends them, Move to Trash moves them and the heart favourites them (#68, as Trash's select mode; B12).
 public struct CollectionGridView: View {
     private let model: CollectionGridModel
     private let thumbnails: any ThumbnailProviding
@@ -23,6 +23,10 @@ public struct CollectionGridView: View {
     private static let contentEndGap: CGFloat = 34
     // Collection.dc.html line 35: the empty state is centred with 90 pt extra below it.
     private static let emptyBottomGap: CGFloat = 90
+    // .superpowers/plandoc/p4 A1 (`.circle`): Share and the heart are 56 pt glass circles with a 24 pt glyph, 16 pt in
+    // from the edges. Title 2 is closest to the glyph, as on the viewer's bar.
+    private static let circleDiameter: CGFloat = 56
+    private static let circleFont = Tokens.Typography.title2.weight(.regular)
 
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Open from the moment the grid is first built until its first `onAppear`.
@@ -54,7 +58,7 @@ public struct CollectionGridView: View {
             canScan: canScan,
             scanIdentifier: AccessibilityID.Grid.scan,
             onScan: onScan,
-            replacement: model.isSelecting ? moveBar : nil
+            replacement: model.isSelecting ? selectBar : nil
         ) {
             // One header for both states, so a grid emptying on screen changes its rest in place (HeaderScrollView).
             HeaderScrollView(
@@ -70,7 +74,10 @@ public struct CollectionGridView: View {
             .onChange(of: tiles.map(\.id), initial: true) { _, ids in
                 prefetcher.update(ids: ids, provider: thumbnails)
             }
-            .onDisappear { prefetcher.stop() }
+            .onDisappear {
+                prefetcher.stop()
+                model.exportEnded()
+            }
         }
         .toolbar {
             // Always there, greyed out while the grid is empty, as in Trash (B14); as Cancel it stays on, should the
@@ -89,14 +96,69 @@ public struct CollectionGridView: View {
         .onAppear(perform: endFirstFrame)
     }
 
-    /// Move to Trash in Scan's place while selecting, in Scan's filled pill, off until a scan is ticked (M24). It asks
-    /// first, as the viewer's Trash button does (06-04, M19).
-    private var moveBar: some View {
-        FilledPillButton(identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
-            Text(model.moveTitle)
+    /// The bar in Scan's place while selecting (B12, A1): Share, Move to Trash and the heart, all glass, all off until
+    /// a scan is ticked (M24). At accessibility sizes the pill takes a row of its own above the circles, so its title
+    /// keeps the width and never breaks mid-word, as Trash's bar stacks (no mock; Ben to confirm).
+    private var selectBar: some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                VStack(spacing: Tokens.Spacing.s3) {
+                    moveButton
+                    HStack {
+                        shareButton
+                        Spacer(minLength: 0)
+                        favoriteButton
+                    }
+                }
+            } else {
+                HStack(spacing: Tokens.Spacing.s3) {
+                    shareButton
+                    moveButton.frame(maxWidth: .infinity)
+                    favoriteButton
+                }
+            }
         }
+        .padding(.horizontal, Tokens.Spacing.s4)
         .disabled(!model.canAct)
+    }
+
+    /// One PDF per selected scan (B7, M10).
+    private var shareButton: some View {
+        ShareLink(
+            items: model.sharedPDFs,
+            preview: { SharePreview($0.suggestedFileName) },
+            label: {
+                GlassCircleLabel(
+                    systemImage: "square.and.arrow.up", font: Self.circleFont, diameter: Self.circleDiameter)
+            }
+        )
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Share", bundle: #bundle))
+        .accessibilityIdentifier(AccessibilityID.Grid.share)
+    }
+
+    /// "Move 2 to Trash", or "Move to Trash" where the count doesn't fit (B12). It asks first, as the viewer's Trash
+    /// button does (06-04, M19).
+    private var moveButton: some View {
+        GlassPillButton(identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
+            ViewThatFits(in: .horizontal) {
+                Text(model.moveTitle).lineLimit(1)
+                Text(model.shortMoveTitle)
+            }
+        }
         .moveToTrashConfirmation(isPresented: $isConfirmingMove, message: model.moveMessage, move: moveSelected)
+    }
+
+    /// Favorite, or Remove from Favorites when every selected scan is one; either ends select mode.
+    private var favoriteButton: some View {
+        GlassCircleButton(
+            systemImage: model.selectionIsFavorite ? "heart.fill" : "heart",
+            font: Self.circleFont,
+            label: Text(model.favoriteTitle),
+            identifier: AccessibilityID.Grid.favorite,
+            diameter: Self.circleDiameter,
+            action: model.favoriteSelected
+        )
     }
 
     private func confirmMove() {

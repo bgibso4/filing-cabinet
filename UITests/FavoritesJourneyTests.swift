@@ -132,6 +132,37 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5), "a tap opens")
     }
 
+    /// Task 12 (B12): select three in All Scans and Favorite them from the bar; select mode ends, each tile has its
+    /// heart and Home's row has the three, in the grid's order.
+    func testFavoritingASelection() {
+        let app = seededApp()
+        let all = app.buttons[AccessibilityID.Home.allRow]
+        XCTAssertTrue(all.appears(within: 5))
+        all.tap()
+        let titles = ["Sample scan 1", "Sample scan 2", "Sample scan 3"]
+        XCTAssertTrue(tile(titles[0], in: app).appears(within: 5))
+        let select = app.buttons[AccessibilityID.Grid.select]
+        select.tap()
+        let favorite = app.buttons[AccessibilityID.Grid.favorite]
+        XCTAssertTrue(favorite.appears(within: 5))
+        XCTAssertFalse(favorite.isEnabled, "off until a scan is ticked")
+        for title in titles.reversed() { tile(title, in: app).tap() }
+        XCTAssertTrue(app.staticTexts["3 selected"].appears(within: 5))
+        XCTAssertEqual(favorite.label, "Favorite")
+        XCTAssertTrue(app.buttons[AccessibilityID.Grid.share].isEnabled)
+
+        favorite.tap()
+        XCTAssertTrue(favorite.disappears(within: 5), "favouriting ends select mode")
+        XCTAssertEqual(select.label, "Select")
+        for title in titles {
+            XCTAssertTrue(tile(title, in: app).satisfies("label ENDSWITH %@", ", favorite", within: 5), title)
+        }
+        XCTAssertFalse(tile("Sample scan 4", in: app).label.hasSuffix(", favorite"))
+        goBack(in: app)
+        XCTAssertTrue(favoriteCards(in: app).element(boundBy: 2).appears(within: 5))
+        XCTAssertEqual(cardTitles(in: app), titles)
+    }
+
     // MARK: Steps
 
     /// Six seeded scans, every one landed: Wallet holds scans 1 and 6.

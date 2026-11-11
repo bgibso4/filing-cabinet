@@ -4,9 +4,9 @@ import Library
 import Observation
 
 /// What a grid shows: a collection's scans, Recent or All Scans, newest first (Favorites in its own order), with Select
-/// for several at once and Move to Trash for them (#68, as Trash's select mode). Expired scans are hidden (M5);
-/// everything is read from the library and from `Today`, so the grid moves when either does, and a scan that leaves
-/// the grid leaves the selection. A scan taken out of Favorites while Favorites is on screen keeps its tile, with an
+/// for several at once, and Share, Favorite and Move to Trash for them (#68, as Trash's select mode; B12). Expired
+/// scans are hidden (M5); everything is read from the library and from `Today`, so the grid moves when either does,
+/// and a scan that leaves the grid leaves the selection. A scan taken out of Favorites while Favorites is on screen keeps its tile, with an
 /// empty heart, until the screen goes (M9): this model lives as long as the screen.
 @Observable
 public final class CollectionGridModel {
@@ -35,16 +35,27 @@ public final class CollectionGridModel {
     private let today: Today
     private let calendar: Calendar
     @ObservationIgnored private let analytics: any Analytics
+    /// The PDFs the selection's Share made, which go when select mode ends or the grid goes (M20).
+    @ObservationIgnored private let exported: ExportedFiles
     @ObservationIgnored private var builtShelf: BuiltShelf?
     /// Favorites only: the tiles as last shown, so a scan taken out of Favorites keeps its place (M9).
     @ObservationIgnored private var lastShown: [ScanID] = []
 
-    public init(kind: GridKind, library: any ScanLibrary, today: Today, calendar: Calendar, analytics: any Analytics) {
+    /// `export` makes the PDFs the selection's Share sends.
+    public init(
+        kind: GridKind,
+        library: any ScanLibrary,
+        today: Today,
+        calendar: Calendar,
+        analytics: any Analytics,
+        export: ScanExport
+    ) {
         self.kind = kind
         self.library = library
         self.today = today
         self.calendar = calendar
         self.analytics = analytics
+        exported = ExportedFiles(export: export)
     }
 
     package var title: String {
@@ -136,9 +147,31 @@ public final class CollectionGridModel {
 
     /// "Move to Trash", or "Move 2 to Trash" for several, as Trash's "Delete 2".
     package var moveTitle: String {
-        selected.count > 1
-            ? String(localized: "Move \(selected.count) to Trash", bundle: #bundle)
-            : String(localized: "Move to Trash", bundle: #bundle)
+        selected.count > 1 ? String(localized: "Move \(selected.count) to Trash", bundle: #bundle) : shortMoveTitle
+    }
+
+    /// The pill's title where `moveTitle` doesn't fit (B12): the count is in the subtitle.
+    package var shortMoveTitle: String { String(localized: "Move to Trash", bundle: #bundle) }
+
+    /// True when every selected scan is a favourite, so the bar's heart takes them out (B12).
+    package var selectionIsFavorite: Bool {
+        let selected = selected
+        return !selected.isEmpty && built.shown.allSatisfy { !selected.contains($0.id) || $0.isFavorite }
+    }
+
+    /// "Favorite" while any selected scan isn't one, else "Remove from Favorites".
+    package var favoriteTitle: String {
+        selectionIsFavorite
+            ? String(localized: "Remove from Favorites", bundle: #bundle)
+            : String(localized: "Favorite", bundle: #bundle)
+    }
+
+    /// What Share sends (B7, M10): one PDF per selected scan, in the grid's order, reported once with the count.
+    package var sharedPDFs: [ScanPDF] {
+        let selected = selected
+        let scans = built.shown.filter { selected.contains($0.id) }
+        let event = AnalyticsEvent.scansExported(kind: .share, count: scans.count)
+        return ScanPDF.sharing(scans, exported: exported, made: { [analytics] in analytics.send(event) })
     }
 
     /// The confirmation's message (06-04's, for any count).
@@ -148,8 +181,9 @@ public final class CollectionGridModel {
             count: selected.count, collection: collections.count == 1 ? collections.first : nil)
     }
 
-    /// Select / Cancel; leaving forgets the ticks.
+    /// Select / Cancel; leaving forgets the ticks and the PDFs the selection shared.
     public func toggleSelecting() {
+        if selection.isSelecting { exportEnded() }
         selection.toggleSelecting()
     }
 
@@ -171,8 +205,29 @@ public final class CollectionGridModel {
         }
         // One event per scan, as from the viewer: each carries its collection.
         for scan in scans { analytics.send(.scanMovedToTrash(collection: scan.collection)) }
-        selection.finish()
+        finishSelecting()
         return MoveToTrashText.announcement(count: scans.count)
+    }
+
+    /// The bar's heart: the selected scans become favourites, new ones last in the grid's order, or, when all of them
+    /// are, stop being favourites. Select mode ends. A failed write shows the edit alert and changes nothing.
+    package func favoriteSelected() {
+        let ids = built.shown.map(\.id).filter(selected.contains)
+        guard !ids.isEmpty else { return }
+        let isFavorite = !selectionIsFavorite
+        do {
+            try library.setFavorite(isFavorite, for: ids)
+        } catch {
+            editAlert = EditAlert()
+            return
+        }
+        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: ids.count))
+        finishSelecting()
+    }
+
+    /// The grid has gone: the PDFs its selection shared are no longer needed (M20). Another screen's stay.
+    package func exportEnded() {
+        exported.removeAll()
     }
 
     /// A tile's VoiceOver Favorite or Remove from Favorites: flips the scan's heart. A failed write shows the edit
@@ -237,6 +292,12 @@ public final class CollectionGridModel {
     }
 
     // MARK: Private
+
+    /// An action ends select mode, and with it the selection's shared PDFs.
+    private func finishSelecting() {
+        selection.finish()
+        exportEnded()
+    }
 
     /// Built once per update: a body reads the model several times, and the library and day only change between
     /// updates. Reading them all here is what keeps the observation.

@@ -76,22 +76,20 @@ private func everySubtext() throws -> [Subtext] {
             room: roomBesideBackAndCancel
         ),
     ]
-    let grids = try Lifespan.allCases.map { lifespan in
-        let grid = CollectionGridModel(
-            kind: .collection(.documents),
-            library: try fullLibrary(lifespan, clock: clock),
+    let gridModel = { (kind: GridKind, library: FakeLibrary) in
+        CollectionGridModel(
+            kind: kind,
+            library: library,
             today: today,
             calendar: clock.calendar,
-            analytics: RecordingAnalytics()
-        )
+            analytics: RecordingAnalytics(),
+            export: ExportFolder().export)
+    }
+    let grids = try Lifespan.allCases.map { lifespan in
+        let grid = gridModel(.collection(.documents), try fullLibrary(lifespan, clock: clock))
         return Subtext(screen: "Documents' grid, \(lifespan)", text: grid.subtitle, room: roomBesideBackAndSelect)
     }
-    let allScans = CollectionGridModel(
-        kind: .all,
-        library: try fullLibrary(.forever, clock: clock),
-        today: today,
-        calendar: clock.calendar,
-        analytics: RecordingAnalytics())
+    let allScans = gridModel(.all, try fullLibrary(.forever, clock: clock))
     let settings = CollectionSettingsModel(
         collection: .documents,
         library: try fullLibrary(.forever, clock: clock),
@@ -99,8 +97,7 @@ private func everySubtext() throws -> [Subtext] {
         calendar: clock.calendar,
         analytics: RecordingAnalytics()
     )
-    let recent = CollectionGridModel(
-        kind: .recent, library: FakeLibrary(), today: today, calendar: clock.calendar, analytics: RecordingAnalytics())
+    let recent = gridModel(.recent, FakeLibrary())
     let besideGridSelect = [
         Subtext(screen: "Recent", text: recent.subtitle, room: roomBesideBackAndSelect),
         Subtext(screen: "All Scans", text: allScans.subtitle, room: roomBesideBackAndSelect),

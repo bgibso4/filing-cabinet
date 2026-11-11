@@ -81,7 +81,7 @@ final class AppEnvironment {
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
             flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
-            makeGrid: { Self.makeGrid($0, store: store, today: today, clock: clock, analytics: analytics) },
+            makeGrid: Self.gridMaker(store: store, today: today, clock: clock, analytics: analytics, export: export),
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
             makeViewer: Self.viewerMaker(
                 store: store, today: today, clock: clock, analytics: analytics, with: viewerShared),
@@ -102,10 +102,15 @@ final class AppEnvironment {
         )
     }
 
-    private static func makeGrid(
-        _ kind: GridKind, store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics
-    ) -> CollectionGridModel {
-        CollectionGridModel(kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics)
+    /// Makes a grid's model; `export` makes the PDFs its selection shares.
+    private static func gridMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, export: ScanExport
+    ) -> (GridKind) -> CollectionGridModel {
+        { kind in
+            CollectionGridModel(
+                kind: kind, library: store, today: today, calendar: clock.calendar, analytics: analytics, export: export
+            )
+        }
     }
 
     /// Makes Search's model, keeping what it saves in the app-wide history the viewer records into.

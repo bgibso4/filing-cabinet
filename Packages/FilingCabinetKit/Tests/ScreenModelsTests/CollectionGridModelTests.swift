@@ -33,7 +33,8 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
         library: FakeLibrary(scans: summaries),
         today: Today(clock: clock),
         calendar: utc,
-        analytics: RecordingAnalytics())
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
 }
 
 @Test func receiptsSubtitleAndTilesNewestFirst() {
@@ -155,7 +156,12 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     let today = Today(clock: clock)
     let library = FakeLibrary(scans: [scan("Coat check", .throwaways, daysAgo: 5)])
     let grid = CollectionGridModel(
-        kind: .collection(.throwaways), library: library, today: today, calendar: utc, analytics: RecordingAnalytics())
+        kind: .collection(.throwaways),
+        library: library,
+        today: today,
+        calendar: utc,
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
     #expect(grid.tiles.map(\.timeLeft) == ["2 days left"])
 
     now.set(noon.addingTimeInterval(86_400))
@@ -170,7 +176,12 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     let library = FakeLibrary()
     let clock = AppClock.fixed(noon, calendar: utc)
     let grid = CollectionGridModel(
-        kind: .all, library: library, today: Today(clock: clock), calendar: utc, analytics: RecordingAnalytics())
+        kind: .all,
+        library: library,
+        today: Today(clock: clock),
+        calendar: utc,
+        analytics: RecordingAnalytics(),
+        export: ExportFolder().export)
     #expect(grid.isEmpty)
 
     let changed = Mutex(false)
@@ -203,16 +214,29 @@ struct GridHarness {
     let grid: CollectionGridModel
     private let clock = AppClock.fixed(noon, calendar: utc)
 
-    init(_ kind: GridKind, _ summaries: [ScanSummary]) {
+    private let export: ScanExport
+
+    init(_ kind: GridKind, _ summaries: [ScanSummary], export: ScanExport = ExportFolder().export) {
         library = FakeLibrary(scans: summaries, clock: clock)
+        self.export = export
         grid = CollectionGridModel(
-            kind: kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
+            kind: kind,
+            library: library,
+            today: Today(clock: clock),
+            calendar: utc,
+            analytics: analytics,
+            export: export)
     }
 
     /// The same grid opened again: a new model over the same library, as the screen builds when it is pushed.
     func reopened() -> CollectionGridModel {
         CollectionGridModel(
-            kind: grid.kind, library: library, today: Today(clock: clock), calendar: utc, analytics: analytics)
+            kind: grid.kind,
+            library: library,
+            today: Today(clock: clock),
+            calendar: utc,
+            analytics: analytics,
+            export: export)
     }
 }
 

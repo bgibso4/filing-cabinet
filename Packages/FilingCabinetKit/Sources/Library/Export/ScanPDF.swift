@@ -23,6 +23,24 @@ package struct ScanPDF: Transferable {
         self.made = made
     }
 
+    /// One PDF per scan, in the order given, a repeated title numbered (M10: a second "Receipt" is "Receipt 2"). `made`
+    /// is told once, when the first is made: a share makes every file and is one share.
+    package static func sharing(
+        _ scans: [ScanSummary], exported: ExportedFiles, made: @escaping @Sendable () -> Void
+    ) -> [Self] {
+        var taken: Set<String> = []
+        var pdfs: [Self] = []
+        for scan in scans {
+            let name = ScanExport.fileName(for: scan.title, taken: taken)
+            taken.insert(name)
+            pdfs.append(
+                pdfs.isEmpty
+                    ? Self(scan: scan, exported: exported, suggestedFileName: name, made: made)
+                    : Self(scan: scan, exported: exported, suggestedFileName: name))
+        }
+        return pdfs
+    }
+
     /// Makes the PDF in the export folder, kept by `exported` for removal when the export ends.
     package func file() async throws(LibraryError) -> URL {
         let url = try await exported.pdf(for: scan, named: suggestedFileName)

@@ -41,6 +41,10 @@ public enum AccessibilityID {
         public static let select = "grid.select"
         /// Only while selecting, in Scan's place.
         public static let moveToTrash = "grid.moveToTrash"
+        /// Only while selecting, leading: shares the selection as PDFs (B12).
+        public static let share = "grid.share"
+        /// Only while selecting, trailing: Favorite or Remove from Favorites for the selection (B12).
+        public static let favorite = "grid.favorite"
         /// Every tile's identifier starts with this; tiles are checked by prefix, not listed in `all`.
         public static let tilePrefix = "grid.tile."
 

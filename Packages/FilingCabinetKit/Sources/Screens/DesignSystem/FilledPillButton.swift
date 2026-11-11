@@ -1,8 +1,7 @@
 import SwiftUI
 
 /// The filled pill at the bottom centre: Liquid Glass tinted graphite in light, near-white in dark (Ben, 2026-11-10).
-/// Scan, and a grid's Move to Trash while selecting, in Scan's place (#68). Disabled, it turns to plain glass with
-/// secondary text.
+/// Scan (a grid's select bar uses `GlassPillButton`, B12). Disabled, it turns to plain glass with secondary text.
 struct FilledPillButton<Label: View>: View {
     let identifier: String
     let action: () -> Void

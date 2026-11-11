@@ -15,7 +15,8 @@ final class GridSnapshotTests: XCTestCase {
             library: library,
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            export: Fixtures.export)
         change(model)
         // Pushed on a navigation stack, because the back button is the system's and only a pushed screen has one.
         return NavigationStack(path: .constant([0])) {

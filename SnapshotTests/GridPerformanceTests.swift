@@ -107,7 +107,8 @@ struct GridPerformanceTests {
             library: library,
             today: Today(clock: Fixtures.clock),
             calendar: Fixtures.clock.calendar,
-            analytics: RecordingAnalytics())
+            analytics: RecordingAnalytics(),
+            export: Fixtures.export)
         return NavigationStack {
             CollectionGridView(model: model, thumbnails: thumbnails, canScan: true, onOpen: { _ in }, onScan: {})
         }
