@@ -33,7 +33,8 @@ private func favorite(_ title: String, order: Int, daysAgo: Int = 0) -> ScanSumm
     #expect(grid.favoriteTitle == "Remove from Favorites")
 }
 
-/// New favourites go last in the order the grid shows them, and favouriting ends select mode (#68's actions do).
+/// New favourites go last in the order the grid shows them, and favouriting ends select mode (#68's actions do). The
+/// event counts the scans that changed, not the one already a favourite.
 @Test func favoritingSeveralKeepsScreenOrder() {
     let harness = GridHarness(
         .all,
@@ -47,11 +48,11 @@ private func favorite(_ title: String, order: Int, daysAgo: Int = 0) -> ScanSumm
     for title in ["Third", "First", "Already", "Second"] {
         grid.toggle(grid.tiles.first { $0.title == title }?.id ?? ScanID())
     }
-    grid.favoriteSelected()
+    #expect(grid.favoriteSelected())
     #expect(!grid.isSelecting)
     let favorites = harness.library.scans.filter(\.isFavorite).sorted(by: ScanSummary.favoritesOrder)
     #expect(favorites.map(\.title) == ["Already", "First", "Second", "Third"])
-    #expect(harness.analytics.events == [.favoritesChanged(isFavorite: true, count: 4)])
+    #expect(harness.analytics.events == [.favoritesChanged(isFavorite: true, count: 3)])
 }
 
 @Test func removingTheSelectionFromFavorites() {
@@ -72,7 +73,7 @@ private func favorite(_ title: String, order: Int, daysAgo: Int = 0) -> ScanSumm
     grid.toggleSelecting()
     grid.toggle(grid.tiles[0].id)
     harness.library.failNextEdit = .writeFailed
-    grid.favoriteSelected()
+    #expect(!grid.favoriteSelected())
     #expect(grid.editAlert == EditAlert())
     #expect(grid.isSelecting)
     #expect(grid.selected.count == 1)
@@ -80,14 +81,15 @@ private func favorite(_ title: String, order: Int, daysAgo: Int = 0) -> ScanSumm
     #expect(harness.analytics.events.isEmpty)
 }
 
-/// B12: where "Move 387 to Trash" doesn't fit, the pill says "Move to Trash"; the count is in the subtitle.
-@Test func thePillsShortTitleDropsTheCount() {
-    let harness = GridHarness(.collection(.receipts), (0..<387).map { scan("Receipt \($0)", .receipts) })
-    let grid = harness.grid
+/// B12: the pill offers "Move 387 to Trash" and, where that doesn't fit, "Move to Trash"; the count is in the subtitle.
+/// One scan has only the one title. (That the view falls back is `grid_select.ax5`.)
+@Test func thePillFallsBackToATitleWithoutTheCount() {
+    let grid = GridHarness(.collection(.receipts), (0..<387).map { scan("Receipt \($0)", .receipts) }).grid
     grid.toggleSelecting()
-    grid.tiles.forEach { grid.toggle($0.id) }
-    #expect(grid.moveTitle == "Move 387 to Trash")
-    #expect(grid.shortMoveTitle == "Move to Trash")
+    grid.toggle(grid.tiles[0].id)
+    #expect(grid.moveTitles == ["Move to Trash"])
+    grid.tiles.dropFirst().forEach { grid.toggle($0.id) }
+    #expect(grid.moveTitles == ["Move 387 to Trash", "Move to Trash"])
     #expect(grid.subtitle == "387 selected")
 }
 

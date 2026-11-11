@@ -146,37 +146,19 @@ public final class CollectionGridModel {
     package var canAct: Bool { !selected.isEmpty }
 
     /// "Move to Trash", or "Move 2 to Trash" for several, as Trash's "Delete 2".
-    package var moveTitle: String {
-        selected.count > 1 ? String(localized: "Move \(selected.count) to Trash", bundle: #bundle) : shortMoveTitle
-    }
+    package var moveTitle: String { moveTitles[0] }
 
-    /// The pill's title where `moveTitle` doesn't fit (B12): the count is in the subtitle.
-    package var shortMoveTitle: String { String(localized: "Move to Trash", bundle: #bundle) }
-
-    /// True when every selected scan is a favourite, so the bar's heart takes them out (B12).
-    package var selectionIsFavorite: Bool {
-        let selected = selected
-        return !selected.isEmpty && built.shown.allSatisfy { !selected.contains($0.id) || $0.isFavorite }
-    }
-
-    /// "Favorite" while any selected scan isn't one, else "Remove from Favorites".
-    package var favoriteTitle: String {
-        selectionIsFavorite
-            ? String(localized: "Remove from Favorites", bundle: #bundle)
-            : String(localized: "Favorite", bundle: #bundle)
-    }
-
-    /// What Share sends (B7, M10): one PDF per selected scan, in the grid's order, reported once with the count.
-    package var sharedPDFs: [ScanPDF] {
-        let selected = selected
-        let scans = built.shown.filter { selected.contains($0.id) }
-        let event = AnalyticsEvent.scansExported(kind: .share, count: scans.count)
-        return ScanPDF.sharing(scans, exported: exported, made: { [analytics] in analytics.send(event) })
+    /// The pill's titles, longest first: the view shows the first that fits (B12). Where "Move 387 to Trash" doesn't,
+    /// the pill says "Move to Trash" and the count stays in the subtitle.
+    package var moveTitles: [String] {
+        let count = selected.count
+        let short = String(localized: "Move to Trash", bundle: #bundle)
+        return count > 1 ? [String(localized: "Move \(count) to Trash", bundle: #bundle), short] : [short]
     }
 
     /// The confirmation's message (06-04's, for any count).
     package var moveMessage: String {
-        let collections = Set(built.shown.filter { selected.contains($0.id) }.map(\.collection))
+        let collections = Set(selectedScans.map(\.collection))
         return MoveToTrashText.message(
             count: selected.count, collection: collections.count == 1 ? collections.first : nil)
     }
@@ -195,7 +177,7 @@ public final class CollectionGridModel {
     /// announces (M19), or nil when nothing was selected or the move failed to save (the alert shows).
     @discardableResult
     package func moveSelectedToTrash() -> String? {
-        let scans = built.shown.filter { selected.contains($0.id) }
+        let scans = selectedScans
         guard !scans.isEmpty else { return nil }
         do {
             try library.moveToTrash(scans.map(\.id))
@@ -207,27 +189,6 @@ public final class CollectionGridModel {
         for scan in scans { analytics.send(.scanMovedToTrash(collection: scan.collection)) }
         finishSelecting()
         return MoveToTrashText.announcement(count: scans.count)
-    }
-
-    /// The bar's heart: the selected scans become favourites, new ones last in the grid's order, or, when all of them
-    /// are, stop being favourites. Select mode ends. A failed write shows the edit alert and changes nothing.
-    package func favoriteSelected() {
-        let ids = built.shown.map(\.id).filter(selected.contains)
-        guard !ids.isEmpty else { return }
-        let isFavorite = !selectionIsFavorite
-        do {
-            try library.setFavorite(isFavorite, for: ids)
-        } catch {
-            editAlert = EditAlert()
-            return
-        }
-        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: ids.count))
-        finishSelecting()
-    }
-
-    /// The grid has gone: the PDFs its selection shared are no longer needed (M20). Another screen's stay.
-    package func exportEnded() {
-        exported.removeAll()
     }
 
     /// A tile's VoiceOver Favorite or Remove from Favorites: flips the scan's heart. A failed write shows the edit
@@ -293,6 +254,12 @@ public final class CollectionGridModel {
 
     // MARK: Private
 
+    /// The ticked scans the grid still shows, in its order.
+    private var selectedScans: [ScanSummary] {
+        let selected = selected
+        return built.shown.filter { selected.contains($0.id) }
+    }
+
     /// An action ends select mode, and with it the selection's shared PDFs.
     private func finishSelecting() {
         selection.finish()
@@ -345,5 +312,53 @@ public final class CollectionGridModel {
             shown.insert(kept, at: min(index, shown.count))
         }
         return shown
+    }
+}
+
+// MARK: - The selection's Share and Favorite (B12)
+
+extension CollectionGridModel {
+    /// True when every selected scan is a favourite, so the bar's heart takes them out (B12).
+    package var selectionIsFavorite: Bool {
+        let scans = selectedScans
+        return !scans.isEmpty && scans.allSatisfy(\.isFavorite)
+    }
+
+    /// "Favorite" while any selected scan isn't one, else "Remove from Favorites".
+    package var favoriteTitle: String {
+        selectionIsFavorite
+            ? String(localized: "Remove from Favorites", bundle: #bundle)
+            : String(localized: "Favorite", bundle: #bundle)
+    }
+
+    /// What Share sends (B7, M10): one PDF per selected scan, in the grid's order, reported once with the count.
+    package var sharedPDFs: [ScanPDF] {
+        let scans = selectedScans
+        let event = AnalyticsEvent.scansExported(kind: .share, count: scans.count)
+        return ScanPDF.sharing(scans, exported: exported, made: { [analytics] in analytics.send(event) })
+    }
+
+    /// The bar's heart: the selected scans become favourites, new ones last in the grid's order, or, when all of them
+    /// are, stop being favourites. Select mode ends; the event counts the scans that changed. A failed write shows the
+    /// edit alert and changes nothing. True when it saved.
+    @discardableResult
+    package func favoriteSelected() -> Bool {
+        let scans = selectedScans
+        guard !scans.isEmpty else { return false }
+        let isFavorite = !selectionIsFavorite
+        do {
+            try library.setFavorite(isFavorite, for: scans.map(\.id))
+        } catch {
+            editAlert = EditAlert()
+            return false
+        }
+        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: scans.count { $0.isFavorite != isFavorite }))
+        finishSelecting()
+        return true
+    }
+
+    /// The grid has gone: the PDFs its selection shared are no longer needed (M20). Another screen's stay.
+    package func exportEnded() {
+        exported.removeAll()
     }
 }

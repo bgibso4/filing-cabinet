@@ -23,10 +23,10 @@ public struct CollectionGridView: View {
     private static let contentEndGap: CGFloat = 34
     // Collection.dc.html line 35: the empty state is centred with 90 pt extra below it.
     private static let emptyBottomGap: CGFloat = 90
-    // .superpowers/plandoc/p4 A1 (`.circle`): Share and the heart are 56 pt glass circles with a 24 pt glyph, 16 pt in
-    // from the edges. Title 2 is closest to the glyph, as on the viewer's bar.
-    private static let circleDiameter: CGFloat = 56
-    private static let circleFont = Tokens.Typography.title2.weight(.regular)
+    // .superpowers/plandoc/p4/index.html lines 37-38 and 141-143: the heart is a glass circle the size of Share's
+    // (`ShareCircle`), 16 pt in from the edge as Share is.
+    private static let circleDiameter = ShareCircle<ScanPDF>.diameter
+    private static let circleFont = ShareCircle<ScanPDF>.font
 
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Open from the moment the grid is first built until its first `onAppear`.
@@ -35,6 +35,8 @@ public struct CollectionGridView: View {
     @State private var isConfirmingMove = false
     /// Counts the drops in Favorites that changed the order, for a light tap as each one lands.
     @State private var drops = 0
+    /// Counts the selection's saved favourites, for a light tap on each (requirements 06 · Haptics, as the viewer's).
+    @State private var favorited = 0
 
     /// `canScan` false keeps the Scan button disabled (until launch cleanup has finished).
     public init(
@@ -92,6 +94,8 @@ public struct CollectionGridView: View {
                 .disabled(model.isEmpty && !model.isSelecting).id(typeSize)
             }
         }
+        // On the screen, not the heart: favouriting ends select mode, which takes the heart away.
+        .sensoryFeedback(.selection, trigger: favorited)
         .editAlert(model.editAlert, dismiss: model.dismissEditAlert)
         .onAppear(perform: endFirstFrame)
     }
@@ -118,32 +122,29 @@ public struct CollectionGridView: View {
                 }
             }
         }
+        // .superpowers/plandoc/p4/index.html lines 141 and 143: the circles are 16 pt in from the edges.
         .padding(.horizontal, Tokens.Spacing.s4)
         .disabled(!model.canAct)
     }
 
     /// One PDF per selected scan (B7, M10).
     private var shareButton: some View {
-        ShareLink(
+        ShareCircle(
             items: model.sharedPDFs,
             preview: { SharePreview($0.suggestedFileName) },
-            label: {
-                GlassCircleLabel(
-                    systemImage: "square.and.arrow.up", font: Self.circleFont, diameter: Self.circleDiameter)
-            }
-        )
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text("Share", bundle: #bundle))
-        .accessibilityIdentifier(AccessibilityID.Grid.share)
+            identifier: AccessibilityID.Grid.share)
     }
 
-    /// "Move 2 to Trash", or "Move to Trash" where the count doesn't fit (B12). It asks first, as the viewer's Trash
+    /// "Move 2 to Trash", or "Move to Trash" where the count doesn't fit (B12, `moveTitles`). It asks first, as the viewer's Trash
     /// button does (06-04, M19).
     private var moveButton: some View {
-        GlassPillButton(identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
+        PillButton(style: .glass, identifier: AccessibilityID.Grid.moveToTrash, action: confirmMove) {
+            // The first title that fits on one line; the last one wraps if even it doesn't.
+            let titles = model.moveTitles
             ViewThatFits(in: .horizontal) {
-                Text(model.moveTitle).lineLimit(1)
-                Text(model.shortMoveTitle)
+                ForEach(titles.indices, id: \.self) { index in
+                    Text(titles[index]).lineLimit(index == titles.count - 1 ? nil : 1)
+                }
             }
         }
         .moveToTrashConfirmation(isPresented: $isConfirmingMove, message: model.moveMessage, move: moveSelected)
@@ -157,8 +158,12 @@ public struct CollectionGridView: View {
             label: Text(model.favoriteTitle),
             identifier: AccessibilityID.Grid.favorite,
             diameter: Self.circleDiameter,
-            action: model.favoriteSelected
+            action: favoriteSelected
         )
+    }
+
+    private func favoriteSelected() {
+        if model.favoriteSelected() { favorited += 1 }
     }
 
     private func confirmMove() {

@@ -23,10 +23,9 @@ struct ViewerBottomBar: View {
     private static let pillPadding: CGFloat = 10
     private static let pillButtonDiameter: CGFloat = 52
     private static let pillButtonGap = Tokens.Spacing.s1
-    // ScanView.dc.html lines 263 and 267: Share and Trash are 56 pt, each with a 23 pt glyph.
-    private static let circleDiameter: CGFloat = 56
-    // Title 2 is closest to the mock's 23 pt glyph.
-    private static let circleFont = Tokens.Typography.title2.weight(.regular)
+    // ScanView.dc.html line 267: Trash is a circle the size of Share's (`ShareCircle`).
+    private static let circleDiameter = ShareCircle<ScanPDF>.diameter
+    private static let circleFont = ShareCircle<ScanPDF>.font
 
     var body: some View {
         ZStack {
@@ -42,13 +41,8 @@ struct ViewerBottomBar: View {
     @ViewBuilder
     private var shareButton: some View {
         if let sharedPDF {
-            ShareLink(item: sharedPDF, preview: SharePreview(title)) {
-                GlassCircleLabel(
-                    systemImage: "square.and.arrow.up", font: Self.circleFont, diameter: Self.circleDiameter)
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(Text("Share", bundle: #bundle))
-            .accessibilityIdentifier(AccessibilityID.Viewer.share)
+            ShareCircle(
+                items: [sharedPDF], preview: { _ in SharePreview(title) }, identifier: AccessibilityID.Viewer.share)
         }
     }
 
