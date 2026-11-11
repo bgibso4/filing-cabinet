@@ -1,4 +1,4 @@
-/// The symbols of Home's views: Recent, All Scans and Trash.
+/// The symbols of Home's views (Favorites, Recent, All Scans and Trash) and of the empty Favorites grid.
 enum ViewSymbol {
     static let recent = "clock"
     static let all = "square.grid.2x2"

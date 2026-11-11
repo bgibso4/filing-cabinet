@@ -18,13 +18,14 @@ final class BrowseJourneyTests: XCTestCase {
 
     func testHomeRowsOpenTheirDestinations() throws {
         let app = seededApp()
-        // Recent and All Scans appear once the seeded scans are in.
+        // Favorites, Recent and All Scans appear once the seeded scans are in.
         assertIdentifiers(AccessibilityID.Home.all, in: app)
         try audit(app)
 
         let rows =
             BuiltInCollection.allCases.map { (AccessibilityID.Home.collectionRow($0), app.header($0)) }
             + [
+                (AccessibilityID.Home.favoritesRow, app.header("Favorites")),
                 (AccessibilityID.Home.recentRow, app.header("Recent")),
                 (AccessibilityID.Home.allRow, app.header("All Scans")),
             ]

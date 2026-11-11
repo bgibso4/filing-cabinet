@@ -3,6 +3,8 @@
 public enum AccessibilityID {
     public enum Home {
         public static let scan = "home.scan"
+        /// Favorites in the views card (B16), first, whenever the card shows.
+        public static let favoritesRow = "home.favorites"
         public static let recentRow = "home.recent"
         public static let allRow = "home.all"
         /// Only while the views card shows, or while something is in Trash.
@@ -27,7 +29,7 @@ public enum AccessibilityID {
         }
 
         public static var all: [String] {
-            [scan, recentRow, allRow, trashRow, settings, cleanupBanner, search]
+            [scan, favoritesRow, recentRow, allRow, trashRow, settings, cleanupBanner, search]
                 + BuiltInCollection.allCases.map(collectionRow)
         }
     }

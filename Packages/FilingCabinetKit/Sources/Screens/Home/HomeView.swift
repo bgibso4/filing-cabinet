@@ -4,8 +4,8 @@ import ScreenModels
 import SwiftUI
 
 /// Home: the title, resting large under the bar's Settings gear and collapsing on scroll like Passwords' root (B9,
-/// M11), the search field and the Favorites row (02-01), the five collections with their counts, the Recent, All Scans
-/// and Trash views, and the Scan button. Before the first scan it shows the collections' descriptions instead.
+/// M11), the search field and the Favorites row (02-01), the five collections with their counts, the Favorites, Recent,
+/// All Scans and Trash views, and the Scan button. Before the first scan it shows the collections' descriptions instead.
 public struct HomeView: View {
     private let model: HomeModel
     private let thumbnails: any ThumbnailProviding
@@ -140,6 +140,7 @@ public struct HomeView: View {
 
     private func route(for row: HomeViewRow) -> AppRoute {
         switch row.kind {
+        case .favorites: .grid(.favorites)
         case .recent: .grid(.recent)
         case .all: .grid(.all)
         case .trash: .trash

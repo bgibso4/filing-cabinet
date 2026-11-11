@@ -67,17 +67,17 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     let home = model(all)
     #expect(!home.isEmpty)
     #expect(home.rows.map(\.detail) == [.count(6), .count(23), .count(41), .count(18), .count(3)])
-    #expect(home.viewRows.map(\.name) == ["Recent", "All Scans", "Trash"])
-    #expect(home.viewRows.map(\.kind) == [.recent, .all, .trash])
-    // An empty Trash shows no number.
-    #expect(home.viewRows.map(\.count) == [nil, 91, nil])
+    #expect(home.viewRows.map(\.name) == ["Favorites", "Recent", "All Scans", "Trash"])
+    #expect(home.viewRows.map(\.kind) == [.favorites, .recent, .all, .trash])
+    // No favourites and an empty Trash show no number.
+    #expect(home.viewRows.map(\.count) == [nil, nil, 91, nil])
 }
 
 @Test func expiredScansAreNotCounted() {
     // Throwaways last a week: a scan 7 days old is expired, one 6 days old is on its last day.
     let home = model(scans(.throwaways, 2, daysAgo: 7) + scans(.throwaways, 1, daysAgo: 6) + scans(.wallet, 1))
     #expect(home.rows.last?.detail == .count(1))
-    #expect(home.viewRows[1].count == 2)
+    #expect(allScansCount(home) == 2)
 }
 
 /// Throwaways expire after a week and leave Trash 30 days later: 40 days old, they are gone.
@@ -98,7 +98,11 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     clock.set(noon.addingTimeInterval(7 * 86_400))
     today.refresh()
     #expect(home.rows.last?.detail == .count(0))
-    #expect(home.viewRows[1].count == 1)
+    #expect(allScansCount(home) == 1)
+}
+
+private func allScansCount(_ home: HomeModel) -> Int? {
+    home.viewRows.first { $0.kind == .all }?.count
 }
 
 // MARK: Trash
@@ -111,9 +115,8 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
         return scan
     }
     let home = model(scans(.receipts, 3) + scans(.throwaways, 2, daysAgo: 8) + moved)
-    #expect(home.viewRows.map(\.kind) == [.recent, .all, .trash])
-    #expect(home.viewRows.map(\.name) == ["Recent", "All Scans", "Trash"])
-    #expect(home.viewRows.map(\.count) == [nil, 3, 3])
+    #expect(home.viewRows.map(\.kind) == [.favorites, .recent, .all, .trash])
+    #expect(home.viewRows.map(\.count) == [nil, nil, 3, 3])
 }
 
 /// M7: with every scan in Trash, Home keeps the first-launch rows and shows only the Trash row.
@@ -133,11 +136,11 @@ private func save(_ collection: BuiltInCollection, to library: FakeLibrary) asyn
     home.hold()
     try await save(.receipts, to: library)
     #expect(home.rows[1].detail == .count(2))
-    #expect(home.viewRows[1].count == 2)
+    #expect(allScansCount(home) == 2)
 
     home.release()
     #expect(home.rows[1].detail == .count(3))
-    #expect(home.viewRows[1].count == 3)
+    #expect(allScansCount(home) == 3)
 }
 
 @Test func releasePulsesOnlyTheCollectionsWhoseCountWentUp() async throws {
@@ -254,6 +257,19 @@ private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSumma
 /// B15: the row, and with it the "Favorites ›" link, shows from one favourite.
 @Test func rowShowsFromOneFavorite() {
     #expect(model(favorites(1)).favorites.count == 1)
+}
+
+/// B16: Favorites leads the views list with the library's favourites; one in Trash waits there and isn't counted.
+@Test func favoritesViewRowCountsTheLibrarysFavorites() {
+    let trashed = favorites(1).map { scan in
+        var scan = scan
+        scan.trashedDay = CalendarDay(year: 2026, month: 10, day: 10)
+        return scan
+    }
+    let home = model(scans(.wallet, 2) + favorites(4) + trashed)
+    #expect(home.viewRows.first?.kind == .favorites)
+    #expect(home.viewRows.first?.name == "Favorites")
+    #expect(home.viewRows.first?.count == 4)
 }
 
 @Test func noFavoritesNoRow() {
