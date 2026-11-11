@@ -40,7 +40,7 @@ final class HomeSnapshotTests: XCTestCase {
         try SnapshotHost.assertScreen(home(library), testName: "home_favorites")
     }
 
-    /// Home.dc.html with two favourites: the header is plain, with no chevron (M18).
+    /// Home.dc.html with two favourites: "Favorites ›" is a link from one favourite (B15).
     @MainActor
     func testHomeWithTwoFavorites() throws {
         let library = Fixtures.library(.home)

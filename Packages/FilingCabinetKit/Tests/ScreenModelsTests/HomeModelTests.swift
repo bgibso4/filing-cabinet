@@ -251,14 +251,12 @@ private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSumma
     #expect(home.favorites.map(\.id) == all.prefix(10).map(\.id))
 }
 
-@Test func linkOnlyFromThree() {
-    #expect(!model(favorites(1)).favoritesOpensGrid)
-    #expect(!model(favorites(2)).favoritesOpensGrid)
-    #expect(model(favorites(3)).favoritesOpensGrid)
+/// B15: the row, and with it the "Favorites ›" link, shows from one favourite.
+@Test func rowShowsFromOneFavorite() {
+    #expect(model(favorites(1)).favorites.count == 1)
 }
 
 @Test func noFavoritesNoRow() {
     let home = model(scans(.receipts, 4))
     #expect(home.favorites.isEmpty)
-    #expect(!home.favoritesOpensGrid)
 }

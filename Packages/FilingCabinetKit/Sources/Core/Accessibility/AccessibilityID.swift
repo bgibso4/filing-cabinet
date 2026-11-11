@@ -11,7 +11,7 @@ public enum AccessibilityID {
         public static let settings = "home.settings"
         /// "4 scans moved to Trash · View", only after a cleanup the person heard nothing about.
         public static let cleanupBanner = "home.cleanupBanner"
-        /// "Favorites ›" over the Favorites row, only with 3 or more favourites (M18), so not in `all`.
+        /// "Favorites ›" over the Favorites row, only with a favourite (B15), so not in `all`.
         public static let favoritesLink = "home.favoritesLink"
         /// Every Favorites card's identifier starts with this; cards are checked by prefix, not listed in `all`.
         public static let favoritePrefix = "home.favorite."

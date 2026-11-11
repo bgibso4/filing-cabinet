@@ -3,12 +3,11 @@ import Library
 import ScreenModels
 import SwiftUI
 
-/// Home's Favorites (02-01, M18): "Favorites" as a header, a link with a chevron from 3 favourites and plain below
-/// that, then the first favourites as cards in a row that scrolls sideways, each its thumbnail with its title under it.
-/// A card opens its scan; the link opens the Favorites grid.
+/// Home's Favorites (02-01, M18): "Favorites ›" as a header that links to the Favorites grid from one favourite (B15),
+/// then the first favourites as cards in a row that scrolls sideways, each its thumbnail with its title under it. A
+/// card opens its scan.
 struct HomeFavoritesRow: View {
     let favorites: [HomeFavorite]
-    let opensGrid: Bool
     let thumbnails: any ThumbnailProviding
     let onOpenGrid: () -> Void
     let onOpen: (ScanID) -> Void
@@ -37,27 +36,22 @@ struct HomeFavoritesRow: View {
         }
     }
 
-    @ViewBuilder
     private var header: some View {
-        if opensGrid {
-            Button(action: onOpenGrid) {
-                HStack(spacing: Self.chevronGap) {
-                    title
-                    Image(systemName: "chevron.right")
-                        // Headline is closest to the mock's 15 pt chevron beside a 22 pt title.
-                        .font(Tokens.Typography.headline)
-                        .foregroundStyle(Tokens.Color.textSecondary)
-                }
-                .contentShape(.rect)
+        Button(action: onOpenGrid) {
+            HStack(spacing: Self.chevronGap) {
+                title
+                Image(systemName: "chevron.right")
+                    // Headline is closest to the mock's 15 pt chevron beside a 22 pt title.
+                    .font(Tokens.Typography.headline)
+                    .foregroundStyle(Tokens.Color.textSecondary)
             }
-            .buttonStyle(.plain)
-            // Home.dc.html line 81.
-            .accessibilityLabel(Text("Favorites, see all", bundle: #bundle))
-            .accessibilityAddTraits(.isHeader)
-            .accessibilityIdentifier(AccessibilityID.Home.favoritesLink)
-        } else {
-            title.accessibilityAddTraits(.isHeader)
+            .contentShape(.rect)
         }
+        .buttonStyle(.plain)
+        // Home.dc.html line 81.
+        .accessibilityLabel(Text("Favorites, see all", bundle: #bundle))
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityIdentifier(AccessibilityID.Home.favoritesLink)
     }
 
     private var title: some View {

@@ -25,7 +25,7 @@ final class FavoritesJourneyTests: XCTestCase {
         goBack(in: app)
         XCTAssertTrue(favoriteCards(in: app).firstMatch.satisfies("label == %@", "Sample scan 2", within: 5))
         XCTAssertEqual(favoriteCards(in: app).count, 1)
-        XCTAssertFalse(app.buttons[AccessibilityID.Home.favoritesLink].exists, "one favourite: a plain header")
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.favoritesLink].exists, "one favourite: still a link (B15)")
     }
 
     /// Review Focus 1: a favourite goes to Trash with its heart and comes back as a favourite.

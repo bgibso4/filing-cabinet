@@ -80,7 +80,6 @@ public struct HomeView: View {
             if !favorites.isEmpty {
                 HomeFavoritesRow(
                     favorites: favorites,
-                    opensGrid: model.favoritesOpensGrid,
                     thumbnails: thumbnails,
                     onOpenGrid: { onOpen(.grid(.favorites)) },
                     onOpen: { onOpen(.scan($0)) })

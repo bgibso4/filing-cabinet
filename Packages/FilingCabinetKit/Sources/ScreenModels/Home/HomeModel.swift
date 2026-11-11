@@ -72,9 +72,6 @@ public final class HomeModel {
         shelf.favorites.prefix(Self.favoritesShown).map { HomeFavorite(id: $0.id, title: $0.title) }
     }
 
-    /// "Favorites ›" opens the Favorites grid from 3 favourites; with 1 or 2 the header is plain (M18).
-    package var favoritesOpensGrid: Bool { shelf.favorites.count >= Self.favoritesForLink }
-
     /// Keeps showing the library as it is now until `release`. The root holds Home while the capture layer is up.
     package func hold() {
         // A second hold keeps the first snapshot, so a save made under the layer still counts as new on release.
@@ -96,9 +93,8 @@ public final class HomeModel {
         }
     }
 
-    // M18: the row shows at most 10 favourites, and links to the grid from 3.
+    // M18: the row shows at most 10 favourites. Its header links to the grid whenever it shows (B15).
     private static let favoritesShown = 10
-    private static let favoritesForLink = 3
 
     private var shelf: LibraryShelf {
         LibraryShelf(
