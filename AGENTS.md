@@ -9,8 +9,8 @@ App/                         app target: entry point, environment wiring, Info.p
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
-  Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
+  Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
     Export/                  a scan as a PDF (ScanPDF), temporary export files and their launch cleanup
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
