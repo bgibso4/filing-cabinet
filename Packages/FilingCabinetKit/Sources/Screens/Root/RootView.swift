@@ -11,6 +11,9 @@ public struct RootView: View {
     @State private var path: [AppRoute] = []
     /// True while Search covers Home.
     @State private var isSearching = false
+    /// Reduce Motion as Search went up: it fades rather than slides, in and out (B17).
+    @State private var searchFades = false
+    @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -31,7 +34,7 @@ public struct RootView: View {
                 onSearch: openSearch,
                 onOpen: { path.append($0) }
             )
-            // Both covers are clear, so Home stays in the window under them; out of the accessibility tree meanwhile.
+            // Clear covers keep Home in the window under them; out of the accessibility tree meanwhile.
             .accessibilityHidden(isCapturing.wrappedValue || isSearching)
             .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching))
             .navigationDestination(for: AppRoute.self, destination: destination)
@@ -63,10 +66,11 @@ public struct RootView: View {
                 makeModel: dependencies.makeSearch,
                 thumbnails: dependencies.thumbnails,
                 viewer: { viewer($0, .library) },
+                fades: searchFades,
                 onClosed: { isSearching = false }
             )
-            // Search draws its own rise and fade over Home, which shows through as it does.
-            .presentationBackground(.clear)
+            // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
+            .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
         }
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
@@ -142,11 +146,13 @@ public struct RootView: View {
         }
     }
 
-    /// Puts up the cover without its own slide: Search rises by itself (SearchCover).
+    /// Slides Search up with the cover's own slide; with Reduce Motion puts the cover up at once and lets Search fade in
+    /// (SearchCover). `forcesReduceMotion` is read here because this view sets it for what is under it.
     private func openSearch() {
-        var cut = Transaction()
-        cut.disablesAnimations = true
-        withTransaction(cut) { isSearching = true }
+        searchFades = systemReducesMotion || dependencies.forcesReduceMotion
+        var transaction = Transaction()
+        transaction.disablesAnimations = searchFades
+        withTransaction(transaction) { isSearching = true }
     }
 
     /// The mode decides the viewer's controls: opened from Trash, ViewerView shows nothing that opens Details.

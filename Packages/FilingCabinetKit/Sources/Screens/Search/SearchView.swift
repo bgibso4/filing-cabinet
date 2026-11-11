@@ -76,11 +76,8 @@ public struct SearchView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Tokens.Color.bgGrouped)
         .toolbarVisibility(.hidden, for: .navigationBar)
-        .onAppear {
-            guard !hasArrived else { return }
-            hasArrived = true
-            isFocused = focusesOnArrival
-        }
+        // Once Search has finished sliding up: a keyboard raised as it starts races the slide (B17, round 2).
+        .background(AfterArrival(action: arrive))
     }
 
     private var field: some View {
@@ -133,6 +130,13 @@ public struct SearchView: View {
     /// growing field shows its placeholder on one line, and the full one was cut to "Search all…".
     private var prompt: Text {
         typeSize.isAccessibilitySize ? Text("Search", bundle: #bundle) : Text("Search all scans", bundle: #bundle)
+    }
+
+    /// The first arrival focuses the field; coming back from the viewer leaves the keyboard down.
+    private func arrive() {
+        guard !hasArrived else { return }
+        hasArrived = true
+        isFocused = focusesOnArrival
     }
 
     /// The field's text, through the model, which takes a Return typed at the end as the keyboard's Search.
