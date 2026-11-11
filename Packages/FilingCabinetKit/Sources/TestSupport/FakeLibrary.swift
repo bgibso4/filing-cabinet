@@ -19,6 +19,8 @@ public final class FakeLibrary: ScanLibrary {
     package private(set) var saved: [ScanDraft] = []
     /// The latest search text per saved scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
+    /// How many times one scan's text was read, so a test can tell a cached read from a fetch.
+    @ObservationIgnored package private(set) var searchTextReads = 0
 
     /// Today, for Trash days.
     private let clock: AppClock
@@ -136,7 +138,8 @@ public final class FakeLibrary: ScanLibrary {
     }
 
     public func searchText(for id: ScanID) -> String? {
-        scans.contains { $0.id == id } ? text(of: id) : nil
+        searchTextReads += 1
+        return scans.contains { $0.id == id } ? text(of: id) : nil
     }
 
     /// The scan's latest text update, else its draft's text.

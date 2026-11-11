@@ -205,6 +205,22 @@ func copyTextDisabledWithoutText(text: String?) {
     #expect(viewer.canCopyText)
 }
 
+/// More's menu reads `canCopyText` on every render, and the viewer renders every frame of the Details motion: the text
+/// is read once, and again only after it changes (m5).
+@Test func copyTextReadsTheTextOncePerChange() {
+    let scan = summary("Lease 2026", .documents)
+    let library = FakeLibrary(scans: [scan], clock: clock)
+    let viewer = model(scan, library: library)
+    for _ in 0..<3 { _ = viewer.canCopyText }
+    #expect(library.searchTextReads == 1)
+
+    library.updateSearchText("Harlow Property", for: scan.id)
+
+    #expect(viewer.canCopyText)
+    #expect(viewer.canCopyText)
+    #expect(library.searchTextReads == 2)
+}
+
 private func exists(_ url: URL) -> Bool {
     FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
 }

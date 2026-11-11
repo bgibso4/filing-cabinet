@@ -49,6 +49,8 @@ public final class ViewerModel {
     private let photos: any PhotoSaving
     /// Set once this open is in Search's recently viewed: appearing again (back from a pushed screen) isn't a new one.
     @ObservationIgnored private var isRecorded = false
+    /// `copiableText` as last read, and the library's text revision it was read at.
+    @ObservationIgnored private var readText: (revision: Int, text: String?)?
 
     /// `history` gets the scan as recently viewed when it opens in the library. `export` makes the shared PDF, and
     /// `photos` adds the pages to Photos.
@@ -243,24 +245,20 @@ public final class ViewerModel {
         return true
     }
 
-    /// The scan's text as the reader stored it, nil when it has none.
+    /// The scan's text as the reader stored it, nil when it has none. Read once per text revision: More's menu reads it
+    /// on every render, and the viewer renders every frame of the Details motion.
     private var copiableText: String? {
         // Observed, so More's menu updates when reading finishes while the viewer is open.
-        _ = library.searchTextRevision
-        guard let text = library.searchText(for: id)?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !text.isEmpty
-        else { return nil }
-        return text
+        let revision = library.searchTextRevision
+        if let readText, readText.revision == revision { return readText.text }
+        let text = library.searchText(for: id)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let copiable = text?.isEmpty == false ? text : nil
+        readText = (revision, copiable)
+        return copiable
     }
 
     private func pdf(made: @escaping @Sendable () -> Void = {}) -> ScanPDF? {
-        scan.map {
-            ScanPDF(
-                scan: $0,
-                exported: exported,
-                suggestedFileName: ScanExport.fileName(for: $0.title, taken: []),
-                made: made)
-        }
+        scan.flatMap { ScanPDF.sharing([$0], exported: exported, made: made).first }
     }
 
     // MARK: Opened from Trash
