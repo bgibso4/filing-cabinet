@@ -6,8 +6,9 @@ import Observation
 /// What a grid shows: a collection's scans, Recent or All Scans, newest first (Favorites in its own order), with Select
 /// for several at once, and Share, Favorite and Move to Trash for them (#68, as Trash's select mode; B12). Expired
 /// scans are hidden (M5); everything is read from the library and from `Today`, so the grid moves when either does,
-/// and a scan that leaves the grid leaves the selection. A scan taken out of Favorites while Favorites is on screen keeps its tile, with an
-/// empty heart, until the screen goes (M9): this model lives as long as the screen.
+/// and a scan that leaves the grid leaves the selection. A scan taken out of Favorites while Favorites is on screen
+/// keeps its tile, with an empty heart, until the screen goes (M9): this model lives as long as the screen. Favorites'
+/// ordering is in `CollectionGridModel+Favorites.swift`.
 @Observable
 public final class CollectionGridModel {
     /// Wallet's scans are cards; every other grid shows pages.
@@ -17,7 +18,7 @@ public final class CollectionGridModel {
     }
 
     /// The shelf, the grid's scans on it, and what both were built from.
-    private struct BuiltShelf {
+    struct BuiltShelf {
         let scans: [ScanSummary]
         let lifespans: CollectionLifespans
         let day: CalendarDay
@@ -28,13 +29,13 @@ public final class CollectionGridModel {
 
     package let kind: GridKind
     /// Set when Move to Trash fails to save; the move changed nothing (M18).
-    package private(set) var editAlert: EditAlert?
+    package internal(set) var editAlert: EditAlert?
 
     private var selection = ScanSelection()
-    private let library: any ScanLibrary
+    let library: any ScanLibrary
     private let today: Today
     private let calendar: Calendar
-    @ObservationIgnored private let analytics: any Analytics
+    @ObservationIgnored let analytics: any Analytics
     /// The PDFs the selection's Share made, which go when select mode ends or the grid goes (M20).
     @ObservationIgnored private let exported: ExportedFiles
     @ObservationIgnored private var builtShelf: BuiltShelf?
@@ -145,11 +146,8 @@ public final class CollectionGridModel {
     /// Move to Trash is off until a scan is ticked (M24).
     package var canAct: Bool { !selected.isEmpty }
 
-    /// "Move to Trash", or "Move 2 to Trash" for several, as Trash's "Delete 2".
-    package var moveTitle: String { moveTitles[0] }
-
-    /// The pill's titles, longest first: the view shows the first that fits (B12). Where "Move 387 to Trash" doesn't,
-    /// the pill says "Move to Trash" and the count stays in the subtitle.
+    /// The pill's titles, longest first: "Move 2 to Trash" for several (as Trash's "Delete 2"), then "Move to Trash".
+    /// The view shows the first that fits (B12); where "Move 387 to Trash" doesn't, the count stays in the subtitle.
     package var moveTitles: [String] {
         let count = selected.count
         let short = String(localized: "Move to Trash", bundle: #bundle)
@@ -191,68 +189,12 @@ public final class CollectionGridModel {
         return MoveToTrashText.announcement(count: scans.count)
     }
 
-    /// A tile's VoiceOver Favorite or Remove from Favorites: flips the scan's heart. A failed write shows the edit
-    /// alert and changes nothing (P2). In Favorites, a kept tile favourited again goes back to its place rather than
-    /// last, so a slip is one tap to undo (M9): a second write. Should only that one fail, the alert shows and the scan
-    /// stays a favourite, last.
-    package func toggleFavorite(_ id: ScanID) {
-        let shown = built.shown
-        guard let scan = shown.first(where: { $0.id == id }) else { return }
-        let isFavorite = !scan.isFavorite
-        do {
-            try library.setFavorite(isFavorite, for: [id])
-        } catch {
-            editAlert = EditAlert()
-            return
-        }
-        analytics.send(.favoritesChanged(isFavorite: isFavorite, count: 1))
-        guard isFavorite && kind == .favorites else { return }
-        do {
-            try library.reorderFavorites(shown.filter { $0.isFavorite || $0.id == id }.map(\.id))
-        } catch {
-            editAlert = EditAlert()
-        }
-    }
-
-    /// A drop in Favorites (M8): the tiles `sources` go just before `destination` (nil: at the end), and the store
-    /// takes the favourites' new order (M3). A kept tile isn't a favourite (M9), so the store leaves it out and it
-    /// stays in its place. A failed write shows the edit alert and changes nothing. True when the favourites' order
-    /// changed (the drop's haptic); a drop that leaves it as it was writes nothing.
-    @discardableResult
-    package func moveFavorites(_ sources: [ScanID], before destination: ScanID?) -> Bool {
-        let shown = built.shown
-        let favorites = Set(Self.favoriteIDs(shown))
-        let order = FavoriteReorder.order(shown.map(\.id), moving: sources, before: destination)
-        guard order.filter(favorites.contains) != Self.favoriteIDs(shown) else { return false }
-        do {
-            try library.reorderFavorites(order)
-        } catch {
-            editAlert = EditAlert()
-            return false
-        }
-        return true
-    }
-
-    /// VoiceOver's Move earlier: the favourite swaps places with the favourite before it (a kept tile isn't one).
-    package func moveFavoriteEarlier(_ id: ScanID) {
-        let favorites = Self.favoriteIDs(built.shown)
-        guard let index = favorites.firstIndex(of: id), index > 0 else { return }
-        moveFavorites([id], before: favorites[index - 1])
-    }
-
-    /// VoiceOver's Move later: the favourite swaps places with the favourite after it.
-    package func moveFavoriteLater(_ id: ScanID) {
-        let favorites = Self.favoriteIDs(built.shown)
-        guard let index = favorites.firstIndex(of: id), index < favorites.count - 1 else { return }
-        moveFavorites([id], before: favorites.indices.contains(index + 2) ? favorites[index + 2] : nil)
-    }
-
     /// The edit alert's OK.
     package func dismissEditAlert() {
         editAlert = nil
     }
 
-    // MARK: Private
+    // MARK: Private (internal where CollectionGridModel+Favorites reads it)
 
     /// The ticked scans the grid still shows, in its order.
     private var selectedScans: [ScanSummary] {
@@ -268,7 +210,7 @@ public final class CollectionGridModel {
 
     /// Built once per update: a body reads the model several times, and the library and day only change between
     /// updates. Reading them all here is what keeps the observation.
-    private var built: BuiltShelf {
+    var built: BuiltShelf {
         let scans = library.scans
         let lifespans = library.lifespans
         let day = today.day
@@ -292,26 +234,6 @@ public final class CollectionGridModel {
         case .favorites:
             return Self.keepingUnfavorited(shelf.favorites, lastShown: lastShown, visible: shelf.visible)
         }
-    }
-
-    /// The favourites among `shown`, in its order.
-    private static func favoriteIDs(_ shown: [ScanSummary]) -> [ScanID] {
-        shown.filter(\.isFavorite).map(\.id)
-    }
-
-    /// Favorites' tiles: the favourites in their order, with each scan shown before but no longer a favourite put back
-    /// at its old index, while it is still in the library (M9).
-    private static func keepingUnfavorited(
-        _ favorites: [ScanSummary], lastShown: [ScanID], visible: [ScanSummary]
-    ) -> [ScanSummary] {
-        let favoriteIDs = Set(favorites.map(\.id))
-        let visibleByID = Dictionary(uniqueKeysWithValues: visible.map { ($0.id, $0) })
-        var shown = favorites
-        for (index, id) in lastShown.enumerated() where !favoriteIDs.contains(id) {
-            guard let kept = visibleByID[id] else { continue }
-            shown.insert(kept, at: min(index, shown.count))
-        }
-        return shown
     }
 }
 

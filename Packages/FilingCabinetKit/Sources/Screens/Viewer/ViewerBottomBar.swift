@@ -24,8 +24,8 @@ struct ViewerBottomBar: View {
     private static let pillButtonDiameter: CGFloat = 52
     private static let pillButtonGap = Tokens.Spacing.s1
     // ScanView.dc.html line 267: Trash is a circle the size of Share's (`ShareCircle`).
-    private static let circleDiameter = ShareCircle<ScanPDF>.diameter
-    private static let circleFont = ShareCircle<ScanPDF>.font
+    private static let circleDiameter = ShareCircle.diameter
+    private static let circleFont = ShareCircle.font
 
     var body: some View {
         ZStack {

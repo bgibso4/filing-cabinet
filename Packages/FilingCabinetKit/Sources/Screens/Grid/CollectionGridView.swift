@@ -25,8 +25,8 @@ public struct CollectionGridView: View {
     private static let emptyBottomGap: CGFloat = 90
     // .superpowers/plandoc/p4/index.html lines 37-38 and 141-143: the heart is a glass circle the size of Share's
     // (`ShareCircle`), 16 pt in from the edge as Share is.
-    private static let circleDiameter = ShareCircle<ScanPDF>.diameter
-    private static let circleFont = ShareCircle<ScanPDF>.font
+    private static let circleDiameter = ShareCircle.diameter
+    private static let circleFont = ShareCircle.font
 
     @Environment(\.dynamicTypeSize) private var typeSize
     /// Open from the moment the grid is first built until its first `onAppear`.
