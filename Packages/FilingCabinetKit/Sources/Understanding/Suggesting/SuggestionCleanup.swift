@@ -5,19 +5,12 @@ package enum SuggestionCleanup {
     private static let wordLimit = 40
     private static let maximumWords = 8
 
-    package static func clean(
-        title: String?, collectionID: String?, words: [String], allowed: [SuggestionCollection]
-    ) -> ScanSuggestion {
+    package static func clean(title: String?, collectionID: String?, allowed: [SuggestionCollection]) -> ScanSuggestion
+    {
         ScanSuggestion(
             title: title.flatMap(cleanTitle),
-            collectionID: allowed.contains { $0.id == collectionID } ? collectionID : nil,
-            searchWords: cleanWords(words)
+            collectionID: allowed.contains { $0.id == collectionID } ? collectionID : nil
         )
-    }
-
-    /// The focused words call's words first, then the first call's, cleaned: so past 8, the focused ones are kept.
-    package static func mergedWords(focused: [String], first: [String]) -> [String] {
-        cleanWords(focused + first)
     }
 
     /// Separators a title may not start or end with, nor repeat with nothing between.
@@ -44,7 +37,7 @@ package enum SuggestionCleanup {
     }
 
     /// Lowercased unless all caps ("ID", "W-2"), 1–40 characters, first spelling kept, at most 8.
-    private static func cleanWords(_ raw: [String]) -> [String] {
+    package static func cleanWords(_ raw: [String]) -> [String] {
         var seen: Set<String> = []
         var kept: [String] = []
         for word in raw.map(collapse) where (1...wordLimit).contains(word.count) {

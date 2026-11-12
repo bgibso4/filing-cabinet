@@ -5,9 +5,12 @@ import Library
 import Observation
 import Understanding
 
-/// The review sheet after the camera: the pages, the title (read from page 1 unless typed), the collection and
-/// expiry, then save or discard. Reading runs once per page set; save waits for it at most `readingWaitLimit` and
-/// adds the search text afterwards if it was still reading (M2).
+/// The review after the camera: the pages, the title (read from page 1 unless typed), the collection and expiry, then
+/// save or discard. Reading runs once per page set; save waits for it at most `readingWaitLimit` and adds the search
+/// text afterwards if it was still reading (M2).
+///
+/// With suggestions on and the model available, review starts as the card: once reading ends, the model suggests a
+/// title and collection (`ReviewSuggestion`), filling only the fields the user hasn't touched.
 @Observable
 public final class ReviewModel: ExpiryEditing {
     package private(set) var pages: [CGImage]
@@ -35,10 +38,13 @@ public final class ReviewModel: ExpiryEditing {
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let readingWaitLimit: Duration
+    private let suggestion: ReviewSuggestion
     /// One id for the whole review, so a retried save is the same scan.
     @ObservationIgnored private let id = ScanID()
     /// True once the user has typed in the title field; reading never overwrites it then.
     @ObservationIgnored private var isTitleEdited = false
+    /// True once the user has picked a collection, or the scan began inside one; a suggestion never overwrites it.
+    @ObservationIgnored private var isCollectionChosen: Bool
     /// Reading of the current pages; replaced (and the old one cancelled) when a rescan replaces them.
     @ObservationIgnored private var reading: Task<ScanReading, Never>?
 
@@ -48,7 +54,11 @@ public final class ReviewModel: ExpiryEditing {
         library: any ScanLibrary,
         clock: AppClock,
         analytics: any Analytics,
-        readingWaitLimit: Duration
+        readingWaitLimit: Duration,
+        suggester: any ScanSuggester,
+        suggestionsOn: Bool,
+        suggestionWaitLimit: Duration,
+        wordsWriter: SearchWordsWriter
     ) {
         self.input = input
         self.reader = reader
@@ -56,8 +66,16 @@ public final class ReviewModel: ExpiryEditing {
         self.clock = clock
         self.analytics = analytics
         self.readingWaitLimit = readingWaitLimit
+        suggestion = ReviewSuggestion(
+            suggester: suggester,
+            isOn: suggestionsOn,
+            waitLimit: suggestionWaitLimit,
+            analytics: analytics,
+            wordsWriter: wordsWriter
+        )
         pages = input.pages
         collection = input.preselected
+        isCollectionChosen = input.preselected != nil
         fallbackTitle = Self.fallbackTitle(scannedAt: input.scannedAt, clock: clock)
         title = fallbackTitle
     }
@@ -102,6 +120,7 @@ public final class ReviewModel: ExpiryEditing {
     public func choose(_ collection: BuiltInCollection) {
         guard !isSaving else { return }
         self.collection = collection
+        isCollectionChosen = true
     }
 
     // MARK: Expiry
@@ -164,11 +183,14 @@ public final class ReviewModel: ExpiryEditing {
         guard let collection, !isSaving else { return nil }
         isSaving = true
         defer { isSaving = false }
+        // The save takes the title and collection as they are now; a suggestion still on its way is dropped.
+        suggestion.endWait()
         let task = reading ?? beginReading()
         let found = await readingResult(within: readingWaitLimit)
+        let title = savedTitle
         let draft = ScanDraft(
             id: id,
-            title: savedTitle,
+            title: title,
             collection: collection,
             scannedAt: input.scannedAt,
             expiryOverride: expiryOverride,
@@ -183,13 +205,19 @@ public final class ReviewModel: ExpiryEditing {
             return nil
         }
         analytics.send(.scanSaved(pageCount: pages.count, collection: collection))
-        if found == nil {
+        suggestion.reportChanges(savedTitle: title, savedCollection: collection)
+        let firstPage = pages.first
+        if let found {
+            suggestion.writeWords(for: id, reading: found, firstPage: firstPage, title: title, collection: collection)
+        } else {
             // Only now does the record exist, so the text can't be dropped for want of one (M2). A cancelled reading
             // stopped part-way; its partial text is not the scan's.
-            Task { [library, id] in
+            Task { [library, id, suggestion] in
                 let found = await task.value
                 guard !task.isCancelled else { return }
                 library.updateSearchText(found.searchText, for: id)
+                suggestion.writeWords(
+                    for: id, reading: found, firstPage: firstPage, title: title, collection: collection)
             }
         }
         return SavedScan(
@@ -220,18 +248,34 @@ public final class ReviewModel: ExpiryEditing {
     package func discard() {
         guard !isSaving else { return }
         reading?.cancel()
+        suggestion.endWait()
         analytics.send(.scanCancelled(stage: .review))
+    }
+
+    // MARK: Suggestion
+
+    package var presentation: ReviewPresentation { suggestion.presentation }
+
+    /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
+    package var suggestionAnnouncement: String? { suggestion.announcement }
+
+    /// The card tapped or dragged open: the full sheet. A suggestion landing within the wait still fills the fields
+    /// the user hasn't touched.
+    package func openSheet() {
+        suggestion.openSheet()
     }
 
     // MARK: Reading
 
-    /// Reads the pages, once per page set, and returns when reading has finished.
+    /// The review has appeared: starts the suggestion's wait limit, then reads the pages, once per page set, and
+    /// returns when reading has finished (the suggestion may come later).
     public func startReading() async {
+        suggestion.startWaiting()
         _ = await (reading ?? beginReading()).value
     }
 
-    /// A finished rescan: its pages replace these, and they are read afresh. A title the user hasn't typed goes
-    /// back to the fallback until the new pages are read.
+    /// A finished rescan: its pages replace these, and they are read afresh (and suggested for, within the wait). A
+    /// title the user hasn't typed goes back to the fallback until the new pages are read.
     /// Ignored while saving, so the pages being saved are the ones read.
     package func replacePages(_ pages: [CGImage]) {
         guard !isSaving else { return }
@@ -240,7 +284,10 @@ public final class ReviewModel: ExpiryEditing {
         currentPage = 0
         isPageZoomed = false
         finishedReading = nil
-        if !isTitleEdited { title = fallbackTitle }
+        if !isTitleEdited {
+            title = fallbackTitle
+            suggestion.titleWasReset()
+        }
         beginReading()
     }
 
@@ -268,7 +315,22 @@ public final class ReviewModel: ExpiryEditing {
             return found
         }
         reading = task
+        suggestion.ask(after: task, firstPage: pages.first) { [self] usable in fill(usable) }
         return task
+    }
+
+    /// Fills the fields the user hasn't touched with the suggestion's, and returns what it filled.
+    private func fill(_ usable: ReviewSuggestion.Fill) -> ReviewSuggestion.Fill {
+        var filled = ReviewSuggestion.Fill()
+        if !isTitleEdited, let suggested = usable.title {
+            title = suggested
+            filled.title = suggested
+        }
+        if !isCollectionChosen, let suggested = usable.collection {
+            collection = suggested
+            filled.collection = suggested
+        }
+        return filled
     }
 
     private func readingFinished(_ found: ScanReading) {

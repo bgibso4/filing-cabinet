@@ -19,7 +19,12 @@ final class ReviewSnapshotTests: XCTestCase {
             library: FakeLibrary(),
             clock: Fixtures.clock,
             analytics: RecordingAnalytics(),
-            readingWaitLimit: .seconds(1)
+            readingWaitLimit: .seconds(1),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: false,
+            suggestionWaitLimit: .seconds(5),
+            wordsWriter: SearchWordsWriter(
+                suggester: FakeScanSuggester.unavailable(), library: FakeLibrary(), backgroundTime: NoBackgroundTime())
         )
         await model.startReading()
         if let collection { model.choose(collection) }
@@ -46,4 +51,9 @@ final class ReviewSnapshotTests: XCTestCase {
         XCTAssertEqual(pages.count, 3)
         try SnapshotHost.assertScreen(await review(pages), testName: "review_three_pages")
     }
+}
+
+/// Review's snapshots never save, so no words call asks for time.
+private struct NoBackgroundTime: BackgroundTime {
+    func begin(_ name: String, expired: @escaping @MainActor @Sendable () -> Void) -> () -> Void { {} }
 }

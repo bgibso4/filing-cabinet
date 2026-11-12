@@ -12,4 +12,7 @@ public enum AnalyticsKey: String, Sendable {
     case isFavorite
     case kind
     case resultCount
+    case outcome
+    case titleChanged
+    case collectionChanged
 }

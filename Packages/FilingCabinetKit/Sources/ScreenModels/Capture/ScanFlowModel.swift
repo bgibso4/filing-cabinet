@@ -1,6 +1,7 @@
 import Core
 import CoreGraphics
 import Observation
+import Understanding
 
 /// One scan from the Scan button to the end of review: camera permission, the camera, rescans and review.
 /// The root presents the capture layer while `phase` is `.camera` or `.review`, and the camera-off sheet for
@@ -26,6 +27,8 @@ public final class ScanFlowModel {
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let makeReview: (ReviewInput) -> ReviewModel
+    @ObservationIgnored private let suggester: any ScanSuggester
+    @ObservationIgnored private let suggestionsOn: Bool
     /// Where the scan in progress started; set by `scan`, read when the first camera finishes.
     @ObservationIgnored private var source = ScanSource.home
     @ObservationIgnored private var preselected: BuiltInCollection?
@@ -36,11 +39,15 @@ public final class ScanFlowModel {
         cameraAccess: any CameraAccess,
         clock: AppClock,
         analytics: any Analytics,
+        suggester: any ScanSuggester,
+        suggestionsOn: Bool,
         makeReview: @escaping (ReviewInput) -> ReviewModel
     ) {
         self.cameraAccess = cameraAccess
         self.clock = clock
         self.analytics = analytics
+        self.suggester = suggester
+        self.suggestionsOn = suggestionsOn
         self.makeReview = makeReview
     }
 
@@ -64,7 +71,7 @@ public final class ScanFlowModel {
             allowed = false
         }
         if allowed {
-            phase = .camera(isRescan: false)
+            openCamera(isRescan: false)
         } else {
             analytics.send(.cameraDenied)
             phase = .cameraOff
@@ -102,7 +109,7 @@ public final class ScanFlowModel {
     package var leavingCameraEndsTheScan: Bool { reviewInput == nil }
 
     package func rescan() {
-        phase = .camera(isRescan: true)
+        openCamera(isRescan: true)
     }
 
     package func dismissCameraOff() {
@@ -116,6 +123,14 @@ public final class ScanFlowModel {
         reviewInput = nil
         review = nil
         phase = .idle
+    }
+
+    /// Shows the camera, warming the model meanwhile so the review's suggestion comes sooner (E3).
+    private func openCamera(isRescan: Bool) {
+        if suggester.answers(whenOn: suggestionsOn) {
+            suggester.prewarm(collections: SuggestionCollection.builtIns)
+        }
+        phase = .camera(isRescan: isRescan)
     }
 
     private func leaveCamera() {

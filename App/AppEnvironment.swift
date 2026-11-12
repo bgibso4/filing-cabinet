@@ -48,9 +48,6 @@ final class AppEnvironment {
         private static let uiTestDaysSinceSeen = 14
     #endif
 
-    /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
-    private static let readingWaitLimit = Duration.seconds(1)
-
     private init(options: LaunchOptions) {
         self.options = options
         let analytics = LogAnalytics()
@@ -118,28 +115,6 @@ final class AppEnvironment {
         store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
     ) -> () -> SearchModel {
         { SearchModel(library: store, today: today, clock: clock, history: history, analytics: analytics) }
-    }
-
-    /// The scan flow, with its reader built here so the reader flags apply from launch.
-    private static func makeFlow(
-        options: LaunchOptions, store: ScanStore, clock: AppClock, analytics: any Analytics
-    ) -> ScanFlowModel {
-        let scanReader = makeScanReader(options: options)
-        return ScanFlowModel(
-            cameraAccess: cameraAccess(options: options),
-            clock: clock,
-            analytics: analytics,
-            makeReview: { input in
-                ReviewModel(
-                    input: input,
-                    reader: scanReader,
-                    library: store,
-                    clock: clock,
-                    analytics: analytics,
-                    readingWaitLimit: readingWaitLimit
-                )
-            }
-        )
     }
 
     /// Unknown flags are ignored, and a Release build ignores every flag (M9).
@@ -275,13 +250,6 @@ final class AppEnvironment {
         return base
     }
 
-    private static func makeScanReader(options: LaunchOptions) -> ScanReader {
-        #if DEBUG
-            if options.fakeReader { return ScanReader(reader: FakeTextReader.readsCityPharmacy()) }
-        #endif
-        return ScanReader(reader: options.reader.makeReader())
-    }
-
     /// The system's answer, or a scripted one for `-CameraDenied` and the fake camera (which needs no permission).
     private static func cameraAccess(options: LaunchOptions) -> any CameraAccess {
         #if DEBUG
@@ -334,5 +302,75 @@ extension AppEnvironment {
             if let authorization = options.photos { return FakePhotoSaving(authorization) }
         #endif
         return SystemPhotoSaving()
+    }
+}
+
+/// The scan flow: reading and the model's suggestions.
+extension AppEnvironment {
+    /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
+    private static let readingWaitLimit = Duration.seconds(1)
+    /// How long the card waits for the model before growing into the sheet (M6, E1).
+    private static let suggestionWaitLimit = Duration.seconds(5)
+    /// Suggestions are on until the Settings switch arrives (Plan 5 Task 10).
+    private static let suggestionsOn = true
+    /// How long `-Suggestions arrives` takes to answer each call.
+    private static let fakeSuggestionDelay = Duration.milliseconds(300)
+
+    /// The scan flow, with its reader built here so the reader flags apply from launch.
+    private static func makeFlow(
+        options: LaunchOptions, store: ScanStore, clock: AppClock, analytics: any Analytics
+    ) -> ScanFlowModel {
+        let scanReader = makeScanReader(options: options)
+        let suggester = makeSuggester(options: options)
+        let wordsWriter = SearchWordsWriter(
+            suggester: suggester, library: store, backgroundTime: SystemBackgroundTime())
+        return ScanFlowModel(
+            cameraAccess: cameraAccess(options: options),
+            clock: clock,
+            analytics: analytics,
+            suggester: suggester,
+            suggestionsOn: suggestionsOn,
+            makeReview: { input in
+                ReviewModel(
+                    input: input,
+                    reader: scanReader,
+                    library: store,
+                    clock: clock,
+                    analytics: analytics,
+                    readingWaitLimit: readingWaitLimit,
+                    suggester: suggester,
+                    suggestionsOn: suggestionsOn,
+                    suggestionWaitLimit: suggestionWaitLimit,
+                    wordsWriter: wordsWriter
+                )
+            }
+        )
+    }
+
+    private static func makeScanReader(options: LaunchOptions) -> ScanReader {
+        #if DEBUG
+            if options.fakeReader { return ScanReader(reader: FakeTextReader.readsCityPharmacy()) }
+        #endif
+        return ScanReader(reader: options.reader.makeReader())
+    }
+
+    /// The on-device model, or a scripted one for `-Suggestions`. UI tests get an unavailable one unless the flag says
+    /// otherwise, so every journey keeps today's full sheet (M5).
+    private static func makeSuggester(options: LaunchOptions) -> any ScanSuggester {
+        #if DEBUG
+            switch options.suggestions {
+            case .arrives:
+                return FakeScanSuggester(
+                    filing: .arrives(FakeScanSuggester.cityPharmacy(), after: fakeSuggestionDelay),
+                    words: .arrives(FakeScanSuggester.cityPharmacyWords, after: fakeSuggestionDelay))
+            case .slow:
+                return FakeScanSuggester(filing: .never, words: .never)
+            case .unavailable:
+                return FakeScanSuggester.unavailable()
+            case nil:
+                if options.isUITest { return FakeScanSuggester.unavailable() }
+            }
+        #endif
+        return ModelScanSuggester()
     }
 }

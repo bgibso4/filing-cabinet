@@ -33,11 +33,12 @@ struct EvaluationReportTests {
         EvaluationRun.Result(
             item: item,
             pageText: text,
-            answer: TimedSuggestion(
-                suggestion: ScanSuggestion(title: title, collectionID: collection, searchWords: words),
+            filing: TimedCall(
+                answer: ScanSuggestion(title: title, collectionID: collection),
                 milliseconds: milliseconds,
                 timedOut: false
-            )
+            ),
+            words: TimedCall(answer: words, milliseconds: milliseconds / 2, timedOut: false)
         )
     }
 
@@ -47,23 +48,18 @@ struct EvaluationReportTests {
         EvaluationRun.Result(
             item: item,
             pageText: "",
-            answer: TimedSuggestion(suggestion: nil, milliseconds: milliseconds, timedOut: timedOut)
+            filing: TimedCall(answer: nil, milliseconds: milliseconds, timedOut: timedOut),
+            words: TimedCall(answer: nil, milliseconds: 1, timedOut: false)
         )
     }
 
     private static func report(
-        _ results: [EvaluationRun.Result], includesImage: Bool = false, titleAndCollectionTimes: [TimedSuggestion] = []
+        _ results: [EvaluationRun.Result], includesImage: Bool = false
     ) -> EvaluationReport {
         EvaluationReport(
             outcome: .ran(
                 EvaluationRun(
-                    includesImage: includesImage,
-                    words: .inAnswer,
-                    results: results,
-                    probes: [],
-                    filter: nil,
-                    titleAndCollectionTimes: titleAndCollectionTimes
-                )))
+                    includesImage: includesImage, results: results, probes: [], filter: nil)))
     }
 
     @Test func collectionAccuracyPerCollection() {
@@ -223,8 +219,10 @@ struct EvaluationReportTests {
         ]).markdown
 
         #expect(markdown.contains("| No suggestion | 1 of 3 (0 timed out) |"))
-        #expect(markdown.contains("p50 (answered) | 100 ms |"))
-        #expect(markdown.contains("p95 (answered) | 300 ms |"))
+        #expect(markdown.contains("| Filing call, p50 (answered; the card waits for it) | 100 ms |"))
+        #expect(markdown.contains("| Filing call, p95 (answered) | 300 ms |"))
+        #expect(markdown.contains("| Words call, p50 (answered; after Save) | 50 ms |"))
+        #expect(markdown.contains("| Words call, p95 (answered) | 150 ms |"))
     }
 
     @Test func lowQualityShownSeparately() {
@@ -268,29 +266,6 @@ struct EvaluationReportTests {
 
         #expect(markdown.contains("The on-device model isn't available on this Mac (appleIntelligenceNotEnabled)"))
         #expect(!markdown.contains("%"))
-    }
-
-    @Test func splitTimingComparesTheFullCallWithTitleAndCollectionOnly() {
-        let answer = ScanSuggestion(title: "City Pharmacy", collectionID: "receipts", searchWords: [])
-        let short =
-            [50.0, 70, 90].map { TimedSuggestion(suggestion: answer, milliseconds: $0, timedOut: false) }
-            + [TimedSuggestion(suggestion: nil, milliseconds: 30_000, timedOut: true)]
-        let markdown = Self.report(
-            [
-                Self.result(Self.item("a"), collection: "receipts", milliseconds: 100),
-                Self.result(Self.item("b"), collection: "receipts", milliseconds: 200),
-                Self.result(Self.item("c"), collection: "receipts", milliseconds: 300),
-            ],
-            titleAndCollectionTimes: short
-        ).markdown
-
-        #expect(markdown.contains("## Split timing"))
-        #expect(markdown.contains("| Title, collection and words (one call) | 3 | 200 ms | 300 ms |"))
-        #expect(markdown.contains("| Title and collection only | 3 | 70 ms | 90 ms |"))
-    }
-
-    @Test func splitTimingIsLeftOutWhenNotMeasured() {
-        #expect(!Self.report([Self.result(Self.item("a"), collection: "receipts")]).markdown.contains("Split timing"))
     }
 
     @Test func aboutLineSaysWhetherTheImageWentIn() {

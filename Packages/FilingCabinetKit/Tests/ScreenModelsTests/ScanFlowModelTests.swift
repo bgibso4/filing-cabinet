@@ -22,15 +22,30 @@ private struct Harness {
             library: FakeLibrary(),
             clock: clock,
             analytics: RecordingAnalytics(),
-            readingWaitLimit: .seconds(1)
+            readingWaitLimit: .seconds(1),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: true,
+            suggestionWaitLimit: .seconds(5),
+            wordsWriter: SearchWordsWriter(
+                suggester: FakeScanSuggester.unavailable(),
+                library: FakeLibrary(),
+                backgroundTime: FakeBackgroundTime()
+            )
         )
     }
 
-    init(_ status: CameraAuthorization, grants: Bool = false) {
+    init(
+        _ status: CameraAuthorization,
+        grants: Bool = false,
+        suggester: FakeScanSuggester = .unavailable(),
+        suggestionsOn: Bool = true
+    ) {
         model = ScanFlowModel(
             cameraAccess: FakeCameraAccess(status: status, grantsOnRequest: grants),
             clock: Self.clock,
             analytics: analytics,
+            suggester: suggester,
+            suggestionsOn: suggestionsOn,
             makeReview: Self.makeReview
         )
     }
@@ -233,7 +248,13 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     let analytics = RecordingAnalytics()
     let access = PromptingCameraAccess()
     let model = ScanFlowModel(
-        cameraAccess: access, clock: Harness.clock, analytics: analytics, makeReview: Harness.makeReview)
+        cameraAccess: access,
+        clock: Harness.clock,
+        analytics: analytics,
+        suggester: FakeScanSuggester.unavailable(),
+        suggestionsOn: true,
+        makeReview: Harness.makeReview
+    )
     let first = Task { await model.scan(from: .home, preselected: nil) }
     while access.requests == 0 { await Task.yield() }
 
@@ -244,4 +265,28 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     #expect(access.requests == 1)
     #expect(analytics.events == [.scanStarted(source: .home)])
     #expect(model.phase == .camera(isRescan: false))
+}
+
+// MARK: - Prewarm (E3)
+
+@Test func prewarmWhenTheCameraOpens() async {
+    let suggester = FakeScanSuggester(filing: .never)
+    let harness = Harness(.authorized, suggester: suggester)
+
+    await harness.model.scan(from: .home, preselected: nil)
+    #expect(suggester.prewarms.map { $0.map(\.id) } == [SuggestionCollection.builtIns.map(\.id)])
+
+    harness.model.cameraFinished([receipt])
+    harness.model.rescan()
+    #expect(suggester.prewarms.count == 2)
+}
+
+@Test func noPrewarmWhenOffOrUnavailable() async {
+    let off = FakeScanSuggester(filing: .never)
+    await Harness(.authorized, suggester: off, suggestionsOn: false).model.scan(from: .home, preselected: nil)
+    let unavailable = FakeScanSuggester.unavailable()
+    await Harness(.authorized, suggester: unavailable).model.scan(from: .home, preselected: nil)
+
+    #expect(off.prewarms.isEmpty)
+    #expect(unavailable.prewarms.isEmpty)
 }

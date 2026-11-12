@@ -74,21 +74,13 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     let pages = [String(repeating: "a", count: 500), "", String(repeating: "b", count: 500)]
 
     let prompt = SuggestionPrompt.wordsPrompt(
-        for: input(pages), title: "City Pharmacy receipt", collectionID: "receipts")
+        for: input(pages), title: "City Pharmacy receipt", collectionName: "Receipts")
 
     #expect(prompt.contains("Title: City Pharmacy receipt"))
     #expect(prompt.contains("Collection: Receipts"))
     // 600 characters of text, across pages; blank pages are skipped.
     #expect(prompt.contains(String(repeating: "a", count: 500) + "\n" + String(repeating: "b", count: 99)))
     #expect(!prompt.contains(String(repeating: "b", count: 100)))
-}
-
-@Test func wordsPromptLeavesOutAMissingTitleOrCollection() {
-    let prompt = SuggestionPrompt.wordsPrompt(for: input(["CITY PHARMACY"]), title: nil, collectionID: "unknown")
-
-    #expect(!prompt.contains("Title:"))
-    #expect(!prompt.contains("Collection:"))
-    #expect(prompt.contains("CITY PHARMACY"))
 }
 
 @Test func instructionsHaveNoPlaceholdersAndNameNoCollection() {
@@ -109,4 +101,11 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
 
     #expect(SuggestionPrompt.prompt(for: input(["CITY PHARMACY"]), budget: 6_000).hasPrefix(prefix))
     #expect(prefix.hasSuffix("Text read from the scan:\n"))
+}
+
+@Test func inputFromSearchTextSplitsItsPages() {
+    let input = SuggestionInput(
+        searchText: "CITY PHARMACY\nTOTAL 12.40\n\nCORNER MARKET", firstPage: nil, collections: [])
+
+    #expect(input.pageTexts == ["CITY PHARMACY\nTOTAL 12.40", "CORNER MARKET"])
 }

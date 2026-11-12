@@ -14,4 +14,14 @@ public struct SuggestionInput: Sendable {
         self.firstPage = firstPage
         self.collections = collections
     }
+
+    /// From a scan's stored or just-read text: its pages, split again where `ScanReader` joined them (pages with no
+    /// text were left out then).
+    package init(searchText: String, firstPage: CGImage?, collections: [SuggestionCollection]) {
+        self.init(
+            pageTexts: searchText.components(separatedBy: ScanReading.pageSeparator),
+            firstPage: firstPage,
+            collections: collections
+        )
+    }
 }

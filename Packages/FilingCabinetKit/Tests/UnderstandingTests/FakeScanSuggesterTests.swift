@@ -6,22 +6,32 @@ import Testing
 private let input = SuggestionInput(
     pageTexts: ["CITY PHARMACY"], firstPage: nil, collections: SuggestionCollection.builtIns)
 
-@Test func arrivesAfterItsDelay() async {
+@Test func filingArrivesAfterItsDelay() async {
     let delay = Duration.milliseconds(50)
-    let fake = FakeScanSuggester(.arrives(FakeScanSuggester.cityPharmacy(), after: delay))
+    let fake = FakeScanSuggester(filing: .arrives(FakeScanSuggester.cityPharmacy(), after: delay))
     let start = ContinuousClock.now
 
-    let suggestion = await fake.suggest(input)
+    let suggestion = await fake.suggestFiling(input)
 
     #expect(ContinuousClock.now - start >= delay)
     #expect(suggestion == FakeScanSuggester.cityPharmacy())
     #expect(fake.availability == .available)
-    #expect(fake.calls.map(\.pageTexts) == [["CITY PHARMACY"]])
+    #expect(fake.filingCalls.map(\.pageTexts) == [["CITY PHARMACY"]])
+}
+
+@Test func wordsAreScriptedApartFromFiling() async {
+    let words = FakeScanSuggester.cityPharmacyWords
+    let fake = FakeScanSuggester(filing: .fails, words: .arrives(words, after: .zero))
+
+    #expect(await fake.suggestFiling(input) == nil)
+    #expect(await fake.suggestWords(input, title: "City Pharmacy", collectionName: "Receipts") == words)
+    #expect(fake.wordsCalls.map(\.title) == ["City Pharmacy"])
+    #expect(fake.wordsCalls.map(\.collectionName) == ["Receipts"])
 }
 
 @Test func neverAnswersUntilCancelled() async {
-    let fake = FakeScanSuggester(.never)
-    let task = Task { await fake.suggest(input) }
+    let fake = FakeScanSuggester(filing: .never)
+    let task = Task { await fake.suggestFiling(input) }
 
     task.cancel()
 
@@ -29,10 +39,11 @@ private let input = SuggestionInput(
 }
 
 @Test func unavailableNeverSuggests() async {
-    let fake = FakeScanSuggester(.unavailable)
+    let fake = FakeScanSuggester.unavailable()
 
     #expect(fake.availability == .unavailable)
-    #expect(await fake.suggest(input) == nil)
+    #expect(await fake.suggestFiling(input) == nil)
+    #expect(await fake.suggestWords(input, title: "A", collectionName: "B") == nil)
 }
 
 @Test func cityPharmacyIsAReceipt() {
@@ -40,11 +51,11 @@ private let input = SuggestionInput(
 
     #expect(suggestion.title == "City Pharmacy receipt")
     #expect(suggestion.collectionID == "receipts")
-    #expect(suggestion.searchWords == ["receipt", "pharmacy", "purchase"])
+    #expect(FakeScanSuggester.cityPharmacyWords == ["receipt", "pharmacy", "purchase"])
 }
 
 @Test func prewarmIsRecorded() {
-    let fake = FakeScanSuggester(.never)
+    let fake = FakeScanSuggester(filing: .never)
 
     fake.prewarm(collections: SuggestionCollection.builtIns)
     fake.prewarm(collections: [])

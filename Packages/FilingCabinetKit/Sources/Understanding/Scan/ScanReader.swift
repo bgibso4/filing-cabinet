@@ -33,9 +33,8 @@ public struct ScanReader: Sendable {
             }
             UnderstandingLog.signposter.endInterval("OCR page", state)
         }
-        // Each page's lines, and a blank line between pages, which Copy Text keeps (M11) and search skips.
         let searchText = texts.map { $0.lines.map(\.text).joined(separator: "\n") }.filter { !$0.isEmpty }
-            .joined(separator: "\n\n")
+            .joined(separator: ScanReading.pageSeparator)
         return ScanReading(
             title: TitleRule.title(from: firstPage.map { [$0] } ?? []), searchText: searchText, failedPages: failed)
     }

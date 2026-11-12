@@ -1,55 +1,71 @@
 import Synchronization
 import Understanding
 
-/// Test double: answers every `suggest` with one scripted outcome.
+/// Test double, also built by the app for `-Suggestions`: answers every `suggestFiling` with one scripted outcome and
+/// every `suggestWords` with another.
 public final class FakeScanSuggester: ScanSuggester {
-    package enum Outcome: Sendable {
-        /// Return this suggestion after `after`; nil if cancelled first.
-        case arrives(ScanSuggestion, after: Duration)
+    public enum Outcome<Answer: Sendable>: Sendable {
+        /// Return this answer after `after`; nil if cancelled first.
+        case arrives(Answer, after: Duration)
+        /// Return nil at once: the model failed.
+        case fails
         /// Wait until cancelled, then return nil.
         case never
-        /// Report unavailable and return nil at once.
-        case unavailable
     }
 
     /// Long enough that only a cancel ends `.never` in any test.
     private static let forever = Duration.seconds(86_400)
 
-    private let outcome: Outcome
-    private let recorded = Mutex<[SuggestionInput]>([])
+    private let isAvailable: Bool
+    private let filing: Outcome<ScanSuggestion>
+    private let words: Outcome<[String]>
+    private let recordedFilings = Mutex<[SuggestionInput]>([])
+    private let recordedWords = Mutex<[WordsCall]>([])
     private let recordedPrewarms = Mutex<[[SuggestionCollection]]>([])
 
-    package init(_ outcome: Outcome) {
-        self.outcome = outcome
+    /// One `suggestWords` call.
+    package struct WordsCall: Sendable {
+        package let input: SuggestionInput
+        package let title: String
+        package let collectionName: String
     }
 
-    /// Every input `suggest` was called with, in order.
-    package var calls: [SuggestionInput] { recorded.withLock { $0 } }
+    public init(filing: Outcome<ScanSuggestion>, words: Outcome<[String]> = .fails) {
+        isAvailable = true
+        self.filing = filing
+        self.words = words
+    }
+
+    /// Reports unavailable, and never answers.
+    public static func unavailable() -> FakeScanSuggester {
+        FakeScanSuggester(isAvailable: false)
+    }
+
+    private init(isAvailable: Bool) {
+        self.isAvailable = isAvailable
+        filing = .fails
+        words = .fails
+    }
+
+    /// Every input `suggestFiling` was called with, in order.
+    package var filingCalls: [SuggestionInput] { recordedFilings.withLock { $0 } }
+
+    /// Every `suggestWords` call, in order.
+    package var wordsCalls: [WordsCall] { recordedWords.withLock { $0 } }
 
     /// The collections of every `prewarm` call, in order.
     package var prewarms: [[SuggestionCollection]] { recordedPrewarms.withLock { $0 } }
 
-    public var availability: SuggesterAvailability {
-        if case .unavailable = outcome { .unavailable } else { .available }
+    public var availability: SuggesterAvailability { isAvailable ? .available : .unavailable }
+
+    public func suggestFiling(_ input: SuggestionInput) async -> ScanSuggestion? {
+        recordedFilings.withLock { $0.append(input) }
+        return await Self.answer(filing)
     }
 
-    public func suggest(_ input: SuggestionInput) async -> ScanSuggestion? {
-        recorded.withLock { $0.append(input) }
-        switch outcome {
-        case .arrives(let suggestion, let delay):
-            do {
-                try await Task.sleep(for: delay)
-                return suggestion
-            } catch {
-                return nil  // cancelled during the delay
-            }
-        case .never:
-            // Ends early only when cancelled; either way there is no suggestion.
-            try? await Task.sleep(for: Self.forever)
-            return nil
-        case .unavailable:
-            return nil
-        }
+    public func suggestWords(_ input: SuggestionInput, title: String, collectionName: String) async -> [String]? {
+        recordedWords.withLock { $0.append(WordsCall(input: input, title: title, collectionName: collectionName)) }
+        return await Self.answer(words)
     }
 
     /// Records the call; nothing to warm.
@@ -57,9 +73,29 @@ public final class FakeScanSuggester: ScanSuggester {
         recordedPrewarms.withLock { $0.append(collections) }
     }
 
-    /// What the model would say for the synthetic City Pharmacy receipt.
-    package static func cityPharmacy() -> ScanSuggestion {
-        ScanSuggestion(
-            title: "City Pharmacy receipt", collectionID: "receipts", searchWords: ["receipt", "pharmacy", "purchase"])
+    /// What the model would file the synthetic City Pharmacy receipt as.
+    public static func cityPharmacy() -> ScanSuggestion {
+        ScanSuggestion(title: "City Pharmacy receipt", collectionID: "receipts")
+    }
+
+    /// The words the model would give the synthetic City Pharmacy receipt.
+    public static let cityPharmacyWords = ["receipt", "pharmacy", "purchase"]
+
+    private static func answer<Answer>(_ outcome: Outcome<Answer>) async -> Answer? {
+        switch outcome {
+        case .arrives(let answer, let delay):
+            do {
+                try await Task.sleep(for: delay)
+                return answer
+            } catch {
+                return nil  // cancelled during the delay
+            }
+        case .fails:
+            return nil
+        case .never:
+            // Ends early only when cancelled; either way there is no answer.
+            try? await Task.sleep(for: forever)
+            return nil
+        }
     }
 }

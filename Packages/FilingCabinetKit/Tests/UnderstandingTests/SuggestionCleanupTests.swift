@@ -4,8 +4,12 @@ import Testing
 
 private let builtIns = SuggestionCollection.builtIns
 
-private func clean(title: String? = nil, collection: String? = nil, words: [String] = []) -> ScanSuggestion {
-    SuggestionCleanup.clean(title: title, collectionID: collection, words: words, allowed: builtIns)
+private func clean(title: String? = nil, collection: String? = nil) -> ScanSuggestion {
+    SuggestionCleanup.clean(title: title, collectionID: collection, allowed: builtIns)
+}
+
+private func clean(words: [String]) -> [String] {
+    SuggestionCleanup.cleanWords(words)
 }
 
 @Test func knownCollectionIsKept() {
@@ -50,7 +54,7 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
     let words = (1...15).flatMap { ["word\($0)", "WORD\($0)x".lowercased()] }
     #expect(words.count == 30)
 
-    let cleaned = clean(words: ["Receipt", "receipt", "RECEIPT"] + words).searchWords
+    let cleaned = clean(words: ["Receipt", "receipt", "RECEIPT"] + words)
 
     #expect(cleaned.count == 8)
     #expect(cleaned.first == "receipt")
@@ -59,17 +63,17 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 
 @Test func allCapsWordsKeepTheirCase() {
     #expect(
-        clean(words: ["ID", "W-2", "Pharmacy", "DMV", "iPhone"]).searchWords == [
+        clean(words: ["ID", "W-2", "Pharmacy", "DMV", "iPhone"]) == [
             "ID", "W-2", "pharmacy", "DMV", "iphone",
         ])
 }
 
 @Test func emptyWordsAreDropped() {
-    #expect(clean(words: ["", "  ", "\n", "license"]).searchWords == ["license"])
+    #expect(clean(words: ["", "  ", "\n", "license"]) == ["license"])
 }
 
 @Test func overlongWordsAreDroppedAndSpacesCollapsed() {
-    #expect(clean(words: [String(repeating: "x", count: 41), " parking   stub "]).searchWords == ["parking stub"])
+    #expect(clean(words: [String(repeating: "x", count: 41), " parking   stub "]) == ["parking stub"])
 }
 
 @Test func titleLosesLeadingAndTrailingSeparators() {
@@ -89,15 +93,6 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 
 @Test func titleOfOnlySeparatorsIsDropped() {
     #expect(clean(title: " · - : ").title == nil)
-}
-
-@Test func mergedWordsPreferTheFocusedCallsWords() {
-    let focused = ["pharmacy", "drugstore", "medicine", "health", "Medical"]
-    let first = ["receipt", "medical", "shop", "purchase", "items", "list"]
-
-    let merged = SuggestionCleanup.mergedWords(focused: focused, first: first)
-
-    #expect(merged == ["pharmacy", "drugstore", "medicine", "health", "medical", "receipt", "shop", "purchase"])
 }
 
 @Test func titleWithAPlaceholderIsDropped() {

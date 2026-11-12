@@ -35,22 +35,33 @@ struct ReviewHarness {
     let analytics = RecordingAnalytics()
     let library = FakeLibrary()
     let reader: FakeTextReader
+    let suggester: FakeScanSuggester
+    let backgroundTime = FakeBackgroundTime()
     let model: ReviewModel
 
+    /// Suggestions are off unless `suggestionsOn` says otherwise, so a review behaves as before Plan 5.
     init(
         pages: [CGImage] = [page1],
         preselected: BuiltInCollection? = nil,
         reads steps: [FakeTextReader.Step] = [.page(pharmacy)],
-        readingWaitLimit: Duration = .seconds(5)
+        readingWaitLimit: Duration = .seconds(5),
+        suggester: FakeScanSuggester = .unavailable(),
+        suggestionsOn: Bool = false,
+        suggestionWaitLimit: Duration = .seconds(5)
     ) {
         reader = FakeTextReader(steps)
+        self.suggester = suggester
         model = ReviewModel(
             input: ReviewInput(pages: pages, preselected: preselected, scannedAt: Self.now, source: .grid),
             reader: ScanReader(reader: reader),
             library: library,
             clock: Self.clock,
             analytics: analytics,
-            readingWaitLimit: readingWaitLimit
+            readingWaitLimit: readingWaitLimit,
+            suggester: suggester,
+            suggestionsOn: suggestionsOn,
+            suggestionWaitLimit: suggestionWaitLimit,
+            wordsWriter: SearchWordsWriter(suggester: suggester, library: library, backgroundTime: backgroundTime)
         )
     }
 
@@ -60,6 +71,8 @@ struct ReviewHarness {
             cameraAccess: FakeCameraAccess(status: .authorized, grantsOnRequest: true),
             clock: clock,
             analytics: RecordingAnalytics(),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: true,
             makeReview: { input in
                 ReviewModel(
                     input: input,
@@ -67,10 +80,28 @@ struct ReviewHarness {
                     library: FakeLibrary(),
                     clock: clock,
                     analytics: RecordingAnalytics(),
-                    readingWaitLimit: .seconds(5)
+                    readingWaitLimit: .seconds(5),
+                    suggester: FakeScanSuggester.unavailable(),
+                    suggestionsOn: true,
+                    suggestionWaitLimit: .seconds(5),
+                    wordsWriter: SearchWordsWriter(
+                        suggester: FakeScanSuggester.unavailable(),
+                        library: FakeLibrary(),
+                        backgroundTime: FakeBackgroundTime()
+                    )
                 )
             }
         )
+    }
+
+    /// Waits up to `limit` for `done`, checking every few milliseconds; true if it came.
+    @discardableResult
+    static func eventually(within limit: Duration = .seconds(5), _ done: () -> Bool) async -> Bool {
+        let deadline = ContinuousClock.now + limit
+        while !done(), ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(5))  // only ends early when the test is cancelled
+        }
+        return done()
     }
 
     /// The search text added after the save, waiting up to `limit` for it.

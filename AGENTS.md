@@ -66,7 +66,7 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |
 | `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
-| `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model, on every made-up case (page 1's image goes in, `IMAGE=0` for text only; `WORDS=1` adds a second call for search words; `SPLIT=1` also times title and collection alone; `CASES=` runs some cases: ids, or prefixes like `wallet-`), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
+| `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model's two calls (title and collection, then search words), on every made-up case (page 1's image goes in, `IMAGE=0` for text only; `CASES=` runs some cases: ids, or prefixes like `wallet-`), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
 | `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
 | `make test-scripts` | bats tests for the test-run scripts (`affected`, `retest`, `audit-report`) |
@@ -102,6 +102,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-SeedFavorites <n>` | with `-SeedScans`, the first `n` seeded scans are favourites, in seed order |
 | `-Photos authorized\|denied` | a fake Photos answers Save to Photos with that access, so no system prompt shows |
 | `-FailSave` | the next page write fails with a full disk |
+| `-Suggestions arrives\|slow\|unavailable` | the review's suggester is a fake: City Pharmacy receipt in Receipts (and its words after Save) after 0.3 s, never, or unavailable. Under `-UITest` it is unavailable unless this says otherwise |
 | `-ReduceMotion` | the capture layer and Search fade rather than slide, and Home's count doesn't pop |
 
 UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.

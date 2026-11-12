@@ -22,7 +22,7 @@ package enum SuggestionPrompt {
         appointment, dentist, dental, teeth, checkup, health.
         """
 
-    /// The second, focused call (`ModelScanSuggester(words: .separateCall)`): search words only.
+    /// The words call (`ScanSuggester.suggestWords`, after Save): search words only.
     package static let wordsInstructions = """
         You suggest hidden search words for a scanned paper document in a person's own private library. Any \
         document is fine: IDs, medical, money and school papers are routine. Give 4 to 8 lowercase words a person \
@@ -35,16 +35,16 @@ package enum SuggestionPrompt {
     /// How much of the text the focused words call reads: enough to tell what the scan is.
     private static let wordsTextLimit = 600
 
-    /// The title and the chosen collection's name from the first call, when there are any, then the start of the
-    /// text: the first 600 characters of the pages that aren't blank.
-    package static func wordsPrompt(for input: SuggestionInput, title: String?, collectionID: String?) -> String {
+    /// The saved title and collection's name, then the start of the text: the first 600 characters of the pages
+    /// that aren't blank.
+    package static func wordsPrompt(for input: SuggestionInput, title: String, collectionName: String) -> String {
         let text = input.pageTexts.filter { !$0.allSatisfy(\.isWhitespace) }.joined(separator: "\n")
-        let name = input.collections.first { $0.id == collectionID }?.name
-        return [
-            title.map { "Title: \($0)" },
-            name.map { "Collection: \($0)" },
-            "Start of the text read from the scan:\n\(text.prefix(wordsTextLimit))",
-        ].compactMap(\.self).joined(separator: "\n")
+        return """
+            Title: \(title)
+            Collection: \(collectionName)
+            Start of the text read from the scan:
+            \(text.prefix(wordsTextLimit))
+            """
     }
 
     /// The start of every prompt for these collections: what a prewarmed session can read ahead (E3).

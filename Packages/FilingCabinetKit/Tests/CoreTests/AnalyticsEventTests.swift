@@ -120,3 +120,21 @@ private struct Expected {
         #expect(event.payload.keys.allSatisfy { [.isFavorite, .kind, .count, .resultCount].contains($0) })
     }
 }
+
+@Test func suggestionEventsCarryOnlyTokensAndFlags() {
+    let expected = [
+        Expected(
+            event: .suggestionOutcome(.timedOut),
+            name: "suggestionOutcome",
+            payload: [.outcome: .token(.init(SuggestionOutcome.timedOut))]),
+        Expected(
+            event: .suggestionChanged(title: false, collection: true),
+            name: "suggestionChanged",
+            payload: [.titleChanged: .bool(false), .collectionChanged: .bool(true)]),
+    ]
+    for item in expected {
+        #expect(item.event.name == item.name)
+        #expect(item.event.payload == item.payload, "\(item.name)")
+    }
+    #expect(SuggestionOutcome.allCases.map(\.rawValue) == ["arrived", "timedOut", "failed", "unavailable"])
+}

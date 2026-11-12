@@ -18,6 +18,7 @@ private let everyFlag = [
     "-Notifications", "denied",
     "-NotificationsUnanswered",
     "-Photos", "denied",
+    "-Suggestions", "slow",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -38,6 +39,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.notifications == .denied)
     #expect(options.notificationsUnanswered)
     #expect(options.photos == .denied)
+    #expect(options.suggestions == .slow)
 }
 
 @Test func parsesSeedFavorites() {
@@ -62,6 +64,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.notifications == nil)
     #expect(!options.notificationsUnanswered)
     #expect(options.photos == nil)
+    #expect(options.suggestions == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -134,4 +137,13 @@ func photosFlagScriptsAuthorization(_ value: String, _ expected: PhotosAuthoriza
 
 @Test func unknownPhotosValueIsIgnored() {
     #expect(LaunchOptions(arguments: ["-Photos", "limited"], isDebugBuild: true).photos == nil)
+}
+
+@Test(arguments: [("arrives", SuggestionsFlag.arrives), ("slow", .slow), ("unavailable", .unavailable)])
+func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
+    #expect(LaunchOptions(arguments: ["-Suggestions", value], isDebugBuild: true).suggestions == expected)
+}
+
+@Test func unknownSuggestionsValueIsIgnored() {
+    #expect(LaunchOptions(arguments: ["-Suggestions", "sometimes"], isDebugBuild: true).suggestions == nil)
 }
