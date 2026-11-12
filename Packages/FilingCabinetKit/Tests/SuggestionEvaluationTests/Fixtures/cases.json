@@ -1,0 +1,1607 @@
+[
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-license.jpg"
+    ],
+    "id" : "wallet-license-sample-state",
+    "quality" : "clean",
+    "searches" : [
+      "driving",
+      "ID",
+      "DMV"
+    ],
+    "titles" : [
+      "Driver License",
+      "Sample State Driver License",
+      "Driver's License"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-templicense.jpg"
+    ],
+    "id" : "wallet-temp-license",
+    "quality" : "clean",
+    "searches" : [
+      "driving",
+      "DMV",
+      "ID"
+    ],
+    "titles" : [
+      "Temporary Driver License",
+      "Temp Driver License",
+      "Temporary License"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-passport.jpg"
+    ],
+    "id" : "wallet-passport",
+    "quality" : "clean",
+    "searches" : [
+      "travel",
+      "ID",
+      "international"
+    ],
+    "titles" : [
+      "Passport",
+      "Sampleland Passport"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-workid.jpg"
+    ],
+    "id" : "wallet-work-id",
+    "quality" : "clean",
+    "searches" : [
+      "employer",
+      "badge",
+      "office"
+    ],
+    "titles" : [
+      "Work ID",
+      "Northwind Labs ID",
+      "Staff ID Badge"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-badge-tall.jpg"
+    ],
+    "id" : "wallet-coworking-badge",
+    "quality" : "clean",
+    "searches" : [
+      "desk",
+      "office",
+      "membership"
+    ],
+    "titles" : [
+      "Riverside Coworking Badge",
+      "Coworking Membership",
+      "Riverside Coworking"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-gym.jpg"
+    ],
+    "id" : "wallet-gym-card",
+    "quality" : "clean",
+    "searches" : [
+      "workout",
+      "exercise",
+      "membership"
+    ],
+    "titles" : [
+      "Ironworks Fitness Card",
+      "Gym Membership",
+      "Ironworks Fitness Club"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-insurance.jpg"
+    ],
+    "id" : "wallet-health-insurance",
+    "quality" : "clean",
+    "searches" : [
+      "medical",
+      "doctor",
+      "coverage"
+    ],
+    "titles" : [
+      "Northfield Mutual Insurance Card",
+      "Health Insurance Card",
+      "Health Insurance"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-library.jpg"
+    ],
+    "id" : "wallet-library-card",
+    "quality" : "clean",
+    "searches" : [
+      "books",
+      "borrow",
+      "reading"
+    ],
+    "titles" : [
+      "Anytown Public Library Card",
+      "Library Card"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "scan-vaccine.jpg"
+    ],
+    "id" : "wallet-vaccination-card",
+    "quality" : "clean",
+    "searches" : [
+      "shots",
+      "health",
+      "clinic"
+    ],
+    "titles" : [
+      "Immunization Record",
+      "Vaccination Card",
+      "Vaccine Record"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-license-northern-plains.jpg"
+    ],
+    "id" : "wallet-license-northern-plains",
+    "quality" : "clean",
+    "searches" : [
+      "driving",
+      "ID",
+      "DMV"
+    ],
+    "titles" : [
+      "Northern Plains Driver License",
+      "Driver License",
+      "Driver's License"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-license-eastlake.jpg"
+    ],
+    "id" : "wallet-license-eastlake",
+    "quality" : "low",
+    "searches" : [
+      "driving",
+      "ID",
+      "DMV"
+    ],
+    "titles" : [
+      "Eastlake Driver License",
+      "Operator License",
+      "Driver License"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-license-westmoor.jpg"
+    ],
+    "id" : "wallet-license-westmoor",
+    "quality" : "clean",
+    "searches" : [
+      "ID",
+      "DMV",
+      "identity"
+    ],
+    "titles" : [
+      "Westmoor State ID",
+      "State ID Card",
+      "Identification Card"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-business-card-chen.jpg"
+    ],
+    "id" : "wallet-business-card-chen",
+    "quality" : "clean",
+    "searches" : [
+      "contact",
+      "designer",
+      "architect"
+    ],
+    "titles" : [
+      "Priya Nair Business Card",
+      "Studio Fern Business Card",
+      "Priya Nair, Studio Fern"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-business-card-ortiz.jpg"
+    ],
+    "id" : "wallet-business-card-ortiz",
+    "quality" : "low",
+    "searches" : [
+      "contact",
+      "repair",
+      "wiring"
+    ],
+    "titles" : [
+      "Marcus Bell Business Card",
+      "Bell & Sons Business Card",
+      "Marcus Bell, Electrician"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-transit-card.jpg"
+    ],
+    "id" : "wallet-transit-card",
+    "quality" : "clean",
+    "searches" : [
+      "subway",
+      "bus",
+      "commute"
+    ],
+    "titles" : [
+      "Metro Go Transit Card",
+      "Transit Card",
+      "Metro Card"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-student-id.jpg"
+    ],
+    "id" : "wallet-student-id",
+    "quality" : "low",
+    "searches" : [
+      "campus",
+      "college",
+      "school"
+    ],
+    "titles" : [
+      "Lakeview University Student ID",
+      "Student ID",
+      "Lakeview Student ID"
+    ]
+  },
+  {
+    "collection" : "wallet",
+    "files" : [
+      "wallet-auto-insurance.jpg"
+    ],
+    "id" : "wallet-auto-insurance",
+    "quality" : "low",
+    "searches" : [
+      "car",
+      "vehicle",
+      "policy"
+    ],
+    "titles" : [
+      "Granite State Auto Insurance Card",
+      "Auto Insurance Card",
+      "Proof of Insurance"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-corner.jpg"
+    ],
+    "id" : "receipts-corner-market",
+    "quality" : "clean",
+    "searches" : [
+      "groceries",
+      "food",
+      "supermarket"
+    ],
+    "titles" : [
+      "Corner Market Receipt",
+      "Corner Market",
+      "Corner Market Groceries"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-bluebird.jpg"
+    ],
+    "id" : "receipts-bluebird-cafe",
+    "quality" : "clean",
+    "searches" : [
+      "coffee",
+      "breakfast",
+      "lunch"
+    ],
+    "titles" : [
+      "Bluebird Cafe Receipt",
+      "Bluebird Café",
+      "Bluebird Cafe"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-gas.jpg"
+    ],
+    "id" : "receipts-harbor-gas",
+    "quality" : "clean",
+    "searches" : [
+      "fuel",
+      "gasoline",
+      "car"
+    ],
+    "titles" : [
+      "Harbor Gas Receipt",
+      "Harbor Gas",
+      "Gas Station Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-pharmacy.jpg"
+    ],
+    "id" : "receipts-city-pharmacy",
+    "quality" : "clean",
+    "searches" : [
+      "medicine",
+      "drugstore",
+      "prescription"
+    ],
+    "titles" : [
+      "City Pharmacy Receipt",
+      "City Pharmacy"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-hardware.jpg"
+    ],
+    "id" : "receipts-northside-hardware",
+    "quality" : "clean",
+    "searches" : [
+      "tools",
+      "repair",
+      "DIY"
+    ],
+    "titles" : [
+      "Northside Hardware Receipt",
+      "Northside Hardware"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-books.jpg"
+    ],
+    "id" : "receipts-page-and-spine",
+    "quality" : "clean",
+    "searches" : [
+      "books",
+      "reading",
+      "novel"
+    ],
+    "titles" : [
+      "Page & Spine Booksellers Receipt",
+      "Page & Spine Receipt",
+      "Page & Spine Booksellers"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-r-pizza.jpg"
+    ],
+    "id" : "receipts-pizzeria-sole",
+    "quality" : "clean",
+    "searches" : [
+      "restaurant",
+      "dinner",
+      "pizza"
+    ],
+    "titles" : [
+      "Pizzeria Sole Receipt",
+      "Pizzeria Sole",
+      "Pizzeria Sole Dinner"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "scan-receipt.jpg"
+    ],
+    "id" : "receipts-tallow-electric",
+    "quality" : "clean",
+    "searches" : [
+      "computer",
+      "electronics",
+      "warranty"
+    ],
+    "titles" : [
+      "Tallow Electric Receipt",
+      "Tallow Electric Laptop Purchase",
+      "Laptop Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-greenway-grocery.jpg"
+    ],
+    "id" : "receipts-greenway-grocery",
+    "quality" : "low",
+    "searches" : [
+      "groceries",
+      "food",
+      "supermarket"
+    ],
+    "titles" : [
+      "Greenway Grocery Receipt",
+      "Greenway Grocery"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-daily-grind.jpg"
+    ],
+    "id" : "receipts-daily-grind",
+    "quality" : "clean",
+    "searches" : [
+      "espresso",
+      "breakfast",
+      "cafe"
+    ],
+    "titles" : [
+      "The Daily Grind Receipt",
+      "The Daily Grind Coffee",
+      "Daily Grind Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-lakeside-fuel.jpg"
+    ],
+    "id" : "receipts-lakeside-fuel",
+    "quality" : "low",
+    "searches" : [
+      "gas",
+      "gasoline",
+      "car"
+    ],
+    "titles" : [
+      "Lakeside Fuel Receipt",
+      "Lakeside Fuel",
+      "Gas Station Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-trattoria-luna.jpg"
+    ],
+    "id" : "receipts-trattoria-luna",
+    "quality" : "clean",
+    "searches" : [
+      "restaurant",
+      "dinner",
+      "Italian"
+    ],
+    "titles" : [
+      "Trattoria Luna Receipt",
+      "Trattoria Luna Dinner",
+      "Trattoria Luna"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-online-order.jpg"
+    ],
+    "id" : "receipts-online-order",
+    "quality" : "low",
+    "searches" : [
+      "amazon",
+      "shopping",
+      "delivery"
+    ],
+    "titles" : [
+      "Parcelhouse Order Confirmation",
+      "Parcelhouse Online Order",
+      "Online Order Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-parking-garage.jpg"
+    ],
+    "id" : "receipts-parking-garage",
+    "quality" : "clean",
+    "searches" : [
+      "parking",
+      "car",
+      "downtown"
+    ],
+    "titles" : [
+      "City Center Garage Receipt",
+      "Parking Garage Receipt",
+      "Parking Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-bakery.jpg"
+    ],
+    "id" : "receipts-bakery",
+    "quality" : "clean",
+    "searches" : [
+      "bread",
+      "pastry",
+      "breakfast"
+    ],
+    "titles" : [
+      "Flour & Crown Bakery Receipt",
+      "Flour & Crown Bakery",
+      "Bakery Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-tax-prep-fee.jpg"
+    ],
+    "id" : "receipts-tax-prep-fee",
+    "quality" : "clean",
+    "searches" : [
+      "taxes",
+      "accountant",
+      "filing"
+    ],
+    "titles" : [
+      "BrightPath Tax Service Receipt",
+      "Tax Preparation Receipt",
+      "Tax Prep Fee Receipt"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-charity-donation.jpg"
+    ],
+    "id" : "receipts-charity-donation",
+    "quality" : "clean",
+    "searches" : [
+      "charity",
+      "taxes",
+      "giving"
+    ],
+    "titles" : [
+      "Riverbend Food Bank Donation Receipt",
+      "Charity Donation Receipt",
+      "Food Bank Donation"
+    ]
+  },
+  {
+    "collection" : "receipts",
+    "files" : [
+      "receipts-garden-center.jpg"
+    ],
+    "id" : "receipts-garden-center",
+    "quality" : "low",
+    "searches" : [
+      "plants",
+      "gardening",
+      "soil"
+    ],
+    "titles" : [
+      "Fern & Field Garden Center Receipt",
+      "Garden Center Receipt",
+      "Fern & Field Receipt"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "scan-note-bio.jpg"
+    ],
+    "id" : "notes-bio-class",
+    "quality" : "clean",
+    "searches" : [
+      "biology",
+      "class",
+      "lecture"
+    ],
+    "titles" : [
+      "Bio 210 Glycolysis",
+      "Glycolysis Notes",
+      "Bio 210 Notes"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "scan-note-call.jpg"
+    ],
+    "id" : "notes-landlord-call",
+    "quality" : "clean",
+    "searches" : [
+      "apartment",
+      "heating",
+      "renewal"
+    ],
+    "titles" : [
+      "Call with Landlord",
+      "Landlord Call Notes",
+      "Landlord Call"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-history-class.jpg"
+    ],
+    "id" : "notes-history-class",
+    "quality" : "clean",
+    "searches" : [
+      "history",
+      "class",
+      "lecture"
+    ],
+    "titles" : [
+      "Hist 101 Industrial Revolution",
+      "Industrial Revolution Notes",
+      "History 101 Notes"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-math-class.jpg"
+    ],
+    "id" : "notes-math-class",
+    "quality" : "low",
+    "searches" : [
+      "math",
+      "calculus",
+      "class"
+    ],
+    "titles" : [
+      "Calc II Integration by Parts",
+      "Calculus Notes",
+      "Calc II Notes"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-chem-class.jpg"
+    ],
+    "id" : "notes-chem-class",
+    "quality" : "clean",
+    "searches" : [
+      "chemistry",
+      "class",
+      "science"
+    ],
+    "titles" : [
+      "Chem 120 Le Chatelier's Principle",
+      "Chemistry Notes",
+      "Chem 120 Notes"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-todo-weekend.jpg"
+    ],
+    "id" : "notes-todo-weekend",
+    "quality" : "clean",
+    "searches" : [
+      "tasks",
+      "chores",
+      "errands"
+    ],
+    "titles" : [
+      "Weekend To Do",
+      "To Do List",
+      "To Do - Weekend"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-todo-moving.jpg"
+    ],
+    "id" : "notes-todo-moving",
+    "quality" : "low",
+    "searches" : [
+      "relocation",
+      "tasks",
+      "apartment"
+    ],
+    "titles" : [
+      "Moving Checklist",
+      "Moving To Do List",
+      "Moving To Do"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-recipe-card.jpg"
+    ],
+    "id" : "notes-recipe-card",
+    "quality" : "clean",
+    "searches" : [
+      "recipe",
+      "cooking",
+      "dinner"
+    ],
+    "titles" : [
+      "Nana's Lentil Soup",
+      "Lentil Soup Recipe",
+      "Lentil Soup"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-meeting-kickoff.jpg"
+    ],
+    "id" : "notes-meeting-kickoff",
+    "quality" : "clean",
+    "searches" : [
+      "work",
+      "project",
+      "agenda"
+    ],
+    "titles" : [
+      "Kickoff Meeting Notes",
+      "Kickoff Meeting - Nov 4",
+      "Project Kickoff Notes"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-meeting-1on1.jpg"
+    ],
+    "id" : "notes-meeting-1on1",
+    "quality" : "low",
+    "searches" : [
+      "work",
+      "manager",
+      "meeting"
+    ],
+    "titles" : [
+      "1:1 with Dana",
+      "One on One with Dana",
+      "Meeting Notes with Dana"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-call-plumber.jpg"
+    ],
+    "id" : "notes-call-plumber",
+    "quality" : "clean",
+    "searches" : [
+      "repair",
+      "leak",
+      "kitchen"
+    ],
+    "titles" : [
+      "Plumber Call Notes",
+      "Call with Plumber",
+      "Plumber Call"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-call-bank.jpg"
+    ],
+    "id" : "notes-call-bank",
+    "quality" : "low",
+    "searches" : [
+      "dispute",
+      "card",
+      "money"
+    ],
+    "titles" : [
+      "Call with Bank",
+      "Bank Call Notes",
+      "Bank Dispute Call"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-gift-ideas.jpg"
+    ],
+    "id" : "notes-gift-ideas",
+    "quality" : "clean",
+    "searches" : [
+      "presents",
+      "holiday",
+      "birthday"
+    ],
+    "titles" : [
+      "Gift Ideas",
+      "Gift List",
+      "Holiday Gift Ideas"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-packing-list.jpg"
+    ],
+    "id" : "notes-packing-list",
+    "quality" : "clean",
+    "searches" : [
+      "travel",
+      "trip",
+      "vacation"
+    ],
+    "titles" : [
+      "Lisbon Packing List",
+      "Packing List",
+      "Packing - Lisbon"
+    ]
+  },
+  {
+    "collection" : "notes",
+    "files" : [
+      "notes-book-notes.jpg"
+    ],
+    "id" : "notes-book-notes",
+    "quality" : "clean",
+    "searches" : [
+      "book",
+      "productivity",
+      "focus"
+    ],
+    "titles" : [
+      "Deep Work Reading Notes",
+      "Book Notes",
+      "Reading Notes - Deep Work"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "scan-lease.jpg"
+    ],
+    "id" : "documents-lease-letter",
+    "quality" : "clean",
+    "searches" : [
+      "apartment",
+      "rent",
+      "landlord"
+    ],
+    "titles" : [
+      "Lease Renewal Letter",
+      "Harlow Property Management Lease Letter",
+      "Lease Renewal Offer"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "scan-lease-p2.jpg",
+      "scan-lease-p3.jpg"
+    ],
+    "id" : "documents-lease-renewal",
+    "quality" : "clean",
+    "searches" : [
+      "apartment",
+      "rent",
+      "tenant"
+    ],
+    "titles" : [
+      "Lease Renewal Agreement",
+      "Lease Renewal Agreement Unit 4B",
+      "Apartment Lease Renewal"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "scan-registration.jpg"
+    ],
+    "id" : "documents-vehicle-registration",
+    "quality" : "clean",
+    "searches" : [
+      "car",
+      "DMV",
+      "plate"
+    ],
+    "titles" : [
+      "Vehicle Registration",
+      "Certificate of Vehicle Registration",
+      "Northwind Compass Registration"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-w2.jpg"
+    ],
+    "id" : "documents-w2",
+    "quality" : "clean",
+    "searches" : [
+      "taxes",
+      "salary",
+      "employer",
+      "income"
+    ],
+    "titles" : [
+      "2026 W-2",
+      "W-2 Wage and Tax Statement 2026",
+      "Northwind Labs W-2"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-1099-nec.jpg"
+    ],
+    "id" : "documents-1099-nec",
+    "quality" : "clean",
+    "searches" : [
+      "taxes",
+      "freelance",
+      "contractor",
+      "income"
+    ],
+    "titles" : [
+      "2026 1099-NEC",
+      "1099-NEC Freelance Income",
+      "Fernwood Studios 1099-NEC"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-1099-int.jpg"
+    ],
+    "id" : "documents-1099-int",
+    "quality" : "low",
+    "searches" : [
+      "taxes",
+      "interest",
+      "savings",
+      "income"
+    ],
+    "titles" : [
+      "2026 1099-INT",
+      "1099-INT Interest Income",
+      "Northfield Savings 1099-INT"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-electric-bill.jpg"
+    ],
+    "id" : "documents-electric-bill",
+    "quality" : "clean",
+    "searches" : [
+      "utilities",
+      "power",
+      "energy"
+    ],
+    "titles" : [
+      "Brightwater Electric Bill October 2026",
+      "Electric Bill",
+      "Brightwater Electric Statement"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-water-bill.jpg"
+    ],
+    "id" : "documents-water-bill",
+    "quality" : "low",
+    "searches" : [
+      "utilities",
+      "sewer",
+      "household"
+    ],
+    "titles" : [
+      "Anytown Water Works Bill",
+      "Water Bill",
+      "Water Bill Q3 2026"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-bank-statement.jpg"
+    ],
+    "id" : "documents-bank-statement",
+    "quality" : "clean",
+    "searches" : [
+      "money",
+      "account",
+      "balance"
+    ],
+    "titles" : [
+      "Northfield Savings Bank Statement October 2026",
+      "Bank Statement October 2026",
+      "Checking Statement"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-bank-statement-low.jpg"
+    ],
+    "id" : "documents-bank-statement-low",
+    "quality" : "low",
+    "searches" : [
+      "money",
+      "savings",
+      "account"
+    ],
+    "titles" : [
+      "Harbor Credit Union Statement September 2026",
+      "Savings Statement",
+      "Bank Statement September 2026"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-warranty.jpg"
+    ],
+    "id" : "documents-warranty",
+    "quality" : "clean",
+    "searches" : [
+      "laptop",
+      "coverage",
+      "protection"
+    ],
+    "titles" : [
+      "Tallow Electric Laptop Warranty",
+      "Laptop Warranty",
+      "Limited Warranty Certificate"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-school-form.jpg"
+    ],
+    "id" : "documents-school-form",
+    "quality" : "low",
+    "searches" : [
+      "school",
+      "child",
+      "permission"
+    ],
+    "titles" : [
+      "Field Trip Permission Form",
+      "Maple Grove Elementary Permission Slip",
+      "School Permission Form"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-hoa-letter.jpg"
+    ],
+    "id" : "documents-hoa-letter",
+    "quality" : "clean",
+    "searches" : [
+      "neighborhood",
+      "dues",
+      "community"
+    ],
+    "titles" : [
+      "Cedar Court HOA Letter",
+      "HOA Notice",
+      "Homeowners Association Letter"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-insurance-letter.jpg"
+    ],
+    "id" : "documents-insurance-letter",
+    "quality" : "low",
+    "searches" : [
+      "car",
+      "premium",
+      "coverage"
+    ],
+    "titles" : [
+      "Granite State Auto Renewal Notice",
+      "Auto Insurance Renewal Letter",
+      "Policy Renewal Notice"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-medical-bill.jpg"
+    ],
+    "id" : "documents-medical-bill",
+    "quality" : "clean",
+    "searches" : [
+      "doctor",
+      "health",
+      "clinic"
+    ],
+    "titles" : [
+      "Anytown Community Health Statement",
+      "Medical Bill",
+      "Doctor Visit Bill"
+    ]
+  },
+  {
+    "collection" : "documents",
+    "files" : [
+      "documents-property-tax.jpg"
+    ],
+    "id" : "documents-property-tax",
+    "quality" : "clean",
+    "searches" : [
+      "taxes",
+      "house",
+      "assessment"
+    ],
+    "titles" : [
+      "Property Tax Notice 2026",
+      "Sample County Property Tax Notice",
+      "Property Tax Bill"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "scan-throw-coat.jpg"
+    ],
+    "id" : "throwaways-coat-check",
+    "quality" : "clean",
+    "searches" : [
+      "jacket",
+      "cloakroom",
+      "ticket"
+    ],
+    "titles" : [
+      "Coat Check 142",
+      "Coat Check Ticket",
+      "Coat Check"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "scan-throw-park.jpg"
+    ],
+    "id" : "throwaways-park-and-go",
+    "quality" : "clean",
+    "searches" : [
+      "parking",
+      "car",
+      "garage"
+    ],
+    "titles" : [
+      "Park & Go Garage Ticket",
+      "Parking Garage Ticket",
+      "Park & Go Ticket"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "scan-throw-valet.jpg"
+    ],
+    "id" : "throwaways-valet",
+    "quality" : "clean",
+    "searches" : [
+      "parking",
+      "car",
+      "ticket"
+    ],
+    "titles" : [
+      "Valet Ticket 087",
+      "Valet Ticket",
+      "Valet 087"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "scan-wifi.jpg"
+    ],
+    "id" : "throwaways-wifi-note",
+    "quality" : "clean",
+    "searches" : [
+      "internet",
+      "password",
+      "router"
+    ],
+    "titles" : [
+      "Wifi Password",
+      "Maple Wifi Note",
+      "Wifi - New Place"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-coat-check-2.jpg"
+    ],
+    "id" : "throwaways-coat-check-2",
+    "quality" : "low",
+    "searches" : [
+      "jacket",
+      "cloakroom",
+      "ticket"
+    ],
+    "titles" : [
+      "Coat Check 058",
+      "Coat Check Ticket",
+      "Coat Check"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-parking-stub.jpg"
+    ],
+    "id" : "throwaways-parking-stub",
+    "quality" : "clean",
+    "searches" : [
+      "parking",
+      "car",
+      "lot"
+    ],
+    "titles" : [
+      "Lot B Parking Stub",
+      "Parking Stub",
+      "Parking Ticket B-214"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-parking-stub-2.jpg"
+    ],
+    "id" : "throwaways-parking-stub-2",
+    "quality" : "low",
+    "searches" : [
+      "parking",
+      "car",
+      "garage"
+    ],
+    "titles" : [
+      "Riverfront Parking Stub",
+      "Parking Stub",
+      "Parking Ticket 0731"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-valet-2.jpg"
+    ],
+    "id" : "throwaways-valet-2",
+    "quality" : "low",
+    "searches" : [
+      "parking",
+      "car",
+      "hotel"
+    ],
+    "titles" : [
+      "Valet Ticket 212",
+      "Alder Hotel Valet Ticket",
+      "Valet Ticket"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-wifi-slip.jpg"
+    ],
+    "id" : "throwaways-wifi-slip",
+    "quality" : "clean",
+    "searches" : [
+      "internet",
+      "password",
+      "network"
+    ],
+    "titles" : [
+      "Guest Wifi Code",
+      "Wifi Slip",
+      "Cafe Guest Wifi"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-raffle.jpg"
+    ],
+    "id" : "throwaways-raffle",
+    "quality" : "clean",
+    "searches" : [
+      "lottery",
+      "drawing",
+      "prize"
+    ],
+    "titles" : [
+      "Raffle Ticket 003917",
+      "Raffle Ticket",
+      "Raffle 003917"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-raffle-2.jpg"
+    ],
+    "id" : "throwaways-raffle-2",
+    "quality" : "low",
+    "searches" : [
+      "lottery",
+      "fair",
+      "prize"
+    ],
+    "titles" : [
+      "50/50 Raffle Ticket",
+      "Raffle Ticket 114502",
+      "School Fair Raffle Ticket"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-deli-number.jpg"
+    ],
+    "id" : "throwaways-deli-number",
+    "quality" : "clean",
+    "searches" : [
+      "queue",
+      "counter",
+      "grocery"
+    ],
+    "titles" : [
+      "Deli Number 47",
+      "Deli Ticket",
+      "Deli Counter Number"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-deli-number-2.jpg"
+    ],
+    "id" : "throwaways-deli-number-2",
+    "quality" : "clean",
+    "searches" : [
+      "queue",
+      "counter",
+      "bakery"
+    ],
+    "titles" : [
+      "Bakery Number 09",
+      "Take a Number Ticket",
+      "Bakery Counter Number"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-wristband.jpg"
+    ],
+    "id" : "throwaways-wristband",
+    "quality" : "clean",
+    "searches" : [
+      "concert",
+      "festival",
+      "event"
+    ],
+    "titles" : [
+      "Lakeside Music Fest Wristband",
+      "Festival Wristband",
+      "General Admission Wristband"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-cinema-stub.jpg"
+    ],
+    "id" : "throwaways-cinema-stub",
+    "quality" : "clean",
+    "searches" : [
+      "movie",
+      "film",
+      "theater"
+    ],
+    "titles" : [
+      "Cinema Ticket Stub",
+      "Movie Ticket Stub",
+      "Cinema 4 Seat H12"
+    ]
+  },
+  {
+    "collection" : "throwaways",
+    "files" : [
+      "throwaways-bag-check.jpg"
+    ],
+    "id" : "throwaways-bag-check",
+    "quality" : "clean",
+    "searches" : [
+      "museum",
+      "luggage",
+      "ticket"
+    ],
+    "titles" : [
+      "Bag Check T-33",
+      "Museum Bag Check Ticket",
+      "Bag Check Ticket"
+    ]
+  },
+  {
+    "collection" : "taxes",
+    "collections" : [
+      "wallet",
+      "receipts",
+      "notes",
+      "documents",
+      "throwaways",
+      "taxes"
+    ],
+    "files" : [
+      "documents-w2.jpg"
+    ],
+    "id" : "custom-taxes-w2",
+    "quality" : "clean",
+    "searches" : [
+      "salary",
+      "employer",
+      "income"
+    ],
+    "titles" : [
+      "2026 W-2",
+      "W-2 Wage and Tax Statement 2026",
+      "Northwind Labs W-2"
+    ]
+  },
+  {
+    "collection" : "taxes",
+    "collections" : [
+      "wallet",
+      "receipts",
+      "notes",
+      "documents",
+      "throwaways",
+      "taxes"
+    ],
+    "files" : [
+      "documents-1099-nec.jpg"
+    ],
+    "id" : "custom-taxes-1099-nec",
+    "quality" : "clean",
+    "searches" : [
+      "freelance",
+      "contractor",
+      "income"
+    ],
+    "titles" : [
+      "2026 1099-NEC",
+      "1099-NEC Freelance Income",
+      "Fernwood Studios 1099-NEC"
+    ]
+  },
+  {
+    "collection" : "taxes",
+    "collections" : [
+      "wallet",
+      "receipts",
+      "notes",
+      "documents",
+      "throwaways",
+      "taxes"
+    ],
+    "files" : [
+      "documents-1099-int.jpg"
+    ],
+    "id" : "custom-taxes-1099-int",
+    "quality" : "clean",
+    "searches" : [
+      "interest",
+      "savings",
+      "income"
+    ],
+    "titles" : [
+      "2026 1099-INT",
+      "1099-INT Interest Income",
+      "Northfield Savings 1099-INT"
+    ]
+  },
+  {
+    "collection" : "taxes",
+    "collections" : [
+      "wallet",
+      "receipts",
+      "notes",
+      "documents",
+      "throwaways",
+      "taxes"
+    ],
+    "files" : [
+      "receipts-tax-prep-fee.jpg"
+    ],
+    "id" : "custom-taxes-tax-prep",
+    "quality" : "clean",
+    "searches" : [
+      "accountant",
+      "filing",
+      "fee"
+    ],
+    "titles" : [
+      "BrightPath Tax Service Receipt",
+      "Tax Preparation Receipt",
+      "Tax Prep Fee Receipt"
+    ]
+  },
+  {
+    "collection" : "taxes",
+    "collections" : [
+      "wallet",
+      "receipts",
+      "notes",
+      "documents",
+      "throwaways",
+      "taxes"
+    ],
+    "files" : [
+      "receipts-charity-donation.jpg"
+    ],
+    "id" : "custom-taxes-donation",
+    "quality" : "clean",
+    "searches" : [
+      "charity",
+      "deduction",
+      "giving"
+    ],
+    "titles" : [
+      "Riverbend Food Bank Donation Receipt",
+      "Charity Donation Receipt",
+      "Food Bank Donation"
+    ]
+  }
+]
