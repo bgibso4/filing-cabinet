@@ -66,7 +66,7 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |
 | `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
-| `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model, on every made-up case (`IMAGE=1` sends page 1 too), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
+| `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model, on every made-up case (`IMAGE=1` sends page 1 too, `WORDS=1` adds a second call for search words), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
 | `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
 | `make test-scripts` | bats tests for the test-run scripts (`affected`, `retest`, `audit-report`) |

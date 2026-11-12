@@ -3,7 +3,8 @@ import FoundationModels
 
 // periphery:ignore - the app wires it in Plan 5 Task 8; remove this line then
 /// The on-device model (`SystemLanguageModel.default`; never Private Cloud Compute). One session per scan, with a
-/// schema whose collection may only be one of the ids it was handed. Measured by Task 4, not unit-tested.
+/// schema whose collection may only be one of the ids it was handed; with `wordsPass`, a second session asks for search
+/// words alone. Measured by Task 4 and 4c, not unit-tested.
 public struct ModelScanSuggester: ScanSuggester {
     /// Page 1's long side when the image is sent (M2).
     private static let imageLongSide = 1_024
@@ -13,10 +14,13 @@ public struct ModelScanSuggester: ScanSuggester {
     private static let charactersPerToken = 3
 
     private let includesImage: Bool
+    private let wordsPass: Bool
 
-    /// `includesImage` sends page 1 alongside the text when the model can see images (E2).
-    public init(includesImage: Bool) {
+    /// `includesImage` sends page 1 alongside the text when the model can see images (E2). `wordsPass` adds a second,
+    /// focused call for search words after the first answers (Task 4c's experiment).
+    public init(includesImage: Bool, wordsPass: Bool) {
         self.includesImage = includesImage
+        self.wordsPass = wordsPass
     }
 
     public var availability: SuggesterAvailability {
@@ -35,11 +39,15 @@ public struct ModelScanSuggester: ScanSuggester {
             includesImage && model.capabilities.contains(.vision)
             ? input.firstPage.flatMap { SuggestionImage.fitted($0, longSide: Self.imageLongSide) } : nil
         do {
-            let suggestion = try await respond(to: input, image: image, model: model)
+            var suggestion = try await respond(to: input, image: image, model: model)
+            if wordsPass {
+                suggestion = try await addingFocusedWords(to: suggestion, input: input, model: model)
+            }
             UnderstandingLog.logger.info(
                 """
                 Suggester: answered in \(ContinuousClock.now - start, privacy: .public), \
-                image \(image != nil, privacy: .public), \(suggestion.searchWords.count, privacy: .public) words
+                image \(image != nil, privacy: .public), words pass \(wordsPass, privacy: .public), \
+                \(suggestion.searchWords.count, privacy: .public) words
                 """)
             return suggestion
         } catch {
@@ -75,6 +83,32 @@ public struct ModelScanSuggester: ScanSuggester {
             words: try content.value([String].self, forProperty: "words"),
             allowed: input.collections
         )
+    }
+
+    /// The second call's words merged ahead of the first's. Its failure keeps the first call's answer as it was; only
+    /// cancellation throws.
+    private func addingFocusedWords(to suggestion: ScanSuggestion, input: SuggestionInput, model: SystemLanguageModel)
+        async throws -> ScanSuggestion
+    {
+        let prompt = SuggestionPrompt.wordsPrompt(
+            for: input, title: suggestion.title, collectionID: suggestion.collectionID)
+        let session = LanguageModelSession(model: model, instructions: SuggestionPrompt.wordsInstructions)
+        do {
+            let response = try await session.respond(
+                to: prompt, schema: try Self.wordsSchema(), options: GenerationOptions(samplingMode: .greedy))
+            try Task.checkCancellation()
+            let words = try response.content.value([String].self, forProperty: "words")
+            return ScanSuggestion(
+                title: suggestion.title,
+                collectionID: suggestion.collectionID,
+                searchWords: SuggestionCleanup.mergedWords(focused: words, first: suggestion.searchWords)
+            )
+        } catch {
+            try Task.checkCancellation()
+            Self.log(error)
+            UnderstandingLog.logger.info("Suggester: words call failed, the first call's words kept")
+            return suggestion
+        }
     }
 
     /// Every failure means "no suggestion"; the log names the kind, never the scan's content.
@@ -137,13 +171,33 @@ public struct ModelScanSuggester: ScanSuggester {
                 DynamicGenerationSchema.Property(name: "collection", schema: collection),
                 DynamicGenerationSchema.Property(
                     name: "words",
-                    description: "6 to 8 lowercase everyday search words for what kind of document this is",
+                    description: "3 to 8 lowercase everyday search words for what kind of document this is",
                     schema: DynamicGenerationSchema(
                         arrayOf: DynamicGenerationSchema(type: String.self),
-                        minimumElements: 6,
+                        minimumElements: 3,
                         maximumElements: 8
                     )
                 ),
+            ])
+        return try GenerationSchema(root: root, dependencies: [])
+    }
+
+    /// The focused call's answer: `words` alone.
+    private static func wordsSchema() throws -> GenerationSchema {
+        let root = DynamicGenerationSchema(
+            name: "SearchWords",
+            properties: [
+                DynamicGenerationSchema.Property(
+                    name: "words",
+                    description:
+                        "4 to 8 lowercase everyday search words: the kind of thing, the kind of shop or organization, "
+                        + "the everyday category",
+                    schema: DynamicGenerationSchema(
+                        arrayOf: DynamicGenerationSchema(type: String.self),
+                        minimumElements: 4,
+                        maximumElements: 8
+                    )
+                )
             ])
         return try GenerationSchema(root: root, dependencies: [])
     }

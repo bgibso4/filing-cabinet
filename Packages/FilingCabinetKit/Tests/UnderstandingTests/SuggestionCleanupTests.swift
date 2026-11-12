@@ -90,3 +90,12 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 @Test func titleOfOnlySeparatorsIsDropped() {
     #expect(clean(title: " · - : ").title == nil)
 }
+
+@Test func mergedWordsPreferTheFocusedCallsWords() {
+    let focused = ["pharmacy", "drugstore", "medicine", "health", "Medical"]
+    let first = ["receipt", "medical", "shop", "purchase", "items", "list"]
+
+    let merged = SuggestionCleanup.mergedWords(focused: focused, first: first)
+
+    #expect(merged == ["pharmacy", "drugstore", "medicine", "health", "medical", "receipt", "shop", "purchase"])
+}

@@ -15,6 +15,11 @@ package enum SuggestionCleanup {
         )
     }
 
+    /// The focused words call's words first, then the first call's, cleaned: so past 8, the focused ones are kept.
+    package static func mergedWords(focused: [String], first: [String]) -> [String] {
+        cleanWords(focused + first)
+    }
+
     /// Separators a title may not start or end with, nor repeat with nothing between.
     private static let separators: Set<Character> = ["·", "-", ",", ":"]
 

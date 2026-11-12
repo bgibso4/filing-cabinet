@@ -69,3 +69,24 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
         SuggestionPrompt.collectionIDs(in: [taxes] + SuggestionCollection.builtIns + [again]) == ["taxes"]
             + SuggestionCollection.builtIns.map(\.id))
 }
+
+@Test func wordsPromptHasTheTitleTheCollectionNameAndTheStartOfTheText() {
+    let pages = [String(repeating: "a", count: 500), "", String(repeating: "b", count: 500)]
+
+    let prompt = SuggestionPrompt.wordsPrompt(
+        for: input(pages), title: "City Pharmacy receipt", collectionID: "receipts")
+
+    #expect(prompt.contains("Title: City Pharmacy receipt"))
+    #expect(prompt.contains("Collection: Receipts"))
+    // 600 characters of text, across pages; blank pages are skipped.
+    #expect(prompt.contains(String(repeating: "a", count: 500) + "\n" + String(repeating: "b", count: 99)))
+    #expect(!prompt.contains(String(repeating: "b", count: 100)))
+}
+
+@Test func wordsPromptLeavesOutAMissingTitleOrCollection() {
+    let prompt = SuggestionPrompt.wordsPrompt(for: input(["CITY PHARMACY"]), title: nil, collectionID: "unknown")
+
+    #expect(!prompt.contains("Title:"))
+    #expect(!prompt.contains("Collection:"))
+    #expect(prompt.contains("CITY PHARMACY"))
+}

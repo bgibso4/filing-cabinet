@@ -11,12 +11,37 @@ package enum SuggestionPrompt {
 
         Collection: the id of the one collection whose description fits what kind of document this is.
 
-        Words: 6 to 8 lowercase search words a person would type to find this document later, mostly words not \
+        Words: 3 to 8 lowercase search words a person would type to find this document later, mostly words not \
         printed on it: the kind of document; the kind of business, place or organization it comes from, with \
         everyday synonyms; and what it is for or about (the activity, subject or purchase), with synonyms. Never \
         people's names, numbers, dates or lines copied from the text. For example, a dentist's appointment card: \
         appointment, dentist, dental, teeth, checkup, health.
         """
+
+    /// The second, focused call (`ModelScanSuggester(wordsPass: true)`): search words only.
+    package static let wordsInstructions = """
+        You suggest hidden search words for a scanned paper document in a person's own private library. Any \
+        document is fine: IDs, medical, money and school papers are routine. Give 4 to 8 lowercase words a person \
+        would type to find this document later: what kind of thing it is, the type of shop or organization it comes \
+        from, and the everyday category it belongs to, with everyday synonyms. Not words already in the title, never \
+        people's names, numbers or dates. For example, an appointment card titled "Bright Smile appointment": \
+        dentist, dental, teeth, checkup, health, medical.
+        """
+
+    /// How much of the text the focused words call reads: enough to tell what the scan is.
+    private static let wordsTextLimit = 600
+
+    /// The title and the chosen collection's name from the first call, when there are any, then the start of the
+    /// text: the first 600 characters of the pages that aren't blank.
+    package static func wordsPrompt(for input: SuggestionInput, title: String?, collectionID: String?) -> String {
+        let text = input.pageTexts.filter { !$0.allSatisfy(\.isWhitespace) }.joined(separator: "\n")
+        let name = input.collections.first { $0.id == collectionID }?.name
+        return [
+            title.map { "Title: \($0)" },
+            name.map { "Collection: \($0)" },
+            "Start of the text read from the scan:\n\(text.prefix(wordsTextLimit))",
+        ].compactMap(\.self).joined(separator: "\n")
+    }
 
     /// The collections, then each page's text trimmed so all the page text fits in `budget` characters.
     package static func prompt(for input: SuggestionInput, budget: Int) -> String {

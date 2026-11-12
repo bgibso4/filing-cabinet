@@ -9,7 +9,8 @@ import Testing
 /// The suggestion evaluation: today's text reader, then the on-device model, over every made-up case, written to
 /// `build/suggestion-eval.md`. A report, not a gate: it asserts only that the report was written. The model run is
 /// slow and needs Apple Intelligence, so it runs only when `FC_EVAL_SUGGESTIONS=1` (`make eval-suggestions`); in
-/// Fast and CI it is skipped. `FC_EVAL_IMAGE=1` (`IMAGE=1`) sends page 1's image too.
+/// Fast and CI it is skipped. `FC_EVAL_IMAGE=1` (`IMAGE=1`) sends page 1's image too; `FC_EVAL_WORDS=1` (`WORDS=1`)
+/// adds the second call for search words.
 @Suite(.timeLimit(.minutes(30)))
 struct SuggestionEvaluationTests {
     private static let environment = ProcessInfo.processInfo.environment
@@ -28,8 +29,8 @@ struct SuggestionEvaluationTests {
     @Test(.enabled(if: environment["FC_EVAL_SUGGESTIONS"] == "1", "runs only in make eval-suggestions"))
     func writesTheReport() async throws {
         let includesImage = Self.environment["FC_EVAL_IMAGE"] == "1"
-        let wordsPass = false
-        let suggester = ModelScanSuggester(includesImage: includesImage)
+        let wordsPass = Self.environment["FC_EVAL_WORDS"] == "1"
+        let suggester = ModelScanSuggester(includesImage: includesImage, wordsPass: wordsPass)
         let outcome: EvaluationReport.Outcome
         if suggester.availability == .available {
             outcome = .ran(try await Self.run(suggester, includesImage: includesImage, wordsPass: wordsPass))
