@@ -13,4 +13,9 @@ public protocol ScanSuggester: Sendable {
     // periphery:ignore - called by the review flow from Plan 5 Task 8; remove this line then
     /// The suggestion, or nil on any failure or cancellation. Never throws: no error is ever shown for the model.
     func suggest(_ input: SuggestionInput) async -> ScanSuggestion?
+
+    // periphery:ignore - called when the camera opens from Plan 5 Task 8; remove this line then
+    /// Gets the model ready for a `suggest` with these collections soon (E3: called when the camera opens). Cheap,
+    /// returns at once and is safe to call again.
+    func prewarm(collections: [SuggestionCollection])
 }

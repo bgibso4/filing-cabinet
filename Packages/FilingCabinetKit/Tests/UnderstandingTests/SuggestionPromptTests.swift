@@ -90,3 +90,23 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     #expect(!prompt.contains("Collection:"))
     #expect(prompt.contains("CITY PHARMACY"))
 }
+
+@Test func instructionsHaveNoPlaceholdersAndNameNoCollection() {
+    let instructions = SuggestionPrompt.instructions
+
+    #expect(!instructions.contains("<") && !instructions.contains(">"))
+    for collection in SuggestionCollection.builtIns {
+        #expect(!instructions.contains(collection.name), "names \(collection.name)")
+    }
+    #expect(!instructions.lowercased().contains("wallet"))
+    #expect(!instructions.lowercased().contains("throwaway"))
+}
+
+@Test func promptStartsWithTheCollectionsPrefix() {
+    let collections = SuggestionCollection.builtIns
+
+    let prefix = SuggestionPrompt.prefix(for: collections)
+
+    #expect(SuggestionPrompt.prompt(for: input(["CITY PHARMACY"]), budget: 6_000).hasPrefix(prefix))
+    #expect(prefix.hasSuffix("Text read from the scan:\n"))
+}

@@ -18,22 +18,22 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 }
 
 @Test func titleIsTrimmedAndCollapsed() {
-    #expect(clean(title: "  City   Pharmacy\n receipt ").title == "City Pharmacy receipt")
+    #expect(clean(title: "  City   Pharmacy\n Receipt ").title == "City Pharmacy Receipt")
 }
 
 @Test func titleIsCutAtFortyOnAWord() {
     let title = clean(title: "Northwind Property Management lease renewal for unit 4B").title
 
-    #expect(title == "Northwind Property Management lease")
+    #expect(title == "Northwind Property Management Lease")
     #expect((title?.count ?? 0) <= 40)
 }
 
 @Test func titleOfOneLongWordIsCutAtForty() {
-    #expect(clean(title: String(repeating: "a", count: 60)).title == String(repeating: "a", count: 40))
+    #expect(clean(title: String(repeating: "Ab", count: 30)).title == String(repeating: "Ab", count: 20))
 }
 
 @Test func titleOfExactlyFortyIsKept() {
-    let forty = "Coat check ticket from the Grand Theatre"
+    let forty = "Coat Check Ticket from the Grand Theatre"
     #expect(forty.count == 40)
     #expect(clean(title: forty).title == forty)
 }
@@ -74,8 +74,8 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 
 @Test func titleLosesLeadingAndTrailingSeparators() {
     #expect(clean(title: "W-2 Wage and Tax Statement 2026 · ").title == "W-2 Wage and Tax Statement 2026")
-    #expect(clean(title: " - Coat check ticket:").title == "Coat check ticket")
-    #expect(clean(title: "· , City Pharmacy receipt ,").title == "City Pharmacy receipt")
+    #expect(clean(title: " - Coat Check Ticket:").title == "Coat Check Ticket")
+    #expect(clean(title: "· , City Pharmacy Receipt ,").title == "City Pharmacy Receipt")
 }
 
 @Test func titleCollapsesEmptySeparators() {
@@ -98,4 +98,43 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
     let merged = SuggestionCleanup.mergedWords(focused: focused, first: first)
 
     #expect(merged == ["pharmacy", "drugstore", "medicine", "health", "medical", "receipt", "shop", "purchase"])
+}
+
+@Test func titleWithAPlaceholderIsDropped() {
+    #expect(clean(title: "<store> ID · <company>").title == nil)
+    #expect(clean(title: "City Pharmacy receipt >").title == nil)
+}
+
+@Test func allLowercaseTitleIsTitleCased() {
+    #expect(clean(title: "fitness club plan").title == "Fitness Club Plan")
+    #expect(clean(title: "call with the landlord").title == "Call with the Landlord")
+}
+
+@Test func lowercaseWordsAreTitleCasedNextToProperOnes() {
+    #expect(clean(title: "City Pharmacy receipt").title == "City Pharmacy Receipt")
+    #expect(clean(title: "2026 W-2 · Northwind labs").title == "2026 W-2 · Northwind Labs")
+}
+
+@Test func shoutedWordsAreTitleCasedButCodesAreKept() {
+    #expect(clean(title: "LAKEVIEW UNIVERSITY ID").title == "Lakeview University ID")
+    #expect(clean(title: "DMV license · 1099-NEC").title == "DMV License · 1099-NEC")
+    #expect(clean(title: "BELL & SONS contact").title == "BELL & SONS Contact")
+}
+
+@Test func mixedCaseWordsAreKept() {
+    #expect(clean(title: "iPhone receipt · McDonald's").title == "iPhone Receipt · McDonald's")
+}
+
+@Test func minorWordsStayLowercaseExceptFirstInAPart() {
+    #expect(clean(title: "certificate OF vehicle registration").title == "Certificate of Vehicle Registration")
+    #expect(clean(title: "Lease · the Harlow Group").title == "Lease · The Harlow Group")
+}
+
+@Test func aPartRepeatingAnEarlierOneIsDropped() {
+    #expect(clean(title: "Lakeview University ID · ID").title == "Lakeview University ID")
+    #expect(clean(title: "Water bill · Anytown Water · water bill").title == "Water Bill · Anytown Water")
+}
+
+@Test func aPartSharingOnlyPartOfAWordIsKept() {
+    #expect(clean(title: "Passport · Pass").title == "Passport · Pass")
 }

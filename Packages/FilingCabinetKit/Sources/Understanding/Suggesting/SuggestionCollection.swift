@@ -1,7 +1,7 @@
 import Core
 
 /// A collection as the model sees it (M3). The model may only answer with one of the ids it is handed.
-package struct SuggestionCollection: Sendable, Equatable {
+public struct SuggestionCollection: Sendable, Equatable {
     package let id: String
     package let name: String
     /// What belongs in it, in plain words.
@@ -22,8 +22,9 @@ package struct SuggestionCollection: Sendable, Equatable {
                 case .wallet:
                     (
                         "Wallet",
-                        "IDs and cards a person carries: license, passport, ID badges, insurance and health cards, "
-                            + "membership, transit and business cards"
+                        "IDs and cards a person carries: driver's licenses, state and student IDs, passports, work "
+                            + "and building badges, gym, club and library cards, insurance and vaccination cards, "
+                            + "transit cards, business cards"
                     )
                 case .receipts:
                     ("Receipts", "Receipts for anything bought or paid for: shops, restaurants, fuel, orders, services")
@@ -33,7 +34,12 @@ package struct SuggestionCollection: Sendable, Equatable {
                         "Notes a person wrote, often by hand: class and lecture notes, meeting and call notes, "
                             + "lists, recipes"
                     )
-                case .documents: ("Documents", "Forms, letters, bills, statements, contracts, anything else to keep")
+                case .documents:
+                    (
+                        "Documents",
+                        "Full pages to keep: forms, letters, bills, statements, contracts, records, anything else "
+                            + "that isn't a card"
+                    )
                 case .throwaways:
                     (
                         "Throwaways",

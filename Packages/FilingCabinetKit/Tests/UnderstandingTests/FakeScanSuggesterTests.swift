@@ -42,3 +42,12 @@ private let input = SuggestionInput(
     #expect(suggestion.collectionID == "receipts")
     #expect(suggestion.searchWords == ["receipt", "pharmacy", "purchase"])
 }
+
+@Test func prewarmIsRecorded() {
+    let fake = FakeScanSuggester(.never)
+
+    fake.prewarm(collections: SuggestionCollection.builtIns)
+    fake.prewarm(collections: [])
+
+    #expect(fake.prewarms.map { $0.map(\.id) } == [SuggestionCollection.builtIns.map(\.id), []])
+}

@@ -35,4 +35,13 @@ struct CasesFileTests {
             #expect(item.collections?.contains(item.collection) == true, "\(item.id) is filed outside its own list")
         }
     }
+
+    @Test func casesFilterTakesIdsAndPrefixes() throws {
+        let cases = try EvaluationCase.loadAll()
+
+        #expect(EvaluationCase.selected(cases, by: nil).count == cases.count)
+        #expect(EvaluationCase.selected(cases, by: " ").count == cases.count)
+        #expect(EvaluationCase.selected(cases, by: "wallet-, notes-bio-class").count == 18)
+        #expect(EvaluationCase.selected(cases, by: "throwaways-valet").map(\.id) == ["throwaways-valet"])
+    }
 }

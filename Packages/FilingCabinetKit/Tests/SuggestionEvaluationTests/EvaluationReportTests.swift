@@ -51,9 +51,19 @@ struct EvaluationReportTests {
         )
     }
 
-    private static func report(_ results: [EvaluationRun.Result]) -> EvaluationReport {
+    private static func report(
+        _ results: [EvaluationRun.Result], includesImage: Bool = false, titleAndCollectionTimes: [TimedSuggestion] = []
+    ) -> EvaluationReport {
         EvaluationReport(
-            outcome: .ran(EvaluationRun(includesImage: false, wordsPass: false, results: results, probes: [])))
+            outcome: .ran(
+                EvaluationRun(
+                    includesImage: includesImage,
+                    words: .inAnswer,
+                    results: results,
+                    probes: [],
+                    filter: nil,
+                    titleAndCollectionTimes: titleAndCollectionTimes
+                )))
     }
 
     @Test func collectionAccuracyPerCollection() {
@@ -66,7 +76,9 @@ struct EvaluationReportTests {
 
         #expect(report.collectionAccuracy(in: "receipts") == EvaluationReport.Tally(hits: 1, total: 2))
         #expect(report.collectionAccuracy(in: "wallet") == EvaluationReport.Tally(hits: 1, total: 2))
-        #expect(report.markdown.contains("| receipts | 1/2 (50%) |"))
+        #expect(report.markdown.contains("| Collection | All | Tune | Holdout |"))
+        #expect(report.markdown.contains("| receipts | 1/2 (50%) | 1/1 (100%) | 0/1 (0%) |"))
+        #expect(report.markdown.contains("| wallet | 1/2 (50%) | 1/1 (100%) | 0/1 (0%) |"))
         #expect(report.markdown.contains("| d | wallet | (no suggestion) |"))
     }
 
@@ -256,5 +268,33 @@ struct EvaluationReportTests {
 
         #expect(markdown.contains("The on-device model isn't available on this Mac (appleIntelligenceNotEnabled)"))
         #expect(!markdown.contains("%"))
+    }
+
+    @Test func splitTimingComparesTheFullCallWithTitleAndCollectionOnly() {
+        let answer = ScanSuggestion(title: "City Pharmacy", collectionID: "receipts", searchWords: [])
+        let short =
+            [50.0, 70, 90].map { TimedSuggestion(suggestion: answer, milliseconds: $0, timedOut: false) }
+            + [TimedSuggestion(suggestion: nil, milliseconds: 30_000, timedOut: true)]
+        let markdown = Self.report(
+            [
+                Self.result(Self.item("a"), collection: "receipts", milliseconds: 100),
+                Self.result(Self.item("b"), collection: "receipts", milliseconds: 200),
+                Self.result(Self.item("c"), collection: "receipts", milliseconds: 300),
+            ],
+            titleAndCollectionTimes: short
+        ).markdown
+
+        #expect(markdown.contains("## Split timing"))
+        #expect(markdown.contains("| Title, collection and words (one call) | 3 | 200 ms | 300 ms |"))
+        #expect(markdown.contains("| Title and collection only | 3 | 70 ms | 90 ms |"))
+    }
+
+    @Test func splitTimingIsLeftOutWhenNotMeasured() {
+        #expect(!Self.report([Self.result(Self.item("a"), collection: "receipts")]).markdown.contains("Split timing"))
+    }
+
+    @Test func aboutLineSaysWhetherTheImageWentIn() {
+        #expect(Self.report([], includesImage: true).markdown.contains("with page 1's image (the default)"))
+        #expect(Self.report([]).markdown.contains("on the text alone (`IMAGE=0`)"))
     }
 }

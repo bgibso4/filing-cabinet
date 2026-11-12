@@ -22,10 +22,15 @@ struct EvaluationRun {
         let answer: TimedSuggestion
     }
 
-    /// Whether page 1 went to the model with the text (`IMAGE=1`).
+    /// Whether page 1 went to the model with the text (the default; `IMAGE=0` turns it off).
     let includesImage: Bool
-    /// Whether a second, focused call asked for the search words (`WORDS=1`).
-    let wordsPass: Bool
+    /// Where the search words came from (`WORDS=1`: a second call).
+    let words: ModelScanSuggester.Words
     let results: [Result]
     let probes: [Probe]
+    /// `CASES=`: the filter the cases were picked by, or nil for all of them.
+    let filter: String?
+    /// `SPLIT=1`: each case asked again for title and collection only, to time it against the full call. Empty when
+    /// not measured.
+    let titleAndCollectionTimes: [TimedSuggestion]
 }

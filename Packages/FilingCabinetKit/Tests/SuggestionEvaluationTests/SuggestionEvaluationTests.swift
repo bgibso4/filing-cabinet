@@ -9,8 +9,9 @@ import Testing
 /// The suggestion evaluation: today's text reader, then the on-device model, over every made-up case, written to
 /// `build/suggestion-eval.md`. A report, not a gate: it asserts only that the report was written. The model run is
 /// slow and needs Apple Intelligence, so it runs only when `FC_EVAL_SUGGESTIONS=1` (`make eval-suggestions`); in
-/// Fast and CI it is skipped. `FC_EVAL_IMAGE=1` (`IMAGE=1`) sends page 1's image too; `FC_EVAL_WORDS=1` (`WORDS=1`)
-/// adds the second call for search words.
+/// Fast and CI it is skipped. Page 1's image goes in unless `FC_EVAL_IMAGE=0` (`IMAGE=0`); `FC_EVAL_WORDS=1`
+/// (`WORDS=1`) adds the second call for search words; `FC_EVAL_SPLIT=1` (`SPLIT=1`) also times a call for title and
+/// collection only; `FC_EVAL_CASES` (`CASES=`) runs only some cases and skips the probes.
 @Suite(.timeLimit(.minutes(30)))
 struct SuggestionEvaluationTests {
     private static let environment = ProcessInfo.processInfo.environment
@@ -28,12 +29,16 @@ struct SuggestionEvaluationTests {
 
     @Test(.enabled(if: environment["FC_EVAL_SUGGESTIONS"] == "1", "runs only in make eval-suggestions"))
     func writesTheReport() async throws {
-        let includesImage = Self.environment["FC_EVAL_IMAGE"] == "1"
-        let wordsPass = Self.environment["FC_EVAL_WORDS"] == "1"
-        let suggester = ModelScanSuggester(includesImage: includesImage, wordsPass: wordsPass)
+        let includesImage = Self.environment["FC_EVAL_IMAGE"] != "0"
+        let words: ModelScanSuggester.Words = Self.environment["FC_EVAL_WORDS"] == "1" ? .separateCall : .inAnswer
+        let suggester = ModelScanSuggester(includesImage: includesImage, words: words)
+        let split =
+            Self.environment["FC_EVAL_SPLIT"] == "1"
+            ? ModelScanSuggester(includesImage: includesImage, words: .skipped) : nil
         let outcome: EvaluationReport.Outcome
         if suggester.availability == .available {
-            outcome = .ran(try await Self.run(suggester, includesImage: includesImage, wordsPass: wordsPass))
+            outcome = .ran(
+                try await Self.run(suggester, split: split, includesImage: includesImage, words: words))
         } else {
             // Only ModelScanSuggester imports FoundationModels, so the system's own reason isn't read here.
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
@@ -46,14 +51,21 @@ struct SuggestionEvaluationTests {
         #expect(FileManager.default.fileExists(atPath: output.path))
     }
 
-    /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test.
-    private static func run(_ suggester: ModelScanSuggester, includesImage: Bool, wordsPass: Bool) async throws
-        -> EvaluationRun
-    {
+    /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test. With
+    /// `split`, each case is also asked for title and collection only, first on odd cases and second on even ones, so
+    /// neither call always runs on a model the other just woke.
+    private static func run(
+        _ suggester: ModelScanSuggester,
+        split: ModelScanSuggester?,
+        includesImage: Bool,
+        words: ModelScanSuggester.Words
+    ) async throws -> EvaluationRun {
         let reader = ScanReader(reader: ReaderKind.text.makeReader())
         var results: [EvaluationRun.Result] = []
         var inputs: [SuggestionInput] = []
-        for item in try EvaluationCase.loadAll() {
+        var splitTimes: [TimedSuggestion] = []
+        let filter = environment["FC_EVAL_CASES"].flatMap { $0.allSatisfy(\.isWhitespace) ? nil : $0 }
+        for (index, item) in EvaluationCase.selected(try EvaluationCase.loadAll(), by: filter).enumerated() {
             let images = try item.files.map(loadImage)
             var texts: [String] = []
             for image in images {
@@ -61,16 +73,31 @@ struct SuggestionEvaluationTests {
             }
             let input = SuggestionInput(
                 pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
+            let splitFirst = !index.isMultiple(of: 2)
+            if let split, splitFirst {
+                splitTimes.append(await TimedSuggestion.suggest(split, input, limit: callLimit))
+            }
             let answer = await TimedSuggestion.suggest(suggester, input, limit: callLimit)
+            if let split, !splitFirst {
+                splitTimes.append(await TimedSuggestion.suggest(split, input, limit: callLimit))
+            }
             inputs.append(input)
             results.append(
                 EvaluationRun.Result(item: item, pageText: texts.joined(separator: "\n"), answer: answer))
         }
-        var probes = [await longScan(suggester, from: inputs)]
-        if let index = results.firstIndex(where: { $0.item.collections != nil }) {
+        var probes: [EvaluationRun.Probe] = []
+        if filter == nil { probes.append(await longScan(suggester, from: inputs)) }
+        if filter == nil, let index = results.firstIndex(where: { $0.item.collections != nil }) {
             probes.append(await manyCollections(suggester, case: results[index].item, input: inputs[index]))
         }
-        return EvaluationRun(includesImage: includesImage, wordsPass: wordsPass, results: results, probes: probes)
+        return EvaluationRun(
+            includesImage: includesImage,
+            words: words,
+            results: results,
+            probes: probes,
+            filter: filter,
+            titleAndCollectionTimes: splitTimes
+        )
     }
 
     /// Review Focus 4: a 12-page scan, the 12 longest pages read put together, stays inside the context.

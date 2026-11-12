@@ -139,13 +139,17 @@ compare-readers: generate
 	@echo "Report: build/reader-comparison.md"
 
 # The suggestion evaluation (Plan 5) on this Mac: the text reader, then the on-device model, over the made-up test
-# set. A report, not a gate; slow (minutes). IMAGE=1 sends page 1's image with the text; WORDS=1 adds a second
-# model call for search words.
-IMAGE ?= 0
+# set. A report, not a gate; slow (minutes). Page 1's image goes in with the text (IMAGE=0: text only); WORDS=1 adds
+# a second model call for search words; SPLIT=1 also times a call for title and collection only; CASES="wallet-,
+# notes-bio-class" runs only those cases (ids, or prefixes ending in "-") and skips the probes.
+IMAGE ?= 1
 WORDS ?= 0
+SPLIT ?= 0
+CASES ?=
 
 eval-suggestions: generate
 	set -o pipefail; TEST_RUNNER_FC_EVAL_IMAGE=$(IMAGE) TEST_RUNNER_FC_EVAL_WORDS=$(WORDS) \
+		TEST_RUNNER_FC_EVAL_SPLIT=$(SPLIT) TEST_RUNNER_FC_EVAL_CASES="$(CASES)" \
 		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
 		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@echo "Report: build/suggestion-eval.md"

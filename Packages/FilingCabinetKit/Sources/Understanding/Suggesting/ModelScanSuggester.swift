@@ -1,11 +1,24 @@
 import CoreGraphics
 import FoundationModels
+import Synchronization
 
 // periphery:ignore - the app wires it in Plan 5 Task 8; remove this line then
 /// The on-device model (`SystemLanguageModel.default`; never Private Cloud Compute). One session per scan, with a
-/// schema whose collection may only be one of the ids it was handed; with `wordsPass`, a second session asks for search
-/// words alone. Measured by Task 4 and 4c, not unit-tested.
-public struct ModelScanSuggester: ScanSuggester {
+/// schema whose collection may only be one of the ids it was handed. Measured by Tasks 4 to 4d, not unit-tested.
+///
+/// Prewarming (E3) makes the session the next `suggest` uses, and only that one: a session keeps its transcript, so a
+/// session answers one scan and is never reused, prewarmed or not.
+public final class ModelScanSuggester: ScanSuggester {
+    /// Where the search words come from.
+    public enum Words: Sendable {
+        /// In the one answer, with the title and the collection (the default).
+        case inAnswer
+        /// A second, focused call after the first answers (Task 4c's experiment, not adopted).
+        case separateCall
+        /// Not asked for: title and collection only. Timing only (Task 4d), never for the app.
+        case skipped
+    }
+
     /// Page 1's long side when the image is sent (M2).
     private static let imageLongSide = 1_024
     /// Context left for the instructions, the collections, the image and the answer; the rest is page text.
@@ -14,17 +27,31 @@ public struct ModelScanSuggester: ScanSuggester {
     private static let charactersPerToken = 3
 
     private let includesImage: Bool
-    private let wordsPass: Bool
+    private let words: Words
+    /// The session `prewarm` made, waiting for the next `suggest` to take it.
+    private let prewarmed = Mutex<LanguageModelSession?>(nil)
 
-    /// `includesImage` sends page 1 alongside the text when the model can see images (E2). `wordsPass` adds a second,
-    /// focused call for search words after the first answers (Task 4c's experiment).
-    public init(includesImage: Bool, wordsPass: Bool) {
+    /// `includesImage` sends page 1 alongside the text when the model can see images (E2).
+    public init(includesImage: Bool = true, words: Words = .inAnswer) {
         self.includesImage = includesImage
-        self.wordsPass = wordsPass
+        self.words = words
     }
 
     public var availability: SuggesterAvailability {
         if case .available = SystemLanguageModel.default.availability { .available } else { .unavailable }
+    }
+
+    /// Makes the next scan's session, if none is waiting, and asks the system to load the model and read the
+    /// instructions and the collection list ahead. Returns at once; calling it again only repeats the hint.
+    public func prewarm(collections: [SuggestionCollection]) {
+        let model = SystemLanguageModel.default
+        guard case .available = model.availability else { return }
+        let session = prewarmed.withLock { waiting in
+            let session = waiting ?? Self.session(model: model)
+            waiting = session
+            return session
+        }
+        session.prewarm(promptPrefix: Prompt(SuggestionPrompt.prefix(for: collections)))
     }
 
     @concurrent
@@ -39,14 +66,17 @@ public struct ModelScanSuggester: ScanSuggester {
             includesImage && model.capabilities.contains(.vision)
             ? input.firstPage.flatMap { SuggestionImage.fitted($0, longSide: Self.imageLongSide) } : nil
         do {
-            var suggestion = try await respond(to: input, image: image, model: model)
-            if wordsPass {
+            let session = prewarmed.withLock { $0.take() }
+            let wasPrewarmed = session != nil
+            var suggestion = try await respond(
+                to: input, image: image, session: session ?? Self.session(model: model), model: model)
+            if words == .separateCall {
                 suggestion = try await addingFocusedWords(to: suggestion, input: input, model: model)
             }
             UnderstandingLog.logger.info(
                 """
                 Suggester: answered in \(ContinuousClock.now - start, privacy: .public), \
-                image \(image != nil, privacy: .public), words pass \(wordsPass, privacy: .public), \
+                image \(image != nil, privacy: .public), prewarmed \(wasPrewarmed, privacy: .public), \
                 \(suggestion.searchWords.count, privacy: .public) words
                 """)
             return suggestion
@@ -56,14 +86,19 @@ public struct ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// One new session per scan; the answer passed through `SuggestionCleanup`.
-    private func respond(to input: SuggestionInput, image: CGImage?, model: SystemLanguageModel) async throws
-        -> ScanSuggestion
-    {
+    /// A fresh session with the suggester's instructions.
+    private static func session(model: SystemLanguageModel) -> LanguageModelSession {
+        LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions)
+    }
+
+    /// The scan's one answer from `session`, passed through `SuggestionCleanup`.
+    private func respond(
+        to input: SuggestionInput, image: CGImage?, session: LanguageModelSession, model: SystemLanguageModel
+    ) async throws -> ScanSuggestion {
         let budget = max(model.contextSize - Self.reservedTokens, 0) * Self.charactersPerToken
         let prompt = SuggestionPrompt.prompt(for: input, budget: budget)
-        let schema = try Self.schema(collectionIDs: SuggestionPrompt.collectionIDs(in: input.collections))
-        let session = LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions)
+        let schema = try Self.schema(
+            collectionIDs: SuggestionPrompt.collectionIDs(in: input.collections), asksForWords: words != .skipped)
         // Greedy: the same scan gets the same answer, which suits classification.
         let options = GenerationOptions(samplingMode: .greedy)
         let response: LanguageModelSession.Response<GeneratedContent>
@@ -80,7 +115,7 @@ public struct ModelScanSuggester: ScanSuggester {
         return SuggestionCleanup.clean(
             title: try content.value(String.self, forProperty: "title"),
             collectionID: try content.value(String.self, forProperty: "collection"),
-            words: try content.value([String].self, forProperty: "words"),
+            words: words == .skipped ? [] : try content.value([String].self, forProperty: "words"),
             allowed: input.collections
         )
     }
@@ -152,33 +187,32 @@ public struct ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// `title`, `collection` (any of `collectionIDs`), `words`.
-    private static func schema(collectionIDs: [String]) throws -> GenerationSchema {
+    /// `title`, `collection` (any of `collectionIDs`) and, when asked for, `words`.
+    private static func schema(collectionIDs: [String], asksForWords: Bool) throws -> GenerationSchema {
         let collection = DynamicGenerationSchema(
             name: "CollectionID",
             description: "The id of the one collection the scan belongs in",
             anyOf: collectionIDs
         )
+        let title = DynamicGenerationSchema.Property(
+            name: "title",
+            description: "What the document is and who it is from, never its owner's name, at most 40 characters",
+            schema: DynamicGenerationSchema(type: String.self)
+        )
+        let words = DynamicGenerationSchema.Property(
+            name: "words",
+            description: "6 to 8 lowercase everyday search words for what kind of document this is",
+            schema: DynamicGenerationSchema(
+                arrayOf: DynamicGenerationSchema(type: String.self),
+                minimumElements: 6,
+                maximumElements: 8
+            )
+        )
         let root = DynamicGenerationSchema(
             name: "ScanSuggestion",
-            properties: [
-                DynamicGenerationSchema.Property(
-                    name: "title",
-                    description:
-                        "What the document is and who it is from, never its owner's name, at most 40 characters",
-                    schema: DynamicGenerationSchema(type: String.self)
-                ),
-                DynamicGenerationSchema.Property(name: "collection", schema: collection),
-                DynamicGenerationSchema.Property(
-                    name: "words",
-                    description: "6 to 8 lowercase everyday search words for what kind of document this is",
-                    schema: DynamicGenerationSchema(
-                        arrayOf: DynamicGenerationSchema(type: String.self),
-                        minimumElements: 6,
-                        maximumElements: 8
-                    )
-                ),
-            ])
+            properties: [title, DynamicGenerationSchema.Property(name: "collection", schema: collection)]
+                + (asksForWords ? [words] : [])
+        )
         return try GenerationSchema(root: root, dependencies: [])
     }
 

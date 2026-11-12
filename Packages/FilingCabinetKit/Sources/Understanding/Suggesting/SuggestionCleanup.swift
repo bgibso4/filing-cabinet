@@ -23,10 +23,12 @@ package enum SuggestionCleanup {
     /// Separators a title may not start or end with, nor repeat with nothing between.
     private static let separators: Set<Character> = ["·", "-", ",", ":"]
 
-    /// Trimmed, collapsed, stripped of edge and empty separators and cut to 40 characters on a word boundary (never
-    /// ending on a separator); nil under 3 letters.
+    /// Nil when it holds a placeholder (`<`, `>`) or has under 3 letters. Otherwise trimmed, collapsed, stripped of edge
+    /// and empty separators and of parts repeating an earlier one, title-cased and cut to 40 characters on a word
+    /// boundary (never ending on a separator).
     private static func cleanTitle(_ raw: String) -> String? {
-        let collapsed = trimmedSeparators(collapse(raw))
+        guard !raw.contains(where: { $0 == "<" || $0 == ">" }) else { return nil }
+        let collapsed = TitleCase.titled(withoutRepeatedParts(trimmedSeparators(collapse(raw))))
         let cut: String
         if collapsed.count <= titleLimit {
             cut = collapsed
@@ -69,6 +71,22 @@ package enum SuggestionCleanup {
         while let first = title.first, separators.contains(first) { title.removeFirst() }
         while let last = title.last, separators.contains(last) { title.removeLast() }
         return title
+    }
+
+    /// Drops a " · " part whose words all appear, in a row, in an earlier part, ignoring case: "Lakeview University ID
+    /// · ID" is "Lakeview University ID".
+    private static func withoutRepeatedParts(_ title: String) -> String {
+        var kept: [[Substring]] = []
+        for part in title.split(separator: " · ").map({ $0.split(separator: " ") }) {
+            let lowered = part.map { $0.lowercased() }
+            let repeats = kept.contains { earlier in
+                let words = earlier.map { $0.lowercased() }
+                return words.count >= lowered.count
+                    && (0...(words.count - lowered.count)).contains { Array(words[$0..<$0 + lowered.count]) == lowered }
+            }
+            if !repeats { kept.append(part) }
+        }
+        return kept.map { $0.joined(separator: " ") }.joined(separator: " · ")
     }
 
     private static func collapse(_ text: String) -> String {

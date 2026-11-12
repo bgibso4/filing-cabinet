@@ -22,6 +22,17 @@ struct EvaluationCase: Decodable, Sendable {
         try JSONDecoder().decode([Self].self, from: Data(contentsOf: fixtures.appending(path: "cases.json")))
     }
 
+    /// `CASES=`: the cases whose id is in the comma list, or starts with an entry ending in "-" ("wallet-"); every
+    /// case for no list.
+    static func selected(_ cases: [Self], by filter: String?) -> [Self] {
+        let entries = (filter ?? "").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard !entries.isEmpty else { return cases }
+        return cases.filter { item in
+            entries.contains { $0 == item.id || ($0.hasSuffix("-") && item.id.hasPrefix($0)) }
+        }
+    }
+
     /// Right when it is one of `titles`, ignoring case, accents and spacing.
     func isRightTitle(_ title: String?) -> Bool {
         guard let title else { return false }

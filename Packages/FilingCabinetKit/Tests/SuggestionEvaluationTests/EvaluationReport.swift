@@ -30,8 +30,8 @@ struct EvaluationReport {
             ])
             .joined(separator: "\n") + "\n"
         case .ran(let run):
-            (Self.header + Self.about(run) + summary(run) + perCollection(run) + titleMisses(run)
-                + unfoundSearches(run) + probes(run) + everyCase(run)).joined(separator: "\n") + "\n"
+            (Self.header + Self.about(run) + summary(run) + Self.splitTiming(run) + perCollection(run)
+                + titleMisses(run) + unfoundSearches(run) + probes(run) + everyCase(run)).joined(separator: "\n") + "\n"
         }
     }
 
@@ -107,10 +107,14 @@ struct EvaluationReport {
     private static func about(_ run: EvaluationRun) -> [String] {
         [
             "\(run.results.count) cases, read with today's text reader, then the on-device model "
-                + (run.includesImage ? "with page 1's image (`IMAGE=1`)" : "on the text alone (no image)")
-                + (run.wordsPass ? ", then a second call for search words (`WORDS=1`)." : ", one call.")
+                + (run.includesImage ? "with page 1's image (the default)" : "on the text alone (`IMAGE=0`)")
+                + (run.words == .separateCall ? ", then a second call for search words (`WORDS=1`)." : ", one call.")
                 + " Times are the whole suggestion (every model call, not the reading), on this Mac: relative only."
-                + " A call still running after 30 s is cancelled and counts as no suggestion.",
+                + " A call still running after 30 s is cancelled and counts as no suggestion."
+                + (run.filter.map {
+                    " **A subset** (`CASES=\($0)`): the Tune and Holdout columns count positions in the subset, not in "
+                        + "cases.json."
+                } ?? ""),
             "",
         ]
     }
@@ -143,6 +147,25 @@ struct EvaluationReport {
         ]
     }
 
+    /// `SPLIT=1`: the full call's times next to a call for title and collection only, over the calls that answered.
+    private static func splitTiming(_ run: EvaluationRun) -> [String] {
+        guard !run.titleAndCollectionTimes.isEmpty else { return [] }
+        func row(_ call: String, _ answers: [TimedSuggestion]) -> String {
+            let times = answers.filter { $0.suggestion != nil }.map(\.milliseconds)
+            return "| \(call) | \(times.count) | \(milliseconds(percentile(0.5, of: times))) | "
+                + "\(milliseconds(percentile(0.95, of: times))) |"
+        }
+        let note =
+            "Each case asked twice, in alternating order: once as above, once for title and collection only (no words). "
+            + "What a later, separate words call would leave on the review card's wait."
+        return [
+            "## Split timing", "", note, "", "| Call | Answered | p50 | p95 |", "|---|---|---|---|",
+            row("Title, collection and words (one call)", run.results.map(\.answer)),
+            row("Title and collection only", run.titleAndCollectionTimes),
+            "",
+        ]
+    }
+
     /// The results at even (tune) or odd (holdout) indexes.
     private static func split(_ results: [EvaluationRun.Result], even: Bool) -> [EvaluationRun.Result] {
         results.enumerated().filter { $0.offset.isMultiple(of: 2) == even }.map(\.element)
@@ -151,8 +174,13 @@ struct EvaluationReport {
     private func perCollection(_ run: EvaluationRun) -> [String] {
         var seen: Set<String> = []
         let order = run.results.map(\.item.collection).filter { seen.insert($0).inserted }
-        return ["## Collection by collection", "", "| Collection | Right |", "|---|---|"]
-            + order.map { "| \($0) | \(collectionAccuracy(in: $0).text) |" } + [""]
+        let sets = [run.results, Self.split(run.results, even: true), Self.split(run.results, even: false)]
+        return ["## Collection by collection", "", "| Collection | All | Tune | Holdout |", "|---|---|---|---|"]
+            + order.map { collection in
+                "| \(collection) | "
+                    + sets.map { Self.collections($0.filter { $0.item.collection == collection }).text }
+                    .joined(separator: " | ") + " |"
+            } + [""]
     }
 
     private func titleMisses(_ run: EvaluationRun) -> [String] {

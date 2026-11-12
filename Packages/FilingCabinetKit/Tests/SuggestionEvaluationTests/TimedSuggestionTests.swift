@@ -18,6 +18,8 @@ struct TimedSuggestionTests {
             }
             return ScanSuggestion(title: "Answer", collectionID: nil, searchWords: [])
         }
+
+        func prewarm(collections: [SuggestionCollection]) {}
     }
 
     private static let input = SuggestionInput(pageTexts: ["text"], firstPage: nil, collections: [])

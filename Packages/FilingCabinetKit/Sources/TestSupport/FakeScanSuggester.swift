@@ -17,6 +17,7 @@ public final class FakeScanSuggester: ScanSuggester {
 
     private let outcome: Outcome
     private let recorded = Mutex<[SuggestionInput]>([])
+    private let recordedPrewarms = Mutex<[[SuggestionCollection]]>([])
 
     package init(_ outcome: Outcome) {
         self.outcome = outcome
@@ -24,6 +25,9 @@ public final class FakeScanSuggester: ScanSuggester {
 
     /// Every input `suggest` was called with, in order.
     package var calls: [SuggestionInput] { recorded.withLock { $0 } }
+
+    /// The collections of every `prewarm` call, in order.
+    package var prewarms: [[SuggestionCollection]] { recordedPrewarms.withLock { $0 } }
 
     public var availability: SuggesterAvailability {
         if case .unavailable = outcome { .unavailable } else { .available }
@@ -46,6 +50,11 @@ public final class FakeScanSuggester: ScanSuggester {
         case .unavailable:
             return nil
         }
+    }
+
+    /// Records the call; nothing to warm.
+    public func prewarm(collections: [SuggestionCollection]) {
+        recordedPrewarms.withLock { $0.append(collections) }
     }
 
     /// What the model would say for the synthetic City Pharmacy receipt.
