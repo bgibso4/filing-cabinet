@@ -285,7 +285,7 @@ final class ScanJourneyTests: XCTestCase {
         restoreFromTrash("Groceries", in: app)
 
         // Back in Receipts, and the restore made it Forever.
-        openOnlyTile(of: .receipts, in: app, label: "Groceries, Receipts, Kept forever")
+        openOnlyTile(of: .receipts, in: app, label: ("Groceries, Receipts, ", " · Forever"))
     }
 
     /// The real Vision reader on the synthetic receipt. 90 s covers Vision's cold start on a CI simulator; if this

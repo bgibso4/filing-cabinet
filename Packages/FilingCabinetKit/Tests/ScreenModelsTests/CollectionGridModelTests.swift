@@ -49,9 +49,17 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     #expect(!grid.isEmpty)
     #expect(grid.tiles.map(\.title) == ["Corner Market", "Bluebird Café", "Harbor Gas"])
     #expect(grid.tiles.allSatisfy { $0.dot == nil })
-    #expect(grid.tiles.first?.timeLeft == "3 months left")
-    #expect(grid.tiles.first?.accessibilityLabel == "Corner Market, Receipts, 3 months left")
+    #expect(grid.tiles.first?.detail == "Oct 12 · 3 mo left")
+    #expect(grid.tiles.first?.accessibilityLabel == "Corner Market, Receipts, Oct 12 · 3 mo left")
     #expect(model(.collection(.wallet), [scan("Work ID", .wallet)]).subtitle == "1 scan · Forever")
+}
+
+@Test func libraryTilesShowTheDateLine() {
+    let tiles = model(
+        .all,
+        [scan("Work ID", .wallet, daysAgo: 3), scan("Old receipt", .receipts, daysAgo: 40)]
+    ).tiles
+    #expect(tiles.map(\.detail) == ["Oct 9 · Forever", "Sep 2 · 50d left"])
 }
 
 @Test func emptyReceiptsCopy() {
@@ -129,14 +137,14 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
         .collection(.throwaways),
         [scan("Last day", .throwaways, daysAgo: 6), scan("Two days", .throwaways, daysAgo: 5)]
     ).tiles
-    #expect(throwaways.map(\.timeLeft) == ["2 days left", "1 day left"])
+    #expect(throwaways.map(\.detail) == ["Oct 7 · 2d left", "Oct 6 · 1d left"])
     #expect(throwaways.map(\.isSoon) == [false, true])
 
     let receipts = model(
         .collection(.receipts),
         [scan("Seven", .receipts, daysAgo: 83), scan("Eight", .receipts, daysAgo: 82)]
     ).tiles
-    #expect(receipts.map(\.timeLeft) == ["8 days left", "7 days left"])
+    #expect(receipts.map(\.detail) == ["Jul 22 · 8d left", "Jul 21 · 7d left"])
     #expect(receipts.map(\.isSoon) == [false, true])
 
     #expect(model(.collection(.wallet), [scan("Forever", .wallet)]).tiles.map(\.isSoon) == [false])
@@ -162,11 +170,11 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
         calendar: utc,
         analytics: RecordingAnalytics(),
         export: ExportFolder().export)
-    #expect(grid.tiles.map(\.timeLeft) == ["2 days left"])
+    #expect(grid.tiles.map(\.detail) == ["Oct 7 · 2d left"])
 
     now.set(noon.addingTimeInterval(86_400))
     today.refresh()
-    #expect(grid.tiles.map(\.timeLeft) == ["1 day left"])
+    #expect(grid.tiles.map(\.detail) == ["Oct 7 · 1d left"])
     now.set(noon.addingTimeInterval(2 * 86_400))
     today.refresh()
     #expect(grid.isEmpty)

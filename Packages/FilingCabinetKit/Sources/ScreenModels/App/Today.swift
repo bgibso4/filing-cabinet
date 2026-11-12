@@ -9,7 +9,7 @@ import Observation
 public final class Today {
     package private(set) var day: CalendarDay
 
-    @ObservationIgnored private let clock: AppClock
+    @ObservationIgnored package let clock: AppClock
 
     /// The calendar `day` is counted in.
     package var calendar: Calendar { clock.calendar }
