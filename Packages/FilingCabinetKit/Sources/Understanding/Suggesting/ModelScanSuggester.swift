@@ -171,10 +171,10 @@ public struct ModelScanSuggester: ScanSuggester {
                 DynamicGenerationSchema.Property(name: "collection", schema: collection),
                 DynamicGenerationSchema.Property(
                     name: "words",
-                    description: "3 to 8 lowercase everyday search words for what kind of document this is",
+                    description: "6 to 8 lowercase everyday search words for what kind of document this is",
                     schema: DynamicGenerationSchema(
                         arrayOf: DynamicGenerationSchema(type: String.self),
-                        minimumElements: 3,
+                        minimumElements: 6,
                         maximumElements: 8
                     )
                 ),

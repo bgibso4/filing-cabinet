@@ -11,7 +11,7 @@ package enum SuggestionPrompt {
 
         Collection: the id of the one collection whose description fits what kind of document this is.
 
-        Words: 3 to 8 lowercase search words a person would type to find this document later, mostly words not \
+        Words: 6 to 8 lowercase search words a person would type to find this document later, mostly words not \
         printed on it: the kind of document; the kind of business, place or organization it comes from, with \
         everyday synonyms; and what it is for or about (the activity, subject or purchase), with synonyms. Never \
         people's names, numbers, dates or lines copied from the text. For example, a dentist's appointment card: \
