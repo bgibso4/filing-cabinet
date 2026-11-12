@@ -54,7 +54,7 @@ public struct ModelScanSuggester: ScanSuggester {
     {
         let budget = max(model.contextSize - Self.reservedTokens, 0) * Self.charactersPerToken
         let prompt = SuggestionPrompt.prompt(for: input, budget: budget)
-        let schema = try Self.schema(collectionIDs: input.collections.map(\.id))
+        let schema = try Self.schema(collectionIDs: SuggestionPrompt.collectionIDs(in: input.collections))
         let session = LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions)
         // Greedy: the same scan gets the same answer, which suits classification.
         let options = GenerationOptions(samplingMode: .greedy)
@@ -83,7 +83,10 @@ public struct ModelScanSuggester: ScanSuggester {
         case is CancellationError:
             UnderstandingLog.logger.info("Suggester: cancelled")
         case let error as LanguageModelError:
-            UnderstandingLog.logger.error("Suggester: model error \(String(describing: error), privacy: .private)")
+            // The case name alone ("guardrailViolation") is public; its details stay private.
+            let kind = Mirror(reflecting: error).children.first?.label ?? "unnamed"
+            UnderstandingLog.logger.error(
+                "Suggester: model error \(kind, privacy: .public), \(String(describing: error), privacy: .private)")
         case let error as SystemLanguageModel.Error:
             UnderstandingLog.logger.error("Suggester: model assets \(String(describing: error), privacy: .private)")
         case let error as GeneratedContent.ParsingError:

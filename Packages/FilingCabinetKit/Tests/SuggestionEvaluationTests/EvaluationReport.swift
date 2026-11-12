@@ -1,7 +1,7 @@
 import Foundation
 import Understanding
 
-/// Renders the suggestion evaluation as Markdown: a summary, accuracy per collection, every title miss, every
+/// Renders the suggestion evaluation as Markdown: a summary, accuracy per collection, every title not acceptable, every
 /// missed search, the probes, then one row per case. Informs; it never decides anything.
 struct EvaluationReport {
     enum Outcome {
@@ -44,7 +44,7 @@ struct EvaluationReport {
     }
 
     func collectionAccuracy(quality: String) -> Tally {
-        Self.collections(results.filter { $0.item.quality == quality })
+        Self.collections(results, quality: quality)
     }
 
     /// The nearest-rank percentile, or nil with no values.
@@ -59,8 +59,16 @@ struct EvaluationReport {
         Tally(hits: results.count { $0.suggestion?.collectionID == $0.item.collection }, total: results.count)
     }
 
+    private static func collections(_ results: [EvaluationRun.Result], quality: String) -> Tally {
+        collections(results.filter { $0.item.quality == quality })
+    }
+
     private static func titles(_ results: [EvaluationRun.Result]) -> Tally {
         Tally(hits: results.count { $0.item.isRightTitle($0.suggestion?.title) }, total: results.count)
+    }
+
+    private static func acceptableTitles(_ results: [EvaluationRun.Result]) -> Tally {
+        Tally(hits: results.count { $0.item.isAcceptableTitle($0.suggestion?.title) }, total: results.count)
     }
 
     private static func searches(_ results: [EvaluationRun.Result]) -> Tally {
@@ -88,21 +96,35 @@ struct EvaluationReport {
         ]
     }
 
+    /// The headline measures for every case, then for the tune set (even indexes in cases.json, the cases a prompt
+    /// is tuned on) and the holdout (odd indexes, read only to check). Times are over the calls that answered.
     private func summary(_ run: EvaluationRun) -> [String] {
-        let times = run.results.map(\.milliseconds)
+        let sets = [run.results, Self.split(run.results, even: true), Self.split(run.results, even: false)]
+        func row(_ measure: String, _ tally: ([EvaluationRun.Result]) -> Tally) -> String {
+            "| \(measure) | " + sets.map { tally($0).text }.joined(separator: " | ") + " |"
+        }
+        let times = run.results.filter { $0.suggestion != nil }.map(\.milliseconds)
         let none = run.results.count { $0.suggestion == nil }
         return [
-            "## Summary", "", "| Measure | Result |", "|---|---|",
-            "| Collection, all scans | \(Self.collections(run.results).text) |",
-            "| Collection, clean scans | \(collectionAccuracy(quality: "clean").text) |",
-            "| Collection, low-quality scans | \(collectionAccuracy(quality: "low").text) |",
-            "| Titles | \(Self.titles(run.results).text) |",
-            "| Search recall | \(Self.searches(run.results).text) |",
+            "## Summary", "", "| Measure | All | Tune | Holdout |", "|---|---|---|---|",
+            row("Collection, all scans", Self.collections),
+            row("Collection, clean scans") { Self.collections($0, quality: "clean") },
+            row("Collection, low-quality scans") { Self.collections($0, quality: "low") },
+            row("Titles, acceptable", Self.acceptableTitles),
+            row("Titles, exact", Self.titles),
+            row("Search recall", Self.searches),
+            "",
+            "| Measure | Result |", "|---|---|",
             "| No suggestion | \(none) of \(run.results.count) |",
-            "| Time per scan, p50 | \(Self.milliseconds(Self.percentile(0.5, of: times))) |",
-            "| Time per scan, p95 | \(Self.milliseconds(Self.percentile(0.95, of: times))) |",
+            "| Time per scan, p50 (answered) | \(Self.milliseconds(Self.percentile(0.5, of: times))) |",
+            "| Time per scan, p95 (answered) | \(Self.milliseconds(Self.percentile(0.95, of: times))) |",
             "",
         ]
+    }
+
+    /// The results at even (tune) or odd (holdout) indexes.
+    private static func split(_ results: [EvaluationRun.Result], even: Bool) -> [EvaluationRun.Result] {
+        results.enumerated().filter { $0.offset.isMultiple(of: 2) == even }.map(\.element)
     }
 
     private func perCollection(_ run: EvaluationRun) -> [String] {
@@ -113,23 +135,29 @@ struct EvaluationReport {
     }
 
     private func titleMisses(_ run: EvaluationRun) -> [String] {
-        let misses = run.results.filter { !$0.item.isRightTitle($0.suggestion?.title) }
-        return ["## Title misses (\(misses.count))", "", "| Case | Expected | Got |", "|---|---|---|"]
-            + misses.map { result in
-                "| \(result.item.id) | \(Self.cell(result.item.titles.joined(separator: " / "))) | "
+        let misses = run.results.enumerated().filter {
+            !$0.element.item.isAcceptableTitle($0.element.suggestion?.title)
+        }
+        return [
+            "## Titles not acceptable (\(misses.count))", "", "| Case | Set | Expected | Got |", "|---|---|---|---|",
+        ]
+            + misses.map { index, result in
+                "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(result.item.titles.joined(separator: " / "))) | "
                     + "\(Self.cell(Self.title(result.suggestion))) |"
             } + [""]
     }
 
     private func missedSearches(_ run: EvaluationRun) -> [String] {
-        let rows = run.results.compactMap { result -> String? in
+        let rows = run.results.enumerated().compactMap { index, result -> String? in
             let missed = result.item.missedSearches(in: result.suggestion?.searchWords ?? [])
             guard !missed.isEmpty else { return nil }
-            return "| \(result.item.id) | \(Self.cell(missed.joined(separator: ", "))) | "
+            return "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(missed.joined(separator: ", "))) | "
                 + "\(Self.cell(Self.words(result.suggestion))) |"
         }
-        return ["## Missed searches (\(rows.count) cases)", "", "| Case | Missed | Words returned |", "|---|---|---|"]
-            + rows + [""]
+        return [
+            "## Missed searches (\(rows.count) cases)", "", "| Case | Set | Missed | Words returned |",
+            "|---|---|---|---|",
+        ] + rows + [""]
     }
 
     private func probes(_ run: EvaluationRun) -> [String] {
@@ -165,6 +193,11 @@ struct EvaluationReport {
     private static func words(_ suggestion: ScanSuggestion?) -> String {
         guard let suggestion else { return "(no suggestion)" }
         return suggestion.searchWords.isEmpty ? "(none)" : suggestion.searchWords.joined(separator: ", ")
+    }
+
+    /// "tune" for an even index in cases.json, "holdout" for an odd one.
+    private static func set(_ index: Int) -> String {
+        index.isMultiple(of: 2) ? "tune" : "holdout"
     }
 
     /// Keeps a value inside one table cell.

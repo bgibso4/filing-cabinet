@@ -71,3 +71,22 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
 @Test func overlongWordsAreDroppedAndSpacesCollapsed() {
     #expect(clean(words: [String(repeating: "x", count: 41), " parking   stub "]).searchWords == ["parking stub"])
 }
+
+@Test func titleLosesLeadingAndTrailingSeparators() {
+    #expect(clean(title: "W-2 Wage and Tax Statement 2026 · ").title == "W-2 Wage and Tax Statement 2026")
+    #expect(clean(title: " - Coat check ticket:").title == "Coat check ticket")
+    #expect(clean(title: "· , City Pharmacy receipt ,").title == "City Pharmacy receipt")
+}
+
+@Test func titleCollapsesEmptySeparators() {
+    #expect(clean(title: "2025 W-2 ·  · Northwind").title == "2025 W-2 · Northwind")
+}
+
+@Test func titleCutNeverEndsOnASeparator() {
+    #expect(
+        clean(title: "Certificate of Vehicle Registration · Northwind").title == "Certificate of Vehicle Registration")
+}
+
+@Test func titleOfOnlySeparatorsIsDropped() {
+    #expect(clean(title: " · - : ").title == nil)
+}

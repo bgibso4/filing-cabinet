@@ -15,9 +15,13 @@ package enum SuggestionCleanup {
         )
     }
 
-    /// Trimmed, collapsed and cut to 40 characters on a word boundary; nil under 3 letters.
+    /// Separators a title may not start or end with, nor repeat with nothing between.
+    private static let separators: Set<Character> = ["·", "-", ",", ":"]
+
+    /// Trimmed, collapsed, stripped of edge and empty separators and cut to 40 characters on a word boundary (never
+    /// ending on a separator); nil under 3 letters.
     private static func cleanTitle(_ raw: String) -> String? {
-        let collapsed = collapse(raw)
+        let collapsed = trimmedSeparators(collapse(raw))
         let cut: String
         if collapsed.count <= titleLimit {
             cut = collapsed
@@ -26,7 +30,7 @@ package enum SuggestionCleanup {
             let breaksOnAWord = collapsed[prefix.endIndex] == " "
             // One word longer than the limit has no boundary to cut on, so it is cut at the limit.
             let lastSpace = breaksOnAWord ? prefix.endIndex : prefix.lastIndex(of: " ") ?? prefix.endIndex
-            cut = String(prefix[..<lastSpace])
+            cut = trimmedSeparators(String(prefix[..<lastSpace]))
         }
         return cut.count(where: \.isLetter) >= minimumTitleLetters ? cut : nil
     }
@@ -43,6 +47,23 @@ package enum SuggestionCleanup {
             if kept.count == maximumWords { break }
         }
         return kept
+    }
+
+    /// Drops separators at either end and any separator straight after another ("A ·  · B" is "A · B"). Assumes
+    /// collapsed spacing.
+    private static func trimmedSeparators(_ title: String) -> String {
+        var parts: [Substring] = []
+        for part in title.split(separator: " ") {
+            let isSeparator = part.allSatisfy(separators.contains)
+            if isSeparator, parts.last.map({ $0.allSatisfy(separators.contains) }) ?? true { continue }
+            parts.append(part)
+        }
+        while let last = parts.last, last.allSatisfy(separators.contains) { parts.removeLast() }
+        var title = parts.joined(separator: " ")
+        // A separator stuck to a word at either end: "Coat check ticket:", "-Receipt".
+        while let first = title.first, separators.contains(first) { title.removeFirst() }
+        while let last = title.last, separators.contains(last) { title.removeLast() }
+        return title
     }
 
     private static func collapse(_ text: String) -> String {

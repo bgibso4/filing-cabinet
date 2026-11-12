@@ -73,6 +73,57 @@ struct EvaluationReportTests {
         #expect(!item.isRightTitle(nil))
     }
 
+    @Test func titleIsAcceptableWhenOneContainsTheOther() {
+        let item = Self.item("a", titles: ["Driver's License", "Sampleland Passport", "2026 W-2"])
+
+        #expect(item.isAcceptableTitle("Drivers license · Sample State"))
+        #expect(item.isAcceptableTitle("Passport"))
+        #expect(item.isAcceptableTitle("2026 W2 · Northwind"))
+        #expect(!item.isAcceptableTitle("Pass"))
+        #expect(!item.isAcceptableTitle("Library card"))
+        #expect(!item.isAcceptableTitle(nil))
+    }
+
+    @Test func multiWordSearchNeedsEveryTerm() {
+        #expect(EvaluationCase.matches("gas station", words: ["gas", "station"]))
+        #expect(EvaluationCase.matches("Gas Sta", words: ["petrol station", "gas"]))
+        #expect(!EvaluationCase.matches("gas station", words: ["gas", "fuel"]))
+    }
+
+    @Test func summaryShowsAcceptableAndExactTitles() {
+        let item = Self.item("a", titles: ["City Pharmacy"])
+        let markdown = Self.report([
+            Self.result(item, collection: "receipts", title: "City Pharmacy"),
+            Self.result(item, collection: "receipts", title: "City Pharmacy receipt"),
+        ]).markdown
+
+        #expect(markdown.contains("| Titles, acceptable | 2/2 (100%) |"))
+        #expect(markdown.contains("| Titles, exact | 1/2 (50%) |"))
+    }
+
+    @Test func tuneIsEvenIndexesAndHoldoutOdd() {
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts"),
+            Self.result(Self.item("b"), collection: "documents"),
+            Self.result(Self.item("c"), collection: "receipts"),
+        ]).markdown
+
+        #expect(markdown.contains("| Measure | All | Tune | Holdout |"))
+        #expect(markdown.contains("| Collection, all scans | 2/3 (67%) | 2/2 (100%) | 0/1 (0%) |"))
+    }
+
+    @Test func timesCountAnsweredCallsOnly() {
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts", milliseconds: 100),
+            Self.result(Self.item("b"), collection: "receipts", milliseconds: 300),
+            EvaluationRun.Result(item: Self.item("c"), suggestion: nil, milliseconds: 9_000),
+        ]).markdown
+
+        #expect(markdown.contains("| No suggestion | 1 of 3 |"))
+        #expect(markdown.contains("p50 (answered) | 100 ms |"))
+        #expect(markdown.contains("p95 (answered) | 300 ms |"))
+    }
+
     @Test func lowQualityShownSeparately() {
         let report = Self.report([
             Self.result(Self.item("a"), collection: "receipts"),
@@ -99,13 +150,13 @@ struct EvaluationReportTests {
             Self.result(
                 Self.item("a", searches: ["medicine", "drug"]),
                 collection: "receipts",
-                title: "Pharmacy",
+                title: "Library card",
                 words: ["drugstore"]
             )
         ]).markdown
 
-        #expect(markdown.contains("| a | City Pharmacy | Pharmacy |"))
-        #expect(markdown.contains("| a | medicine | drugstore |"))
+        #expect(markdown.contains("| a | tune | City Pharmacy | Library card |"))
+        #expect(markdown.contains("| a | tune | medicine | drugstore |"))
         #expect(markdown.contains("| Search recall | 1/2 (50%) |"))
     }
 

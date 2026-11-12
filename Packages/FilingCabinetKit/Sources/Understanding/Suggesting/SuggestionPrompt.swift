@@ -18,6 +18,12 @@ package enum SuggestionPrompt {
         return "Collections:\n\(list)\n\nText read from the scan:\n\(pages)"
     }
 
+    /// The collections' ids, each once, in order: a schema can't offer the same choice twice.
+    package static func collectionIDs(in collections: [SuggestionCollection]) -> [String] {
+        var seen: Set<String> = []
+        return collections.map(\.id).filter { seen.insert($0).inserted }
+    }
+
     /// Page 1 keeps as much as fits; the rest of the budget is shared between later pages in order, a short page
     /// leaving its unused share to the pages after it. Each page keeps its beginning.
     package static func trimmed(_ pages: [String], budget: Int) -> [String] {

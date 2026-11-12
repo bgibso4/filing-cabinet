@@ -60,3 +60,12 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     #expect(prompt.contains("Page 3:\nback"))
     #expect(!prompt.contains("Page 2:"))
 }
+
+@Test func collectionIDsAreUniqueInOrder() {
+    let taxes = SuggestionCollection(id: "taxes", name: "Taxes", about: "Tax forms")
+    let again = SuggestionCollection(id: "taxes", name: "Taxes 2", about: "More tax forms")
+
+    #expect(
+        SuggestionPrompt.collectionIDs(in: [taxes] + SuggestionCollection.builtIns + [again]) == ["taxes"]
+            + SuggestionCollection.builtIns.map(\.id))
+}

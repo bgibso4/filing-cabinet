@@ -1,7 +1,6 @@
 import Core
 import CoreGraphics
 import Foundation
-import FoundationModels
 import ImageIO
 import Testing
 
@@ -31,7 +30,8 @@ struct SuggestionEvaluationTests {
         if suggester.availability == .available {
             outcome = .ran(try await Self.run(suggester, includesImage: includesImage))
         } else {
-            outcome = .unavailable(reason: String(describing: SystemLanguageModel.default.availability))
+            // Only ModelScanSuggester imports FoundationModels, so the system's own reason isn't read here.
+            outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
         }
 
         let output = Self.root.appending(path: "build/suggestion-eval.md")
@@ -53,7 +53,7 @@ struct SuggestionEvaluationTests {
                 texts.append(await reader.read([image]).searchText)
             }
             let input = SuggestionInput(
-                pageTexts: texts, firstPage: images.first, collections: collections(for: item.collections))
+                pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
             let (suggestion, milliseconds) = await timed(suggester, input)
             inputs.append(input)
             results.append(EvaluationRun.Result(item: item, suggestion: suggestion, milliseconds: milliseconds))
@@ -110,11 +110,11 @@ struct SuggestionEvaluationTests {
         )
     }
 
-    /// The built-ins, or the case's own list (built-ins plus taxes).
-    private static func collections(for ids: [String]?) -> [SuggestionCollection] {
+    /// The built-ins, or the case's own list (built-ins plus taxes); every id must be known.
+    private static func collections(for ids: [String]?) throws -> [SuggestionCollection] {
         guard let ids else { return SuggestionCollection.builtIns }
         let known = SuggestionCollection.builtIns + [taxes]
-        return ids.compactMap { id in known.first { $0.id == id } }
+        return try ids.map { id in try #require(known.first { $0.id == id }, "unknown collection \(id)") }
     }
 
     /// The answer and how long the model call took, in milliseconds.
