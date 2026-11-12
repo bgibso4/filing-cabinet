@@ -23,12 +23,13 @@ package enum SuggestionCleanup {
     /// Separators a title may not start or end with, nor repeat with nothing between.
     private static let separators: Set<Character> = ["·", "-", ",", ":"]
 
-    /// Nil when it holds a placeholder (`<`, `>`) or has under 3 letters. Otherwise trimmed, collapsed, stripped of edge
-    /// and empty separators and of parts repeating an earlier one, title-cased and cut to 40 characters on a word
+    /// Nil when it holds a placeholder (`<`, `>`) or has under 3 letters. Otherwise trimmed, collapsed, its spaced
+    /// dashes made middots, stripped of edge and empty separators and of parts repeating an earlier one, cased by
+    /// `TitleCasing` and cut to 40 characters on a word
     /// boundary (never ending on a separator).
     private static func cleanTitle(_ raw: String) -> String? {
         guard !raw.contains(where: { $0 == "<" || $0 == ">" }) else { return nil }
-        let collapsed = TitleCase.titled(withoutRepeatedParts(trimmedSeparators(collapse(raw))))
+        let collapsed = TitleCasing.cased(withoutRepeatedParts(trimmedSeparators(middots(collapse(raw)))))
         let cut: String
         if collapsed.count <= titleLimit {
             cut = collapsed
@@ -71,6 +72,11 @@ package enum SuggestionCleanup {
         while let first = title.first, separators.contains(first) { title.removeFirst() }
         while let last = title.last, separators.contains(last) { title.removeLast() }
         return title
+    }
+
+    /// " - " and " – " between parts become " · ", the app's separator. Assumes collapsed spacing.
+    private static func middots(_ title: String) -> String {
+        title.replacing(" - ", with: " · ").replacing(" – ", with: " · ")
     }
 
     /// Drops a " · " part whose words all appear, in a row, in an earlier part, ignoring case: "Lakeview University ID
