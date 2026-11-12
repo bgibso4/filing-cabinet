@@ -97,7 +97,7 @@ public final class CollectionGridModel {
         // own), and only a handful of different names exist.
         var names: [BuiltInCollection: String] = [:]
         // The date line costs the same (a date formatter each), and scans of one day with the same time left share it.
-        var details: [DetailKey: String] = [:]
+        var details: [DetailKey: (text: String, spoken: String)] = [:]
         // Where each favourite stands among the favourites, for VoiceOver's moves; none outside Favorites or while
         // selecting (P5).
         let movable = kind == .favorites && !isSelecting ? Self.favoriteIDs(built.shown) : []
@@ -105,15 +105,20 @@ public final class CollectionGridModel {
         return built.shown.map { scan in
             let collectionName = names[scan.collection] ?? CollectionText.name(scan.collection)
             names[scan.collection] = collectionName
-            let key = DetailKey(day: CalendarDay(scan.scannedAt, in: calendar), left: shelf.timeLeft(scan))
+            let clock = today.clock
+            let key = DetailKey(day: CalendarDay(scan.scannedAt, in: clock.calendar), left: shelf.timeLeft(scan))
             let detail =
-                details[key] ?? TileDateText.text(scanDay: key.day, left: key.left, clock: today.clock)
+                details[key] ?? (
+                    TileDateText.text(scanDay: key.day, left: key.left, clock: clock),
+                    TileDateText.spoken(scanDay: key.day, left: key.left, clock: clock)
+                )
             details[key] = detail
             return GridTile(
                 id: scan.id,
                 title: scan.title,
                 collectionName: collectionName,
-                detail: detail,
+                detail: detail.text,
+                spokenDetail: detail.spoken,
                 isSoon: shelf.isSoon(scan),
                 dot: showsWideScansWhole ? scan.collection : nil,
                 isFavorite: scan.isFavorite,

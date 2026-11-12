@@ -26,6 +26,14 @@ private func line(_ day: CalendarDay, _ left: TimeLeft) -> String {
     #expect(line(CalendarDay(year: 2026, month: 9, day: 28), .days(59)) == "Sep 28 · 59d left")
 }
 
+@Test func spokenUsesFullWords() {
+    let day = CalendarDay(year: 2026, month: 10, day: 12)
+    #expect(TileDateText.spoken(scanDay: day, left: .days(95), clock: clock) == "Oct 12, 3 months left")
+    #expect(TileDateText.spoken(scanDay: day, left: .days(730), clock: clock) == "Oct 12, 2 years left")
+    #expect(TileDateText.spoken(scanDay: day, left: .days(59), clock: clock) == "Oct 12, 59 days left")
+    #expect(TileDateText.spoken(scanDay: day, left: .forever, clock: clock) == "Oct 12, Kept forever")
+}
+
 @Test func foreverHasNoLeft() {
     #expect(line(CalendarDay(year: 2026, month: 3, day: 4), .forever) == "Mar 4 · Forever")
 }

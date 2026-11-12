@@ -198,6 +198,7 @@
     "IDs and cards" : {},
     "Kept forever" : {},
     "%@ · Forever" : {},
+    "%@, %@" : {},
     "%@ · %lldd left" : {},
     "%@ · %lld mo left" : {},
     "%@ · %lld yr left" : {},

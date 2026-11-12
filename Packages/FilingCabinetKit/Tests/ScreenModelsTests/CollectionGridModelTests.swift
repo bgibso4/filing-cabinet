@@ -50,7 +50,7 @@ private func model(_ kind: GridKind, _ summaries: [ScanSummary] = []) -> Collect
     #expect(grid.tiles.map(\.title) == ["Corner Market", "Bluebird Café", "Harbor Gas"])
     #expect(grid.tiles.allSatisfy { $0.dot == nil })
     #expect(grid.tiles.first?.detail == "Oct 12 · 3 mo left")
-    #expect(grid.tiles.first?.accessibilityLabel == "Corner Market, Receipts, Oct 12 · 3 mo left")
+    #expect(grid.tiles.first?.accessibilityLabel == "Corner Market, Receipts, Oct 12, 3 months left")
     #expect(model(.collection(.wallet), [scan("Work ID", .wallet)]).subtitle == "1 scan · Forever")
 }
 

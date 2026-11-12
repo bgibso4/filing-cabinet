@@ -65,8 +65,8 @@ private func favorite(_ title: String, order: Int?, _ collection: BuiltInCollect
 
 @Test func tileLabelSaysFavorite() {
     let grid = GridHarness(.all, [favorite("Corner Market", order: 0), scan("Harbor Gas", .receipts, daysAgo: 1)]).grid
-    #expect(grid.tiles[0].accessibilityLabel == "Corner Market, Receipts, Oct 12 · 3 mo left, favorite")
-    #expect(grid.tiles[1].accessibilityLabel == "Harbor Gas, Receipts, \(grid.tiles[1].detail)")
+    #expect(grid.tiles[0].accessibilityLabel == "Corner Market, Receipts, Oct 12, 3 months left, favorite")
+    #expect(grid.tiles[1].accessibilityLabel == "Harbor Gas, Receipts, Oct 11, 2 months left")
 }
 
 @Test func toggleFavoriteFromATile() {
