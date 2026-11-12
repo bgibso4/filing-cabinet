@@ -54,10 +54,11 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings
         ),
-        // The made-up test set for the suggestion evaluation (Plan 5). Its file checks run in Fast.
+        // The made-up test set and the suggestion evaluation (Plan 5). The file checks and the report's scoring run
+        // in Fast; the model run only in the SuggestionEvaluation scheme (`make eval-suggestions`).
         .testTarget(
             name: "SuggestionEvaluationTests",
-            dependencies: ["Core"],
+            dependencies: ["Core", "Understanding"],
             resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings
         ),

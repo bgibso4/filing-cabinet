@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers device-perf
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -137,6 +137,15 @@ compare-readers: generate
 	set -o pipefail; xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme ReaderComparison \
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@echo "Report: build/reader-comparison.md"
+
+# The suggestion evaluation (Plan 5) on this Mac: the text reader, then the on-device model, over the made-up test
+# set. A report, not a gate; slow (minutes). IMAGE=1 sends page 1's image with the text.
+IMAGE ?= 0
+
+eval-suggestions: generate
+	set -o pipefail; TEST_RUNNER_FC_EVAL_IMAGE=$(IMAGE) xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
+		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+	@echo "Report: build/suggestion-eval.md"
 
 # Reader timing on a connected iPhone (A12, A14). Not part of `full` or CI. XCTest runs every class of one
 # invocation in one process, so each cold-read class gets its own `xcodebuild test` (a fresh app launch) and the

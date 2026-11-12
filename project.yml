@@ -194,6 +194,19 @@ schemes:
       targets:
         - package: FilingCabinetKit/ReaderComparisonTests
 
+  # The suggestion evaluation report (Plan 5) on macOS: `make eval-suggestions`. Not in FilingCabinet or CI. The
+  # target's file and scoring tests also run in Fast; the model run needs FC_EVAL_SUGGESTIONS, which only this sets.
+  SuggestionEvaluation:
+    build:
+      targets:
+        FastTests: [test]
+    test:
+      config: Debug
+      environmentVariables:
+        FC_EVAL_SUGGESTIONS: "1"
+      targets:
+        - package: FilingCabinetKit/SuggestionEvaluationTests
+
   # Reader timing on a connected iPhone: `make device-perf DEVICE=<name>`. Not in FilingCabinet or CI.
   Device:
     build:
