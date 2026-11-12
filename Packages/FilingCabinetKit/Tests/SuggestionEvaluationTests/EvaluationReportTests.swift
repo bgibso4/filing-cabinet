@@ -160,6 +160,16 @@ struct EvaluationReportTests {
         #expect(Self.report([]).markdown.contains("written knowing the test set's categories"))
     }
 
+    @Test func pluralStemMustMatchAWholeWord() {
+        #expect(!EvaluationCase.matches("bus", words: ["budget"]))
+        #expect(EvaluationCase.matches("taxes", words: ["tax"]))
+        #expect(!EvaluationCase.matches("taxes", words: ["taxi"]))
+        #expect(EvaluationCase.matches("taxes", words: ["income tax"]))
+        #expect(EvaluationCase.matches("bus", words: ["bus stop"]))
+        #expect(!EvaluationCase.matches("cardi", words: ["card", "id"]))
+        #expect(EvaluationCase.matches("license", words: ["driver \t license"]))
+    }
+
     @Test func multiWordSearchNeedsEveryTerm() {
         #expect(EvaluationCase.matches("gas station", words: ["gas", "station"]))
         #expect(EvaluationCase.matches("Gas Sta", words: ["petrol station", "gas"]))

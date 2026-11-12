@@ -12,25 +12,24 @@ package enum SearchMatch {
     package struct Folded: Sendable {
         package let original: String
         package let bytes: [UInt8]
-        /// What a term can match at the start of a hidden word (M7): itself, and itself without a trailing "es" or
-        /// "s" when 2 or more characters are left ("taxes" is also "tax" and "taxe"), each also with a space before it,
-        /// to find it at the start of a later part.
-        let wordStarts: [[UInt8]]
-        let laterWordStarts: [[UInt8]]
+        /// What a term can match in hidden words made by `hiddenWords` (M7): " term" starts a part, and " stem " is a
+        /// whole part, for the term without a trailing "es" or "s" when 2 or more characters are left ("taxes" is
+        /// the whole part "tax", not the start of "taxi"; "bus" is "bu", not the start of "budget").
+        let partStart: [UInt8]
+        let wholeParts: [[UInt8]]
 
         package init(_ original: String) {
             self.original = original
-            let bytes = Self.fold(original)
+            let folded = original.folding(options: Self.options, locale: nil)
+            let bytes = Array(folded.utf8)
             self.bytes = bytes
-            let stems = Self.pluralSuffixes.compactMap { suffix in
-                bytes.count - suffix.count >= 2 && bytes.suffix(suffix.count).elementsEqual(suffix)
-                    ? Array(bytes.dropLast(suffix.count)) : nil
+            let space = UInt8(ascii: " ")
+            partStart = [space] + bytes
+            wholeParts = ["es", "s"].compactMap { suffix in
+                guard folded.hasSuffix(suffix), folded.count - suffix.count >= 2 else { return nil }
+                return [space] + Array(folded.dropLast(suffix.count).utf8) + [space]
             }
-            wordStarts = [bytes] + stems
-            laterWordStarts = wordStarts.map { [UInt8(ascii: " ")] + $0 }
         }
-
-        private static let pluralSuffixes = [Array("es".utf8), Array("s".utf8)]
 
         /// Case and accents: what Search ignores (M15), in the fold and in the snippet's compare.
         static let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
@@ -43,12 +42,19 @@ package enum SearchMatch {
             SearchMatch.offset(of: term.bytes, in: bytes) != nil
         }
 
-        /// For hidden words joined by spaces: whether `term` starts any space-separated part of one of them, or its
-        /// stem does (M7): "lic" finds "driver license", "ids" finds "id", "cense" finds nothing.
-        func startsAPart(with term: Self) -> Bool {
-            term.wordStarts.contains { bytes.starts(with: $0) }
-                || term.laterWordStarts.contains { SearchMatch.offset(of: $0, in: bytes) != nil }
+        /// For `hiddenWords`: whether `term` starts any part of a word, or its stem is a whole part (M7): "lic" finds
+        /// "driver license", "ids" finds "id", "cense" finds nothing, "bus" doesn't find "budget".
+        func hasPart(matching term: Self) -> Bool {
+            SearchMatch.offset(of: term.partStart, in: bytes) != nil
+                || term.wholeParts.contains { SearchMatch.offset(of: $0, in: bytes) != nil }
         }
+    }
+
+    /// A scan's hidden words as one `Folded`: every word's whitespace made a single space, the words joined by spaces
+    /// and framed by one at each end, so a part always has a space on both sides. Nothing for no words.
+    package static func hiddenWords(_ words: [String]) -> Folded {
+        let parts = words.flatMap { $0.split(whereSeparator: \.isWhitespace) }
+        return Folded(parts.isEmpty ? "" : " " + parts.joined(separator: " ") + " ")
     }
 
     /// The query's words: split on whitespace, empties dropped.
@@ -82,7 +88,7 @@ package enum SearchMatch {
                 continue
             }
             titleMatches = false
-            guard offset != nil || words.startsAPart(with: term) else { return nil }
+            guard offset != nil || words.hasPart(matching: term) else { return nil }
         }
         // Found by the title alone: the first line, plain.
         guard let earliest else {

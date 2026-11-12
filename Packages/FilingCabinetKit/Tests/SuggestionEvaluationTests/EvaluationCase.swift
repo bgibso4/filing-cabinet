@@ -57,7 +57,8 @@ struct EvaluationCase: Decodable, Sendable {
 
     /// M7: a query term finds a hidden word when it starts the word, or any space-separated part of it, ignoring
     /// case and accents ("lic" finds "license" and "driver license"); so does the term without a trailing "es" or "s"
-    /// when 2 or more characters are left ("taxes" finds "tax"). This mirrors `SearchMatch` in ScreenModels, which
+    /// when 2 or more characters are left, but only as a whole part ("taxes" finds "tax", not "taxi"; "bus" doesn't
+    /// find "budget"). This mirrors `SearchMatch` in ScreenModels, which
     /// this target can't import; both sides have tests. A query of several terms needs every term
     /// found, each by any word ("gas station" finds "gas" and "station"). A query with no terms finds nothing.
     static func matches(_ query: String, words: [String]) -> Bool {
@@ -70,15 +71,13 @@ struct EvaluationCase: Decodable, Sendable {
         let terms = folded(query).split(whereSeparator: \.isWhitespace).map(String.init)
         guard !terms.isEmpty else { return false }
         let (title, text) = (folded(title), folded(text))
-        let parts = words.flatMap { folded($0).split(whereSeparator: \.isWhitespace) }
+        let parts = words.flatMap { folded($0).split(whereSeparator: \.isWhitespace).map(String.init) }
         return terms.allSatisfy { term in
-            let starts =
-                [term]
-                + ["es", "s"].filter { term.hasSuffix($0) && term.count - $0.count >= 2 }.map {
-                    String(term.dropLast($0.count))
-                }
+            let stems = ["es", "s"].filter { term.hasSuffix($0) && term.count - $0.count >= 2 }.map {
+                String(term.dropLast($0.count))
+            }
             return title.contains(term) || text.contains(term)
-                || parts.contains { part in starts.contains { part.hasPrefix($0) } }
+                || parts.contains { $0.hasPrefix(term) || stems.contains($0) }
         }
     }
 

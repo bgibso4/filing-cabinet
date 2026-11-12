@@ -35,7 +35,7 @@ public final class SearchModel {
         let scan: ScanSummary
         let title: SearchMatch.Folded
         let text: SearchMatch.FoldedText
-        /// The hidden words, joined by spaces.
+        /// The hidden words, from `SearchMatch.hiddenWords`.
         let words: SearchMatch.Folded
     }
 
@@ -264,13 +264,13 @@ public final class SearchModel {
         let previous = Dictionary(uniqueKeysWithValues: (index?.entries ?? []).map { ($0.scan.id, $0) })
         let entries = visible.map { scan in
             let text = texts[scan.id] ?? ""
-            let words = (allWords[scan.id] ?? []).joined(separator: " ")
+            let words = SearchMatch.hiddenWords(allWords[scan.id] ?? [])
             let old = previous[scan.id]
             return Entry(
                 scan: scan,
                 title: old.flatMap { $0.title.original == scan.title ? $0.title : nil } ?? .init(scan.title),
                 text: old.flatMap { $0.text.original == text ? $0.text : nil } ?? .init(text),
-                words: old.flatMap { $0.words.original == words ? $0.words : nil } ?? .init(words))
+                words: old.flatMap { $0.words.original == words.original ? $0.words : nil } ?? words)
         }
         return Index(scans: scans, lifespans: lifespans, day: day, textRevision: textRevision, entries: entries)
     }

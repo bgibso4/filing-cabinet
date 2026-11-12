@@ -7,7 +7,7 @@ private func hit(_ query: String, title: String = "Scan", text: String = "", wor
     SearchMatch.match(
         title: SearchMatch.Folded(title),
         text: SearchMatch.FoldedText(text),
-        words: SearchMatch.Folded(words.joined(separator: " ")),
+        words: SearchMatch.hiddenWords(words),
         terms: SearchMatch.terms(query).map(SearchMatch.Folded.init))
 }
 
@@ -35,6 +35,28 @@ private func hit(_ query: String, title: String = "Scan", text: String = "", wor
     // What is left must be 2 characters or more: "is" is not "i".
     #expect(hit("is", words: ["i"]) == nil)
     #expect(hit("as", words: ["a"]) == nil)
+}
+
+@Test func pluralStemMustMatchAWholeWord() {
+    #expect(hit("bus", words: ["budget"]) == nil)
+    #expect(hit("taxes", words: ["tax"]) != nil)
+    #expect(hit("taxes", words: ["taxi"]) == nil)
+    #expect(hit("taxes", words: ["tax return"]) != nil)
+    #expect(hit("taxes", words: ["income tax"]) != nil)
+    // The stem is "bu": only a whole part "bu" has it. The term itself still starts parts.
+    #expect(hit("bus", words: ["bu"]) != nil)
+    #expect(hit("bus", words: ["bus stop"]) != nil)
+}
+
+@Test func termMustNotSpanTwoWords() {
+    #expect(hit("cardi", words: ["card", "id"]) == nil)
+}
+
+@Test func whitespaceInWordsIsOneSpace() {
+    #expect(hit("license", words: ["driver   license"]) != nil)
+    #expect(hit("license", words: ["driver\nlicense"]) != nil)
+    #expect(hit("taxes", words: ["  tax\t"]) != nil)
+    #expect(hit("driver license", words: ["driver \t license"]) != nil)
 }
 
 @Test func foldsCaseAndAccentsInWords() {
