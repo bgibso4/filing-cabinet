@@ -7,9 +7,9 @@ import Testing
     #expect(SuggestionCollection.builtIns.map(\.id) == BuiltInCollection.allCases.map(\.rawValue))
 }
 
-@Test func builtInsUseTheRequirementsWording() {
+@Test func builtInsDescribeWhatTheyHold() {
     let wallet = SuggestionCollection.builtIns.first
     #expect(wallet?.name == "Wallet")
-    #expect(wallet?.about == "IDs and cards: license, insurance, membership, business cards")
+    #expect(wallet?.about.hasPrefix("IDs and cards") == true)
     #expect(SuggestionCollection.builtIns.allSatisfy { !$0.name.isEmpty && !$0.about.isEmpty })
 }

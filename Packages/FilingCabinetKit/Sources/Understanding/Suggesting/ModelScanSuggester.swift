@@ -110,16 +110,17 @@ public struct ModelScanSuggester: ScanSuggester {
             properties: [
                 DynamicGenerationSchema.Property(
                     name: "title",
-                    description: "What the document is and who it is from, at most 40 characters",
+                    description:
+                        "What the document is and who it is from, never its owner's name, at most 40 characters",
                     schema: DynamicGenerationSchema(type: String.self)
                 ),
                 DynamicGenerationSchema.Property(name: "collection", schema: collection),
                 DynamicGenerationSchema.Property(
                     name: "words",
-                    description: "4 to 8 lowercase search words",
+                    description: "6 to 8 lowercase everyday search words for what kind of document this is",
                     schema: DynamicGenerationSchema(
                         arrayOf: DynamicGenerationSchema(type: String.self),
-                        minimumElements: 4,
+                        minimumElements: 6,
                         maximumElements: 8
                     )
                 ),

@@ -13,16 +13,33 @@ package struct SuggestionCollection: Sendable, Equatable {
         self.about = about
     }
 
-    /// The built-in collections in display order, with the requirements' wording.
+    /// The built-in collections in display order. The descriptions grow the requirements' cards (M3) into the kinds
+    /// of document each holds, so the model can tell notes and wallet cards apart from documents (Task 4b).
     package static var builtIns: [Self] {
         BuiltInCollection.allCases.map { collection in
             let (name, about) =
                 switch collection {
-                case .wallet: ("Wallet", "IDs and cards: license, insurance, membership, business cards")
-                case .receipts: ("Receipts", "Purchase receipts")
-                case .notes: ("Notes", "Handwritten and class notes")
-                case .documents: ("Documents", "Forms, letters, anything else")
-                case .throwaways: ("Throwaways", "Short-lived scraps: coat-check tag, parking stub")
+                case .wallet:
+                    (
+                        "Wallet",
+                        "IDs and cards a person carries: license, passport, ID badges, insurance and health cards, "
+                            + "membership, transit and business cards"
+                    )
+                case .receipts:
+                    ("Receipts", "Receipts for anything bought or paid for: shops, restaurants, fuel, orders, services")
+                case .notes:
+                    (
+                        "Notes",
+                        "Notes a person wrote, often by hand: class and lecture notes, meeting and call notes, "
+                            + "lists, recipes"
+                    )
+                case .documents: ("Documents", "Forms, letters, bills, statements, contracts, anything else to keep")
+                case .throwaways:
+                    (
+                        "Throwaways",
+                        "Short-lived scraps not needed after today: claim tags and stubs, used tickets, "
+                            + "take-a-number slips"
+                    )
                 }
             return Self(id: collection.rawValue, name: name, about: about)
         }

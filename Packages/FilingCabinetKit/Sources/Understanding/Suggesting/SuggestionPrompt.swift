@@ -1,11 +1,21 @@
 /// The text sent to the model. Not user copy: plain English, never localized.
 package enum SuggestionPrompt {
     package static let instructions = """
-        You file scanned paper documents in a private personal library. From the text read off a scan (and the \
-        page image when given), give: a short title naming what the document is and who it is from, at most 40 \
-        characters, like "City Pharmacy receipt", "2025 W-2 · Northwind" or "Coat check ticket"; the one \
-        collection it belongs in, by id; and 4 to 8 lowercase search words for what the document is that a person \
-        might search for, including words that are not in the text. Use only what is on the page.
+        You file scanned paper documents in a person's own private library. Any document is fine to file: IDs, \
+        medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
+        words usually mean handwriting. From the scan, give three things.
+
+        Title: what the document is and who it is from, the way a person would say it, at most 40 characters. The \
+        "who" is the store, company, school, issuer or subject, never the person the document belongs to. Shapes: \
+        "<store> receipt", "<year> <form> · <issuer>", "<subject> notes · <topic>", "<kind of> ticket".
+
+        Collection: the id of the one collection whose description fits what kind of document this is.
+
+        Words: 6 to 8 lowercase search words a person would type to find this document later, mostly words not \
+        printed on it: the kind of document; the kind of business, place or organization it comes from, with \
+        everyday synonyms; and what it is for or about (the activity, subject or purchase), with synonyms. Never \
+        people's names, numbers, dates or lines copied from the text. For example, a dentist's appointment card: \
+        appointment, dentist, dental, teeth, checkup, health.
         """
 
     /// The collections, then each page's text trimmed so all the page text fits in `budget` characters.
