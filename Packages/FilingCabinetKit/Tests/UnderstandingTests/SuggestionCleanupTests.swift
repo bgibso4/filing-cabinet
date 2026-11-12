@@ -131,7 +131,13 @@ private func clean(title: String? = nil, collection: String? = nil, words: [Stri
     #expect(clean(title: "fitness club plan").title == "Fitness club plan")
     #expect(clean(title: "dmv license").title == "DMV license")
     #expect(clean(title: "lakeview university id").title == "Lakeview university ID")
-    #expect(clean(title: "Biology notes · cell respiration").title == "Biology notes · Cell respiration")
+}
+
+@Test func laterLowercasePartsStayLowercaseButSpellAcronyms() {
+    #expect(clean(title: "Biology notes · cell respiration").title == "Biology notes · cell respiration")
+    #expect(clean(title: "biology notes · cell respiration").title == "Biology notes · cell respiration")
+    #expect(clean(title: "dmv license · sample state").title == "DMV license · sample state")
+    #expect(clean(title: "Lakeview University · student id").title == "Lakeview University · student ID")
 }
 
 @Test func spacedDashBetweenPartsBecomesAMiddot() {

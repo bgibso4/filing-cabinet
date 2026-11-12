@@ -8,14 +8,14 @@ enum TitleCasing {
 
     /// Each " · " part cased on its own; assumes collapsed spacing.
     static func cased(_ title: String) -> String {
-        title.split(separator: " · ", omittingEmptySubsequences: false)
-            .map { cased(part: $0) }
+        title.split(separator: " · ", omittingEmptySubsequences: false).enumerated()
+            .map { cased(part: $0.element, isFirst: $0.offset == 0) }
             .joined(separator: " · ")
     }
 
-    /// ALL CAPS: each word capitalised, codes kept. All lowercase: the first letter capitalised. Either way, known
-    /// acronyms in capitals. Mixed case: as written.
-    private static func cased(part: Substring) -> String {
+    /// ALL CAPS: each word capitalised, codes kept. All lowercase: the first letter capitalised in the first part only
+    /// ("Biology notes · cell respiration"). Either way, known acronyms in capitals. Mixed case: as written.
+    private static func cased(part: Substring, isFirst: Bool) -> String {
         let letters = part.filter(\.isLetter)
         guard !letters.isEmpty else { return String(part) }
         if letters.allSatisfy(\.isUppercase) {
@@ -23,7 +23,7 @@ enum TitleCasing {
         }
         guard letters.allSatisfy(\.isLowercase) else { return String(part) }
         let withAcronyms = words(of: part) { String($0) }
-        guard let first = withAcronyms.firstIndex(where: \.isLetter) else { return withAcronyms }
+        guard isFirst, let first = withAcronyms.firstIndex(where: \.isLetter) else { return withAcronyms }
         return withAcronyms.replacingCharacters(in: first...first, with: withAcronyms[first].uppercased())
     }
 
