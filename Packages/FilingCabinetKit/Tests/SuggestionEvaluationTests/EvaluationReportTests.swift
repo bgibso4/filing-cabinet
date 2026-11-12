@@ -164,6 +164,11 @@ struct EvaluationReportTests {
         #expect(EvaluationCase.matches("gas station", words: ["gas", "station"]))
         #expect(EvaluationCase.matches("Gas Sta", words: ["petrol station", "gas"]))
         #expect(!EvaluationCase.matches("gas station", words: ["gas", "fuel"]))
+        // The plural rule, as Search has it (M7): "es" or "s" off, 2 or more characters left.
+        #expect(EvaluationCase.matches("taxes", words: ["tax"]))
+        #expect(EvaluationCase.matches("IDs", words: ["id"]))
+        #expect(EvaluationCase.matches("receipts", words: ["driver receipt"]))
+        #expect(!EvaluationCase.matches("is", words: ["i"]))
     }
 
     @Test func summaryShowsAcceptableAndExactTitles() {

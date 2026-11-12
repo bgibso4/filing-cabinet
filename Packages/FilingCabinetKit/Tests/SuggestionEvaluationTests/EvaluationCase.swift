@@ -56,7 +56,9 @@ struct EvaluationCase: Decodable, Sendable {
     }
 
     /// M7: a query term finds a hidden word when it starts the word, or any space-separated part of it, ignoring
-    /// case and accents ("lic" finds "license" and "driver license"). A query of several terms needs every term
+    /// case and accents ("lic" finds "license" and "driver license"); so does the term without a trailing "es" or "s"
+    /// when 2 or more characters are left ("taxes" finds "tax"). This mirrors `SearchMatch` in ScreenModels, which
+    /// this target can't import; both sides have tests. A query of several terms needs every term
     /// found, each by any word ("gas station" finds "gas" and "station"). A query with no terms finds nothing.
     static func matches(_ query: String, words: [String]) -> Bool {
         isFound(query, title: "", text: "", words: words)
@@ -65,12 +67,18 @@ struct EvaluationCase: Decodable, Sendable {
     /// What Search does: every term is found in the folded title or page text (Plan 4, substring) or by a hidden word
     /// (M7, part prefix), each term by any of them. A query with no terms finds nothing.
     static func isFound(_ query: String, title: String, text: String, words: [String]) -> Bool {
-        let terms = folded(query).split(whereSeparator: \.isWhitespace)
+        let terms = folded(query).split(whereSeparator: \.isWhitespace).map(String.init)
         guard !terms.isEmpty else { return false }
         let (title, text) = (folded(title), folded(text))
         let parts = words.flatMap { folded($0).split(whereSeparator: \.isWhitespace) }
         return terms.allSatisfy { term in
-            title.contains(term) || text.contains(term) || parts.contains { $0.hasPrefix(term) }
+            let starts =
+                [term]
+                + ["es", "s"].filter { term.hasSuffix($0) && term.count - $0.count >= 2 }.map {
+                    String(term.dropLast($0.count))
+                }
+            return title.contains(term) || text.contains(term)
+                || parts.contains { part in starts.contains { part.hasPrefix($0) } }
         }
     }
 

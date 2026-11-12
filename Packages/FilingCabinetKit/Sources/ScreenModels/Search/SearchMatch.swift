@@ -12,11 +12,25 @@ package enum SearchMatch {
     package struct Folded: Sendable {
         package let original: String
         package let bytes: [UInt8]
+        /// What a term can match at the start of a hidden word (M7): itself, and itself without a trailing "es" or
+        /// "s" when 2 or more characters are left ("taxes" is also "tax" and "taxe"), each also with a space before it,
+        /// to find it at the start of a later part.
+        let wordStarts: [[UInt8]]
+        let laterWordStarts: [[UInt8]]
 
         package init(_ original: String) {
             self.original = original
-            bytes = Self.fold(original)
+            let bytes = Self.fold(original)
+            self.bytes = bytes
+            let stems = Self.pluralSuffixes.compactMap { suffix in
+                bytes.count - suffix.count >= 2 && bytes.suffix(suffix.count).elementsEqual(suffix)
+                    ? Array(bytes.dropLast(suffix.count)) : nil
+            }
+            wordStarts = [bytes] + stems
+            laterWordStarts = wordStarts.map { [UInt8(ascii: " ")] + $0 }
         }
+
+        private static let pluralSuffixes = [Array("es".utf8), Array("s".utf8)]
 
         /// Case and accents: what Search ignores (M15), in the fold and in the snippet's compare.
         static let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
@@ -28,6 +42,13 @@ package enum SearchMatch {
         func contains(_ term: Self) -> Bool {
             SearchMatch.offset(of: term.bytes, in: bytes) != nil
         }
+
+        /// For hidden words joined by spaces: whether `term` starts any space-separated part of one of them, or its
+        /// stem does (M7): "lic" finds "driver license", "ids" finds "id", "cense" finds nothing.
+        func startsAPart(with term: Self) -> Bool {
+            term.wordStarts.contains { bytes.starts(with: $0) }
+                || term.laterWordStarts.contains { SearchMatch.offset(of: $0, in: bytes) != nil }
+        }
     }
 
     /// The query's words: split on whitespace, empties dropped.
@@ -35,27 +56,44 @@ package enum SearchMatch {
         query.split(whereSeparator: \.isWhitespace).map(String.init)
     }
 
-    /// The hit when every term is in the title or the text, else nil (nil too for no terms). Pass each term folded
-    /// once per query (`terms(query).map(Folded.init)`), and each scan's title and text folded once per change.
-    package static func match(title: Folded, text: FoldedText, terms: [Folded]) -> SearchHit? {
+    /// The hit when every term is in the title or the text, or is found by a hidden word (M7), else nil (nil too for no
+    /// terms). Pass each term folded once per query (`terms(query).map(Folded.init)`), and each scan's title, text and
+    /// words (joined by spaces) folded once per change.
+    package static func match(title: Folded, text: FoldedText, words: Folded = Folded(""), terms: [Folded])
+        -> SearchHit?
+    {
         var comparedLines = 0
-        return match(title: title, text: text, terms: terms, comparedLines: &comparedLines)
+        return match(title: title, text: text, words: words, terms: terms, comparedLines: &comparedLines)
     }
 
     /// `match`, counting the original lines it compares for the bold: at most one per hit (E3).
-    static func match(title: Folded, text: FoldedText, terms: [Folded], comparedLines: inout Int) -> SearchHit? {
+    static func match(
+        title: Folded, text: FoldedText, words: Folded = Folded(""), terms: [Folded], comparedLines: inout Int
+    ) -> SearchHit? {
         guard !terms.isEmpty else { return nil }
         var titleMatches = true
+        var titleHasATerm = false
         var earliest: Int?
         for term in terms {
             let offset = text.offset(of: term)
             if let offset { earliest = min(earliest ?? offset, offset) }
-            guard !title.contains(term) else { continue }
+            if title.contains(term) {
+                titleHasATerm = true
+                continue
+            }
             titleMatches = false
-            guard offset != nil else { return nil }
+            guard offset != nil || words.startsAPart(with: term) else { return nil }
         }
         // Found by the title alone: the first line, plain.
-        guard let earliest else { return SearchHit(titleMatches: titleMatches, snippet: text.firstLine, bold: []) }
+        guard let earliest else {
+            // Nothing the page or title says: the hidden words found it, and the row says so (M8).
+            let onlyWords = !titleHasATerm
+            return SearchHit(
+                titleMatches: titleMatches,
+                snippet: onlyWords ? "" : text.firstLine,
+                bold: [],
+                matchedOnlyHiddenWords: onlyWords)
+        }
         let line = text.line(containing: earliest)
         comparedLines += 1
         return SearchHit(titleMatches: titleMatches, snippet: line, bold: bold(terms, in: line))

@@ -283,6 +283,7 @@
     "Search reads the words on every scan. Check the spelling or try another word." : {},
     "%lld scans in %@ and %@ mention “%@”." : {},
     "%lld scans in other collections mention “%@”." : {},
+    "Matches %@" : {},
     "Saved to Photos" : {},
     "Saved to Files" : {},
     "Copied" : {},

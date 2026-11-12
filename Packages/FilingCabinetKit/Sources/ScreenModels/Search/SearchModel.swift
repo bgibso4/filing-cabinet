@@ -35,6 +35,8 @@ public final class SearchModel {
         let scan: ScanSummary
         let title: SearchMatch.Folded
         let text: SearchMatch.FoldedText
+        /// The hidden words, joined by spaces.
+        let words: SearchMatch.Folded
     }
 
     /// A query's matches in every collection, newest first, and the scans they were found among.
@@ -55,7 +57,9 @@ public final class SearchModel {
     }
 
     /// One scan's match against the folded terms.
-    package typealias Matching = (SearchMatch.Folded, SearchMatch.FoldedText, [SearchMatch.Folded]) -> SearchHit?
+    package typealias Matching = (
+        SearchMatch.Folded, SearchMatch.FoldedText, SearchMatch.Folded, [SearchMatch.Folded]
+    ) -> SearchHit?
 
     /// The field's text, as typed.
     public var query = ""
@@ -87,7 +91,7 @@ public final class SearchModel {
             clock: clock,
             history: history,
             analytics: analytics,
-            matching: { SearchMatch.match(title: $0, text: $1, terms: $2) })
+            matching: { SearchMatch.match(title: $0, text: $1, words: $2, terms: $3) })
     }
 
     /// `matching` is how one scan is matched, so a test can count the visits.
@@ -132,21 +136,25 @@ public final class SearchModel {
     /// The matches in the filter's collection, as rows.
     package var results: [SearchResult] {
         let day = today.day
+        let query = terms.joined(separator: " ")
         let signpost = ScreenModelsLog.signposter.beginInterval(
             "Search results", id: ScreenModelsLog.signposter.makeSignpostID())
         defer { ScreenModelsLog.signposter.endInterval("Search results", signpost) }
         return shown.map { entry, hit in
             let place = place(entry.scan, today: day)
+            let secondLine: SearchResult.SecondLine =
+                hit.matchedOnlyHiddenWords
+                ? .hiddenWord(query: query) : .snippet(hit.snippet, bold: hit.bold)
+            let said = hit.matchedOnlyHiddenWords ? SearchResult.matchesLine(query) : hit.snippet
             return SearchResult(
                 id: entry.scan.id,
                 title: entry.scan.title,
-                snippet: hit.snippet,
-                bold: hit.bold,
+                secondLine: secondLine,
                 collection: entry.scan.collection,
                 detail: place.detail,
                 accessibilityLabel: String(
                     localized:
-                        "\(entry.scan.title), \(CollectionText.name(entry.scan.collection)), \(place.spokenDay), \(hit.snippet)",
+                        "\(entry.scan.title), \(CollectionText.name(entry.scan.collection)), \(place.spokenDay), \(said)",
                     bundle: #bundle))
         }
     }
@@ -220,7 +228,7 @@ public final class SearchModel {
         let interval = ScreenModelsLog.signposter.beginInterval(
             "Search", id: ScreenModelsLog.signposter.makeSignpostID())
         let hits = index.entries.compactMap { entry in
-            matching(entry.title, entry.text, terms).map { (entry, $0) }
+            matching(entry.title, entry.text, entry.words, terms).map { (entry, $0) }
         }
         ScreenModelsLog.signposter.endInterval("Search", interval)
         lastSearch = LastSearch(query: query, scans: index.scans, hits: hits)
@@ -252,14 +260,17 @@ public final class SearchModel {
         let textRevision = library.searchTextRevision
         let visible = LibraryShelf(scans: scans, lifespans: lifespans, today: day, calendar: clock.calendar).visible
         let texts = library.searchTexts()
+        let allWords = library.searchWords()
         let previous = Dictionary(uniqueKeysWithValues: (index?.entries ?? []).map { ($0.scan.id, $0) })
         let entries = visible.map { scan in
             let text = texts[scan.id] ?? ""
+            let words = (allWords[scan.id] ?? []).joined(separator: " ")
             let old = previous[scan.id]
             return Entry(
                 scan: scan,
                 title: old.flatMap { $0.title.original == scan.title ? $0.title : nil } ?? .init(scan.title),
-                text: old.flatMap { $0.text.original == text ? $0.text : nil } ?? .init(text))
+                text: old.flatMap { $0.text.original == text ? $0.text : nil } ?? .init(text),
+                words: old.flatMap { $0.words.original == words ? $0.words : nil } ?? .init(words))
         }
         return Index(scans: scans, lifespans: lifespans, day: day, textRevision: textRevision, entries: entries)
     }

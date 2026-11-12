@@ -6,4 +6,15 @@ package struct SearchHit: Sendable, Equatable {
     package let snippet: String
     /// Every match in `snippet`, to show in bold, in order.
     package let bold: [Range<String.Index>]
+    /// Neither the title nor the page text has a word of the query: only hidden words found the scan (M8).
+    package let matchedOnlyHiddenWords: Bool
+
+    package init(
+        titleMatches: Bool, snippet: String, bold: [Range<String.Index>], matchedOnlyHiddenWords: Bool = false
+    ) {
+        self.titleMatches = titleMatches
+        self.snippet = snippet
+        self.bold = bold
+        self.matchedOnlyHiddenWords = matchedOnlyHiddenWords
+    }
 }

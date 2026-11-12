@@ -121,8 +121,12 @@ private struct Fixture {
     fixture.model.query = "renew"
     let result = try #require(fixture.model.results.first)
     #expect(result.title == "Lease 2026")
-    #expect(result.snippet == "Re: Lease renewal")
-    #expect(result.bold.map { String(result.snippet[$0]) } == ["renew"])
+    guard case .snippet(let snippet, let bold) = result.secondLine else {
+        Issue.record("expected a snippet, got \(result.secondLine)")
+        return
+    }
+    #expect(snippet == "Re: Lease renewal")
+    #expect(bold.map { String(snippet[$0]) } == ["renew"])
     #expect(result.collection == .documents)
     #expect(result.detail == "Documents · Oct 1")
     #expect(fixture.model.results.last?.detail == "Documents · Sep 7, 2025")
@@ -374,7 +378,7 @@ private struct Fixture {
     fixture.library.updateSearchText("CITY PHARMACY\nBatteries AA", for: receipt.id)
     #expect(heard.withLock { $0 })
     #expect(fixture.search("pharmacy") == [receipt.id])
-    #expect(fixture.model.results.first?.snippet == "CITY PHARMACY")
+    #expect(fixture.model.results.first?.accessibilityLabel.hasSuffix(", CITY PHARMACY") == true)
 }
 
 @MainActor
