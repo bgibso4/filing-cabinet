@@ -2,7 +2,7 @@ import Foundation
 import Understanding
 
 /// Renders the suggestion evaluation as Markdown: a summary, accuracy per collection, every title not acceptable, every
-/// missed search, the probes, then one row per case. Informs; it never decides anything.
+/// search not found, the probes, then one row per case. Informs; it never decides anything.
 struct EvaluationReport {
     enum Outcome {
         case ran(EvaluationRun)
@@ -31,7 +31,7 @@ struct EvaluationReport {
             .joined(separator: "\n") + "\n"
         case .ran(let run):
             (Self.header + Self.about(run) + summary(run) + perCollection(run) + titleMisses(run)
-                + missedSearches(run) + probes(run) + everyCase(run)).joined(separator: "\n") + "\n"
+                + unfoundSearches(run) + probes(run) + everyCase(run)).joined(separator: "\n") + "\n"
         }
     }
 
@@ -71,10 +71,26 @@ struct EvaluationReport {
         Tally(hits: results.count { $0.item.isAcceptableTitle($0.suggestion?.title) }, total: results.count)
     }
 
-    private static func searches(_ results: [EvaluationRun.Result]) -> Tally {
+    /// The headline: searches Search finds from the suggested title, the page text and the hidden words.
+    private static func foundBySearch(_ results: [EvaluationRun.Result]) -> Tally {
+        searches(results, missed: unfound)
+    }
+
+    /// Searches the hidden words alone find.
+    private static func wordsOnly(_ results: [EvaluationRun.Result]) -> Tally {
+        searches(results) { $0.item.missedSearches(in: $0.suggestion?.searchWords ?? []) }
+    }
+
+    private static func searches(
+        _ results: [EvaluationRun.Result], missed: (EvaluationRun.Result) -> [String]
+    ) -> Tally {
         let total = results.reduce(0) { $0 + $1.item.searches.count }
-        let missed = results.reduce(0) { $0 + $1.item.missedSearches(in: $1.suggestion?.searchWords ?? []).count }
-        return Tally(hits: total - missed, total: total)
+        return Tally(hits: total - results.reduce(0) { $0 + missed($1).count }, total: total)
+    }
+
+    private static func unfound(_ result: EvaluationRun.Result) -> [String] {
+        result.item.unfoundSearches(
+            title: result.suggestion?.title, text: result.pageText, words: result.suggestion?.searchWords ?? [])
     }
 
     // MARK: - Sections
@@ -83,15 +99,18 @@ struct EvaluationReport {
         "# Suggestion evaluation",
         "",
         "Written by `make eval-suggestions` (SuggestionEvaluationTests) from the made-up test set in "
-            + "`Tests/SuggestionEvaluationTests/Fixtures/`. A report, not a gate.",
+            + "`Tests/SuggestionEvaluationTests/Fixtures/`. A report, not a gate. The built-in collections' `about` "
+            + "texts were written knowing the test set's categories, so collection accuracy may read high.",
         "",
     ]
 
     private static func about(_ run: EvaluationRun) -> [String] {
         [
             "\(run.results.count) cases, read with today's text reader, then the on-device model "
-                + (run.includesImage ? "with page 1's image (`IMAGE=1`)." : "on the text alone (no image).")
-                + " Times are the model call alone, on this Mac: relative only.",
+                + (run.includesImage ? "with page 1's image (`IMAGE=1`)" : "on the text alone (no image)")
+                + (run.wordsPass ? ", then a second call for search words (`WORDS=1`)." : ", one call.")
+                + " Times are the whole suggestion (every model call, not the reading), on this Mac: relative only."
+                + " A call still running after 30 s is cancelled and counts as no suggestion.",
             "",
         ]
     }
@@ -105,6 +124,7 @@ struct EvaluationReport {
         }
         let times = run.results.filter { $0.suggestion != nil }.map(\.milliseconds)
         let none = run.results.count { $0.suggestion == nil }
+        let timedOut = run.results.count { $0.answer.timedOut }
         return [
             "## Summary", "", "| Measure | All | Tune | Holdout |", "|---|---|---|---|",
             row("Collection, all scans", Self.collections),
@@ -112,10 +132,11 @@ struct EvaluationReport {
             row("Collection, low-quality scans") { Self.collections($0, quality: "low") },
             row("Titles, acceptable", Self.acceptableTitles),
             row("Titles, exact", Self.titles),
-            row("Search recall", Self.searches),
+            row("Found by search", Self.foundBySearch),
+            row("Search recall, hidden words only", Self.wordsOnly),
             "",
             "| Measure | Result |", "|---|---|",
-            "| No suggestion | \(none) of \(run.results.count) |",
+            "| No suggestion | \(none) of \(run.results.count) (\(timedOut) timed out) |",
             "| Time per scan, p50 (answered) | \(Self.milliseconds(Self.percentile(0.5, of: times))) |",
             "| Time per scan, p95 (answered) | \(Self.milliseconds(Self.percentile(0.95, of: times))) |",
             "",
@@ -147,15 +168,15 @@ struct EvaluationReport {
             } + [""]
     }
 
-    private func missedSearches(_ run: EvaluationRun) -> [String] {
+    private func unfoundSearches(_ run: EvaluationRun) -> [String] {
         let rows = run.results.enumerated().compactMap { index, result -> String? in
-            let missed = result.item.missedSearches(in: result.suggestion?.searchWords ?? [])
+            let missed = Self.unfound(result)
             guard !missed.isEmpty else { return nil }
             return "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(missed.joined(separator: ", "))) | "
                 + "\(Self.cell(Self.words(result.suggestion))) |"
         }
         return [
-            "## Missed searches (\(rows.count) cases)", "", "| Case | Set | Missed | Words returned |",
+            "## Searches not found (\(rows.count) cases)", "", "| Case | Set | Not found | Words returned |",
             "|---|---|---|---|",
         ] + rows + [""]
     }
@@ -163,15 +184,15 @@ struct EvaluationReport {
     private func probes(_ run: EvaluationRun) -> [String] {
         ["## Probes", "", "| Probe | Handed in | Collection | Title | Time |", "|---|---|---|---|---|"]
             + run.probes.map { probe in
-                "| \(probe.name) | \(Self.cell(probe.detail)) | \(Self.collection(probe.suggestion)) | "
-                    + "\(Self.cell(probe.suggestion?.title ?? "")) | \(Self.milliseconds(probe.milliseconds)) |"
+                "| \(probe.name) | \(Self.cell(probe.detail)) | \(Self.collection(probe.answer)) | "
+                    + "\(Self.cell(probe.answer.suggestion?.title ?? "")) | \(Self.milliseconds(probe.answer.milliseconds)) |"
             } + [""]
     }
 
     private func everyCase(_ run: EvaluationRun) -> [String] {
         ["## Every case", "", "| Case | Expected | Got | Title | Words | Time |", "|---|---|---|---|---|---|"]
             + run.results.map { result in
-                "| \(result.item.id) | \(result.item.collection) | \(Self.collection(result.suggestion)) | "
+                "| \(result.item.id) | \(result.item.collection) | \(Self.collection(result.answer)) | "
                     + "\(Self.cell(result.suggestion?.title ?? "")) | "
                     + "\(Self.cell(result.suggestion?.searchWords.joined(separator: ", ") ?? "")) | "
                     + "\(Self.milliseconds(result.milliseconds)) |"
@@ -180,8 +201,10 @@ struct EvaluationReport {
 
     // MARK: - Cells
 
-    private static func collection(_ suggestion: ScanSuggestion?) -> String {
-        guard let suggestion else { return "(no suggestion)" }
+    private static func collection(_ answer: TimedSuggestion) -> String {
+        guard let suggestion = answer.suggestion else {
+            return answer.timedOut ? "(no suggestion, timed out)" : "(no suggestion)"
+        }
         return suggestion.collectionID ?? "(none)"
     }
 

@@ -8,7 +8,7 @@ struct EvaluationCase: Decodable, Sendable {
     let collection: String
     /// Every title that counts as right.
     let titles: [String]
-    /// Searches a person would type that never appear on the page: only the hidden words can find them.
+    /// Searches a person would type that are never printed on the page; the title or the hidden words can find them.
     let searches: [String]
     /// "clean" or "low".
     let quality: String
@@ -29,14 +29,18 @@ struct EvaluationCase: Decodable, Sendable {
     }
 
     /// Acceptable when, folded (case, accents, spacing, punctuation), one of `titles` holds the answer's words in a
-    /// row or the answer holds one of `titles`: "Passport" for "Sampleland Passport", or "Driver's License ·
-    /// Sample State" for "Driver's License". Whole words only, so "Pass" is not "Passport".
+    /// row or the answer holds one of `titles`: "Pharmacy receipt" for "City Pharmacy receipt", or "Driver's License ·
+    /// Sample State" for "Driver's License". Whole words only, so "Pass" is not "Passport". A one-word answer counts
+    /// only when it is a whole expected title, so a bare "Receipt" never does.
     func isAcceptableTitle(_ title: String?) -> Bool {
         guard let title else { return false }
-        let answer = " \(Self.loosened(title)) "
-        guard answer.contains(where: \.isLetter) else { return false }
+        let loosened = Self.loosened(title)
+        guard loosened.contains(where: \.isLetter) else { return false }
+        let answer = " \(loosened) "
+        let isOneWord = !loosened.contains(" ")
         return titles.contains { expected in
             let expected = " \(Self.loosened(expected)) "
+            if isOneWord { return answer == expected }
             return answer.contains(expected) || expected.contains(answer)
         }
     }
@@ -46,13 +50,27 @@ struct EvaluationCase: Decodable, Sendable {
         searches.filter { !Self.matches($0, words: words) }
     }
 
+    /// The searches Search wouldn't find from the title, the page text and the hidden words, in case order.
+    func unfoundSearches(title: String?, text: String, words: [String]) -> [String] {
+        searches.filter { !Self.isFound($0, title: title ?? "", text: text, words: words) }
+    }
+
     /// M7: a query term finds a hidden word when it starts the word, or any space-separated part of it, ignoring
     /// case and accents ("lic" finds "license" and "driver license"). A query of several terms needs every term
-    /// found, each by any word ("gas station" finds "gas" and "station").
+    /// found, each by any word ("gas station" finds "gas" and "station"). A query with no terms finds nothing.
     static func matches(_ query: String, words: [String]) -> Bool {
+        isFound(query, title: "", text: "", words: words)
+    }
+
+    /// What Search does: every term is found in the folded title or page text (Plan 4, substring) or by a hidden word
+    /// (M7, part prefix), each term by any of them. A query with no terms finds nothing.
+    static func isFound(_ query: String, title: String, text: String, words: [String]) -> Bool {
+        let terms = folded(query).split(whereSeparator: \.isWhitespace)
+        guard !terms.isEmpty else { return false }
+        let (title, text) = (folded(title), folded(text))
         let parts = words.flatMap { folded($0).split(whereSeparator: \.isWhitespace) }
-        return folded(query).split(whereSeparator: \.isWhitespace).allSatisfy { term in
-            parts.contains { $0.hasPrefix(term) }
+        return terms.allSatisfy { term in
+            title.contains(term) || text.contains(term) || parts.contains { $0.hasPrefix(term) }
         }
     }
 

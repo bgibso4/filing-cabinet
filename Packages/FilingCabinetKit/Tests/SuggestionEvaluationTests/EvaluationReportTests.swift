@@ -27,17 +27,33 @@ struct EvaluationReportTests {
         collection: String?,
         title: String? = "City Pharmacy",
         words: [String] = [],
+        text: String = "",
         milliseconds: Double = 100
     ) -> EvaluationRun.Result {
         EvaluationRun.Result(
             item: item,
-            suggestion: ScanSuggestion(title: title, collectionID: collection, searchWords: words),
-            milliseconds: milliseconds
+            pageText: text,
+            answer: TimedSuggestion(
+                suggestion: ScanSuggestion(title: title, collectionID: collection, searchWords: words),
+                milliseconds: milliseconds,
+                timedOut: false
+            )
+        )
+    }
+
+    private static func noSuggestion(_ item: EvaluationCase, milliseconds: Double = 5, timedOut: Bool = false)
+        -> EvaluationRun.Result
+    {
+        EvaluationRun.Result(
+            item: item,
+            pageText: "",
+            answer: TimedSuggestion(suggestion: nil, milliseconds: milliseconds, timedOut: timedOut)
         )
     }
 
     private static func report(_ results: [EvaluationRun.Result]) -> EvaluationReport {
-        EvaluationReport(outcome: .ran(EvaluationRun(includesImage: false, results: results, probes: [])))
+        EvaluationReport(
+            outcome: .ran(EvaluationRun(includesImage: false, wordsPass: false, results: results, probes: [])))
     }
 
     @Test func collectionAccuracyPerCollection() {
@@ -45,7 +61,7 @@ struct EvaluationReportTests {
             Self.result(Self.item("a"), collection: "receipts"),
             Self.result(Self.item("b"), collection: "documents"),
             Self.result(Self.item("c", collection: "wallet"), collection: "wallet"),
-            EvaluationRun.Result(item: Self.item("d", collection: "wallet"), suggestion: nil, milliseconds: 5),
+            Self.noSuggestion(Self.item("d", collection: "wallet")),
         ])
 
         #expect(report.collectionAccuracy(in: "receipts") == EvaluationReport.Tally(hits: 1, total: 2))
@@ -77,11 +93,71 @@ struct EvaluationReportTests {
         let item = Self.item("a", titles: ["Driver's License", "Sampleland Passport", "2026 W-2"])
 
         #expect(item.isAcceptableTitle("Drivers license · Sample State"))
-        #expect(item.isAcceptableTitle("Passport"))
+        #expect(item.isAcceptableTitle("Sampleland passport · 2026"))
         #expect(item.isAcceptableTitle("2026 W2 · Northwind"))
         #expect(!item.isAcceptableTitle("Pass"))
         #expect(!item.isAcceptableTitle("Library card"))
         #expect(!item.isAcceptableTitle(nil))
+    }
+
+    @Test func bareOneWordTitleIsAcceptableOnlyWhenExact() {
+        let item = Self.item("a", titles: ["City Pharmacy receipt", "Passport"])
+
+        #expect(!item.isAcceptableTitle("Receipt"))
+        #expect(!item.isAcceptableTitle("pharmacy"))
+        #expect(item.isAcceptableTitle("passport"))
+        #expect(item.isAcceptableTitle("Pharmacy receipt"))
+    }
+
+    @Test func emptyQueryNeverMatches() {
+        #expect(!EvaluationCase.matches("", words: ["receipt"]))
+        #expect(!EvaluationCase.matches("  ", words: ["receipt"]))
+        #expect(!EvaluationCase.isFound("", title: "Receipt", text: "receipt", words: ["receipt"]))
+        #expect(!EvaluationCase.isFound(" \n", title: "Receipt", text: "receipt", words: []))
+    }
+
+    @Test func searchFindsTermsInTitleTextOrWords() {
+        let title = "City Pharmacy receipt"
+        let text = "CITY PHARMACY\nIbuprofen 200 mg\nTOTAL 12.40"
+
+        // Substrings of the title or text, folded, like Plan 4's Search.
+        #expect(EvaluationCase.isFound("harmac", title: title, text: "", words: []))
+        #expect(EvaluationCase.isFound("ibuprofén", title: "", text: text, words: []))
+        // Words by M7's part prefix only: "rug" doesn't find "drugstore".
+        #expect(EvaluationCase.isFound("drug", title: "", text: "", words: ["drugstore"]))
+        #expect(!EvaluationCase.isFound("rug", title: "", text: "", words: ["drugstore"]))
+        // Each term may be found by a different source.
+        #expect(EvaluationCase.isFound("pharmacy medicine", title: title, text: text, words: ["medicine"]))
+        #expect(!EvaluationCase.isFound("pharmacy vet", title: title, text: text, words: ["medicine"]))
+    }
+
+    @Test func summaryShowsFoundBySearchAndWordsOnly() {
+        let markdown = Self.report([
+            Self.result(
+                Self.item("a", searches: ["pharmacy", "medicine", "drugstore"]),
+                collection: "receipts",
+                title: "City Pharmacy",
+                words: ["medicine"]
+            )
+        ]).markdown
+
+        #expect(markdown.contains("| Found by search | 2/3 (67%) |"))
+        #expect(markdown.contains("| Search recall, hidden words only | 1/3 (33%) |"))
+        #expect(markdown.contains("| a | tune | drugstore | medicine |"))
+    }
+
+    @Test func timedOutCallsAreCountedApart() {
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts"),
+            Self.noSuggestion(Self.item("b"), milliseconds: 30_000, timedOut: true),
+        ]).markdown
+
+        #expect(markdown.contains("| No suggestion | 1 of 2 (1 timed out) |"))
+        #expect(markdown.contains("| b | receipts | (no suggestion, timed out) |"))
+    }
+
+    @Test func headerSaysTheAboutTextsKnewTheCategories() {
+        #expect(Self.report([]).markdown.contains("written knowing the test set's categories"))
     }
 
     @Test func multiWordSearchNeedsEveryTerm() {
@@ -116,10 +192,10 @@ struct EvaluationReportTests {
         let markdown = Self.report([
             Self.result(Self.item("a"), collection: "receipts", milliseconds: 100),
             Self.result(Self.item("b"), collection: "receipts", milliseconds: 300),
-            EvaluationRun.Result(item: Self.item("c"), suggestion: nil, milliseconds: 9_000),
+            Self.noSuggestion(Self.item("c"), milliseconds: 9_000),
         ]).markdown
 
-        #expect(markdown.contains("| No suggestion | 1 of 3 |"))
+        #expect(markdown.contains("| No suggestion | 1 of 3 (0 timed out) |"))
         #expect(markdown.contains("p50 (answered) | 100 ms |"))
         #expect(markdown.contains("p95 (answered) | 300 ms |"))
     }
@@ -157,7 +233,7 @@ struct EvaluationReportTests {
 
         #expect(markdown.contains("| a | tune | City Pharmacy | Library card |"))
         #expect(markdown.contains("| a | tune | medicine | drugstore |"))
-        #expect(markdown.contains("| Search recall | 1/2 (50%) |"))
+        #expect(markdown.contains("| Search recall, hidden words only | 1/2 (50%) |"))
     }
 
     @Test func unavailableModelIsOneLineAndNoNumbers() {

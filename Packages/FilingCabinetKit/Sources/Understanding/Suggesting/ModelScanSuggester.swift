@@ -84,17 +84,37 @@ public struct ModelScanSuggester: ScanSuggester {
             UnderstandingLog.logger.info("Suggester: cancelled")
         case let error as LanguageModelError:
             // The case name alone ("guardrailViolation") is public; its details stay private.
-            let kind = Mirror(reflecting: error).children.first?.label ?? "unnamed"
             UnderstandingLog.logger.error(
-                "Suggester: model error \(kind, privacy: .public), \(String(describing: error), privacy: .private)")
+                """
+                Suggester: model error \(kind(of: error), privacy: .public), \
+                \(String(describing: error), privacy: .private)
+                """)
         case let error as SystemLanguageModel.Error:
             UnderstandingLog.logger.error("Suggester: model assets \(String(describing: error), privacy: .private)")
+        case let error as LanguageModelSession.Error:
+            UnderstandingLog.logger.error("Suggester: session \(String(describing: error), privacy: .public)")
         case let error as GeneratedContent.ParsingError:
             UnderstandingLog.logger.error(
                 "Suggester: answer not parsed \(String(describing: error.underlyingError), privacy: .private)")
         default:
             // Schema or session errors.
             UnderstandingLog.logger.error("Suggester: failed, \(String(describing: type(of: error)), privacy: .public)")
+        }
+    }
+
+    /// The case's name, written out so the log can show it publicly.
+    private static func kind(of error: LanguageModelError) -> String {
+        switch error {
+        case .contextSizeExceeded: "contextSizeExceeded"
+        case .rateLimited: "rateLimited"
+        case .guardrailViolation: "guardrailViolation"
+        case .refusal: "refusal"
+        case .unsupportedCapability: "unsupportedCapability"
+        case .unsupportedTranscriptContent: "unsupportedTranscriptContent"
+        case .unsupportedGenerationGuide: "unsupportedGenerationGuide"
+        case .unsupportedLanguageOrLocale: "unsupportedLanguageOrLocale"
+        case .timeout: "timeout"
+        @unknown default: "unknown"
         }
     }
 

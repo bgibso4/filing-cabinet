@@ -18,6 +18,9 @@ struct SuggestionEvaluationTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent()
 
+    /// Each `suggest` call is cancelled after this, so one hung model call can't stall the run.
+    private static let callLimit = Duration.seconds(30)
+
     /// The one custom collection the made-up cases use.
     private static let taxes = SuggestionCollection(
         id: "taxes", name: "Taxes", about: "Tax forms and records: W-2, 1099, returns, donation receipts")
@@ -25,10 +28,11 @@ struct SuggestionEvaluationTests {
     @Test(.enabled(if: environment["FC_EVAL_SUGGESTIONS"] == "1", "runs only in make eval-suggestions"))
     func writesTheReport() async throws {
         let includesImage = Self.environment["FC_EVAL_IMAGE"] == "1"
+        let wordsPass = false
         let suggester = ModelScanSuggester(includesImage: includesImage)
         let outcome: EvaluationReport.Outcome
         if suggester.availability == .available {
-            outcome = .ran(try await Self.run(suggester, includesImage: includesImage))
+            outcome = .ran(try await Self.run(suggester, includesImage: includesImage, wordsPass: wordsPass))
         } else {
             // Only ModelScanSuggester imports FoundationModels, so the system's own reason isn't read here.
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
@@ -42,7 +46,9 @@ struct SuggestionEvaluationTests {
     }
 
     /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test.
-    private static func run(_ suggester: ModelScanSuggester, includesImage: Bool) async throws -> EvaluationRun {
+    private static func run(_ suggester: ModelScanSuggester, includesImage: Bool, wordsPass: Bool) async throws
+        -> EvaluationRun
+    {
         let reader = ScanReader(reader: ReaderKind.text.makeReader())
         var results: [EvaluationRun.Result] = []
         var inputs: [SuggestionInput] = []
@@ -54,15 +60,16 @@ struct SuggestionEvaluationTests {
             }
             let input = SuggestionInput(
                 pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
-            let (suggestion, milliseconds) = await timed(suggester, input)
+            let answer = await TimedSuggestion.suggest(suggester, input, limit: callLimit)
             inputs.append(input)
-            results.append(EvaluationRun.Result(item: item, suggestion: suggestion, milliseconds: milliseconds))
+            results.append(
+                EvaluationRun.Result(item: item, pageText: texts.joined(separator: "\n"), answer: answer))
         }
         var probes = [await longScan(suggester, from: inputs)]
         if let index = results.firstIndex(where: { $0.item.collections != nil }) {
             probes.append(await manyCollections(suggester, case: results[index].item, input: inputs[index]))
         }
-        return EvaluationRun(includesImage: includesImage, results: results, probes: probes)
+        return EvaluationRun(includesImage: includesImage, wordsPass: wordsPass, results: results, probes: probes)
     }
 
     /// Review Focus 4: a 12-page scan, the 12 longest pages read put together, stays inside the context.
@@ -72,12 +79,10 @@ struct SuggestionEvaluationTests {
         let pages = Array(inputs.flatMap(\.pageTexts).sorted { $0.count > $1.count }.prefix(12))
         let input = SuggestionInput(
             pageTexts: pages, firstPage: inputs.first?.firstPage, collections: SuggestionCollection.builtIns)
-        let (suggestion, milliseconds) = await timed(suggester, input)
         return EvaluationRun.Probe(
             name: "12-page scan",
             detail: "the \(pages.count) longest pages, \(pages.reduce(0) { $0 + $1.count }) characters, the built-ins",
-            suggestion: suggestion,
-            milliseconds: milliseconds
+            answer: await TimedSuggestion.suggest(suggester, input, limit: callLimit)
         )
     }
 
@@ -99,14 +104,15 @@ struct SuggestionEvaluationTests {
             )
         }
         let collections = input.collections + extra
-        let (suggestion, milliseconds) = await timed(
+        let answer = await TimedSuggestion.suggest(
             suggester,
-            SuggestionInput(pageTexts: input.pageTexts, firstPage: input.firstPage, collections: collections))
+            SuggestionInput(pageTexts: input.pageTexts, firstPage: input.firstPage, collections: collections),
+            limit: callLimit
+        )
         return EvaluationRun.Probe(
             name: "\(collections.count) collections",
             detail: "\(item.id) (expected \(item.collection)) with \(extra.count) more made-up collections",
-            suggestion: suggestion,
-            milliseconds: milliseconds
+            answer: answer
         )
     }
 
@@ -115,16 +121,6 @@ struct SuggestionEvaluationTests {
         guard let ids else { return SuggestionCollection.builtIns }
         let known = SuggestionCollection.builtIns + [taxes]
         return try ids.map { id in try #require(known.first { $0.id == id }, "unknown collection \(id)") }
-    }
-
-    /// The answer and how long the model call took, in milliseconds.
-    private static func timed(_ suggester: ModelScanSuggester, _ input: SuggestionInput) async
-        -> (ScanSuggestion?, Double)
-    {
-        let start = ContinuousClock.now
-        let suggestion = await suggester.suggest(input)
-        let elapsed = ContinuousClock.now - start
-        return (suggestion, Double(elapsed.components.seconds) * 1000 + Double(elapsed.components.attoseconds) / 1e15)
     }
 
     private static func loadImage(_ file: String) throws -> CGImage {
