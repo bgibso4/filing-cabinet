@@ -78,3 +78,15 @@ import Testing
     // Newest first, so the store's order is the seed order.
     #expect(store.scans.map(\.favoriteOrder) == [0, 1, nil, nil])
 }
+
+@MainActor
+@Test func seededScansHaveHiddenWordsThatAreNeverReread() async throws {
+    let store = try makeStore()
+
+    try await LibrarySeed.seed(store, count: 5, clock: octoberTwelfth)
+
+    let words = store.searchWords()
+    #expect(words.values.allSatisfy { !$0.isEmpty })
+    #expect(words.values.contains(["ID", "card", "licence"]))
+    #expect(store.scansNeedingWords(version: 1_000).isEmpty)
+}

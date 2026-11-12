@@ -2,7 +2,7 @@ import Core
 import Foundation
 import SwiftData
 
-extension SchemaV3 {
+extension SchemaV4 {
     /// One saved scan in the store. Plain values only: every property has a default, nothing is unique and
     /// there are no relationships, so later schema changes stay lightweight. Never leaves the main context;
     /// hand out `summary` instead.
@@ -23,6 +23,10 @@ extension SchemaV3 {
         var trashedDay: Int?
         /// The scan's place in Favorites, lower first; nil when it isn't a favourite (M1). Only `ScanStore` sets it.
         var favoriteOrder: Int?
+        /// The model's hidden search words, newline-joined; empty until read (M1). Never shown to the user.
+        var searchWords: String = ""
+        /// The `ScanSuggestion.promptVersion` that made `searchWords`; nil when the model never read the scan (M1).
+        var searchWordsVersion: Int?
 
         init() {}
 
@@ -50,6 +54,12 @@ extension SchemaV3 {
                     overrideLastDay = nil
                 }
             }
+        }
+
+        /// `searchWords` as a list; an empty column is no words.
+        var searchWordList: [String] {
+            get { searchWords.isEmpty ? [] : searchWords.components(separatedBy: "\n") }
+            set { searchWords = newValue.joined(separator: "\n") }
         }
 
         /// Nil when `collectionKey` names no built-in collection.

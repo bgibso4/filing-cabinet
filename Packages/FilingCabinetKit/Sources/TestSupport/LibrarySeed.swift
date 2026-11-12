@@ -12,6 +12,18 @@ public enum LibrarySeed {
     /// Documents' scans have this many pages, so a seeded library has scans to swipe through.
     private static let documentPageCount = 3
 
+    /// The hidden words a seeded scan gets, by collection, so a UI test can search "ID" and find the wallet scans.
+    private static let hiddenWords: [BuiltInCollection: [String]] = [
+        .wallet: ["ID", "card", "licence"],
+        .receipts: ["receipt", "purchase", "store"],
+        .notes: ["note", "reminder", "memo"],
+        .documents: ["document", "letter", "contract"],
+        .throwaways: ["flyer", "coupon", "ticket"],
+    ]
+
+    /// Seeded words count as read by every prompt version, so the background pass never replaces them.
+    private static let seededWordsVersion = Int.max
+
     /// Saves `count` scans, cycling through the five collections in display order: one page each, more in Documents.
     /// Each scan's search text is the lines its pages show ("Sample scan 1", "Page 1"), so Search finds real words.
     /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
@@ -59,7 +71,9 @@ public enum LibrarySeed {
                     pages: pages,
                     // What reading the pages finds, as the reader joins it: each page's lines, a blank line between
                     // pages.
-                    searchText: pageLines.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
+                    searchText: pageLines.map { $0.joined(separator: "\n") }.joined(separator: "\n\n"),
+                    searchWords: hiddenWords[collection] ?? [],
+                    searchWordsVersion: seededWordsVersion
                 ))
             ids.append(id)
         }

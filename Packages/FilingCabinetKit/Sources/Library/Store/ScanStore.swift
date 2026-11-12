@@ -15,14 +15,14 @@ public final class ScanStore: ScanLibrary {
     public private(set) var scans: [ScanSummary] = []
     /// How long each collection keeps its scans: the defaults, changed by the stored `CollectionRecord`s.
     public private(set) var lifespans: CollectionLifespans = .defaults
-    public private(set) var searchTextRevision = 0
+    public internal(set) var searchTextRevision = 0
 
     /// Held so the main context keeps working: a context does not keep its container alive.
     @ObservationIgnored private let container: ModelContainer
     @ObservationIgnored private let files: PageFileStore
     /// Today, for Trash days. Internal, like the helpers the favourites extension uses.
     @ObservationIgnored let clock: AppClock
-    @ObservationIgnored private let persist: (ModelContext) throws -> Void
+    @ObservationIgnored let persist: (ModelContext) throws -> Void
     /// Every fetch of scan records goes through here.
     @ObservationIgnored let fetch: (ModelContext, FetchDescriptor<ScanRecord>) throws -> [ScanRecord]
     /// Scans whose files may be on disk before their record is: orphan cleanup must leave them alone.
@@ -60,7 +60,7 @@ public final class ScanStore: ScanLibrary {
     /// The SwiftData container for the library, migrating an older store to the current schema. A nil
     /// `storeURL` keeps the store in memory.
     public static func makeContainer(storeURL: URL?) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: SchemaV3.self)
+        let schema = Schema(versionedSchema: SchemaV4.self)
         let configuration =
             if let storeURL {
                 ModelConfiguration(schema: schema, url: storeURL)
@@ -91,6 +91,8 @@ public final class ScanStore: ScanLibrary {
         record.expiryOverride = draft.expiryOverride
         record.pageFileNames = fileNames
         record.searchText = draft.searchText ?? ""
+        record.searchWordList = draft.searchWords
+        record.searchWordsVersion = draft.searchWordsVersion
         context.insert(record)
         do {
             try persist(context)

@@ -5,7 +5,7 @@ import Library
 import TestSupport
 import Testing
 
-private func draft(scannedAt seconds: TimeInterval) -> ScanDraft {
+private func draft(scannedAt seconds: TimeInterval, searchWords: [String] = [], version: Int? = nil) -> ScanDraft {
     ScanDraft(
         id: ScanID(),
         title: "Corner Market",
@@ -13,7 +13,9 @@ private func draft(scannedAt seconds: TimeInterval) -> ScanDraft {
         scannedAt: Date(timeIntervalSince1970: seconds),
         expiryOverride: .lifespan(.week),
         pages: [SyntheticPages.page(lines: [], size: CGSize(width: 10, height: 10))],
-        searchText: nil
+        searchText: nil,
+        searchWords: searchWords,
+        searchWordsVersion: version
     )
 }
 
@@ -230,4 +232,32 @@ private func orders(_ scans: [ScanSummary], in library: FakeLibrary) -> [Int?] {
     #expect(fake.searchTexts() == [scan.id: "corner market"])
     #expect(fake.searchText(for: scan.id) == "corner market")
     #expect(fake.searchText(for: ScanID()) == nil)
+}
+
+@MainActor
+@Test func fakeLibraryKeepsADraftsWordsAndUpdatesThem() async throws {
+    let fake = FakeLibrary()
+    let library: any ScanLibrary = fake
+    let scan = draft(scannedAt: 1_791_720_000, searchWords: ["ID"], version: 1)
+    try await library.save(scan)
+    #expect(library.searchWords()[scan.id] == ["ID"])
+    #expect(library.scansNeedingWords(version: 1).isEmpty)
+    #expect(library.scansNeedingWords(version: 2) == [scan.id])
+
+    let before = library.searchTextRevision
+    library.updateSearchWords(["card", "licence"], version: 2, for: scan.id)
+
+    #expect(library.searchWords()[scan.id] == ["card", "licence"])
+    #expect(library.searchTextRevision == before + 1)
+    #expect(library.scansNeedingWords(version: 2).isEmpty)
+}
+
+@MainActor
+@Test func fakeLibraryIgnoresWordsForAMissingScan() {
+    let library: any ScanLibrary = FakeLibrary()
+
+    library.updateSearchWords(["ghost"], version: 1, for: ScanID())
+
+    #expect(library.searchTextRevision == 0)
+    #expect(library.searchWords().isEmpty)
 }

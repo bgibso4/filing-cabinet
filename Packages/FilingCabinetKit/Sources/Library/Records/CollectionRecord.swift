@@ -2,7 +2,7 @@ import Core
 import Foundation
 import SwiftData
 
-extension SchemaV3 {
+extension SchemaV4 {
     /// A collection's chosen lifespan. Plain values only, like `ScanRecord`.
     @Model
     final class CollectionRecord {
