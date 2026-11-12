@@ -4,13 +4,13 @@ import XCTest
 /// Issues the audit may ignore. Each entry needs a comment with the reason it is a false positive.
 @MainActor
 private let exemptions: [AuditExemption] = [
-    // At the largest text size the list is taller than the screen, and a row's label can start in the last point
-    // of the window (the audit found "Notes" at y 872.7 in an 874 pt window). That text is scrolled out of view
-    // and sits under the Scan button, so the audit samples background pixels and reports low contrast.
-    // Only contrast, only an element that begins within 2 pt of the window's bottom edge or below it.
+    // Home, the grids and Trash fade their content into the page background before the bottom bar, as the mocks draw
+    // it (#83), so text that begins in the fade is faded on purpose and the audit reports low contrast (CI found
+    // "All Scans" at y 756 and, at the largest text, "Notes" at y 848, in an 874 pt window). Only contrast, only an
+    // element that begins in the fade or below it (Ben, 2026-11-11; it covered the last 2 pt of the window before).
     AuditExemption(name: "deep-text-under-scan") { app, issue in
         guard issue.auditType == .contrast, let element = issue.element else { return false }
-        return element.frame.minY >= app.windows.firstMatch.frame.maxY - 2
+        return element.frame.minY >= app.windows.firstMatch.frame.maxY - BottomBarFade.height
     },
     // On iOS 27 the audit reports text as clipped on any floating sheet (any detent shorter than .large), even with the
     // text intact. Ben chose the mocks' compact camera-off sheet knowing this (2026-11-06). Only textClipped, and only
