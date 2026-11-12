@@ -13,7 +13,7 @@ struct ScanButton: View {
     var body: some View {
         PillButton(style: .filled, identifier: identifier, action: action) {
             HStack(spacing: Tokens.Spacing.s2) {
-                Image(systemName: "text.viewfinder")
+                Image(systemName: "text.viewfinder").imageScale(.large)
                 Text("Scan", bundle: #bundle)
             }
         }
