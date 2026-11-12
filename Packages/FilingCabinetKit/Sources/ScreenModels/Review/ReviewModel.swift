@@ -183,7 +183,8 @@ public final class ReviewModel: ExpiryEditing {
         guard let collection, !isSaving else { return nil }
         isSaving = true
         defer { isSaving = false }
-        // The save takes the title and collection as they are now; a suggestion still on its way is dropped.
+        // The save takes the title and collection as they are now; a suggestion still on its way is dropped and
+        // records no outcome (none of M10's fits a save that came first).
         suggestion.endWait()
         let task = reading ?? beginReading()
         let found = await readingResult(within: readingWaitLimit)
@@ -201,6 +202,7 @@ public final class ReviewModel: ExpiryEditing {
             try await library.save(draft)
         } catch {
             saveAlert = SaveAlert(error)
+            suggestion.saveFailed()
             analytics.send(.saveFailed(reason: error == .diskFull ? .diskFull : .writeFailed))
             return nil
         }
@@ -211,7 +213,8 @@ public final class ReviewModel: ExpiryEditing {
             suggestion.writeWords(for: id, reading: found, firstPage: firstPage, title: title, collection: collection)
         } else {
             // Only now does the record exist, so the text can't be dropped for want of one (M2). A cancelled reading
-            // stopped part-way; its partial text is not the scan's.
+            // stopped part-way; its partial text is not the scan's. Background time covers only the words call, not
+            // this wait for reading: if the app is left first, the background pass fills the words later.
             Task { [library, id, suggestion] in
                 let found = await task.value
                 guard !task.isCancelled else { return }
@@ -252,19 +255,6 @@ public final class ReviewModel: ExpiryEditing {
         analytics.send(.scanCancelled(stage: .review))
     }
 
-    // MARK: Suggestion
-
-    package var presentation: ReviewPresentation { suggestion.presentation }
-
-    /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
-    package var suggestionAnnouncement: String? { suggestion.announcement }
-
-    /// The card tapped or dragged open: the full sheet. A suggestion landing within the wait still fills the fields
-    /// the user hasn't touched.
-    package func openSheet() {
-        suggestion.openSheet()
-    }
-
     // MARK: Reading
 
     /// The review has appeared: starts the suggestion's wait limit, then reads the pages, once per page set, and
@@ -275,7 +265,8 @@ public final class ReviewModel: ExpiryEditing {
     }
 
     /// A finished rescan: its pages replace these, and they are read afresh (and suggested for, within the wait). A
-    /// title the user hasn't typed goes back to the fallback until the new pages are read.
+    /// title the user hasn't typed goes back to the fallback until the new pages are read; a collection the suggestion
+    /// picked goes back to unchosen.
     /// Ignored while saving, so the pages being saved are the ones read.
     package func replacePages(_ pages: [CGImage]) {
         guard !isSaving else { return }
@@ -284,10 +275,12 @@ public final class ReviewModel: ExpiryEditing {
         currentPage = 0
         isPageZoomed = false
         finishedReading = nil
-        if !isTitleEdited {
-            title = fallbackTitle
-            suggestion.titleWasReset()
-        }
+        // What the suggestion filled and the user hasn't touched goes: the title to the text rule, the collection to
+        // unchosen (a preselected one is never filled, so it stays).
+        let resetsCollection = !isCollectionChosen && suggestion.filled.collection != nil
+        if !isTitleEdited { title = fallbackTitle }
+        if resetsCollection { collection = input.preselected }
+        suggestion.forgetFilled(title: !isTitleEdited, collection: resetsCollection)
         beginReading()
     }
 
@@ -361,5 +354,20 @@ public final class ReviewModel: ExpiryEditing {
             if let found { return found }
         }
         return nil
+    }
+}
+
+// MARK: - Suggestion
+
+extension ReviewModel {
+    package var presentation: ReviewPresentation { suggestion.presentation }
+
+    /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
+    package var suggestionAnnouncement: String? { suggestion.announcement }
+
+    /// The card tapped or dragged open: the full sheet. A suggestion landing within the wait still fills the fields
+    /// the user hasn't touched.
+    package func openSheet() {
+        suggestion.openSheet()
     }
 }

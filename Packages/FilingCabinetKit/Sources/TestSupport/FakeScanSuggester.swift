@@ -11,6 +11,8 @@ public final class FakeScanSuggester: ScanSuggester {
         case fails
         /// Wait until cancelled, then return nil.
         case never
+        /// Never answer, even when cancelled: the model call once seen to hang for 10+ minutes.
+        case hangsIgnoringCancellation
     }
 
     /// Long enough that only a cancel ends `.never` in any test.
@@ -95,6 +97,10 @@ public final class FakeScanSuggester: ScanSuggester {
         case .never:
             // Ends early only when cancelled; either way there is no answer.
             try? await Task.sleep(for: forever)
+            return nil
+        case .hangsIgnoringCancellation:
+            // A task of its own isn't cancelled with the caller, and awaiting its value ignores cancellation.
+            await Task { try? await Task.sleep(for: forever) }.value
             return nil
         }
     }

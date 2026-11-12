@@ -92,3 +92,41 @@ func aHungCallIsCancelledAtItsLimit() async throws {
 
     #expect(library.scansNeedingWords(version: ScanSuggestion.promptVersion) == [id])
 }
+
+@Test(.timeLimit(.minutes(1)))
+func aCallIgnoringCancellationStillEndsAtTheLimit() async throws {
+    let library = FakeLibrary()
+    let id = try await savedScan(in: library)
+    let time = FakeBackgroundTime()
+    let writer = SearchWordsWriter(
+        suggester: FakeScanSuggester(filing: .fails, words: .hangsIgnoringCancellation),
+        library: library,
+        backgroundTime: time,
+        callLimit: .milliseconds(50)
+    )
+    let start = ContinuousClock.now
+
+    await writer.write(for: id, input: input, title: "City Pharmacy", collectionName: "Receipts").value
+
+    #expect(ContinuousClock.now - start < .seconds(5))
+    #expect(await ReviewHarness.eventually { time.ended == 1 })
+    #expect(library.scansNeedingWords(version: ScanSuggestion.promptVersion) == [id])
+}
+
+@Test(.timeLimit(.minutes(1)))
+func runningOutOfTimeEndsACallIgnoringCancellation() async throws {
+    let library = FakeLibrary()
+    let id = try await savedScan(in: library)
+    let time = FakeBackgroundTime()
+    let writer = SearchWordsWriter(
+        suggester: FakeScanSuggester(filing: .fails, words: .hangsIgnoringCancellation),
+        library: library,
+        backgroundTime: time
+    )
+
+    let task = writer.write(for: id, input: input, title: "City Pharmacy", collectionName: "Receipts")
+    time.expire()
+    await task.value
+
+    #expect(library.scansNeedingWords(version: ScanSuggestion.promptVersion) == [id])
+}

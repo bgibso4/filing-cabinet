@@ -53,7 +53,9 @@ public final class SearchWordsWriter {
         return task
     }
 
-    /// The call's words, or nil if it failed or `limit` passed first (the call is then cancelled).
+    /// The call's words, or nil if it failed, `limit` passed first, or the writer was cancelled. Unstructured tasks
+    /// race the call, so this returns at the limit even when the call ignores cancellation (a task group would wait
+    /// for it); the call is then cancelled and left to end on its own.
     private static func words(
         from suggester: any ScanSuggester,
         input: SuggestionInput,
@@ -61,16 +63,41 @@ public final class SearchWordsWriter {
         collectionName: String,
         limit: Duration
     ) async -> [String]? {
-        await withTaskGroup(of: [String]?.self) { group in
-            group.addTask { await suggester.suggestWords(input, title: title, collectionName: collectionName) }
-            group.addTask {
-                // A cancelled sleep only means the call ended first.
-                try? await Task.sleep(for: limit)
-                return nil
-            }
-            defer { group.cancelAll() }
-            guard let first = await group.next() else { return nil }
-            return first
+        let call = Task { await suggester.suggestWords(input, title: title, collectionName: collectionName) }
+        let timer = Task {
+            // A cancelled sleep means the call ended first or the writer was cancelled: either way, stop waiting.
+            try? await Task.sleep(for: limit)
         }
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                let first = FirstAnswer(continuation)
+                Task {
+                    let words = await call.value
+                    timer.cancel()
+                    first.give(words)
+                }
+                Task {
+                    await timer.value
+                    call.cancel()
+                    first.give(nil)
+                }
+            }
+        } onCancel: {
+            timer.cancel()
+        }
+    }
+}
+
+/// Resumes the race's continuation once, with whichever answer comes first.
+private final class FirstAnswer {
+    private var continuation: CheckedContinuation<[String]?, Never>?
+
+    init(_ continuation: CheckedContinuation<[String]?, Never>) {
+        self.continuation = continuation
+    }
+
+    func give(_ words: [String]?) {
+        continuation?.resume(returning: words)
+        continuation = nil
     }
 }

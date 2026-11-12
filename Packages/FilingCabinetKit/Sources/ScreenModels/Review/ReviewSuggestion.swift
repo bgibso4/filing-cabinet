@@ -33,8 +33,8 @@ final class ReviewSuggestion {
     @ObservationIgnored private var limit: Task<Void, Never>?
     /// True once the suggestion landed, the limit passed, or save or discard ended the wait.
     @ObservationIgnored private var isWaitOver = false
-    /// What the suggestion filled in, so save can tell whether the user changed it.
-    @ObservationIgnored private var filled = Fill()
+    /// What the suggestion filled in, so save can tell whether the user changed it and a rescan can undo it.
+    @ObservationIgnored private(set) var filled = Fill()
 
     init(
         suggester: any ScanSuggester,
@@ -89,9 +89,15 @@ final class ReviewSuggestion {
         }
     }
 
-    /// A rescan put the fallback back in the title, so the suggested title is no longer what it shows.
-    func titleWasReset() {
-        filled.title = nil
+    /// A rescan reset these fields, so what the suggestion put in them no longer shows.
+    func forgetFilled(title: Bool, collection: Bool) {
+        if title { filled.title = nil }
+        if collection { filled.collection = nil }
+    }
+
+    /// The save failed: a card still reading shows the sheet, so the pages and the alert aren't left on a spinner.
+    func saveFailed() {
+        if presentation == .card(isReading: true) { presentation = .sheet }
     }
 
     /// No more suggestions this review: saved or discarded.

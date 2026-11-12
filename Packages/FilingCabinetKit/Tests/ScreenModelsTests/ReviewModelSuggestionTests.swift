@@ -317,3 +317,60 @@ func discardStopsTheWait() async throws {
 
     #expect(suggestionEvents(harness).isEmpty)
 }
+
+@Test(.timeLimit(.minutes(1)))
+func failedSaveFromAReadingCardShowsTheSheet() async {
+    let harness = review(filing: .never, preselected: .receipts)
+    await harness.model.startReading()
+    harness.library.failNextSave = .diskFull
+
+    #expect(await harness.model.save() == nil)
+
+    #expect(harness.model.saveAlert != nil)
+    #expect(harness.model.presentation == .sheet)
+}
+
+@Test(.timeLimit(.minutes(1)))
+func rescanAfterLandingResetsSuggestedFields() async {
+    let harness = review(reads: [.page(ReviewHarness.pharmacy), .page(ReviewHarness.market)])
+    await startAndSettle(harness)
+    #expect(harness.model.collection == .receipts)
+
+    harness.model.replacePages([ReviewHarness.page2])
+    await harness.model.startReading()
+
+    // The wait is over, so the new pages get the text rule and the collection is unchosen again.
+    #expect(harness.model.title == "Corner Market")
+    #expect(harness.model.collection == nil)
+    #expect(harness.suggester.filingCalls.count == 1)
+}
+
+@Test(.timeLimit(.minutes(1)))
+func rescanKeepsWhatTheUserChose() async {
+    let harness = review(
+        filing: .arrives(FakeScanSuggester.cityPharmacy(), after: .milliseconds(50)),
+        reads: [.page(ReviewHarness.pharmacy), .page(ReviewHarness.market)]
+    )
+    harness.model.choose(.documents)
+    await startAndSettle(harness)
+    #expect(harness.model.title == "City Pharmacy receipt")
+
+    harness.model.editTitle("Allergy pills")
+    harness.model.replacePages([ReviewHarness.page2])
+    await harness.model.startReading()
+
+    #expect(harness.model.title == "Allergy pills")
+    #expect(harness.model.collection == .documents)
+}
+
+@Test(.timeLimit(.minutes(1)))
+func rescanFromInsideACollectionKeepsIt() async {
+    let harness = review(preselected: .wallet, reads: [.page(ReviewHarness.pharmacy), .page(ReviewHarness.market)])
+    await startAndSettle(harness)
+
+    harness.model.replacePages([ReviewHarness.page2])
+    await harness.model.startReading()
+
+    #expect(harness.model.collection == .wallet)
+    #expect(harness.model.title == "Corner Market")
+}
