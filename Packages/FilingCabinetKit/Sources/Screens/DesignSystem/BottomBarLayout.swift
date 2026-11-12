@@ -1,3 +1,4 @@
+import Core
 import SwiftUI
 
 /// A screen's scrolling content with a bar of buttons at the bottom centre (Scan, Empty Trash). The bar floats over the
@@ -9,11 +10,6 @@ import SwiftUI
 struct BottomBarLayout<Content: View, Bar: View>: View {
     @ViewBuilder let content: Content
     @ViewBuilder let bar: Bar
-
-    // Home.dc.html line 191 (also Collection.dc.html line 125, Trash.dc.html line 118): the fade is 128 pt from the
-    // screen's bottom edge, solid page background for its lower 38%, then clear.
-    private static var fadeHeight: CGFloat { 128 }
-    private static var fadeSolidFraction: CGFloat { 0.38 }
 
     @State private var barHeight: CGFloat = 0
 
@@ -44,12 +40,12 @@ struct BottomBarLayout<Content: View, Bar: View>: View {
             LinearGradient(
                 stops: [
                     .init(color: .black, location: 0),
-                    .init(color: .clear, location: 1 - Self.fadeSolidFraction),
+                    .init(color: .clear, location: 1 - BottomBarFade.solidFraction),
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: Self.fadeHeight)
+            .frame(height: BottomBarFade.height)
         }
         .ignoresSafeArea()
     }
