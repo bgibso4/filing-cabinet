@@ -16,6 +16,7 @@ import CoreText
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
+import Vision
 
 // MARK: - Table types
 
@@ -458,7 +459,7 @@ reuse(
 reuse(
     "wallet-temp-license", "wallet", ["scan-templicense.jpg"],
     titles: ["Temporary Driver License", "Temp Driver License", "Temporary License"],
-    searches: ["driving", "DMV", "ID"])
+    searches: ["DMV", "identity", "motorist"])
 reuse(
     "wallet-passport", "wallet", ["scan-passport.jpg"],
     titles: ["Passport", "Sampleland Passport"], searches: ["travel", "ID", "international"])
@@ -468,7 +469,7 @@ reuse(
 reuse(
     "wallet-coworking-badge", "wallet", ["scan-badge-tall.jpg"],
     titles: ["Riverside Coworking Badge", "Coworking Membership", "Riverside Coworking"],
-    searches: ["desk", "office", "membership"])
+    searches: ["office", "membership", "workspace"])
 reuse(
     "wallet-gym-card", "wallet", ["scan-gym.jpg"],
     titles: ["Ironworks Fitness Card", "Gym Membership", "Ironworks Fitness Club"],
@@ -482,7 +483,7 @@ reuse(
     titles: ["Anytown Public Library Card", "Library Card"], searches: ["books", "borrow", "reading"])
 reuse(
     "wallet-vaccination-card", "wallet", ["scan-vaccine.jpg"],
-    titles: ["Immunization Record", "Vaccination Card", "Vaccine Record"], searches: ["shots", "health", "clinic"])
+    titles: ["Immunization Record", "Vaccination Card", "Vaccine Record"], searches: ["shots", "immunity", "medical"])
 gen(
     "wallet-license-northern-plains", "wallet",
     Doc(
@@ -516,7 +517,7 @@ gen(
             ["Name", "MORGAN, ALEX"], ["ID no.", "W0000000"], ["Issued", "00/00/0000"], ["Expires", "00/00/0000"],
         ],
         foot: ["Sample card, not valid"], tint: 3),
-    titles: ["Westmoor State ID", "State ID Card", "Identification Card"], searches: ["ID", "DMV", "identity"])
+    titles: ["Westmoor State ID", "State ID Card", "Identification Card"], searches: ["DMV", "identity", "photo"])
 gen(
     "wallet-business-card-chen", "wallet",
     Doc(
@@ -524,7 +525,7 @@ gen(
         head: ["Priya Nair", "Landscape Architect", "STUDIO FERN"],
         rows: [["priya@studiofern.example"], ["000 000 0000"], ["12 Sample Lane, Anytown"]], tint: 1),
     titles: ["Priya Nair Business Card", "Studio Fern Business Card", "Priya Nair, Studio Fern"],
-    searches: ["contact", "designer", "architect"])
+    searches: ["contact", "designer", "garden"])
 gen(
     "wallet-business-card-ortiz", "wallet",
     Doc(
@@ -563,7 +564,7 @@ gen(
         ],
         foot: ["Sample card, not valid"], tint: 4),
     titles: ["Granite State Auto Insurance Card", "Auto Insurance Card", "Proof of Insurance"],
-    searches: ["car", "vehicle", "policy"], low: .contrast)
+    searches: ["coverage", "driver", "liability"], low: .contrast)
 
 // -- Receipts (8 reused, 8 drawn, 3 low)
 reuse(
@@ -575,7 +576,7 @@ reuse(
     titles: ["Bluebird Cafe Receipt", "Bluebird Café", "Bluebird Cafe"], searches: ["coffee", "breakfast", "lunch"])
 reuse(
     "receipts-harbor-gas", "receipts", ["scan-r-gas.jpg"],
-    titles: ["Harbor Gas Receipt", "Harbor Gas", "Gas Station Receipt"], searches: ["fuel", "gasoline", "car"])
+    titles: ["Harbor Gas Receipt", "Harbor Gas", "Gas Station Receipt"], searches: ["fuel", "gasoline", "petrol"])
 reuse(
     "receipts-city-pharmacy", "receipts", ["scan-r-pharmacy.jpg"],
     titles: ["City Pharmacy Receipt", "City Pharmacy"], searches: ["medicine", "drugstore", "prescription"])
@@ -585,7 +586,7 @@ reuse(
 reuse(
     "receipts-page-and-spine", "receipts", ["scan-r-books.jpg"],
     titles: ["Page & Spine Booksellers Receipt", "Page & Spine Receipt", "Page & Spine Booksellers"],
-    searches: ["books", "reading", "novel"])
+    searches: ["reading", "novel", "bookstore"])
 reuse(
     "receipts-pizzeria-sole", "receipts", ["scan-r-pizza.jpg"],
     titles: ["Pizzeria Sole Receipt", "Pizzeria Sole", "Pizzeria Sole Dinner"],
@@ -593,7 +594,7 @@ reuse(
 reuse(
     "receipts-tallow-electric", "receipts", ["scan-receipt.jpg"],
     titles: ["Tallow Electric Receipt", "Tallow Electric Laptop Purchase", "Laptop Receipt"],
-    searches: ["computer", "electronics", "warranty"])
+    searches: ["computer", "electronics", "purchase"])
 gen(
     "receipts-greenway-grocery", "receipts",
     receipt(
@@ -617,7 +618,7 @@ gen(
     receipt(
         ["LAKESIDE FUEL #12", "PUMP 07 PREMIUM", "11.204 GAL @ 3.899", "10/28/2026  06:55"],
         [["Fuel", "43.69"], ["Car wash", "8.00"]], total: "51.69"),
-    titles: ["Lakeside Fuel Receipt", "Lakeside Fuel", "Gas Station Receipt"], searches: ["gas", "gasoline", "car"],
+    titles: ["Lakeside Fuel Receipt", "Lakeside Fuel", "Gas Station Receipt"], searches: ["gas", "gasoline", "vehicle"],
     low: .rotate(5))
 gen(
     "receipts-trattoria-luna", "receipts",
@@ -642,7 +643,7 @@ gen(
         ],
         foot: ["Sample order, not a real purchase"], tint: 0),
     titles: ["Parcelhouse Order Confirmation", "Parcelhouse Online Order", "Online Order Receipt"],
-    searches: ["amazon", "shopping", "delivery"], low: .jpeg)
+    searches: ["shopping", "amazon", "package"], low: .jpeg)
 gen(
     "receipts-parking-garage", "receipts",
     receipt(
@@ -650,7 +651,7 @@ gen(
         [["Parking 5h 34m", "18.00"], ["Event rate", "-4.00"]], total: "14.00",
         foot: ["Paid by card", "Lost ticket fee $40"]),
     titles: ["City Center Garage Receipt", "Parking Garage Receipt", "Parking Receipt"],
-    searches: ["parking", "car", "downtown"])
+    searches: ["downtown", "vehicle", "hourly"])
 gen(
     "receipts-bakery", "receipts",
     receipt(
@@ -679,7 +680,7 @@ gen(
         ],
         foot: ["Sample receipt, not real"], tint: 1),
     titles: ["Riverbend Food Bank Donation Receipt", "Charity Donation Receipt", "Food Bank Donation"],
-    searches: ["charity", "taxes", "giving"])
+    searches: ["giving", "deduction", "nonprofit"])
 gen(
     "receipts-garden-center", "receipts",
     receipt(
@@ -687,7 +688,7 @@ gen(
         [["Potting soil 20L", "11.99"], ["Basil plant", "3.99"], ["Terracotta pot", "8.49"], ["Trowel", "12.00"]],
         total: "36.47"),
     titles: ["Fern & Field Garden Center Receipt", "Garden Center Receipt", "Fern & Field Receipt"],
-    searches: ["plants", "gardening", "soil"], low: .contrast)
+    searches: ["plants", "gardening", "dirt"], low: .contrast)
 
 // -- Notes (2 reused, 14 drawn, 4 low)
 reuse(
@@ -696,7 +697,7 @@ reuse(
 reuse(
     "notes-landlord-call", "notes", ["scan-note-call.jpg"],
     titles: ["Call with Landlord", "Landlord Call Notes", "Landlord Call"],
-    searches: ["apartment", "heating", "renewal"])
+    searches: ["apartment", "maintenance", "lease"])
 gen(
     "notes-history-class", "notes",
     Doc(
@@ -709,7 +710,7 @@ gen(
             ["essay due Fri, 1200 words"],
         ]),
     titles: ["Hist 101 Industrial Revolution", "Industrial Revolution Notes", "History 101 Notes"],
-    searches: ["history", "class", "lecture"])
+    searches: ["history", "lecture", "college"])
 gen(
     "notes-math-class", "notes",
     Doc(
@@ -796,7 +797,7 @@ gen(
             ["Marcus, Bell & Sons"], ["leak under kitchen sink"], ["quote: $180 + parts"], ["can come Tues 9-11"],
             ["bring: shut-off valve key"],
         ]),
-    titles: ["Plumber Call Notes", "Call with Plumber", "Plumber Call"], searches: ["repair", "leak", "kitchen"])
+    titles: ["Plumber Call Notes", "Call with Plumber", "Plumber Call"], searches: ["repair", "plumbing", "contractor"])
 gen(
     "notes-call-bank", "notes",
     Doc(
@@ -806,7 +807,7 @@ gen(
             ["ref #: 0000-00"], ["spoke to: Rosa"], ["disputed charge $64.20"], ["credit in 3-5 days"],
             ["new card arrives next week"],
         ]),
-    titles: ["Call with Bank", "Bank Call Notes", "Bank Dispute Call"], searches: ["dispute", "card", "money"],
+    titles: ["Call with Bank", "Bank Call Notes", "Bank Dispute Call"], searches: ["money", "fraud", "chargeback"],
     low: .contrast)
 gen(
     "notes-gift-ideas", "notes",
@@ -838,21 +839,21 @@ gen(
             ["quote p.84: \"clarity about what"], ["matters provides clarity about"], ["what does not\""],
         ]),
     titles: ["Deep Work Reading Notes", "Book Notes", "Reading Notes - Deep Work"],
-    searches: ["book", "productivity", "focus"])
+    searches: ["book", "productivity", "concentration"])
 
 // -- Documents (4 reused cases, 13 drawn, 4 low)
 reuse(
     "documents-lease-letter", "documents", ["scan-lease.jpg"],
     titles: ["Lease Renewal Letter", "Harlow Property Management Lease Letter", "Lease Renewal Offer"],
-    searches: ["apartment", "rent", "landlord"])
+    searches: ["housing", "tenancy", "renting"])
 reuse(
     "documents-lease-renewal", "documents", ["scan-lease-p2.jpg", "scan-lease-p3.jpg"],
     titles: ["Lease Renewal Agreement", "Lease Renewal Agreement Unit 4B", "Apartment Lease Renewal"],
-    searches: ["apartment", "rent", "tenant"])
+    searches: ["housing", "tenancy", "contract"])
 reuse(
     "documents-vehicle-registration", "documents", ["scan-registration.jpg"],
     titles: ["Vehicle Registration", "Certificate of Vehicle Registration", "Northwind Compass Registration"],
-    searches: ["car", "DMV", "plate"])
+    searches: ["car", "automobile", "tags"])
 gen(
     "documents-w2", "documents",
     Doc(
@@ -871,7 +872,7 @@ gen(
         ],
         foot: ["Department of the Treasury - Internal Revenue Service (sample)"], tint: 4),
     titles: ["2026 W-2", "W-2 Wage and Tax Statement 2026", "Northwind Labs W-2"],
-    searches: ["taxes", "salary", "employer", "income"])
+    searches: ["taxes", "salary", "paycheck", "earnings"])
 gen(
     "documents-1099-nec", "documents",
     Doc(
@@ -887,7 +888,7 @@ gen(
         ],
         foot: ["Report this income on your tax return (sample)"], tint: 4),
     titles: ["2026 1099-NEC", "1099-NEC Freelance Income", "Fernwood Studios 1099-NEC"],
-    searches: ["taxes", "freelance", "contractor", "income"])
+    searches: ["taxes", "freelance", "contractor", "earnings"])
 gen(
     "documents-1099-int", "documents",
     Doc(
@@ -900,7 +901,7 @@ gen(
         ],
         foot: ["Account 0000, interest paid 2026 (sample)"], tint: 4),
     titles: ["2026 1099-INT", "1099-INT Interest Income", "Northfield Savings 1099-INT"],
-    searches: ["taxes", "interest", "savings", "income"], low: .jpeg)
+    searches: ["taxes", "earnings", "yield"], low: .jpeg)
 gen(
     "documents-electric-bill", "documents",
     Doc(
@@ -925,7 +926,7 @@ gen(
         ],
         foot: ["Sample bill, not a real account"], tint: 6),
     titles: ["Anytown Water Works Bill", "Water Bill", "Water Bill Q3 2026"],
-    searches: ["utilities", "sewer", "household"], low: .blur(2.5))
+    searches: ["utilities", "household", "wastewater"], low: .blur(2.5))
 gen(
     "documents-bank-statement", "documents",
     Doc(
@@ -939,7 +940,7 @@ gen(
         ],
         foot: ["Sample statement, not a real account"], tint: 0),
     titles: ["Northfield Savings Bank Statement October 2026", "Bank Statement October 2026", "Checking Statement"],
-    searches: ["money", "account", "balance"])
+    searches: ["money", "ledger", "finances"])
 gen(
     "documents-bank-statement-low", "documents",
     Doc(
@@ -951,7 +952,7 @@ gen(
         ],
         foot: ["Sample statement, not a real account"], tint: 6),
     titles: ["Harbor Credit Union Statement September 2026", "Savings Statement", "Bank Statement September 2026"],
-    searches: ["money", "savings", "account"], low: .rotate(7))
+    searches: ["money", "finances", "reserves"], low: .rotate(7))
 gen(
     "documents-warranty", "documents",
     Doc(
@@ -966,7 +967,7 @@ gen(
         ],
         foot: ["Sample warranty, not real"], tint: 3),
     titles: ["Tallow Electric Laptop Warranty", "Laptop Warranty", "Limited Warranty Certificate"],
-    searches: ["laptop", "coverage", "protection"])
+    searches: ["computer", "protection", "guarantee"])
 gen(
     "documents-school-form", "documents",
     Doc(
@@ -980,7 +981,7 @@ gen(
         ],
         foot: ["Sample form, not real"], tint: 5),
     titles: ["Field Trip Permission Form", "Maple Grove Elementary Permission Slip", "School Permission Form"],
-    searches: ["school", "child", "permission"], low: .shadow)
+    searches: ["school", "child", "consent"], low: .shadow)
 gen(
     "documents-hoa-letter", "documents",
     Doc(
@@ -993,7 +994,7 @@ gen(
         ],
         foot: ["Sample letter, not real"], tint: 1),
     titles: ["Cedar Court HOA Letter", "HOA Notice", "Homeowners Association Letter"],
-    searches: ["neighborhood", "dues", "community"])
+    searches: ["neighborhood", "housing", "fees"])
 gen(
     "documents-insurance-letter", "documents",
     Doc(
@@ -1006,7 +1007,7 @@ gen(
         ],
         foot: ["Sample letter, not real"], tint: 4),
     titles: ["Granite State Auto Renewal Notice", "Auto Insurance Renewal Letter", "Policy Renewal Notice"],
-    searches: ["car", "premium", "coverage"], low: .contrast)
+    searches: ["car", "vehicle", "insurer"], low: .contrast)
 gen(
     "documents-medical-bill", "documents",
     Doc(
@@ -1019,7 +1020,7 @@ gen(
         ],
         foot: ["Sample bill, not real"], tint: 7),
     titles: ["Anytown Community Health Statement", "Medical Bill", "Doctor Visit Bill"],
-    searches: ["doctor", "health", "clinic"])
+    searches: ["doctor", "medical", "healthcare"])
 gen(
     "documents-property-tax", "documents",
     Doc(
@@ -1041,13 +1042,13 @@ reuse(
 reuse(
     "throwaways-park-and-go", "throwaways", ["scan-throw-park.jpg"],
     titles: ["Park & Go Garage Ticket", "Parking Garage Ticket", "Park & Go Ticket"],
-    searches: ["parking", "car", "garage"])
+    searches: ["parking", "car", "stub"])
 reuse(
     "throwaways-valet", "throwaways", ["scan-throw-valet.jpg"],
-    titles: ["Valet Ticket 087", "Valet Ticket", "Valet 087"], searches: ["parking", "car", "ticket"])
+    titles: ["Valet Ticket 087", "Valet Ticket", "Valet 087"], searches: ["parking", "ticket", "vehicle"])
 reuse(
     "throwaways-wifi-note", "throwaways", ["scan-wifi.jpg"],
-    titles: ["Wifi Password", "Maple Wifi Note", "Wifi - New Place"], searches: ["internet", "password", "router"])
+    titles: ["Wifi Password", "Maple Wifi Note", "Wifi - New Place"], searches: ["internet", "password", "modem"])
 gen(
     "throwaways-coat-check-2", "throwaways",
     Doc(style: .stub, head: ["COAT CHECK", "058"], foot: ["Not responsible for valuables"], tint: 0, height: 300),
@@ -1056,41 +1057,41 @@ gen(
 gen(
     "throwaways-parking-stub", "throwaways",
     Doc(style: .stub, head: ["LOT B", "B-214"], foot: ["IN 08:41", "KEEP THIS STUB"], tint: 3),
-    titles: ["Lot B Parking Stub", "Parking Stub", "Parking Ticket B-214"], searches: ["parking", "car", "lot"])
+    titles: ["Lot B Parking Stub", "Parking Stub", "Parking Ticket B-214"], searches: ["parking", "car", "vehicle"])
 gen(
     "throwaways-parking-stub-2", "throwaways",
     Doc(style: .stub, head: ["RIVERFRONT PARKING", "0731"], foot: ["IN 17:20", "LEVEL 1"], tint: 6),
-    titles: ["Riverfront Parking Stub", "Parking Stub", "Parking Ticket 0731"], searches: ["parking", "car", "garage"],
+    titles: ["Riverfront Parking Stub", "Parking Stub", "Parking Ticket 0731"], searches: ["car", "garage", "vehicle"],
     low: .shadow)
 gen(
     "throwaways-valet-2", "throwaways",
     Doc(style: .stub, head: ["VALET", "212"], foot: ["The Alder Hotel", "PRESENT TO RETRIEVE CAR"], tint: 7),
-    titles: ["Valet Ticket 212", "Alder Hotel Valet Ticket", "Valet Ticket"], searches: ["parking", "car", "hotel"],
+    titles: ["Valet Ticket 212", "Alder Hotel Valet Ticket", "Valet Ticket"], searches: ["parking", "vehicle", "lodging"],
     low: .rotate(5))
 gen(
     "throwaways-wifi-slip", "throwaways",
     Doc(style: .stub, head: ["GUEST WIFI", "4821"], foot: ["Network: Cafe-Guest", "Code valid 24 hours"], tint: 1),
-    titles: ["Guest Wifi Code", "Wifi Slip", "Cafe Guest Wifi"], searches: ["internet", "password", "network"])
+    titles: ["Guest Wifi Code", "Wifi Slip", "Cafe Guest Wifi"], searches: ["internet", "password", "connection"])
 gen(
     "throwaways-raffle", "throwaways",
     Doc(
         style: .stub, head: ["RAFFLE TICKET", "003917"], foot: ["Drawing at 8 pm", "Must be present to win"], tint: 3,
         height: 300),
-    titles: ["Raffle Ticket 003917", "Raffle Ticket", "Raffle 003917"], searches: ["lottery", "drawing", "prize"])
+    titles: ["Raffle Ticket 003917", "Raffle Ticket", "Raffle 003917"], searches: ["lottery", "prize", "giveaway"])
 gen(
     "throwaways-raffle-2", "throwaways",
     Doc(style: .stub, head: ["50/50 RAFFLE", "114502"], foot: ["Maple Grove school fair"], tint: 5, height: 300),
     titles: ["50/50 Raffle Ticket", "Raffle Ticket 114502", "School Fair Raffle Ticket"],
-    searches: ["lottery", "fair", "prize"], low: .contrast)
+    searches: ["lottery", "prize", "giveaway"], low: .contrast)
 gen(
     "throwaways-deli-number", "throwaways",
     Doc(style: .stub, head: ["NOW SERVING", "47"], foot: ["Deli counter"], tint: 3, height: 260),
-    titles: ["Deli Number 47", "Deli Ticket", "Deli Counter Number"], searches: ["queue", "counter", "grocery"])
+    titles: ["Deli Number 47", "Deli Ticket", "Deli Counter Number"], searches: ["queue", "grocery", "waiting"])
 gen(
     "throwaways-deli-number-2", "throwaways",
     Doc(style: .stub, head: ["TAKE A NUMBER", "09"], foot: ["Bakery counter"], tint: 0, height: 260),
     titles: ["Bakery Number 09", "Take a Number Ticket", "Bakery Counter Number"],
-    searches: ["queue", "counter", "bakery"])
+    searches: ["queue", "waiting", "bread"])
 gen(
     "throwaways-wristband", "throwaways",
     Doc(
@@ -1106,7 +1107,7 @@ gen(
     "throwaways-bag-check", "throwaways",
     Doc(style: .stub, head: ["BAG CHECK", "T-33"], foot: ["Riverside Museum"], tint: 4, height: 280),
     titles: ["Bag Check T-33", "Museum Bag Check Ticket", "Bag Check Ticket"],
-    searches: ["museum", "luggage", "ticket"])
+    searches: ["luggage", "ticket", "backpack"])
 
 // -- Custom collection "Taxes" (5 cases, drawn scans reused from above)
 func custom(_ id: String, from source: String, titles: [String], searches: [String]) {
@@ -1119,23 +1120,23 @@ func custom(_ id: String, from source: String, titles: [String], searches: [Stri
 custom(
     "custom-taxes-w2", from: "documents-w2",
     titles: ["2026 W-2", "W-2 Wage and Tax Statement 2026", "Northwind Labs W-2"],
-    searches: ["salary", "employer", "income"])
+    searches: ["salary", "paycheck", "earnings"])
 custom(
     "custom-taxes-1099-nec", from: "documents-1099-nec",
     titles: ["2026 1099-NEC", "1099-NEC Freelance Income", "Fernwood Studios 1099-NEC"],
-    searches: ["freelance", "contractor", "income"])
+    searches: ["freelance", "contractor", "earnings"])
 custom(
     "custom-taxes-1099-int", from: "documents-1099-int",
     titles: ["2026 1099-INT", "1099-INT Interest Income", "Northfield Savings 1099-INT"],
-    searches: ["interest", "savings", "income"])
+    searches: ["earnings", "yield", "dividend"])
 custom(
     "custom-taxes-tax-prep", from: "receipts-tax-prep-fee",
     titles: ["BrightPath Tax Service Receipt", "Tax Preparation Receipt", "Tax Prep Fee Receipt"],
-    searches: ["accountant", "filing", "fee"])
+    searches: ["accountant", "filing", "preparer"])
 custom(
     "custom-taxes-donation", from: "receipts-charity-donation",
     titles: ["Riverbend Food Bank Donation Receipt", "Charity Donation Receipt", "Food Bank Donation"],
-    searches: ["charity", "deduction", "giving"])
+    searches: ["giving", "deduction", "nonprofit"])
 
 // MARK: - Main
 
@@ -1186,5 +1187,52 @@ for file in entries.flatMap(\.files) where !fm.fileExists(atPath: scans.appendin
     fatalError("missing scan \(file)")
 }
 print("\(entries.count) cases")
+
+// MARK: - Hidden words only
+
+/// Folds case and accents so "Café" and "cafe" compare equal.
+func folded(_ string: String) -> String {
+    string.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+}
+
+/// Every string the generator draws for a case; a reused scan has none here (it is checked against its OCR).
+func printedText(_ entry: Entry) -> String {
+    guard let doc = entry.doc else { return "" }
+    return ([doc.head] + doc.rows + [doc.foot]).flatMap { $0 }.joined(separator: " ")
+}
+
+/// A search must find a scan by what it IS, never by a word printed on it.
+func leaks(_ entry: Entry, in printed: String) -> [String] {
+    let words = folded(printed).split { !$0.isLetter && !$0.isNumber }.map(String.init)
+    return entry.searches.filter { query in
+        let q = folded(query)
+        return words.contains { $0.hasPrefix(q) }
+    }
+}
+
+/// What a reused scan prints, read back from the image.
+func ocrText(_ url: URL) throws -> String {
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    try VNImageRequestHandler(url: url).perform([request])
+    return (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
+}
+
+var printedByFile: [String: String] = [:]
+for entry in entries {
+    for file in entry.files where printedByFile[file] == nil {
+        printedByFile[file] =
+            entry.doc != nil ? printedText(entry) : try ocrText(scans.appendingPathComponent(file))
+    }
+}
+var leaking = false
+for entry in entries {
+    let found = leaks(entry, in: entry.files.compactMap { printedByFile[$0] }.joined(separator: " "))
+    if !found.isEmpty {
+        leaking = true
+        print("LEAK \(entry.id): \(found)")
+    }
+}
+if leaking { exit(1) }
 
 // swiftlint:enable multiline_arguments multiline_parameters identifier_name force_unwrapping file_length function_parameter_count large_tuple legacy_multiple no_print

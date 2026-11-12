@@ -25,9 +25,9 @@
     "id" : "wallet-temp-license",
     "quality" : "clean",
     "searches" : [
-      "driving",
       "DMV",
-      "ID"
+      "identity",
+      "motorist"
     ],
     "titles" : [
       "Temporary Driver License",
@@ -78,9 +78,9 @@
     "id" : "wallet-coworking-badge",
     "quality" : "clean",
     "searches" : [
-      "desk",
       "office",
-      "membership"
+      "membership",
+      "workspace"
     ],
     "titles" : [
       "Riverside Coworking Badge",
@@ -150,8 +150,8 @@
     "quality" : "clean",
     "searches" : [
       "shots",
-      "health",
-      "clinic"
+      "immunity",
+      "medical"
     ],
     "titles" : [
       "Immunization Record",
@@ -203,9 +203,9 @@
     "id" : "wallet-license-westmoor",
     "quality" : "clean",
     "searches" : [
-      "ID",
       "DMV",
-      "identity"
+      "identity",
+      "photo"
     ],
     "titles" : [
       "Westmoor State ID",
@@ -223,7 +223,7 @@
     "searches" : [
       "contact",
       "designer",
-      "architect"
+      "garden"
     ],
     "titles" : [
       "Priya Nair Business Card",
@@ -293,9 +293,9 @@
     "id" : "wallet-auto-insurance",
     "quality" : "low",
     "searches" : [
-      "car",
-      "vehicle",
-      "policy"
+      "coverage",
+      "driver",
+      "liability"
     ],
     "titles" : [
       "Granite State Auto Insurance Card",
@@ -349,7 +349,7 @@
     "searches" : [
       "fuel",
       "gasoline",
-      "car"
+      "petrol"
     ],
     "titles" : [
       "Harbor Gas Receipt",
@@ -399,9 +399,9 @@
     "id" : "receipts-page-and-spine",
     "quality" : "clean",
     "searches" : [
-      "books",
       "reading",
-      "novel"
+      "novel",
+      "bookstore"
     ],
     "titles" : [
       "Page & Spine Booksellers Receipt",
@@ -437,7 +437,7 @@
     "searches" : [
       "computer",
       "electronics",
-      "warranty"
+      "purchase"
     ],
     "titles" : [
       "Tallow Electric Receipt",
@@ -490,7 +490,7 @@
     "searches" : [
       "gas",
       "gasoline",
-      "car"
+      "vehicle"
     ],
     "titles" : [
       "Lakeside Fuel Receipt",
@@ -524,9 +524,9 @@
     "id" : "receipts-online-order",
     "quality" : "low",
     "searches" : [
-      "amazon",
       "shopping",
-      "delivery"
+      "amazon",
+      "package"
     ],
     "titles" : [
       "Parcelhouse Order Confirmation",
@@ -542,9 +542,9 @@
     "id" : "receipts-parking-garage",
     "quality" : "clean",
     "searches" : [
-      "parking",
-      "car",
-      "downtown"
+      "downtown",
+      "vehicle",
+      "hourly"
     ],
     "titles" : [
       "City Center Garage Receipt",
@@ -596,9 +596,9 @@
     "id" : "receipts-charity-donation",
     "quality" : "clean",
     "searches" : [
-      "charity",
-      "taxes",
-      "giving"
+      "giving",
+      "deduction",
+      "nonprofit"
     ],
     "titles" : [
       "Riverbend Food Bank Donation Receipt",
@@ -616,7 +616,7 @@
     "searches" : [
       "plants",
       "gardening",
-      "soil"
+      "dirt"
     ],
     "titles" : [
       "Fern & Field Garden Center Receipt",
@@ -651,8 +651,8 @@
     "quality" : "clean",
     "searches" : [
       "apartment",
-      "heating",
-      "renewal"
+      "maintenance",
+      "lease"
     ],
     "titles" : [
       "Call with Landlord",
@@ -669,8 +669,8 @@
     "quality" : "clean",
     "searches" : [
       "history",
-      "class",
-      "lecture"
+      "lecture",
+      "college"
     ],
     "titles" : [
       "Hist 101 Industrial Revolution",
@@ -813,8 +813,8 @@
     "quality" : "clean",
     "searches" : [
       "repair",
-      "leak",
-      "kitchen"
+      "plumbing",
+      "contractor"
     ],
     "titles" : [
       "Plumber Call Notes",
@@ -830,9 +830,9 @@
     "id" : "notes-call-bank",
     "quality" : "low",
     "searches" : [
-      "dispute",
-      "card",
-      "money"
+      "money",
+      "fraud",
+      "chargeback"
     ],
     "titles" : [
       "Call with Bank",
@@ -886,7 +886,7 @@
     "searches" : [
       "book",
       "productivity",
-      "focus"
+      "concentration"
     ],
     "titles" : [
       "Deep Work Reading Notes",
@@ -902,9 +902,9 @@
     "id" : "documents-lease-letter",
     "quality" : "clean",
     "searches" : [
-      "apartment",
-      "rent",
-      "landlord"
+      "housing",
+      "tenancy",
+      "renting"
     ],
     "titles" : [
       "Lease Renewal Letter",
@@ -921,9 +921,9 @@
     "id" : "documents-lease-renewal",
     "quality" : "clean",
     "searches" : [
-      "apartment",
-      "rent",
-      "tenant"
+      "housing",
+      "tenancy",
+      "contract"
     ],
     "titles" : [
       "Lease Renewal Agreement",
@@ -940,8 +940,8 @@
     "quality" : "clean",
     "searches" : [
       "car",
-      "DMV",
-      "plate"
+      "automobile",
+      "tags"
     ],
     "titles" : [
       "Vehicle Registration",
@@ -959,8 +959,8 @@
     "searches" : [
       "taxes",
       "salary",
-      "employer",
-      "income"
+      "paycheck",
+      "earnings"
     ],
     "titles" : [
       "2026 W-2",
@@ -979,7 +979,7 @@
       "taxes",
       "freelance",
       "contractor",
-      "income"
+      "earnings"
     ],
     "titles" : [
       "2026 1099-NEC",
@@ -996,9 +996,8 @@
     "quality" : "low",
     "searches" : [
       "taxes",
-      "interest",
-      "savings",
-      "income"
+      "earnings",
+      "yield"
     ],
     "titles" : [
       "2026 1099-INT",
@@ -1033,8 +1032,8 @@
     "quality" : "low",
     "searches" : [
       "utilities",
-      "sewer",
-      "household"
+      "household",
+      "wastewater"
     ],
     "titles" : [
       "Anytown Water Works Bill",
@@ -1051,8 +1050,8 @@
     "quality" : "clean",
     "searches" : [
       "money",
-      "account",
-      "balance"
+      "ledger",
+      "finances"
     ],
     "titles" : [
       "Northfield Savings Bank Statement October 2026",
@@ -1069,8 +1068,8 @@
     "quality" : "low",
     "searches" : [
       "money",
-      "savings",
-      "account"
+      "finances",
+      "reserves"
     ],
     "titles" : [
       "Harbor Credit Union Statement September 2026",
@@ -1086,9 +1085,9 @@
     "id" : "documents-warranty",
     "quality" : "clean",
     "searches" : [
-      "laptop",
-      "coverage",
-      "protection"
+      "computer",
+      "protection",
+      "guarantee"
     ],
     "titles" : [
       "Tallow Electric Laptop Warranty",
@@ -1106,7 +1105,7 @@
     "searches" : [
       "school",
       "child",
-      "permission"
+      "consent"
     ],
     "titles" : [
       "Field Trip Permission Form",
@@ -1123,8 +1122,8 @@
     "quality" : "clean",
     "searches" : [
       "neighborhood",
-      "dues",
-      "community"
+      "housing",
+      "fees"
     ],
     "titles" : [
       "Cedar Court HOA Letter",
@@ -1141,8 +1140,8 @@
     "quality" : "low",
     "searches" : [
       "car",
-      "premium",
-      "coverage"
+      "vehicle",
+      "insurer"
     ],
     "titles" : [
       "Granite State Auto Renewal Notice",
@@ -1159,8 +1158,8 @@
     "quality" : "clean",
     "searches" : [
       "doctor",
-      "health",
-      "clinic"
+      "medical",
+      "healthcare"
     ],
     "titles" : [
       "Anytown Community Health Statement",
@@ -1214,7 +1213,7 @@
     "searches" : [
       "parking",
       "car",
-      "garage"
+      "stub"
     ],
     "titles" : [
       "Park & Go Garage Ticket",
@@ -1231,8 +1230,8 @@
     "quality" : "clean",
     "searches" : [
       "parking",
-      "car",
-      "ticket"
+      "ticket",
+      "vehicle"
     ],
     "titles" : [
       "Valet Ticket 087",
@@ -1250,7 +1249,7 @@
     "searches" : [
       "internet",
       "password",
-      "router"
+      "modem"
     ],
     "titles" : [
       "Wifi Password",
@@ -1286,7 +1285,7 @@
     "searches" : [
       "parking",
       "car",
-      "lot"
+      "vehicle"
     ],
     "titles" : [
       "Lot B Parking Stub",
@@ -1302,9 +1301,9 @@
     "id" : "throwaways-parking-stub-2",
     "quality" : "low",
     "searches" : [
-      "parking",
       "car",
-      "garage"
+      "garage",
+      "vehicle"
     ],
     "titles" : [
       "Riverfront Parking Stub",
@@ -1321,8 +1320,8 @@
     "quality" : "low",
     "searches" : [
       "parking",
-      "car",
-      "hotel"
+      "vehicle",
+      "lodging"
     ],
     "titles" : [
       "Valet Ticket 212",
@@ -1340,7 +1339,7 @@
     "searches" : [
       "internet",
       "password",
-      "network"
+      "connection"
     ],
     "titles" : [
       "Guest Wifi Code",
@@ -1357,8 +1356,8 @@
     "quality" : "clean",
     "searches" : [
       "lottery",
-      "drawing",
-      "prize"
+      "prize",
+      "giveaway"
     ],
     "titles" : [
       "Raffle Ticket 003917",
@@ -1375,8 +1374,8 @@
     "quality" : "low",
     "searches" : [
       "lottery",
-      "fair",
-      "prize"
+      "prize",
+      "giveaway"
     ],
     "titles" : [
       "50/50 Raffle Ticket",
@@ -1393,8 +1392,8 @@
     "quality" : "clean",
     "searches" : [
       "queue",
-      "counter",
-      "grocery"
+      "grocery",
+      "waiting"
     ],
     "titles" : [
       "Deli Number 47",
@@ -1411,8 +1410,8 @@
     "quality" : "clean",
     "searches" : [
       "queue",
-      "counter",
-      "bakery"
+      "waiting",
+      "bread"
     ],
     "titles" : [
       "Bakery Number 09",
@@ -1464,9 +1463,9 @@
     "id" : "throwaways-bag-check",
     "quality" : "clean",
     "searches" : [
-      "museum",
       "luggage",
-      "ticket"
+      "ticket",
+      "backpack"
     ],
     "titles" : [
       "Bag Check T-33",
@@ -1491,8 +1490,8 @@
     "quality" : "clean",
     "searches" : [
       "salary",
-      "employer",
-      "income"
+      "paycheck",
+      "earnings"
     ],
     "titles" : [
       "2026 W-2",
@@ -1518,7 +1517,7 @@
     "searches" : [
       "freelance",
       "contractor",
-      "income"
+      "earnings"
     ],
     "titles" : [
       "2026 1099-NEC",
@@ -1542,9 +1541,9 @@
     "id" : "custom-taxes-1099-int",
     "quality" : "clean",
     "searches" : [
-      "interest",
-      "savings",
-      "income"
+      "earnings",
+      "yield",
+      "dividend"
     ],
     "titles" : [
       "2026 1099-INT",
@@ -1570,7 +1569,7 @@
     "searches" : [
       "accountant",
       "filing",
-      "fee"
+      "preparer"
     ],
     "titles" : [
       "BrightPath Tax Service Receipt",
@@ -1594,9 +1593,9 @@
     "id" : "custom-taxes-donation",
     "quality" : "clean",
     "searches" : [
-      "charity",
+      "giving",
       "deduction",
-      "giving"
+      "nonprofit"
     ],
     "titles" : [
       "Riverbend Food Bank Donation Receipt",
