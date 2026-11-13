@@ -1,0 +1,103 @@
+<style>
+  .phones{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;margin:12px 0 28px}
+  .phone{width:300px;height:620px;border-radius:40px;background:#f2f2f7;border:8px solid #1c1c1e;overflow:hidden;position:relative;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;color:#1c1c1e;flex:none}
+  .phone .in{padding:44px 14px 14px}
+  .serif{font-family:"New York","Iowan Old Style",Georgia,serif;font-weight:700}
+  .back{width:34px;height:34px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+  .grp{background:#fff;border-radius:14px;margin-bottom:14px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:12px;padding:11px 14px;font-size:15px;min-height:22px}
+  .row + .row{border-top:1px solid #d8d8dc;margin-left:44px;padding-left:0}
+  .row .ic{width:20px;text-align:center;color:#6e6e73}
+  .row .sub{font-size:12px;color:#6e6e73}
+  .row .chev{margin-left:auto;color:#c4c4c9}
+  .tog{margin-left:auto;width:40px;height:24px;border-radius:12px;background:#1c1c1e;position:relative}
+  .tog:after{content:"";position:absolute;right:2px;top:2px;width:20px;height:20px;border-radius:50%;background:#fff}
+  .foot{text-align:center;font-size:12px;color:#6e6e73;margin-top:6px}
+  .foot a{color:#1c1c1e;text-decoration:underline}
+  .new{outline:2px dashed #c0533a;outline-offset:2px;border-radius:14px}
+  .cap{font-size:13px;color:#666;max-width:300px;margin-top:8px}
+  .err{background:#f2f2f7;height:100%;display:flex;flex-direction:column;padding:90px 24px 28px;box-sizing:border-box;text-align:center}
+  .well{width:64px;height:64px;border-radius:50%;background:#e3e3e8;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:28px}
+  .err h1{font-size:26px;line-height:1.15;margin:0 0 10px}
+  .err p{font-size:14px;color:#6e6e73;line-height:1.4;margin:0}
+  .pill{display:block;border-radius:999px;padding:13px;font-size:15px;font-weight:600;margin-top:10px}
+  .pill.pri{background:#1c1c1e;color:#fff}
+  .pill.sec{color:#1c1c1e}
+  .mail{width:300px;border-radius:14px;background:#fff;border:1px solid #ddd;font-family:-apple-system,system-ui,sans-serif;font-size:13px;color:#1c1c1e;flex:none}
+  .mail div{padding:8px 12px;border-bottom:1px solid #eee}
+  .mail .k{color:#8a8a8e}
+  .mail pre{margin:0;padding:12px;font-family:inherit;white-space:pre-wrap;color:#6e6e73}
+</style>
+
+<h2>1 · Where the Privacy policy link goes</h2>
+<p class="subtitle">Settings as designed, plus one new thing (dashed). Click the one you prefer.</p>
+
+<div class="cards">
+  <div class="card" data-choice="privacy-row" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="phone"><div class="in">
+        <div class="back">‹</div>
+        <div class="serif" style="font-size:30px;margin:0 0 14px">Settings</div>
+        <div class="grp"><div class="row"><span class="ic">▭</span>Collections<span class="chev" style="color:#6e6e73">5 ›</span></div></div>
+        <div class="grp">
+          <div class="row"><span class="ic">✦</span><div>Apple Intelligence<div class="sub">Suggests titles and collections</div></div><span class="tog"></span></div>
+          <div class="row"><div>Notifications<div class="sub">A note when scans move to Trash</div></div><span class="tog"></span></div>
+        </div>
+        <div class="grp new">
+          <div class="row"><span class="ic">✉</span>Send feedback<span class="chev">›</span></div>
+          <div class="row"><span style="margin-left:-32px;width:20px;text-align:center;color:#6e6e73">⛉</span>Privacy policy<span class="chev">↗</span></div>
+        </div>
+        <div class="foot">Filing Cabinet 1.0 · Private by design</div>
+      </div></div>
+    </div>
+    <div class="card-body"><h3>A · A row under Send feedback</h3><p>Same group, a shield icon, opens the page in Safari. Easy to find.</p></div>
+  </div>
+
+  <div class="card" data-choice="privacy-footer" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="phone"><div class="in">
+        <div class="back">‹</div>
+        <div class="serif" style="font-size:30px;margin:0 0 14px">Settings</div>
+        <div class="grp"><div class="row"><span class="ic">▭</span>Collections<span class="chev" style="color:#6e6e73">5 ›</span></div></div>
+        <div class="grp">
+          <div class="row"><span class="ic">✦</span><div>Apple Intelligence<div class="sub">Suggests titles and collections</div></div><span class="tog"></span></div>
+          <div class="row"><div>Notifications<div class="sub">A note when scans move to Trash</div></div><span class="tog"></span></div>
+        </div>
+        <div class="grp"><div class="row"><span class="ic">✉</span>Send feedback<span class="chev">›</span></div></div>
+        <div class="foot new" style="padding:6px">Filing Cabinet 1.0 · <a>Private by design</a></div>
+      </div></div>
+    </div>
+    <div class="card-body"><h3>B · "Private by design" becomes the link</h3><p>No new row; the footer you already have opens the policy. Quieter, but easy to miss.</p></div>
+  </div>
+</div>
+
+<h2 style="margin-top:36px">2 · When the library can't open (#40)</h2>
+<p class="subtitle">Shown instead of Home. Touches no files. "Send report" opens an email with the error filled in; "Try again" reopens the library.</p>
+
+<div class="phones">
+  <div>
+    <div class="phone"><div class="err">
+      <div class="well">🗄</div>
+      <h1 class="serif">Your library couldn't open</h1>
+      <p>Your scans are still on this iPhone and nothing was deleted. Send a report so it can be fixed, then try again.</p>
+      <div style="margin-top:auto">
+        <span class="pill pri">Send report</span>
+        <span class="pill sec">Try again</span>
+      </div>
+    </div></div>
+    <p class="cap">Same look as the welcome and notifications screens: icon well, New York title, pill button. Dark mode follows the tokens.</p>
+  </div>
+
+  <div>
+    <div class="mail">
+      <div><span class="k">To:</span> filingcabinet@… (your new address)</div>
+      <div><span class="k">Subject:</span> Filing Cabinet · library couldn't open</div>
+      <pre>
+
+· · ·
+Filing Cabinet 1.0 (14) · iOS 27.2 · iPhone 17
+Error: SwiftData migration SchemaV4 → V5 failed (NSCocoaErrorDomain 134110)</pre>
+    </div>
+    <p class="cap">The email "Send report" writes. Space at the top for them to add a line; the details sit underneath. Plain Send feedback from Settings is the same email without the error line. No scan content is ever attached.</p>
+  </div>
+</div>
