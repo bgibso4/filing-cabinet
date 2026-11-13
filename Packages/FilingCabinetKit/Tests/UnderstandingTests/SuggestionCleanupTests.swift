@@ -22,13 +22,13 @@ private func clean(words: [String]) -> [String] {
 }
 
 @Test func titleIsTrimmedAndCollapsed() {
-    #expect(clean(title: "  City   Pharmacy\n receipt ").title == "City Pharmacy receipt")
+    #expect(clean(title: "  City   Pharmacy\n receipt ").title == "City Pharmacy Receipt")
 }
 
 @Test func titleIsCutAtFortyOnAWord() {
     let title = clean(title: "Northwind Property Management lease renewal for unit 4B").title
 
-    #expect(title == "Northwind Property Management lease")
+    #expect(title == "Northwind Property Management Lease")
     #expect((title?.count ?? 0) <= 40)
 }
 
@@ -37,7 +37,7 @@ private func clean(words: [String]) -> [String] {
 }
 
 @Test func titleOfExactlyFortyIsKept() {
-    let forty = "Coat check ticket from the Grand Theatre"
+    let forty = "Coat Check Ticket From the Grand Theatre"
     #expect(forty.count == 40)
     #expect(clean(title: forty).title == forty)
 }
@@ -78,8 +78,8 @@ private func clean(words: [String]) -> [String] {
 
 @Test func titleLosesLeadingAndTrailingSeparators() {
     #expect(clean(title: "W-2 Wage and Tax Statement 2026 · ").title == "W-2 Wage and Tax Statement 2026")
-    #expect(clean(title: " - Coat check ticket:").title == "Coat check ticket")
-    #expect(clean(title: "· , City Pharmacy receipt ,").title == "City Pharmacy receipt")
+    #expect(clean(title: " - Coat check ticket:").title == "Coat Check Ticket")
+    #expect(clean(title: "· , City Pharmacy receipt ,").title == "City Pharmacy Receipt")
 }
 
 @Test func titleCollapsesEmptySeparators() {
@@ -100,51 +100,54 @@ private func clean(words: [String]) -> [String] {
     #expect(clean(title: "City Pharmacy receipt >").title == nil)
 }
 
-@Test func mixedCasePartIsKeptAsWritten() {
-    #expect(clean(title: "City Pharmacy receipt").title == "City Pharmacy receipt")
-    #expect(clean(title: "iPhone receipt · McDonald's").title == "iPhone receipt · McDonald's")
-    #expect(clean(title: "Northwind LABS Staff ID").title == "Northwind LABS Staff ID")
+@Test func everyWordGetsACapital() {
+    #expect(clean(title: "City Pharmacy receipt").title == "City Pharmacy Receipt")
+    #expect(clean(title: "driver's license").title == "Driver's License")
+    #expect(clean(title: "Biology notes · cell respiration").title == "Biology Notes · Cell Respiration")
+    #expect(clean(title: "fitness club plan").title == "Fitness Club Plan")
 }
 
-@Test func allCapsPartIsCapitalisedWordByWord() {
-    #expect(clean(title: "HARBOR GAS receipt").title == "HARBOR GAS receipt")  // mixed part: kept
+@Test func codesAndMixedCaseWordsAreKeptAsWritten() {
+    #expect(clean(title: "2025 W-2 · Northwind").title == "2025 W-2 · Northwind")
+    #expect(clean(title: "1099-NEC · northwind").title == "1099-NEC · Northwind")
+    #expect(clean(title: "follow-up letter").title == "follow-up Letter")
+    #expect(clean(title: "iPhone receipt · McDonald's").title == "iPhone Receipt · McDonald's")
+}
+
+@Test func knownAcronymsAreInCapitals() {
+    #expect(clean(title: "dmv license").title == "DMV License")
+    #expect(clean(title: "Lakeview University · student id").title == "Lakeview University · Student ID")
+    #expect(clean(title: "Cedar Court Hoa, Llc").title == "Cedar Court HOA, LLC")
+    #expect(clean(title: "DMV RENEWAL NOTICE").title == "DMV Renewal Notice")
+}
+
+@Test func allCapsWordsAreCapitalised() {
     #expect(clean(title: "HARBOR GAS").title == "Harbor Gas")
-    #expect(clean(title: "BRIGHTPATH TAX SERVICE · Federal return").title == "Brightpath Tax Service · Federal return")
+    #expect(clean(title: "HARBOR GAS receipt").title == "Harbor Gas Receipt")
+    #expect(clean(title: "BRIGHTPATH TAX SERVICE · Federal return").title == "Brightpath Tax Service · Federal Return")
+    #expect(clean(title: "Northwind LABS Staff ID").title == "Northwind Labs Staff ID")
     #expect(clean(title: "PORTLAND, OR").title == "Portland, Or")
     #expect(clean(title: "MCDONALD'S").title == "Mcdonald's")
-}
-
-@Test func allCapsPartKeepsCodesAndKnownAcronyms() {
     #expect(clean(title: "W-2 WAGE STATEMENT").title == "W-2 Wage Statement")
-    #expect(clean(title: "1099-NEC · NORTHWIND").title == "1099-NEC · Northwind")
-    #expect(clean(title: "LAKEVIEW UNIVERSITY ID").title == "Lakeview University ID")
-    #expect(clean(title: "DMV RENEWAL NOTICE").title == "DMV Renewal Notice")
-    #expect(clean(title: "CEDAR COURT HOA, LLC").title == "Cedar Court HOA, LLC")
 }
 
-@Test func allLowercasePartGetsSentenceCaseAndKnownAcronyms() {
-    #expect(clean(title: "fitness club plan").title == "Fitness club plan")
-    #expect(clean(title: "dmv license").title == "DMV license")
-    #expect(clean(title: "lakeview university id").title == "Lakeview university ID")
-}
-
-@Test func laterLowercasePartsStayLowercaseButSpellAcronyms() {
-    #expect(clean(title: "Biology notes · cell respiration").title == "Biology notes · cell respiration")
-    #expect(clean(title: "biology notes · cell respiration").title == "Biology notes · cell respiration")
-    #expect(clean(title: "dmv license · sample state").title == "DMV license · sample state")
-    #expect(clean(title: "Lakeview University · student id").title == "Lakeview University · student ID")
+@Test func smallWordsWrittenLowercaseStayLowercaseInsideAPart() {
+    #expect(clean(title: "notes of the meeting").title == "Notes of the Meeting")
+    #expect(clean(title: "the lease · terms and conditions").title == "The Lease · Terms and Conditions")
+    #expect(clean(title: "Notes Of The Meeting").title == "Notes Of The Meeting")
+    #expect(clean(title: "Bill · for March").title == "Bill · For March")
 }
 
 @Test func spacedDashBetweenPartsBecomesAMiddot() {
-    #expect(clean(title: "Studio Fern - Business card").title == "Studio Fern · Business card")
-    #expect(clean(title: "Kickoff meeting – Nov 4").title == "Kickoff meeting · Nov 4")
+    #expect(clean(title: "Studio Fern - Business card").title == "Studio Fern · Business Card")
+    #expect(clean(title: "Kickoff meeting – Nov 4").title == "Kickoff Meeting · Nov 4")
     #expect(clean(title: "Anytown Water Works, Bill").title == "Anytown Water Works, Bill")
     #expect(clean(title: "W-2 · Northwind").title == "W-2 · Northwind")
 }
 
 @Test func aPartRepeatingAnEarlierOneIsDropped() {
     #expect(clean(title: "Lakeview University ID · ID").title == "Lakeview University ID")
-    #expect(clean(title: "Water bill · Anytown Water · water bill").title == "Water bill · Anytown Water")
+    #expect(clean(title: "Water bill · Anytown Water · water bill").title == "Water Bill · Anytown Water")
     #expect(clean(title: "Card · Credit Card").title == "Card · Credit Card")
 }
 

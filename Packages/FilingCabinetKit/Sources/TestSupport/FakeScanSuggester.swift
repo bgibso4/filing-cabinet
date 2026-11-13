@@ -77,7 +77,7 @@ public final class FakeScanSuggester: ScanSuggester {
 
     /// What the model would file the synthetic City Pharmacy receipt as.
     public static func cityPharmacy() -> ScanSuggestion {
-        ScanSuggestion(title: "City Pharmacy receipt", collectionID: "receipts")
+        ScanSuggestion(title: "City Pharmacy Receipt", collectionID: "receipts")
     }
 
     /// The words the model would give the synthetic City Pharmacy receipt.

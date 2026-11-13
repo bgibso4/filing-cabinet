@@ -67,7 +67,7 @@ func arrivalFillsTitleAndCollection() async {
     await startAndSettle(harness)
 
     #expect(harness.model.presentation == .card(isReading: false))
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
     #expect(harness.model.collection == .receipts)
     #expect(harness.model.canSave)
     // The model reads what the reader read, and page 1.
@@ -93,7 +93,7 @@ func pickedCollectionWins() async {
 
     await startAndSettle(harness)
 
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
     #expect(harness.model.collection == .documents)
 }
 
@@ -106,7 +106,7 @@ func preselectedCollectionWinsAndSaveIsOn() async {
 
     await startAndSettle(harness)
 
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
     #expect(harness.model.collection == .wallet)
 }
 
@@ -120,7 +120,7 @@ func openedSheetStillFills() async {
     await ReviewHarness.eventually { harness.model.suggestionAnnouncement != nil }
 
     #expect(harness.model.presentation == .sheet)
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
     #expect(harness.model.collection == .receipts)
 }
 
@@ -142,7 +142,7 @@ func announcementNamesTitleAndCollection() async {
 
     await startAndSettle(harness)
 
-    #expect(harness.model.suggestionAnnouncement == "Suggested: City Pharmacy receipt, Receipts")
+    #expect(harness.model.suggestionAnnouncement == "Suggested: City Pharmacy Receipt, Receipts")
 }
 
 @Test(.timeLimit(.minutes(1)))
@@ -203,7 +203,7 @@ func rescanCancelsTheOldSuggestion() async throws {
 
     #expect(harness.suggester.filingCalls.map(\.pageTexts) == [["CITY PHARMACY\nTOTAL 12.40"], ["CORNER MARKET"]])
     #expect(suggestionEvents(harness) == [.suggestionOutcome(.arrived)])
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
 }
 
 // MARK: - Save
@@ -236,10 +236,10 @@ func saveStartsTheWordsCall() async throws {
     #expect(harness.library.searchWords()[saved.id] == FakeScanSuggester.cityPharmacyWords)
     #expect(harness.library.scansNeedingWords(version: ScanSuggestion.promptVersion).isEmpty)
     let call = try #require(harness.suggester.wordsCalls.first)
-    #expect(call.title == "City Pharmacy receipt")
+    #expect(call.title == "City Pharmacy Receipt")
     #expect(call.collectionName == "Receipts")
     #expect(call.input.pageTexts == ["CITY PHARMACY\nTOTAL 12.40"])
-    #expect(harness.library.scans.map(\.title) == ["City Pharmacy receipt"])
+    #expect(harness.library.scans.map(\.title) == ["City Pharmacy Receipt"])
     #expect(harness.backgroundTime.begun == ["Search words"])
 }
 
@@ -365,7 +365,7 @@ func rescanKeepsWhatTheUserChose() async {
     )
     harness.model.choose(.documents)
     await startAndSettle(harness)
-    #expect(harness.model.title == "City Pharmacy receipt")
+    #expect(harness.model.title == "City Pharmacy Receipt")
 
     harness.model.editTitle("Allergy pills")
     harness.model.replacePages([ReviewHarness.page2])

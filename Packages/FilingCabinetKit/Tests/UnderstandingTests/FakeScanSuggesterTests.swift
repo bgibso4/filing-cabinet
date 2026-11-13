@@ -49,7 +49,7 @@ private let input = SuggestionInput(
 @Test func cityPharmacyIsAReceipt() {
     let suggestion = FakeScanSuggester.cityPharmacy()
 
-    #expect(suggestion.title == "City Pharmacy receipt")
+    #expect(suggestion.title == "City Pharmacy Receipt")
     #expect(suggestion.collectionID == "receipts")
     #expect(FakeScanSuggester.cityPharmacyWords == ["receipt", "pharmacy", "purchase"])
 }

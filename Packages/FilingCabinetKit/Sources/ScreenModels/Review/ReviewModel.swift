@@ -363,7 +363,7 @@ extension ReviewModel {
     /// Public for the snapshot tests, which wait for the suggestion to land.
     public var presentation: ReviewPresentation { suggestion.presentation }
 
-    /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
+    /// "Suggested: City Pharmacy Receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
     package var suggestionAnnouncement: String? { suggestion.announcement }
 
     /// Whether the collection is the user's (picked, or the scan began inside it) rather than empty or the

@@ -85,7 +85,7 @@ public struct ReviewView: View {
         .background(Tokens.Color.bgGrouped)
         // Reading starts as review opens, once per page set (a rescan's pages start their own).
         .task { await model.startReading() }
-        // M11: a light tap and VoiceOver's "Suggested: City Pharmacy receipt, Receipts" when the suggestion lands.
+        // M11: a light tap and VoiceOver's "Suggested: City Pharmacy Receipt, Receipts" when the suggestion lands.
         .sensoryFeedback(.selection, trigger: model.suggestionAnnouncement)
         .onChange(of: model.suggestionAnnouncement) { _, announcement in
             if let announcement { AccessibilityNotification.Announcement(announcement).post() }

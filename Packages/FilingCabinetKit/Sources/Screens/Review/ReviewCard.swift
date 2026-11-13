@@ -5,7 +5,9 @@ import SwiftUI
 /// Review's slim card (Review.dc.html lines 234-252, 03-02): the title with the pencil, the collection's dot and
 /// "Receipts · kept 3 months", and Save. While the model reads (the loading mock, option B:
 /// claude.ai/artifact/SZ5Ntg5vThvnYN3KAgv14Q) a shimmering bar and "Reading your scan…" stand in for them and Save is
-/// off; when the suggestion lands they cross-fade in. Tapping the card, or dragging it up, opens the sheet.
+/// off; when the suggestion lands they cross-fade in. A scan begun inside a collection shows that collection's line
+/// under the bar and Save is on straight away (design §5): only the title waits. Tapping the card, or dragging it up,
+/// opens the sheet.
 struct ReviewCard: View {
     let model: ReviewModel
     let isReading: Bool
@@ -76,7 +78,7 @@ struct ReviewCard: View {
         .padding(.bottom, Self.bottomPadding)
         .background(background, in: .rect(cornerRadius: Self.cornerRadius))
         .contentShape(.rect(cornerRadius: Self.cornerRadius))
-        // Anywhere on the card opens the sheet, Save too while it is off (reading, or no collection): intended.
+        // Anywhere on the card opens the sheet, Save too while it is off (no collection yet): intended.
         .onTapGesture(perform: model.openSheet)
         .simultaneousGesture(openDrag)
         .animation(reducesMotion ? Self.reducedFade : Self.crossFade, value: isReading)
@@ -127,6 +129,7 @@ struct ReviewCard: View {
         .accessibilityIdentifier(AccessibilityID.Review.card)
     }
 
+    /// The bar for the title, then the scan's collection line when it began inside one, else "Reading your scan…".
     private var reading: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Still once the suggestion lands: the layer stays, faded out, for the cross-fade.
@@ -136,12 +139,18 @@ struct ReviewCard: View {
                 .padding(.vertical, Self.barMargin)
                 .accessibilityHidden(true)
             HStack(alignment: .firstTextBaseline, spacing: Self.inlineGap) {
-                Circle()
-                    .fill(placeholder)
-                    .frame(width: Self.dotDiameter, height: Self.dotDiameter)
-                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] + dotLift }
-                    .accessibilityHidden(true)
-                Text("Reading your scan…", bundle: #bundle)
+                if let collection = model.collection {
+                    CollectionDot(collection: collection, diameter: Self.dotDiameter)
+                        .alignmentGuide(.firstTextBaseline) { $0[.bottom] + dotLift }
+                    Text(model.cardLine)
+                } else {
+                    Circle()
+                        .fill(placeholder)
+                        .frame(width: Self.dotDiameter, height: Self.dotDiameter)
+                        .alignmentGuide(.firstTextBaseline) { $0[.bottom] + dotLift }
+                        .accessibilityHidden(true)
+                    Text("Reading your scan…", bundle: #bundle)
+                }
             }
             .font(Tokens.Typography.subheadline)
             .foregroundStyle(Tokens.Color.textSecondary)
@@ -184,10 +193,10 @@ struct ReviewCard: View {
         }
     }
 
-    /// Off while reading and until there is a collection. "Save", not the sheet's "Save to Receipts": the line above
-    /// names the collection.
+    /// Off until there is a collection: while reading, that is only when the scan began inside one. "Save", not the
+    /// sheet's "Save to Receipts": the line beside it names the collection.
     private var saveButton: some View {
-        let isOn = !isReading && model.canSave
+        let isOn = model.canSave
         return Button(action: onSave) {
             Text("Save", bundle: #bundle)
                 .font(Tokens.Typography.headline)

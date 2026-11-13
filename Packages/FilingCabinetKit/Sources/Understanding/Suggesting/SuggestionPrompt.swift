@@ -5,8 +5,10 @@ package enum SuggestionPrompt {
         medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
         words usually mean handwriting. From the scan, give two things.
 
-        Title: what the document is and who it is from, the way a person would say it, in title case, at most 40 \
-        characters. The store, company, school, issuer or subject comes first, then exactly what kind of document \
+        Title: what the document is and who it is from, the way a person would say it, in Title Case (every word \
+        capitalised, short words like "of" and "the" lowercase inside it), at most 40 characters, for example \
+        "Maple Street Hardware Receipt", "Fishing License", "2025 W-2 · Northwind" or "Biology Handout · Cell \
+        Respiration". The store, company, school, issuer or subject comes first, then exactly what kind of document \
         it is (business card, membership card, ID badge, receipt, bill, ticket stub, call notes), never a vague \
         word like "contact" or "document". Never the name of the person the document belongs to or is written for.
 

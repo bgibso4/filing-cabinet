@@ -50,7 +50,7 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
         ).firstMatch
         XCTAssertTrue(tile.appears(within: 5))
-        XCTAssertTrue(tile.label.contains("City Pharmacy receipt"), tile.label)
+        XCTAssertTrue(tile.label.contains("City Pharmacy Receipt"), tile.label)
     }
 
     /// Tapping the card opens the full sheet, filled with the suggestion.
@@ -63,7 +63,7 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
         let collection = app.descendants(matching: .any)[Review.collection]
         XCTAssertTrue(collection.satisfies("exists == true AND value == %@", "Receipts", within: 5))
         let field = app.descendants(matching: .any)[Review.titleField]
-        XCTAssertTrue(field.satisfies("exists == true AND value == %@", "City Pharmacy receipt", within: 5))
+        XCTAssertTrue(field.satisfies("exists == true AND value == %@", "City Pharmacy Receipt", within: 5))
         XCTAssertFalse(app.buttons[Review.card].exists)
         XCTAssertEqual(app.buttons[Review.save].label, "Save to Receipts")
     }
@@ -85,6 +85,36 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
         XCTAssertTrue(field.satisfies("value == %@", "City Pharmacy", within: 5), "the title from the text")
     }
 
+    /// Scanned inside Receipts (design §5): while the model still reads, the card names Receipts and Save is on; Save
+    /// files the scan there under the title read from the text.
+    func testInsideACollectionSaveIsOnWhileReading() {
+        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "slow"])
+        let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
+        XCTAssertTrue(row.appears(within: 5))
+        row.tap()
+        XCTAssertTrue(app.header(.receipts).appears(within: 5))
+        let scan = app.buttons[AccessibilityID.Grid.scan]
+        XCTAssertTrue(scan.satisfies("isEnabled == true", within: 5))
+        scan.tap()
+        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
+        XCTAssertTrue(finish.appears(within: 5))
+        finish.tap()
+
+        let card = app.buttons[Review.card]
+        XCTAssertTrue(card.satisfies("label == %@", "Receipts · kept 3 months", within: 5), card.label)
+        let save = app.buttons[Review.save]
+        XCTAssertTrue(save.isEnabled, "on while the model reads")
+        XCTAssertEqual(save.label, "Save")
+        save.tap()
+
+        XCTAssertTrue(save.disappears(within: 10))
+        let tile = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
+        ).firstMatch
+        XCTAssertTrue(tile.appears(within: 5))
+        XCTAssertTrue(tile.label.contains("City Pharmacy"), tile.label)
+    }
+
     /// No model: the full sheet at once, as before Apple Intelligence.
     func testUnavailableShowsSheet() {
         let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "unavailable"])
@@ -96,11 +126,11 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
 
     // MARK: Steps
 
-    /// The card shows the suggestion: "City Pharmacy receipt" in Receipts.
+    /// The card shows the suggestion: "City Pharmacy Receipt" in Receipts.
     private func waitForSuggestion(in app: XCUIApplication, line: UInt = #line) {
         let card = app.buttons[Review.card]
         XCTAssertTrue(
-            card.satisfies("label == %@", "City Pharmacy receipt, Receipts · kept 3 months", within: 10),
+            card.satisfies("label == %@", "City Pharmacy Receipt, Receipts · kept 3 months", within: 10),
             card.label,
             line: line)
     }

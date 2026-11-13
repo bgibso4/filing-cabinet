@@ -8,7 +8,7 @@ import Understanding
 import XCTest
 
 /// Review, option G (Review.dc.html). The sheet: before a collection (03-05, 03-09), with one (03-07), and three pages.
-/// The card: reading (the loading mock's option B), and with the suggestion in (03-02, 03-03, 03-08, 12-03).
+/// The card: reading (the loading mock's option B), reading inside a collection, and with the suggestion in (03-02, 03-03, 03-08, 12-03).
 /// Reading has finished before each snapshot, so the title is the one read from page 1 (or the suggestion's). Menus and
 /// alerts are not snapshotted; the journeys attach screenshots of them.
 final class ReviewSnapshotTests: XCTestCase {
@@ -21,10 +21,12 @@ final class ReviewSnapshotTests: XCTestCase {
         return ReviewView(model: model, onClose: {}, onRescan: {}, onSaved: { _ in })
     }
 
-    /// The card, still reading: the model never answers within the snapshot.
+    /// The card, still reading: the model never answers within the snapshot. `preselected` is the collection the scan
+    /// began inside.
     @MainActor
-    private func readingCard(_ pages: [CGImage]) async -> ReviewView {
-        let model = reviewModel(pages, suggester: FakeScanSuggester(filing: .never), suggestionsOn: true)
+    private func readingCard(_ pages: [CGImage], preselected: BuiltInCollection? = nil) async -> ReviewView {
+        let model = reviewModel(
+            pages, suggester: FakeScanSuggester(filing: .never), suggestionsOn: true, preselected: preselected)
         await model.startReading()
         return ReviewView(model: model, onClose: {}, onRescan: {}, onSaved: { _ in })
     }
@@ -49,8 +51,14 @@ final class ReviewSnapshotTests: XCTestCase {
     private static let motionProgress = 0.5
 
     @MainActor
-    private func reviewModel(_ pages: [CGImage], suggester: FakeScanSuggester, suggestionsOn: Bool) -> ReviewModel {
-        let input = ReviewInput(pages: pages, preselected: nil, scannedAt: Fixtures.clock.now(), source: .home)
+    private func reviewModel(
+        _ pages: [CGImage], suggester: FakeScanSuggester, suggestionsOn: Bool, preselected: BuiltInCollection? = nil
+    ) -> ReviewModel {
+        let input = ReviewInput(
+            pages: pages,
+            preselected: preselected,
+            scannedAt: Fixtures.clock.now(),
+            source: preselected == nil ? .home : .grid)
         return ReviewModel(
             input: input,
             reader: ScanReader(reader: FakeTextReader.readsCityPharmacy()),
@@ -103,6 +111,17 @@ final class ReviewSnapshotTests: XCTestCase {
             variants: [Self.variant("light")])
     }
 
+    /// Scanned inside Receipts (design §5): the collection's line shows under the bar and Save is on; only the title
+    /// waits.
+    @MainActor
+    func testCardReadingPreselected() async throws {
+        let card = await readingCard(Fixtures.scans("scan-r-pharmacy"), preselected: .receipts)
+        try SnapshotHost.assertScreen(
+            card.environment(\.stillMotionProgress, Self.motionProgress),
+            testName: "review_card_reading_preselected",
+            variants: [Self.variant("light")])
+    }
+
     /// No shimmer and no sweep: a plain bar.
     @MainActor
     func testCardReadingReduceMotion() async throws {
@@ -113,7 +132,7 @@ final class ReviewSnapshotTests: XCTestCase {
             variants: [Self.variant("light")])
     }
 
-    /// 03-02, with the suggestion's title ("City Pharmacy receipt") where the mock says "City Pharmacy".
+    /// 03-02, with the suggestion's title ("City Pharmacy Receipt") where the mock says "City Pharmacy".
     @MainActor
     func testCardSuggested() async throws {
         let card = try await suggestedCard(Fixtures.scans("scan-r-pharmacy"))

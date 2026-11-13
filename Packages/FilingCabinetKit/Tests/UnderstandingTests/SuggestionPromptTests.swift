@@ -74,9 +74,9 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     let pages = [String(repeating: "a", count: 500), "", String(repeating: "b", count: 500)]
 
     let prompt = SuggestionPrompt.wordsPrompt(
-        for: input(pages), title: "City Pharmacy receipt", collectionName: "Receipts")
+        for: input(pages), title: "City Pharmacy Receipt", collectionName: "Receipts")
 
-    #expect(prompt.contains("Title: City Pharmacy receipt"))
+    #expect(prompt.contains("Title: City Pharmacy Receipt"))
     #expect(prompt.contains("Collection: Receipts"))
     // 600 characters of text, across pages; blank pages are skipped.
     #expect(prompt.contains(String(repeating: "a", count: 500) + "\n" + String(repeating: "b", count: 99)))
