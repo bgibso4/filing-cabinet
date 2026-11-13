@@ -30,6 +30,7 @@ private struct SettingsHarness {
     let preferences: AppPreferences
     let center: FakeNotificationCenter
     let model: SettingsModel
+    let analytics = RecordingAnalytics()
     private let fresh: FreshDefaults
 
     init(_ authorization: NotificationAuthorization, grantsRequest: Bool = true) throws {
@@ -44,10 +45,25 @@ private struct SettingsHarness {
             preferences: preferences,
             isBusy: { false })
         model = SettingsModel(
-            preferences: preferences, notifications: center, suggester: suggester, wordsPass: pass, version: "1.0")
+            preferences: preferences,
+            notifications: center,
+            suggester: suggester,
+            wordsPass: pass,
+            analytics: analytics,
+            version: "1.0")
     }
 
     func cleanUp() { fresh.cleanUp() }
+}
+
+@MainActor
+@Test func feedbackRowReportsItsKindAndBuildsTheDraft() throws {
+    let harness = try SettingsHarness(.authorized)
+    defer { harness.cleanUp() }
+    #expect(harness.model.feedbackURL.scheme == "mailto")
+    #expect(harness.model.privacyURL == PrivacyPolicy.url)
+    harness.model.feedbackOpened()
+    #expect(harness.analytics.events == [.feedbackOpened(kind: .feedback)])
 }
 
 @MainActor

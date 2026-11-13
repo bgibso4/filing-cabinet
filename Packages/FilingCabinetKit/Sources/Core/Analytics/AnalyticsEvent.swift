@@ -33,6 +33,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case suggestionOutcome(SuggestionOutcome)
     /// At save, after a suggestion arrived: whether the saved title and collection differ from the suggested ones (M10).
     case suggestionChanged(title: Bool, collection: Bool)
+    /// The person opened a feedback email, from Settings or the failure screen (M14). Never what they write.
+    case feedbackOpened(kind: FeedbackKind)
 
     public var name: String {
         switch self {
@@ -56,6 +58,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .searchSaved: "searchSaved"
         case .suggestionOutcome: "suggestionOutcome"
         case .suggestionChanged: "suggestionChanged"
+        case .feedbackOpened: "feedbackOpened"
         }
     }
 
@@ -83,6 +86,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .suggestionOutcome(let outcome): [.outcome: .token(.init(outcome))]
         case .suggestionChanged(let title, let collection):
             [.titleChanged: .bool(title), .collectionChanged: .bool(collection)]
+        case .feedbackOpened(let kind): [.kind: .token(.init(kind))]
         }
     }
 }

@@ -92,6 +92,13 @@ private struct Expected {
     }
 }
 
+@Test func feedbackEventCarriesOnlyItsKind() {
+    let event = AnalyticsEvent.feedbackOpened(kind: .report)
+    #expect(event.name == "feedbackOpened")
+    #expect(event.payload == [.kind: .token(.init(FeedbackKind.report))])
+    #expect(FeedbackKind.allCases.map(\.rawValue) == ["feedback", "report"])
+}
+
 @Test func tokensKeepTheirRawValues() {
     #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])

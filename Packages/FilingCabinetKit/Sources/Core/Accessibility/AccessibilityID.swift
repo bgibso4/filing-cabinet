@@ -197,10 +197,20 @@ public enum AccessibilityID {
         public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
         public static let intelligence = "settings.intelligence"
+        public static let feedback = "settings.feedback"
+        public static let privacy = "settings.privacy"
 
         public static var all: [String] {
-            [collections, appearance, intelligence, notifications]
+            [collections, appearance, intelligence, notifications, feedback, privacy]
         }
+    }
+
+    /// The "No mail app" alert, from Send feedback and (Plan 6) the failure screen's Send report.
+    public enum Feedback {
+        public static let noMailAlert = "feedback.noMailAlert"
+        public static let copy = "feedback.copy"
+
+        public static var all: [String] { [noMailAlert, copy] }
     }
 
     /// Settings › Collections (10-02): one row per collection.
@@ -275,7 +285,7 @@ public enum AccessibilityID {
             + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
-            ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all
+            ] + Trash.all + TrashViewer.all + Settings.all + Feedback.all + Collections.all + CollectionSettings.all
             + Search.all + [Search.clearQuery, Search.clear, Search.searchAll]
     }
 }

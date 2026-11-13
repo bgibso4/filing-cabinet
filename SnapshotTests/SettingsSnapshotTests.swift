@@ -54,6 +54,7 @@ final class SettingsSnapshotTests: XCTestCase {
             notifications: FakeNotificationCenter(authorization: authorization),
             suggester: suggester,
             wordsPass: pass,
+            analytics: RecordingAnalytics(),
             version: "1.0")
         // What the screen reads as it appears, read here first so the first frame already shows it.
         await model.refreshAuthorization()

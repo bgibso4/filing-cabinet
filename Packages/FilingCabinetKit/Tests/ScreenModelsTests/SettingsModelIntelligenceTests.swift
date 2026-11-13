@@ -44,6 +44,7 @@ private struct IntelligenceHarness {
             notifications: FakeNotificationCenter(authorization: .authorized),
             suggester: suggester,
             wordsPass: pass,
+            analytics: RecordingAnalytics(),
             version: "1.0")
     }
 

@@ -4,9 +4,9 @@ import SwiftUI
 import UIKit
 
 /// Settings from Home's gear (10-01): Collections, Appearance, then Apple Intelligence and Notifications with the line
-/// about Apple Intelligence under them (Plan 5's demo), then the footer. Send feedback comes with a later plan.
+/// about Apple Intelligence under them (Plan 5's demo), then Send feedback and the Privacy policy (Plan 6), then the footer.
 public struct SettingsView: View {
-    private let model: SettingsModel
+    let model: SettingsModel
     private let onOpenCollections: () -> Void
 
     // Settings2.dc.html line 30: 22 pt above each group; the first one is 22 pt under the bar now the title is in it.
@@ -25,8 +25,9 @@ public struct SettingsView: View {
     private static let progressRadius: CGFloat = 2
 
     @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.openURL) private var openURL
+    @Environment(\.openURL) var openURL
     @Environment(\.scenePhase) private var scenePhase
+    @State var feedbackDraft: URL?
 
     public init(model: SettingsModel, onOpenCollections: @escaping () -> Void) {
         self.model = model
@@ -54,6 +55,8 @@ public struct SettingsView: View {
                         .padding(.top, Tokens.Spacing.s2)
                         .padding(.horizontal, Tokens.Spacing.s4)
                 }
+                feedbackGroup
+                    .padding(.top, Self.groupGap)
                 Text(model.footer)
                     .font(Tokens.Typography.footnote)
                     .foregroundStyle(Tokens.Color.textSecondary)
@@ -67,6 +70,7 @@ public struct SettingsView: View {
         // It fits the screen: a bounce shows no scroll bar (phone check F4).
         .scrollIndicators(.hidden)
         .background(Tokens.Color.bgGrouped)
+        .mailComposer(url: $feedbackDraft)
         .task { await model.refreshAuthorization() }
         // Someone may come back from iPhone Settings having turned notifications on or off.
         .onChange(of: scenePhase) { _, phase in
@@ -74,7 +78,7 @@ public struct SettingsView: View {
         }
     }
 
-    private func group(@ViewBuilder _ rows: () -> some View) -> some View {
+    func group(@ViewBuilder _ rows: () -> some View) -> some View {
         VStack(spacing: 0, content: rows)
             .background(Tokens.Color.bgSurface, in: .rect(cornerRadius: Tokens.Radius.surface))
     }
@@ -210,7 +214,7 @@ public struct SettingsView: View {
     /// An icon, the text, then the value or switch. At accessibility sizes the icon goes and the value or switch moves
     /// under the text, so a name never breaks mid-word (12-05). `showsSeparator` draws a hairline above the row, from
     /// where its text starts to the group's edge (10-01).
-    private func row(
+    func row(
         icon: String,
         showsSeparator: Bool = false,
         @ViewBuilder text: () -> some View,

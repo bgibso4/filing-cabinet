@@ -70,7 +70,11 @@
     "Change the title, collection or expiry" : {},
     "Reading your scan…" : {},
     "Save" : {},
-    "Apple Intelligence" : {}
+    "Apple Intelligence" : {},
+    "No mail app" : {},
+    "Copy" : {},
+    "Send feedback" : {},
+    "Privacy policy" : {}
   },
   "version" : "1.0"
 }

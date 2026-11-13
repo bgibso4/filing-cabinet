@@ -22,6 +22,7 @@ extension AppEnvironment {
         let suggester: any ScanSuggester
         /// Stopped during a scan, and waits behind a words call after Save: review has the model to itself.
         let wordsPass: SearchWordsPass
+        private let analytics: any Analytics
 
         init(
             options: LaunchOptions,
@@ -67,12 +68,17 @@ extension AppEnvironment {
             )
             self.suggester = suggester
             self.wordsPass = wordsPass
+            self.analytics = analytics
         }
 
         /// Settings, whose Apple Intelligence switch and reading line follow this model and pass.
         func settings(preferences: AppPreferences, notifications: any CleanupNotifying) -> SettingsModel {
             SettingsModel(
-                preferences: preferences, notifications: notifications, suggester: suggester, wordsPass: wordsPass)
+                preferences: preferences,
+                notifications: notifications,
+                suggester: suggester,
+                wordsPass: wordsPass,
+                analytics: analytics)
         }
     }
 
