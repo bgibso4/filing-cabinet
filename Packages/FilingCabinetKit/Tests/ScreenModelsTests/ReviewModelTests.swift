@@ -87,6 +87,17 @@ func noReadableTextKeepsFallback() async {
     #expect(harness.model.collectionValue == "Receipts")
 }
 
+@Test func cardLineNamesTheCollectionAndHowLongItKeeps() {
+    let harness = ReviewHarness()
+    #expect(harness.model.cardLine == "Choose a collection")
+    harness.model.choose(.receipts)
+    #expect(harness.model.cardLine == "Receipts · kept 3 months")
+    harness.model.choose(.documents)
+    #expect(harness.model.cardLine == "Documents · kept forever")
+    harness.model.choose(.throwaways)
+    #expect(harness.model.cardLine == "Throwaways · kept 1 week")
+}
+
 @Test func preselectedCollectionIsChosen() {
     let harness = ReviewHarness(preselected: .wallet)
     #expect(harness.model.collection == .wallet)

@@ -290,7 +290,9 @@
     "Saved to Files" : {},
     "Copied" : {},
     "Couldn’t save to Photos" : {},
-    "Couldn’t save to Files" : {}
+    "Couldn’t save to Files" : {},
+    "%@ · kept forever" : {},
+    "%@ · kept %@" : {}
   },
   "version" : "1.0"
 }

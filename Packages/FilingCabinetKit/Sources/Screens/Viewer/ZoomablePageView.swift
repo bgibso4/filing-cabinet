@@ -21,7 +21,15 @@ struct ZoomablePageView: UIViewRepresentable {
     }
 
     func updateUIView(_ view: ZoomableScrollView, context: Context) {
-        view.fitInsets = fitInsets
+        // A fit that changes in an animated transaction (review's scan shrinking as the sheet rises) moves with it.
+        if let animation = context.transaction.animation, view.fitInsets != fitInsets, view.fitInsets != .zero {
+            UIView.animate(animation) {
+                view.fitInsets = fitInsets
+                view.layoutIfNeeded()
+            }
+        } else {
+            view.fitInsets = fitInsets
+        }
         view.onZoomChange = onZoomChange
         view.accessibilityLabel = label
         // Only the page on screen is in the accessibility tree; VoiceOver pages with the strip's adjustable action, so

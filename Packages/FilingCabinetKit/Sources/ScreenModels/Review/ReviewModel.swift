@@ -360,10 +360,22 @@ public final class ReviewModel: ExpiryEditing {
 // MARK: - Suggestion
 
 extension ReviewModel {
-    package var presentation: ReviewPresentation { suggestion.presentation }
+    /// Public for the snapshot tests, which wait for the suggestion to land.
+    public var presentation: ReviewPresentation { suggestion.presentation }
 
     /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
     package var suggestionAnnouncement: String? { suggestion.announcement }
+
+    /// The card's line under the title (03-02): "Receipts · kept 3 months", "Documents · kept forever", or "Choose a
+    /// collection" before there is one.
+    package var cardLine: String {
+        guard let collection else { return collectionValue }
+        let name = CollectionText.name(collection)
+        let lifespan = library.lifespans[collection]
+        return lifespan == .forever
+            ? String(localized: "\(name) · kept forever", bundle: #bundle)
+            : String(localized: "\(name) · kept \(CollectionText.lifespanShort(lifespan))", bundle: #bundle)
+    }
 
     /// The card tapped or dragged open: the full sheet. A suggestion landing within the wait still fills the fields
     /// the user hasn't touched.
