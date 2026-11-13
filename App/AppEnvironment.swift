@@ -97,7 +97,8 @@ final class AppEnvironment {
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion,
             preferences: preferences,
-            welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics)
+            welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics),
+            rating: scanning.rating
         )
     }
 
@@ -239,6 +240,10 @@ final class AppEnvironment {
         let preferences = AppPreferences(defaults: defaults)
         if options.isUITest {
             preferences.welcomeDone = !options.showWelcome
+            if options.ratingDue {
+                preferences.savesCount = 9
+                preferences.saveDays = [20_270_101, 20_270_102, 20_270_103]
+            }
         }
         return (preferences, SearchHistory(defaults: defaults))
     }

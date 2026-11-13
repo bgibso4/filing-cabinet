@@ -39,6 +39,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case libraryOpenFailed
     /// The first-launch welcome closed (M14): whether iOS lets the app post cleanup notes by then.
     case welcomeFinished(notifications: Bool)
+    /// The app asked Apple for the rating prompt, which decides itself whether to show it.
+    case ratingRequested
 
     public var name: String {
         switch self {
@@ -65,12 +67,13 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .feedbackOpened: "feedbackOpened"
         case .libraryOpenFailed: "libraryOpenFailed"
         case .welcomeFinished: "welcomeFinished"
+        case .ratingRequested: "ratingRequested"
         }
     }
 
     public var payload: [AnalyticsKey: AnalyticsValue] {
         switch self {
-        case .appOpened, .cameraDenied, .cameraFailed, .libraryOpenFailed: [:]
+        case .appOpened, .cameraDenied, .cameraFailed, .libraryOpenFailed, .ratingRequested: [:]
         case .scanStarted(let source): [.source: .token(.init(source))]
         case .scanCancelled(let stage): [.stage: .token(.init(stage))]
         case .scanSaved(let pageCount, let collection):

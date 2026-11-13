@@ -74,6 +74,7 @@ Packages/FilingCabinetKit/Sources/Screens/Startup/ LibraryFailureJourneyTests Li
 Packages/FilingCabinetKit/Sources/ScreenModels/Startup/ LibraryFailureJourneyTests LibraryFailureSnapshotTests
 Packages/FilingCabinetKit/Sources/Screens/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Rating/ ScanJourneyTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests WelcomeJourneyTests WelcomeSnapshotTests
 # Older scans' search words: the pass's progress shows in Settings.
 Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests

@@ -5,6 +5,14 @@ import XCTest
 
 /// The steps of `testScanEditTrashRestore`, one screen each. Kept out of `ScanJourneyTests.swift` for its length.
 extension ScanJourneyTests {
+    /// Apple's rating prompt, if it showed (Apple limits how often): Not Now, and waits for it to go.
+    func dismissRatingPrompt(in app: XCUIApplication) {
+        let notNow = app.buttons["Not Now"]
+        guard notNow.appears(within: 5) else { return }
+        notNow.tap()
+        XCTAssertTrue(notNow.disappears(within: 5))
+    }
+
     /// From Home, the collection's only scan, opens in the viewer. `label` checks the tile's label: its start and its
     /// end, because the middle is the scan's day, which is the real one in this journey.
     func openOnlyTile(

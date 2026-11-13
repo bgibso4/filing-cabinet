@@ -39,6 +39,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var failLibraryOpen: FailLibraryOpen?
     /// `-ShowWelcome`: under `-UITest` the welcome shows as on a first launch; otherwise it counts as done (M1).
     public private(set) var showWelcome = false
+    /// `-RatingDue`: under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating.
+    public private(set) var ratingDue = false
 
     private static let fakeCameraRange = 1...3
 
@@ -65,6 +67,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-ReduceMotion": reduceMotion = true
         case "-NotificationsUnanswered": notificationsUnanswered = true
         case "-ShowWelcome": showWelcome = true
+        case "-RatingDue": ratingDue = true
         default: return false
         }
         return true

@@ -23,6 +23,8 @@ public struct RootDependencies {
     let preferences: AppPreferences
     /// The first-launch welcome, a sheet over Home until it is completed.
     let welcome: WelcomeModel
+    /// When to ask Apple for a rating, after a save.
+    let rating: RatingPrompt
 
     public init(
         home: HomeModel,
@@ -40,7 +42,8 @@ public struct RootDependencies {
         cameraMode: CameraMode,
         forcesReduceMotion: Bool,
         preferences: AppPreferences,
-        welcome: WelcomeModel
+        welcome: WelcomeModel,
+        rating: RatingPrompt
     ) {
         self.home = home
         self.flow = flow
@@ -58,5 +61,6 @@ public struct RootDependencies {
         self.forcesReduceMotion = forcesReduceMotion
         self.preferences = preferences
         self.welcome = welcome
+        self.rating = rating
     }
 }

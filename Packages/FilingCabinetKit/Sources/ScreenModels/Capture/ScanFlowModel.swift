@@ -39,6 +39,8 @@ public final class ScanFlowModel {
     /// dismissed), so the background words pass leaves the model to review meanwhile.
     @ObservationIgnored private let scanStarted: () -> Void
     @ObservationIgnored private let scanEnded: () -> Void
+    /// Told when review saved a scan, for the rating prompt's count.
+    @ObservationIgnored private let scanSaved: () -> Void
 
     public init(
         cameraAccess: any CameraAccess,
@@ -48,7 +50,8 @@ public final class ScanFlowModel {
         suggestionsOn: @escaping () -> Bool,
         makeReview: @escaping (ReviewInput) -> ReviewModel,
         scanStarted: @escaping () -> Void = {},
-        scanEnded: @escaping () -> Void = {}
+        scanEnded: @escaping () -> Void = {},
+        scanSaved: @escaping () -> Void = {}
     ) {
         self.cameraAccess = cameraAccess
         self.clock = clock
@@ -58,6 +61,7 @@ public final class ScanFlowModel {
         self.makeReview = makeReview
         self.scanStarted = scanStarted
         self.scanEnded = scanEnded
+        self.scanSaved = scanSaved
     }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
@@ -129,7 +133,10 @@ public final class ScanFlowModel {
     /// Review saved (`saved`) or discarded the scan. The view calls this once the layer has slid away, so the haptic
     /// and the announcement come after the slide.
     package func reviewEnded(saved: SavedScan?) {
-        if let saved { lastSaved = saved }
+        if let saved {
+            lastSaved = saved
+            scanSaved()
+        }
         reviewInput = nil
         review = nil
         endScan()

@@ -32,6 +32,21 @@ public final class AppPreferences {
         didSet { defaults.set(welcomeDone, forKey: Key.welcomeDone) }
     }
 
+    /// Scans saved on this install, for the rating prompt (Plan 6 §6b).
+    public var savesCount: Int {
+        didSet { defaults.set(savesCount, forKey: Key.savesCount) }
+    }
+
+    /// The three most recent distinct days a scan was saved (`CalendarDay.storageValue`), oldest first.
+    public var saveDays: [Int] {
+        didSet { defaults.set(saveDays, forKey: Key.saveDays) }
+    }
+
+    /// The app version the rating prompt was last requested in.
+    package var ratingAskedVersion: String? {
+        didSet { defaults.set(ratingAskedVersion, forKey: Key.ratingAskedVersion) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// Whether cleanup notes reach the person: they want them and iOS allows them.
@@ -44,6 +59,9 @@ public final class AppPreferences {
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
         appleIntelligenceOn = defaults.object(forKey: Key.appleIntelligenceOn) as? Bool ?? true
         welcomeDone = defaults.bool(forKey: Key.welcomeDone)
+        savesCount = defaults.integer(forKey: Key.savesCount)
+        saveDays = defaults.array(forKey: Key.saveDays) as? [Int] ?? []
+        ratingAskedVersion = defaults.string(forKey: Key.ratingAskedVersion)
         appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
@@ -56,5 +74,8 @@ public final class AppPreferences {
         static let appleIntelligenceOn = "appleIntelligenceOn"
         static let cleanupSeenThrough = "cleanupSeenThrough"
         static let welcomeDone = "welcomeDone"
+        static let savesCount = "savesCount"
+        static let saveDays = "saveDays"
+        static let ratingAskedVersion = "ratingAskedVersion"
     }
 }

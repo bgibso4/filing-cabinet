@@ -157,3 +157,8 @@ private struct Expected {
     #expect(event.payload == [.notifications: .bool(true)])
     #expect(AnalyticsEvent.welcomeFinished(notifications: false).payload == [.notifications: .bool(false)])
 }
+
+@Test func ratingRequestedCarriesNothing() {
+    #expect(AnalyticsEvent.ratingRequested.name == "ratingRequested")
+    #expect(AnalyticsEvent.ratingRequested.payload.isEmpty)
+}

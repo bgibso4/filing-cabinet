@@ -1,5 +1,6 @@
 import Core
 import ScreenModels
+import StoreKit
 import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
@@ -15,6 +16,7 @@ public struct RootView: View {
     @State private var searchFades = false
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.requestReview) private var requestReview
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -55,6 +57,11 @@ public struct RootView: View {
         .sensoryFeedback(.success, trigger: restores)
         .onChange(of: flow.lastSaved) { _, saved in
             if let saved { AccessibilityNotification.Announcement(saved.announcement).post() }
+        }
+        // The layer has slid away (the flow ends the scan after it), so the prompt comes after the save, never during
+        // the welcome, a review, the camera-off sheet or a confirmation (Plan 6 §4).
+        .onChange(of: flow.phase) { _, phase in
+            askForRatingIfDue(after: phase)
         }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
@@ -98,6 +105,14 @@ public struct RootView: View {
         case .light: .light
         case .dark: .dark
         }
+    }
+
+    private func askForRatingIfDue(after phase: ScanFlowModel.Phase) {
+        guard phase == .idle, dependencies.rating.isDue, dependencies.welcome.isFinished, !isSearching,
+            dependencies.welcome.step == nil
+        else { return }
+        requestReview()
+        dependencies.rating.asked()
     }
 
     private var flow: ScanFlowModel { dependencies.flow }
