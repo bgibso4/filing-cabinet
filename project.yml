@@ -18,6 +18,9 @@ settings:
     SWIFT_VERSION: "6"
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
+    # One version for the app and its extension: an embedded extension must match the app's.
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: 1
 
 packages:
   FilingCabinetKit:
@@ -34,7 +37,13 @@ targets:
       - path: App
         excludes:
           - "**/.DS_Store"
+      # The App Intents, compiled into the app and the controls extension (Plan 6 E1).
+      - path: Intents
+        excludes:
+          - "**/.DS_Store"
     dependencies:
+      - target: FilingCabinetControls
+        embed: true
       - package: FilingCabinetKit
         product: Core
       - package: FilingCabinetKit
@@ -59,9 +68,34 @@ targets:
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         # iPhone only, portrait only (Info.plist lists the single orientation).
         TARGETED_DEVICE_FAMILY: "1"
-        MARKETING_VERSION: "0.1"
-        CURRENT_PROJECT_VERSION: 1
         CODE_SIGN_STYLE: Automatic
+
+  # The Scan control (Control Center, Lock Screen, Action button). Links Core only: its intent runs in the app.
+  FilingCabinetControls:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Controls
+        excludes:
+          - "**/.DS_Store"
+      - path: Intents
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - package: FilingCabinetKit
+        product: Core
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).controls
+        PRODUCT_NAME: FilingCabinetControls
+        INFOPLIST_FILE: Controls/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        SKIP_INSTALL: YES
 
   # App-hosted: snapshots use drawHierarchyInKeyWindow, which needs the real app's key window.
   FilingCabinetSnapshotTests:

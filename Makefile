@@ -60,7 +60,7 @@ fast: generate
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
 		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
-SWIFT_DIRS := App Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests DeviceTests
+SWIFT_DIRS := App Intents Controls Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests DeviceTests
 
 # swift-format owns formatting; SwiftLint owns everything else. Both are strict.
 lint:

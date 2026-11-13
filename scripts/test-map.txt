@@ -19,6 +19,8 @@ DeviceTests/ NONE
 design/ NONE
 scripts/ NONE
 Packages/FilingCabinetKit/Tests/ NONE
+# The Scan control's extension: no simulator test runs it (the phone check does).
+Controls/ NONE
 
 # Shared: everything.
 design/prototype/ ALL
@@ -26,6 +28,7 @@ Makefile ALL
 design/tokens.json ALL
 scripts/generate-tokens.swift ALL
 App/ ALL
+Intents/ ALL
 project.yml ALL
 Package.resolved ALL
 Packages/FilingCabinetKit/Package.swift ALL

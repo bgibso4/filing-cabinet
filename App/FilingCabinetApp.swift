@@ -1,3 +1,4 @@
+import AppIntents
 import Core
 import Foundation
 import Screens
@@ -15,6 +16,8 @@ struct FilingCabinetApp: App {
         HeaderAppearance.install()
         let requests = ExternalRequests()
         self.requests = requests
+        // Here, before any intent runs: the system launches the app cold to run one, and an unregistered dependency traps.
+        AppDependencyManager.shared.add(dependency: requests)
         startup = AppStartup(arguments: CommandLine.arguments, requests: requests)
     }
 

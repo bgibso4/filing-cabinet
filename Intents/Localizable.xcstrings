@@ -1,0 +1,14 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Find a scan" : {},
+    "Find scans matching ${text}" : {},
+    "Opens Search in Filing Cabinet with this text." : {},
+    "Opens the camera in Filing Cabinet." : {},
+    "Scan" : {},
+    "Scan a document" : {},
+    "Text" : {},
+    "What are you looking for?" : {}
+  },
+  "version" : "1.0"
+}
