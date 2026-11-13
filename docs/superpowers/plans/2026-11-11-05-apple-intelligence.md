@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-11-apple-intelligence-design.md` (approved by Ben 2026-11-11) and its demo https://claude.ai/artifact/E6NGvA4p6DxXM343GF3dmo; the requirements `docs/superpowers/specs/2026-10-10-filing-cabinet-requirements.html` (section 06 Scanning and review, Settings; section 04 Graceful fallback) as changed by the design's §8; `design/` (03-02, 03-03, 03-04, 03-05, 03-08, 12-03, 10-01, 10-06, 05-01, 08-03) and `Review.dc.html` (option G, lines 209–260), the loading mock https://claude.ai/artifact/SZ5Ntg5vThvnYN3KAgv14Q (option B) and the fallback mock https://claude.ai/artifact/ULgeFhB5rS6qNzMwLebT5N (option 3). Executors read Plan 4 (`docs/superpowers/plans/2026-11-09-04-favorites-search-share.md`) for the conventions this plan continues.
 
-**Status:** Draft for Ben's review, 2026-11-11. No app code written. Execution starts after branch `polish` merges (shared checkout and simulator).
+**Status:** Executed on branch `plan-5`, 2026-11-11 to 2026-11-12 (Tasks 1–11; the phone check and the PR follow). Tasks 4b, 4c and 4d (prompt tuning) were added during execution.
 
 ---
 
@@ -338,6 +338,7 @@ UITests/        ReviewSuggestionJourneyTests (new), SettingsJourneyTests, Search
 
 | # | Decision | From |
 |---|---|---|
-| E1 | The wait limit | Task 1, Ben |
-| E2 | Page 1 image in or out | Task 1 |
-| E3 | Prewarm at camera open or not | Task 1 |
+| E1 | The wait limit: 5 s | Task 1, Ben |
+| E2 | Page 1 image in | Task 1, Ben |
+| E3 | Prewarm at camera open | Task 1, Ben |
+| E4 | Split the read: title and collection for the card, words after Save, the background pass fills the rest | Task 4d, Ben |

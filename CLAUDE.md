@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plans 1–4 are merged (Plan 4, favorites, search and share: PR #86, 2026-11-11).** Next on the roadmap: Plan 5 (Apple Intelligence), then Plan 6 (first launch and system) and TestFlight. Small follow-ups: #83 (fade behind Scan), #85 (header text size), a glass Scan button.
+**Phase: Plans 1–4 are merged (Plan 4, favorites, search and share: PR #86, 2026-11-11). Plan 5 (Apple Intelligence) is built on `plan-5`; the phone check and the PR are pending, so it is not merged.** Next on the roadmap: Plan 6 (first launch and system) and TestFlight. Small follow-ups: #83 (fade behind Scan), #85 (header text size), a glass Scan button.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.

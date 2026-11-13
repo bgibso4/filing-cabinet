@@ -1,6 +1,6 @@
 # Plan 5 · Apple Intelligence: smart filing and search · design
 
-2026-11-11 · brainstorm with Ben (agent `plan5`). Demo: https://claude.ai/artifact/E6NGvA4p6DxXM343GF3dmo ·
+2026-11-11 · as built 2026-11-12 (see "Decided during execution" at the end) · brainstorm with Ben (agent `plan5`). Demo: https://claude.ai/artifact/E6NGvA4p6DxXM343GF3dmo ·
 tile and search-row options: https://claude.ai/artifact/6CX5ocZEi1cRpeC2fjPCyk. Requirements
 (`docs/superpowers/specs/2026-10-10-filing-cabinet-requirements.html`) still hold except where this document changes
 them; the changes are listed in §8.
@@ -118,9 +118,13 @@ snippet; else a title match shows the start of the text as today; else a hidden-
 iPhone, hidden words aren't stored, so nothing changes. Prefix matching on hidden words ("lic" finds "license") follows
 whatever Plan 4's matching does for text.
 
-**Older scans.** A background pass while the app is in the foreground, one scan at a time, oldest-unread first, pausing
-when the app leaves the foreground. Uses the stored page text plus the first page image. Writes only search words, and
-a marker that the scan has been read (so it isn't read twice, and a later prompt version can re-read).
+**The split read** (Ben, 2026-11-12). The card's call returns the title and the collection only. The hidden words come
+from a second call after Save. A background pass reads **newest first**, at launch and on returning to the foreground,
+with the switch on and the model available, and fills any scan that is missing words (a scan saved before the second call
+finished, one saved with the switch off, or one read by an older prompt version). One scan at a time. It uses the stored
+page text plus the first page image, writes only search words and a marker that the scan has been read (so it isn't read
+twice, and a later prompt version can re-read), and never changes a title or collection. Newest first because the newest
+scans are the likeliest searches.
 
 ## 6 · The test set of made-up scans
 
@@ -165,3 +169,19 @@ background pass's pacing; where the suggester lives in the module map (Understan
 
 Measure on a real iPhone: time from camera close to suggestion (text only vs text + image), accuracy on a dozen of the
 made-up scans, and whether image input improves low-text scans. The image decision comes from it. **The spike stops for Ben** (his call: "lets measure first before making any decisions"): if a suggestion takes well over ~5 s, Ben decides how to respond with the numbers in front of him, before any task that depends on the timing starts. Options on the table then: raise the wait, make the read faster (no image, less text), or keep the full sheet and run the model only after Save for search words.
+
+## 11 · Decided during execution
+
+By Ben:
+- **E1** The wait limit is 5 s, counted from when the card appears.
+- **E2** Page 1's image goes in with the text.
+- **E3** The model is prewarmed when the camera opens.
+- **The split read:** title and collection first, words after Save (saves about 0.8 s at p50 on the card).
+- **Card title font:** "whatever font matches the rest of the app", so SF Pro, not New York.
+
+By the controller, changing behaviour:
+- Hidden-word matching: a query term matches when it starts any space-separated part of a hidden word ("lic" finds "driver license"). A term's "s" or "es" stem matches only a whole part ("taxes" finds "tax"; "bus" never finds "budget").
+- Titles are sentence case: ALL-CAPS parts become capitalised words, known acronyms stay upper, " - " separators become " · ", and only a title's first lowercase part is capitalised.
+- The unavailable Settings row follows 10-06 exactly ("Turn it on in iPhone Settings first").
+- A rescan resets a title and collection the suggestion filled and you hadn't touched.
+- Saving before the suggestion lands records no suggestion outcome in analytics.

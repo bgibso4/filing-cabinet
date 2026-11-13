@@ -11,6 +11,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
+    Suggesting/              Apple Intelligence: the ScanSuggester seam, the on-device model's two calls (title and collection, then search words), prompts, title casing
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
     Export/                  a scan as a PDF (ScanPDF), temporary export files and their launch cleanup
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
@@ -18,7 +19,9 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Shared/                  HeaderRest, HeaderInsets, HeaderSettling: the header's maths
     Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
-    Search/                  search matching (text folded once), history, recently viewed, the Search model
+    Search/                  search matching (text folded once, hidden words by part-prefix), history, recently viewed, the Search model
+    Suggestions/             the background pass that gives older scans their search words
+    Review/                  the review's card-or-sheet state, the wait limit, the words call after Save
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
                              own titles, styled by HeaderAppearance)
@@ -28,11 +31,12 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Search/                  the Search screen: our own field, filter chips, result rows
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
-                             ReaderComparisonTests (the bake-off report, not a gate)
+                             ReaderComparisonTests (the bake-off report, not a gate),
+                             SuggestionEvaluationTests (`make eval-suggestions`: the made-up scans and the report, not a gate)
 SnapshotTests/               app-hosted snapshot tests; references live beside the tests
 UITests/                     journey UI tests, with identifier coverage and accessibility audits
 DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
-scripts/                     token generator, compare, pre-commit, lint-rule tests
+scripts/                     token generator, compare, pre-commit, lint-rule tests; make-eval-scans.swift makes the made-up test scans
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
 design/                      design handoff and tokens.json (source of the generated tokens)
 docs/superpowers/specs/      requirements and design specs

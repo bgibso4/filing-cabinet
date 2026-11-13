@@ -182,7 +182,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
   <p class="lede">A private, Photos-style library just for personal documents. It files each scan itself and cleans up after itself. This document defines <em>what</em> v1 does. The design spec defines <em>how</em>.</p>
   <div class="meta">
     <span class="chip"><b>Status</b> Screens designed</span>
-    <span class="chip"><b>Date</b> 2026-10-10 · updated 2026-10-29</span>
+    <span class="chip"><b>Date</b> 2026-10-10 · updated 2026-11-12</span>
     <span class="chip"><b>Platform</b> iPhone · iOS 27+</span>
     <span class="chip"><b>Next</b> Build in SwiftUI</span>
   </div>
@@ -210,7 +210,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <div class="job"><p>Grab a throwaway doc (a coat-check tag) that deletes itself in a week.</p></div>
     </div>
     <p class="note">These four jobs were confirmed on 2026-10-10 as the complete set. No others are in scope.</p>
-    <p class="note">Updated 2026-10-25 after the screens were designed, and 2026-10-29 with the app icon. Lines that changed are corrected in place, and everything decided during design is listed in <a href="#design">06 · Design changes</a>. The decisions board on the Mocks canvas stays as the record of 2026-10-10.</p>
+    <p class="note">Updated 2026-10-25 after the screens were designed, 2026-10-29 with the app icon, and 2026-11-12 for Apple Intelligence (Plan 5). Lines that changed are corrected in place, and everything decided during design is listed in <a href="#design">06 · Design changes</a>. The decisions board on the Mocks canvas stays as the record of 2026-10-10.</p>
     <p class="note">Where this document and the design spec (<code>2026-07-12-filing-cabinet-design.md</code>) conflict, this document wins.</p>
   </div>
 </section>
@@ -232,10 +232,11 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
 
     <h3>Automatic filing</h3>
     <ul class="rules">
-      <li>The app checks whether <b>Apple Intelligence is available</b> using the on-device model's availability API. If it is, the model suggests a collection and the review sheet comes pre-filled with it.</li>
+      <li>The app checks whether <b>Apple Intelligence is available</b> using the on-device model's availability API. If it is, the model reads each new scan once and suggests a <b>title</b> and a <b>collection</b>, and the slim review card shows them. You still tap Save.</li>
+      <li>After Save the model also writes a few <b>hidden search words</b> for the scan, so Search can find it by what it is ("ID" finds a driver's license that never prints "ID"). The words are never shown or edited. Scans saved before Apple Intelligence was on, or before the model finished, get their words in the background while the app is open; their titles and collections never change.</li>
       <li>If it isn't available (the device isn't eligible, Apple Intelligence is turned off, or the model isn't downloaded yet), <b>you pick the collection</b> on the review sheet. Every other feature works the same.</li>
       <li>A wrong guess always costs <b>one tap</b> to fix.</li>
-      <li>Accuracy is checked with a throwaway experiment on 20–30 of the author's real scans before the implementation plan. If it's poor, v1 ships with manual picking only, and the review sheet doesn't change.</li>
+      <li>Accuracy is measured on a set of made-up scans (at least 15 per collection, a few of them poor quality) with <code>make eval-suggestions</code> on a Mac. It is a report, not a gate. This replaces the 20–30 real-scan experiment. Updated 2026-11-12.</li>
     </ul>
 
     <h3>Expiry</h3>
@@ -284,7 +285,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <div class="group-label">Finding</div>
     <div class="stories">
       <div class="story"><div class="n">4</div><div><h4>Browse</h4><p>Each collection (Wallet, Receipts, Notes, Documents, Throwaways), plus Recent and All, is one tap from home.</p></div></div>
-      <div class="story"><div class="n">5</div><div><h4>Search</h4><p>Full-text search across the recognized text of every scan. Results show thumbnails.</p></div></div>
+      <div class="story"><div class="n">5</div><div><h4>Search</h4><p>Full-text search across the recognized text of every scan, and across what each scan is (hidden words from Apple Intelligence). Results show thumbnails.</p></div></div>
       <div class="story"><div class="n">6</div><div><h4>Favorites</h4><p>You can favorite any scan, and favorites are one tap from home, so you can pull up your license at a counter.</p></div></div>
     </div>
 
@@ -440,7 +441,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <h3>Collections and settings</h3>
     <ul class="rules">
       <li>Receipts are kept 3 months, shown that way everywhere.</li>
-      <li>Settings: Collections, an Apple Intelligence switch ("Suggests titles and collections"), a Notifications switch ("A note when scans move to Trash"), Send feedback, and the footer "Filing Cabinet 1.0 · Private by design".</li>
+      <li>Settings: Collections, an Apple Intelligence switch ("Names, files and finds your scans"; when Apple Intelligence isn't available the switch is off and dimmed, and the footer says "Turn it on in iPhone Settings first"; while older scans are being read, a footer line shows the progress), a Notifications switch ("A note when scans move to Trash"), Send feedback, and the footer "Filing Cabinet 1.0 · Private by design".</li>
       <li>Collections opens a list; each collection has "Keep scans for" (1 week, 1 month, 3 months, 1 year, Forever) with the shortening confirmation and count.</li>
     </ul>
 
@@ -454,6 +455,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <h3>Search</h3>
     <ul class="rules">
       <li>One ranked list with recently viewed scans, recent searches and collection filters; title matches first, the match in bold.</li>
+      <li>Search also matches what a scan is: the hidden search words match the start of a word ("lic" finds "driver license"). A row found only that way shows a sparkle and "Matches <b>ID</b>", never the words themselves. Without Apple Intelligence nothing changes.</li>
       <li>First use (nothing viewed or searched yet) shows only the filters. A search is saved when you press Search or open a result.</li>
     </ul>
 
@@ -462,6 +464,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <li>A collection's lifespan uses its friendly unit: "Kept 3 months", "Kept 1 week", "Kept forever".</li>
       <li>A scan's countdown: a year or more shows years ("1 year left"); 60 days to a year shows whole months, rounded down ("2 months left"); under 60 days shows days ("45 days left"); the last week is orange. Trash always shows days.</li>
       <li>When a scan's whole lifespan is a week or less, only its last day is orange.</li>
+      <li>Every grid tile's second line is the scan date and a short time left: "Nov 11 · 3 mo left", "Sep 28 · 59d left", "Sep 28 · 2 yr left", "Mar 4 · Forever". Details and Trash keep the full wording.</li>
     </ul>
 
     <h3>Extras in v1</h3>
@@ -566,12 +569,12 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <h2>Open questions</h2>
     <div class="open">
       <div class="card"><h4>Home screen look</h4><p>Settled in the Claude Design mocks: see the Final page of the canvas.</p></div>
-      <div class="card"><h4>Accuracy of automatic filing</h4><p>Settled by the experiment with real scans before the implementation plan.</p></div>
+      <div class="card"><h4>Accuracy of automatic filing</h4><p>Measured on made-up scans with <code>make eval-suggestions</code> (Plan 5); see Automatic filing.</p></div>
     </div>
   </div>
 </section>
 
-<footer>Filing Cabinet · Requirements &amp; user stories · 2026-10-10 · updated 2026-10-29</footer>
+<footer>Filing Cabinet · Requirements &amp; user stories · 2026-10-10 · updated 2026-11-12</footer>
 </div>
 </body>
 </html>
