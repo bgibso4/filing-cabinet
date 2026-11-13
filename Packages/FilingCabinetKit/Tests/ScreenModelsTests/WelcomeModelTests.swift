@@ -18,7 +18,20 @@ private struct WelcomeHarness {
         fresh = try FreshDefaults()
         preferences = AppPreferences(defaults: fresh.defaults)
         center = FakeNotificationCenter(authorization: authorization, grantsRequest: grantsRequest, answers: answers)
-        model = WelcomeModel(preferences: preferences, notifications: center, analytics: analytics)
+        model = WelcomeModel(
+            preferences: preferences, notifications: center, analytics: analytics, authorizationWait: Self.wait)
+    }
+
+    /// Long enough for the fake to answer, short enough to keep a stuck read quick.
+    static let wait = Duration.milliseconds(50)
+
+    /// Starts Turn on notifications from the second screen and returns once iOS has been asked.
+    func askAndWait() async -> Task<Void, Never> {
+        await model.start()
+        await model.continueTapped()
+        let ask = Task { await model.turnOnTapped() }
+        while center.requestCount == 0 { await Task.yield() }
+        return ask
     }
 
     /// Another model on the same defaults, as after the app was killed and opened again.
@@ -94,21 +107,56 @@ func answeredSkipsSecondScreen(_ authorization: NotificationAuthorization) async
     #expect(harness.preferences.welcomeDone)
 }
 
-@Test func unansweredAskClosesOnReturn() async throws {
+@Test func stuckServiceStillReachesTheAsk() async throws {
     let harness = try WelcomeHarness(.notDetermined, answers: false)
     defer { harness.cleanUp() }
     await harness.model.start()
-    // Continue would wait on the stuck service too, so the second screen is reached as Continue would have.
-    let ask = Task { await harness.model.turnOnTapped() }
+    await harness.model.continueTapped()
+    #expect(harness.model.step == .notifications)
+    harness.model.notNowTapped()
+    #expect(harness.model.step == nil)
+    #expect(harness.analytics.events == [.welcomeFinished(notifications: false)])
+}
+
+@Test func unansweredAskClosesOnReturn() async throws {
+    let harness = try WelcomeHarness(.notDetermined, answers: false)
+    defer { harness.cleanUp() }
+    let ask = await harness.askAndWait()
     defer { ask.cancel() }
-    while harness.center.requestCount == 0 { await Task.yield() }
-    #expect(harness.model.step != nil)
+    #expect(harness.model.step == .notifications)
 
     harness.model.becameActive()
 
     #expect(harness.model.step == nil)
     #expect(harness.preferences.welcomeDone)
-    #expect(harness.analytics.events == [.welcomeFinished(notifications: false)])
+    // The answer never came, so there is nothing true to report.
+    #expect(harness.analytics.events.isEmpty)
+}
+
+@Test func answerAfterReturnIsReported() async throws {
+    let harness = try WelcomeHarness(.notDetermined, grantsRequest: true, answers: false)
+    defer { harness.cleanUp() }
+    let ask = await harness.askAndWait()
+    harness.model.becameActive()
+    #expect(harness.model.step == nil)
+    #expect(harness.analytics.events.isEmpty)
+
+    // The stuck fake answers once cancelled: iOS's answer arriving after the app became active.
+    ask.cancel()
+    await ask.value
+
+    #expect(harness.analytics.events == [.welcomeFinished(notifications: true)])
+    harness.model.becameActive()
+    #expect(harness.analytics.events.count == 1)
+}
+
+@Test func turnOnWorksOnlyOnTheAsk() async throws {
+    let harness = try WelcomeHarness(.notDetermined)
+    defer { harness.cleanUp() }
+    await harness.model.start()
+    await harness.model.turnOnTapped()
+    #expect(harness.center.requestCount == 0)
+    #expect(harness.model.step == .welcome)
 }
 
 @Test func becomingActiveWithoutAnAskChangesNothing() async throws {
@@ -171,6 +219,7 @@ func answeredSkipsSecondScreen(_ authorization: NotificationAuthorization) async
     harness.model.notNowTapped()
     harness.model.notNowTapped()
     await harness.model.turnOnTapped()
+    harness.model.becameActive()
     #expect(harness.analytics.events.count == 1)
     #expect(harness.center.requestCount == 0)
 }

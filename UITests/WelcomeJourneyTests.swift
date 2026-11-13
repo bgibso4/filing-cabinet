@@ -46,6 +46,21 @@ final class WelcomeJourneyTests: XCTestCase {
         attach(app, named: "empty-home")
     }
 
+    func testStuckNotificationServiceStillLetsContinueAndNotNow() {
+        // iOS never says whether it allows notes: Continue shows the ask after its wait, and Not now closes it.
+        let app = launchApp(["-ShowWelcome", "-NotificationsUnanswered"])
+        let continueButton = app.buttons[AccessibilityID.Welcome.continue]
+        XCTAssertTrue(continueButton.appears(within: 5))
+
+        continueButton.tap()
+
+        let notNow = app.buttons[AccessibilityID.Welcome.notNow]
+        XCTAssertTrue(notNow.appears(within: 5))
+        notNow.tap()
+        XCTAssertTrue(notNow.disappears(within: 5))
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isHittable == true", within: 5))
+    }
+
     func testTurnOnAsksIOS() {
         // The fake notification center stands in for iOS's ask (01-05) and allows.
         let app = launchApp(["-ShowWelcome", "-Notifications", "notDetermined"])
