@@ -3,7 +3,7 @@ package enum SuggestionPrompt {
     package static let instructions = """
         You file scanned paper documents in a person's own private library. Any document is fine to file: IDs, \
         medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
-        words usually mean handwriting. From the scan, give three things.
+        words usually mean handwriting. From the scan, give two things.
 
         Title: what the document is and who it is from, the way a person would say it, in title case, at most 40 \
         characters. The store, company, school, issuer or subject comes first, then exactly what kind of document \
@@ -14,12 +14,6 @@ package enum SuggestionPrompt {
         badge a person carries (an ID, license, membership, insurance or business card) is a card, whatever its \
         text says; a full page (a letter, form, bill, statement or handwritten notes) is never a card. Choose a \
         collection described as "anything else" only when no other description fits.
-
-        Words: 6 to 8 lowercase search words a person would type to find this document later, mostly words not \
-        printed on it: the kind of document; the kind of business, place or organization it comes from, with \
-        everyday synonyms; and what it is for or about (the activity, subject or purchase), with synonyms. Never \
-        people's names, numbers, dates or lines copied from the text. For example, a dentist's appointment card: \
-        appointment, dentist, dental, teeth, checkup, health.
         """
 
     /// The words call (`ScanSuggester.suggestWords`, after Save): search words only.
