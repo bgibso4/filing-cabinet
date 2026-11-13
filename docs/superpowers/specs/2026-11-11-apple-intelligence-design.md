@@ -19,8 +19,8 @@ what the doc is especially if there is not much text on it".
    title, one collection from the collections that exist at that moment, and a handful of hidden search words. Ben:
    "you would need to do it at scan time to have the app be able to scale properly and stay performative". The model
    never runs while you search.
-2. **Better titles.** Who and what, the way you'd say it: "City Pharmacy receipt", "Driver's license",
-   "2025 W-2 · Northwind", "Biology notes · cell respiration", "Coat check ticket". Short (about 40 characters at most).
+2. **Better titles.** Who and what, the way you'd say it, in Title Case: "City Pharmacy Receipt", "Driver's License",
+   "2025 W-2 · Northwind", "Biology Notes · Cell Respiration", "Coat Check Ticket". Short (about 40 characters at most).
 3. **Collection from whatever collections exist.** The model is handed the current list (name and description of
    each) on every read, never a fixed five. Ben: "it should just easily support that in the future" (custom
    collections). Today the list is the five built-ins.
@@ -122,7 +122,7 @@ whatever Plan 4's matching does for text.
 from a second call after Save. A background pass reads **newest first**, at launch and on returning to the foreground,
 with the switch on and the model available, and fills any scan that is missing words (a scan saved before the second call
 finished, one saved with the switch off, or one read by an older prompt version). One scan at a time. It uses the stored
-page text plus the first page image, writes only search words and a marker that the scan has been read (so it isn't read
+page text, the scan's title and its collection's name (text only, no page image, as the words call after Save), writes only search words and a marker that the scan has been read (so it isn't read
 twice, and a later prompt version can re-read), and never changes a title or collection. Newest first because the newest
 scans are the likeliest searches.
 
@@ -181,7 +181,8 @@ By Ben:
 
 By the controller, changing behaviour:
 - Hidden-word matching: a query term matches when it starts any space-separated part of a hidden word ("lic" finds "driver license"). A term's "s" or "es" stem matches only a whole part ("taxes" finds "tax"; "bus" never finds "budget").
-- Titles are sentence case: ALL-CAPS parts become capitalised words, known acronyms stay upper, " - " separators become " · ", and only a title's first lowercase part is capitalised.
+- Titles are Title Case (Ben, 2026-11-12: "title case"), part by part (" · " parts): every word gets a capital first letter; codes with a digit or hyphen ("W-2", "1099-NEC") and words already mixing case ("iPhone", "McDonald's") stay as written; known acronyms are upper case; ALL-CAPS words become capitalised ("HARBOR GAS" is "Harbor Gas"); small words (a, an, the, and, or, of, for, to, in, on, at, by, with) stay lowercase only when the model wrote them so and they aren't first in a part. " - " separators become " · ". The prompt asks for Title Case with examples kept out of the test set's titles.
+- The background pass stops while a scan is under way (from the Scan tap until review ends), its call in flight included, and a words call after Save waits while the next review's filing call runs, so the filing call never shares the model.
 - The unavailable Settings row follows 10-06 exactly ("Turn it on in iPhone Settings first").
 - A rescan resets a title and collection the suggestion filled and you hadn't touched.
 - Saving before the suggestion lands records no suggestion outcome in analytics.
