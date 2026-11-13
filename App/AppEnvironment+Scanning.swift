@@ -20,7 +20,7 @@ extension AppEnvironment {
     struct Scanning {
         let flow: ScanFlowModel
         let suggester: any ScanSuggester
-        /// Waits while a scan is under way or a words call after Save runs, so review has the model to itself.
+        /// Stopped during a scan, and waits behind a words call after Save: review has the model to itself.
         let wordsPass: SearchWordsPass
 
         init(
@@ -35,7 +35,13 @@ extension AppEnvironment {
             let wordsWriter = SearchWordsWriter(
                 suggester: suggester, library: store, backgroundTime: SystemBackgroundTime())
             let scanReader = AppEnvironment.makeScanReader(options: options)
-            let flow = ScanFlowModel(
+            let wordsPass = SearchWordsPass(
+                library: store,
+                today: today,
+                suggester: suggester,
+                preferences: preferences,
+                isBusy: { wordsWriter.isWriting })
+            flow = ScanFlowModel(
                 cameraAccess: AppEnvironment.cameraAccess(options: options),
                 clock: clock,
                 analytics: analytics,
@@ -55,16 +61,12 @@ extension AppEnvironment {
                         suggestionWaitLimit: AppEnvironment.suggestionWaitLimit,
                         wordsWriter: wordsWriter
                     )
-                }
+                },
+                scanStarted: wordsPass.scanStarted,
+                scanEnded: wordsPass.scanEnded
             )
-            self.flow = flow
             self.suggester = suggester
-            wordsPass = SearchWordsPass(
-                library: store,
-                today: today,
-                suggester: suggester,
-                preferences: preferences,
-                isBusy: { flow.isScanning || wordsWriter.isWriting })
+            self.wordsPass = wordsPass
         }
 
         /// Settings, whose Apple Intelligence switch and reading line follow this model and pass.

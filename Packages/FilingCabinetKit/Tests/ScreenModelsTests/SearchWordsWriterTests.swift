@@ -148,3 +148,54 @@ func isWritingUntilTheCallEnds() async throws {
 
     #expect(await ReviewHarness.eventually { !writer.isWriting })
 }
+
+/// While the next review's filing call runs, a words call waits for it (holding background time meanwhile); it starts
+/// once that call ends.
+@Test(.timeLimit(.minutes(1)))
+func aWordsCallWaitsForTheFilingCall() async throws {
+    let library = FakeLibrary()
+    let id = try await savedScan(in: library)
+    let suggester = FakeScanSuggester(filing: .fails, words: .arrives(["receipt"], after: .zero))
+    let time = FakeBackgroundTime()
+    let writer = SearchWordsWriter(
+        suggester: suggester,
+        library: library,
+        backgroundTime: time,
+        callLimit: .seconds(30),
+        filingRecheck: .milliseconds(10))
+    writer.isFilingUnderWay = true
+
+    let task = writer.write(for: id, input: input, title: "City Pharmacy", collectionName: "Receipts")
+    try await Task.sleep(for: .milliseconds(100))
+    #expect(suggester.wordsCalls.isEmpty)
+    #expect(writer.isWriting)
+    #expect(time.begun == ["Search words"])
+
+    writer.isFilingUnderWay = false
+    await task.value
+    #expect(suggester.wordsCalls.count == 1)
+    #expect(library.searchWords()[id] == ["receipt"])
+}
+
+/// Background time running out while the words call waits ends it without asking the model.
+@Test(.timeLimit(.minutes(1)))
+func runningOutOfTimeWhileWaitingAsksNothing() async throws {
+    let library = FakeLibrary()
+    let id = try await savedScan(in: library)
+    let suggester = FakeScanSuggester(filing: .fails, words: .arrives(["receipt"], after: .zero))
+    let time = FakeBackgroundTime()
+    let writer = SearchWordsWriter(
+        suggester: suggester,
+        library: library,
+        backgroundTime: time,
+        callLimit: .seconds(30),
+        filingRecheck: .milliseconds(10))
+    writer.isFilingUnderWay = true
+
+    let task = writer.write(for: id, input: input, title: "City Pharmacy", collectionName: "Receipts")
+    time.expire()
+    await task.value
+
+    #expect(suggester.wordsCalls.isEmpty)
+    #expect(library.scansNeedingWords(version: ScanSuggestion.promptVersion) == [id])
+}

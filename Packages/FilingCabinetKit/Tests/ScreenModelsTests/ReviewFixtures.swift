@@ -37,6 +37,8 @@ struct ReviewHarness {
     let reader: FakeTextReader
     let suggester: FakeScanSuggester
     let backgroundTime = FakeBackgroundTime()
+    /// The review's words writer: a test can hold it back as another review's filing call would.
+    let wordsWriter: SearchWordsWriter
     let model: ReviewModel
 
     /// Suggestions are off unless `suggestionsOn` says otherwise, so a review behaves as before Plan 5.
@@ -51,6 +53,7 @@ struct ReviewHarness {
     ) {
         reader = FakeTextReader(steps)
         self.suggester = suggester
+        wordsWriter = SearchWordsWriter(suggester: suggester, library: library, backgroundTime: backgroundTime)
         model = ReviewModel(
             input: ReviewInput(pages: pages, preselected: preselected, scannedAt: Self.now, source: .grid),
             reader: ScanReader(reader: reader),
@@ -61,7 +64,7 @@ struct ReviewHarness {
             suggester: suggester,
             suggestionsOn: suggestionsOn,
             suggestionWaitLimit: suggestionWaitLimit,
-            wordsWriter: SearchWordsWriter(suggester: suggester, library: library, backgroundTime: backgroundTime)
+            wordsWriter: wordsWriter
         )
     }
 

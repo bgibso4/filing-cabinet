@@ -312,12 +312,57 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     #expect(suggester.prewarms.count == 1)
 }
 
-/// The background words pass waits while a scan is under way.
-@Test func isScanningFromTheTapUntilReviewEnds() async {
-    let harness = Harness(.authorized)
-    #expect(!harness.model.isScanning)
-    await harness.reachReview([receipt])
-    #expect(harness.model.isScanning)
-    harness.model.reviewEnded(saved: nil)
-    #expect(!harness.model.isScanning)
+/// Counts the flow's scan started and ended calls, which pause and resume the background words pass.
+@MainActor
+private final class ScanHooks {
+    var started = 0
+    var ended = 0
+
+    func flow(_ status: CameraAuthorization = .authorized) -> ScanFlowModel {
+        ScanFlowModel(
+            cameraAccess: FakeCameraAccess(status: status, grantsOnRequest: false),
+            clock: Harness.clock,
+            analytics: RecordingAnalytics(),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: { true },
+            makeReview: Harness.makeReview,
+            scanStarted: { self.started += 1 },
+            scanEnded: { self.ended += 1 })
+    }
+}
+
+@Test func aScanStartsAtTheTapAndEndsWithTheReview() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow()
+
+    await model.scan(from: .home, preselected: nil)
+    #expect((hooks.started, hooks.ended) == (1, 0))
+    model.cameraFinished([receipt])
+    model.rescan()
+    model.cameraCancelled()  // a rescan's cancel goes back to review: the scan goes on
+    #expect((hooks.started, hooks.ended) == (1, 0))
+
+    model.reviewEnded(saved: nil)
+    #expect((hooks.started, hooks.ended) == (1, 1))
+}
+
+@Test func aCancelledCameraEndsTheScan() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow()
+
+    await model.scan(from: .home, preselected: nil)
+    model.cameraCancelled()
+
+    #expect((hooks.started, hooks.ended) == (1, 1))
+}
+
+@Test func theCameraOffSheetEndsTheScanWhenDismissed() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow(.denied)
+
+    await model.scan(from: .home, preselected: nil)
+    #expect((hooks.started, hooks.ended) == (1, 0))
+    model.dismissCameraOff()
+
+    #expect((hooks.started, hooks.ended) == (1, 1))
 }

@@ -285,3 +285,24 @@ func leavingTheForegroundStopsReading() async throws {
     #expect(harness.suggester.titles == ["Lease"])
     #expect(harness.needing() == harness.ids)
 }
+
+/// A scan stops the call in flight, so review has the model to itself; the pass starts again once the scan ends.
+@Test(.timeLimit(.minutes(1)))
+func aScanStopsThePassUntilItEnds() async throws {
+    let harness = try PassHarness(["Lease", "Letter"])
+    defer { harness.cleanUp() }
+
+    harness.pass.resume()
+    #expect(await harness.asked(1))
+    harness.pass.scanStarted()
+    #expect(harness.pass.progress == nil)
+    harness.suggester.answer(PassHarness.words)  // too late: the pass has let go of this call
+    harness.pass.resume()  // back in the foreground mid-scan: still waits
+    try await Task.sleep(for: .milliseconds(100))
+    #expect(harness.suggester.titles == ["Lease"])
+    #expect(harness.needing() == harness.ids)
+
+    harness.pass.scanEnded()
+    #expect(await harness.asked(2))
+    #expect(harness.suggester.titles == ["Lease", "Lease"])
+}

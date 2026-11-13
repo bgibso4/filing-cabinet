@@ -12,10 +12,9 @@ import Understanding
 /// collection's name, and only its words change. A scan whose call fails or times out is skipped until the next
 /// `resume()`. The list is asked for again before each scan, so a scan deleted or moved to Trash meanwhile is skipped.
 ///
-/// The pass waits while `isBusy` (a scan under way, or a words call after Save), so it never competes with review for
-/// the model. It checks every `busyRecheck`; a scan takes seconds, so the check costs nothing to speak of. A call
-/// already in flight when Scan is tapped isn't cancelled: it can overlap the review for up to its 30 s limit, and
-/// `isBusy` holds back only the next one.
+/// The pass never competes with review for the model: `scanStarted()` stops it, call in flight included, and
+/// `scanEnded()` starts it again. Between scans it waits while `isBusy` (a words call after Save), checking every
+/// `busyRecheck`; a words call takes seconds, so the check costs nothing to speak of.
 @MainActor
 @Observable
 public final class SearchWordsPass {
@@ -43,8 +42,10 @@ public final class SearchWordsPass {
     @ObservationIgnored private var runNumber = 0
     /// The app launches into the foreground; `leftForeground()` and `enteredForeground()` keep this current.
     @ObservationIgnored private var isInForeground = true
+    /// Between `scanStarted()` and `scanEnded()`.
+    @ObservationIgnored private var isScanUnderWay = false
 
-    /// `isBusy` is true while the model is wanted elsewhere: a scan under way, or a words call after Save.
+    /// `isBusy` is true while the model is wanted elsewhere between scans: a words call after Save.
     public convenience init(
         library: any ScanLibrary,
         today: Today,
@@ -81,10 +82,10 @@ public final class SearchWordsPass {
         self.busyRecheck = busyRecheck
     }
 
-    /// Starts reading, unless it already is, the app isn't in the foreground, the switch is off or the model can't
-    /// answer.
+    /// Starts reading, unless it already is, the app isn't in the foreground, a scan is under way, the switch is off
+    /// or the model can't answer.
     public func resume() {
-        guard run == nil, isInForeground, isAllowed else { return }
+        guard run == nil, isInForeground, !isScanUnderWay, isAllowed else { return }
         runNumber += 1
         let number = runNumber
         run = Task { [weak self] in
@@ -98,6 +99,19 @@ public final class SearchWordsPass {
         run?.cancel()
         run = nil
         progress = nil
+    }
+
+    /// A scan has started: reading stops, the call in flight too, so review has the model to itself; `resume()` waits
+    /// for `scanEnded()`.
+    public func scanStarted() {
+        isScanUnderWay = true
+        pause()
+    }
+
+    /// The scan has ended (saved, discarded or cancelled): reading starts again.
+    public func scanEnded() {
+        isScanUnderWay = false
+        resume()
     }
 
     /// The app is in the foreground again; the caller resumes once its own launch work allows.

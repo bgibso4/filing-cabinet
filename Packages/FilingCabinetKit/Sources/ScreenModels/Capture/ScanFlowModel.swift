@@ -35,6 +35,10 @@ public final class ScanFlowModel {
     @ObservationIgnored private var preselected: BuiltInCollection?
     /// True while the system asks for camera access.
     @ObservationIgnored private var isAskingForCamera = false
+    /// Told when a scan starts (the Scan tap) and when it ends (saved, discarded, cancelled or the camera-off sheet
+    /// dismissed), so the background words pass leaves the model to review meanwhile.
+    @ObservationIgnored private let scanStarted: () -> Void
+    @ObservationIgnored private let scanEnded: () -> Void
 
     public init(
         cameraAccess: any CameraAccess,
@@ -42,7 +46,9 @@ public final class ScanFlowModel {
         analytics: any Analytics,
         suggester: any ScanSuggester,
         suggestionsOn: @escaping () -> Bool,
-        makeReview: @escaping (ReviewInput) -> ReviewModel
+        makeReview: @escaping (ReviewInput) -> ReviewModel,
+        scanStarted: @escaping () -> Void = {},
+        scanEnded: @escaping () -> Void = {}
     ) {
         self.cameraAccess = cameraAccess
         self.clock = clock
@@ -50,16 +56,16 @@ public final class ScanFlowModel {
         self.suggester = suggester
         self.suggestionsOn = suggestionsOn
         self.makeReview = makeReview
+        self.scanStarted = scanStarted
+        self.scanEnded = scanEnded
     }
-
-    /// True from the Scan tap until review ends: the background words pass waits meanwhile.
-    public var isScanning: Bool { phase != .idle || isAskingForCamera }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
     /// Does nothing while a scan is under way, including while the permission prompt is up (`phase` is still idle
     /// then), so a second tap can't start a second scan.
     package func scan(from source: ScanSource, preselected: BuiltInCollection?) async {
         guard phase == .idle, !isAskingForCamera else { return }
+        scanStarted()
         analytics.send(.scanStarted(source: source))
         self.source = source
         self.preselected = preselected
@@ -117,7 +123,7 @@ public final class ScanFlowModel {
     }
 
     package func dismissCameraOff() {
-        phase = .idle
+        endScan()
     }
 
     /// Review saved (`saved`) or discarded the scan. The view calls this once the layer has slid away, so the haptic
@@ -126,7 +132,7 @@ public final class ScanFlowModel {
         if let saved { lastSaved = saved }
         reviewInput = nil
         review = nil
-        phase = .idle
+        endScan()
     }
 
     /// Shows the camera, warming the model meanwhile so the review's suggestion comes sooner (E3).
@@ -137,9 +143,14 @@ public final class ScanFlowModel {
         phase = .camera(isRescan: isRescan)
     }
 
+    private func endScan() {
+        phase = .idle
+        scanEnded()
+    }
+
     private func leaveCamera() {
         if leavingCameraEndsTheScan {
-            phase = .idle
+            endScan()
         } else {
             phase = .review
         }

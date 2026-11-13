@@ -19,7 +19,7 @@ final class ReviewSuggestion {
     }
 
     private(set) var presentation: ReviewPresentation
-    /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
+    /// "Suggested: City Pharmacy Receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
     private(set) var announcement: String?
 
     @ObservationIgnored private let suggester: any ScanSuggester
@@ -77,14 +77,18 @@ final class ReviewSuggestion {
         call?.cancel()
         call = nil
         guard asks, !isWaitOver else { return }
-        call = Task { [suggester] in
+        // A words call after the last Save waits until this call is done, so the two don't share the model.
+        wordsWriter.isFilingUnderWay = true
+        call = Task { [suggester, wordsWriter] in
             let found = await reading.value
             guard !Task.isCancelled else { return }
             let suggestion = await suggester.suggestFiling(
                 SuggestionInput(
                     searchText: found.searchText, firstPage: firstPage, collections: SuggestionCollection.builtIns))
-            // Cancelled: a rescan, the limit, save or discard came first, and the answer is no longer wanted.
+            // Cancelled: a rescan, the limit, save or discard came first, and the answer is no longer wanted. Whoever
+            // cancelled it has let the words call go, or asked again.
             guard !Task.isCancelled else { return }
+            wordsWriter.isFilingUnderWay = false
             landed(suggestion, fill: fill)
         }
     }
@@ -105,6 +109,7 @@ final class ReviewSuggestion {
         isWaitOver = true
         call?.cancel()
         call = nil
+        wordsWriter.isFilingUnderWay = false
         limit?.cancel()
     }
 
@@ -156,7 +161,7 @@ final class ReviewSuggestion {
         if case .card = presentation { presentation = .card(isReading: false) }
     }
 
-    /// "Suggested: City Pharmacy receipt, Receipts", or just the part filled in; nil when nothing was.
+    /// "Suggested: City Pharmacy Receipt, Receipts", or just the part filled in; nil when nothing was.
     private static func announcement(for filled: Fill) -> String? {
         switch (filled.title, filled.collection.map(CollectionText.name)) {
         case (let title?, let name?): String(localized: "Suggested: \(title), \(name)", bundle: #bundle)
