@@ -43,7 +43,9 @@ func draft(
     scannedAt: Date = Date(timeIntervalSince1970: 1_000),
     expiryOverride: ExpiryOverride? = nil,
     pages: Int = 1,
-    searchText: String? = nil
+    searchText: String? = nil,
+    searchWords: [String] = [],
+    searchWordsVersion: Int? = nil
 ) -> ScanDraft {
     ScanDraft(
         id: ScanID(),
@@ -52,7 +54,9 @@ func draft(
         scannedAt: scannedAt,
         expiryOverride: expiryOverride,
         pages: Array(repeating: smallPage(), count: pages),
-        searchText: searchText
+        searchText: searchText,
+        searchWords: searchWords,
+        searchWordsVersion: searchWordsVersion
     )
 }
 

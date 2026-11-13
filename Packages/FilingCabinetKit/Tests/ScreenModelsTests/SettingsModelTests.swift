@@ -36,7 +36,15 @@ private struct SettingsHarness {
         fresh = try FreshDefaults()
         preferences = AppPreferences(defaults: fresh.defaults)
         center = FakeNotificationCenter(authorization: authorization, grantsRequest: grantsRequest)
-        model = SettingsModel(preferences: preferences, notifications: center, version: "1.0")
+        let suggester = FakeScanSuggester.unavailable()
+        let pass = SearchWordsPass(
+            library: FakeLibrary(),
+            today: Today(clock: .fixed(noon, calendar: utc)),
+            suggester: suggester,
+            preferences: preferences,
+            isBusy: { false })
+        model = SettingsModel(
+            preferences: preferences, notifications: center, suggester: suggester, wordsPass: pass, version: "1.0")
     }
 
     func cleanUp() { fresh.cleanUp() }

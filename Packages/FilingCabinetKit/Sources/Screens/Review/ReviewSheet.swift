@@ -46,7 +46,8 @@ struct ReviewSheet: View {
         .padding([.horizontal, .bottom], Tokens.Spacing.s4)
         .background(Tokens.Color.bgSurface, in: Self.shape)
         .padding(Self.inset)
-        .sensoryFeedback(.selection, trigger: model.collection)
+        // Only the user's pick: a suggestion filling the collection has its own haptic (ReviewView).
+        .sensoryFeedback(.selection, trigger: model.collection) { _, _ in model.isCollectionPicked }
         .sensoryFeedback(.selection, trigger: model.expiryOverride)
     }
 

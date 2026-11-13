@@ -151,6 +151,24 @@ final class SettingsJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// With Apple Intelligence, turning its switch off takes effect on the next scan: the full sheet at once, asking
+    /// for a collection, as on an iPhone without it.
+    func testSwitchOffShowsSheetOnNextScan() {
+        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "arrives"])
+        openSettings(in: app)
+        let intelligence = app.switches[AccessibilityID.Settings.intelligence]
+        XCTAssertEqual(intelligence.value as? String, "1")
+        XCTAssertTrue(intelligence.label.hasSuffix("Names, files and finds your scans"), intelligence.label)
+        intelligence.tap()
+        XCTAssertTrue(intelligence.satisfies("value == '0'", within: 5))
+        app.buttons[AccessibilityID.Grid.back].tap()
+
+        scanOnePage(in: app)
+        let collection = app.descendants(matching: .any)[AccessibilityID.Review.collection]
+        XCTAssertTrue(collection.satisfies("exists == true AND value == %@", "Choose a collection", within: 5))
+        XCTAssertFalse(app.buttons[AccessibilityID.Review.card].exists)
+    }
+
     // MARK: Steps
 
     private func openSettings(in app: XCUIApplication) {

@@ -11,6 +11,12 @@ public final class AppPreferences {
         didSet { defaults.set(notificationsOn, forKey: Key.notificationsOn) }
     }
 
+    /// The person's wish for Apple Intelligence: names and files new scans and gives scans search words. Whether the
+    /// model can answer is separate (`ScanSuggester.availability`).
+    public var appleIntelligenceOn: Bool {
+        didSet { defaults.set(appleIntelligenceOn, forKey: Key.appleIntelligenceOn) }
+    }
+
     /// The last day whose cleanup Home's banner has already reported (Task 14), so it counts only what is new.
     public var cleanupSeenThrough: CalendarDay? {
         didSet { defaults.set(cleanupSeenThrough?.storageValue, forKey: Key.cleanupSeenThrough) }
@@ -31,6 +37,7 @@ public final class AppPreferences {
     public init(defaults: UserDefaults) {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
+        appleIntelligenceOn = defaults.object(forKey: Key.appleIntelligenceOn) as? Bool ?? true
         appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
@@ -40,6 +47,7 @@ public final class AppPreferences {
     private enum Key {
         static let notificationsOn = "notificationsOn"
         static let appearance = "appearance"
+        static let appleIntelligenceOn = "appleIntelligenceOn"
         static let cleanupSeenThrough = "cleanupSeenThrough"
     }
 }

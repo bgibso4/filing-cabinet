@@ -19,6 +19,8 @@ public final class FakeLibrary: ScanLibrary {
     package private(set) var saved: [ScanDraft] = []
     /// The latest search text per saved scan.
     package private(set) var searchTextUpdates: [ScanID: String] = [:]
+    /// The latest hidden words and the version that made them, per scan, as updated after the save.
+    @ObservationIgnored private var wordUpdates: [ScanID: (words: [String], version: Int)] = [:]
     /// How many times one scan's text was read, so a test can tell a cached read from a fetch.
     @ObservationIgnored package private(set) var searchTextReads = 0
 
@@ -64,6 +66,13 @@ public final class FakeLibrary: ScanLibrary {
     public func updateSearchText(_ text: String, for id: ScanID) {
         guard scans.contains(where: { $0.id == id }) else { return }
         searchTextUpdates[id] = text
+        searchTextRevision += 1
+    }
+
+    /// Like the real store, words for a scan with no record are dropped.
+    public func updateSearchWords(_ words: [String], version: Int, for id: ScanID) {
+        guard scans.contains(where: { $0.id == id }) else { return }
+        wordUpdates[id] = (words, version)
         searchTextRevision += 1
     }
 
@@ -137,6 +146,19 @@ public final class FakeLibrary: ScanLibrary {
         Dictionary(uniqueKeysWithValues: scans.compactMap { scan in text(of: scan.id).map { (scan.id, $0) } })
     }
 
+    public func searchWords() -> [ScanID: [String]] {
+        Dictionary(uniqueKeysWithValues: scans.map { ($0.id, words(of: $0.id).words) })
+    }
+
+    public func scansNeedingWords(version: Int) -> [ScanID] {
+        scans.filter { scan in
+            guard case .library = scan.place(lifespans: lifespans, today: clock.today, in: clock.calendar) else {
+                return false
+            }
+            return words(of: scan.id).version.map { $0 < version } ?? true
+        }.map(\.id)
+    }
+
     public func searchText(for id: ScanID) -> String? {
         searchTextReads += 1
         return scans.contains { $0.id == id } ? text(of: id) : nil
@@ -145,6 +167,13 @@ public final class FakeLibrary: ScanLibrary {
     /// The scan's latest text update, else its draft's text.
     private func text(of id: ScanID) -> String? {
         searchTextUpdates[id] ?? saved.last { $0.id == id }?.searchText
+    }
+
+    /// The scan's latest words update, else its draft's words.
+    private func words(of id: ScanID) -> (words: [String], version: Int?) {
+        if let update = wordUpdates[id] { return (update.words, update.version) }
+        let draft = saved.last { $0.id == id }
+        return (draft?.searchWords ?? [], draft?.searchWordsVersion)
     }
 
     /// Stores the numbers `FavoriteNumbering` worked out, as the real store does: nothing to change writes nothing.

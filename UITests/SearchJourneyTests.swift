@@ -46,6 +46,19 @@ final class SearchJourneyTests: XCTestCase {
         closeSearch(in: app)
     }
 
+    /// A hidden word finds a scan its page never says (Plan 5, Task 7): seeded Wallet scans hold "ID", so "ID" finds
+    /// scans 1, 6 and 11, and the row reads "Matches ID".
+    func testSearchFindsAScanByAHiddenWord() {
+        let app = seededApp()
+        let field = openSearch(in: app)
+        field.typeText("ID")
+        let first = results(in: app).firstMatch
+        XCTAssertTrue(
+            first.satisfies("label == %@", "Sample scan 1, Wallet, October 12, Matches ID", within: 5), first.label)
+        XCTAssertEqual(results(in: app).count, 3)
+        closeSearch(in: app)
+    }
+
     /// With Reduce Motion, Search fades rather than slides, and the X's fade is its only way back to Home (a full-screen
     /// cover can't be swiped away), so its completion must land: open, type, a result and back, then the X (I4).
     func testReduceMotionSearchClosesToHome() {

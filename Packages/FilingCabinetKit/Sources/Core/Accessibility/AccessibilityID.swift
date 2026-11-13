@@ -91,9 +91,12 @@ public enum AccessibilityID {
         public static let titleField = "review.titleField"
         public static let collection = "review.collection"
         public static let expiry = "review.expiry"
+        /// The sheet's Save, or the card's.
         public static let save = "review.save"
         /// Only with more than one page, so not in `all`.
         public static let strip = "review.strip"
+        /// The suggestion card's title and collection, which open the sheet. Only while the card shows, so not in `all`.
+        public static let card = "review.card"
 
         public static var all: [String] {
             [close, rescan, pagePill, title, titleField, collection, expiry, save]
@@ -193,9 +196,10 @@ public enum AccessibilityID {
         public static let collections = "settings.collections"
         public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
+        public static let intelligence = "settings.intelligence"
 
         public static var all: [String] {
-            [collections, appearance, notifications]
+            [collections, appearance, intelligence, notifications]
         }
     }
 

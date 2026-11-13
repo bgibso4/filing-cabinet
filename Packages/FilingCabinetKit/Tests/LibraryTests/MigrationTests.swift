@@ -13,7 +13,7 @@ private func temporaryFolder() throws -> URL {
 }
 
 /// A copy of a fixture store (three synthetic scans), so migrating it never touches the fixture. `LibraryV1` is the
-/// store plan 1 wrote; `LibraryV2` the one plan 3 wrote.
+/// store plan 1 wrote; `LibraryV2` the one plan 3 wrote, `LibraryV3` plan 4's (one scan favourite, one in Trash).
 private func storeCopy(_ name: String) throws -> URL {
     let fixture = try #require(
         Bundle.module.url(forResource: name, withExtension: "store", subdirectory: "Fixtures"))
@@ -50,7 +50,7 @@ private func storeCopy(_ name: String) throws -> URL {
 }
 
 @MainActor
-@Test func v2StoreOpensAsV3WithEveryScan() throws {
+@Test func v2StoreOpensAsV4WithEveryScan() throws {
     let container = try ScanStore.makeContainer(storeURL: try storeCopy("LibraryV2"))
 
     let store = ScanStore(
@@ -74,7 +74,46 @@ private func storeCopy(_ name: String) throws -> URL {
 }
 
 @MainActor
-@Test func newStoreIsV3() throws {
+@Test func v3StoreOpensAsV4WithNoWords() throws {
+    let container = try ScanStore.makeContainer(storeURL: try storeCopy("LibraryV3"))
+
+    let store = ScanStore(
+        container: container,
+        files: PageFileStore(
+            location: LibraryLocation(root: try temporaryFolder(), caches: try temporaryFolder()),
+            fileSystem: LocalFileSystem()),
+        clock: octoberTwelfth)
+    let scans = store.scans
+
+    #expect(scans.map(\.title) == ["Bluebird Café", "Library Card", "City Pharmacy"])
+    #expect(scans.map(\.trashedDay) == [nil, nil, day(10, 12)])
+    #expect(scans.map(\.expiryOverride) == [nil, .lifespan(.year), nil])
+    #expect(scans.map(\.isFavorite) == [false, true, false])
+    #expect(store.searchWords().values.allSatisfy { $0.isEmpty })
+    #expect(store.searchWords().count == 3)
+    // Never read by the model, so the background pass picks up the two in the library, newest first.
+    #expect(store.scansNeedingWords(version: 1) == [scans[0].id, scans[1].id])
+    #expect(
+        Set(store.searchTexts().values) == ["Bluebird Café", "Library card", "City pharmacy batteries AA"])
+}
+
+@MainActor
+@Test func v1AndV2StoresStillOpen() throws {
+    for name in ["LibraryV1", "LibraryV2"] {
+        let store = ScanStore(
+            container: try ScanStore.makeContainer(storeURL: try storeCopy(name)),
+            files: PageFileStore(
+                location: LibraryLocation(root: try temporaryFolder(), caches: try temporaryFolder()),
+                fileSystem: LocalFileSystem()),
+            clock: octoberTwelfth)
+
+        #expect(store.scans.map(\.title) == ["Bluebird Café", "Library Card", "City Pharmacy"])
+        #expect(store.searchWords().values.allSatisfy { $0.isEmpty })
+    }
+}
+
+@MainActor
+@Test func newStoreIsV4() throws {
     let storeURL = try temporaryFolder().appending(path: "Library.store")
     do {
         let container = try ScanStore.makeContainer(storeURL: storeURL)
@@ -85,6 +124,8 @@ private func storeCopy(_ name: String) throws -> URL {
         context.insert(record)
         let scan = ScanRecord()
         scan.favoriteOrder = 4
+        scan.searchWordList = ["ID", "card"]
+        scan.searchWordsVersion = 1
         context.insert(scan)
         try context.save()
     }
@@ -94,5 +135,8 @@ private func storeCopy(_ name: String) throws -> URL {
 
     #expect(reopened.map(\.collectionKey) == ["receipts"])
     #expect(reopened.map(\.lifespanKey) == ["year"])
-    #expect(try ModelContext(container).fetch(FetchDescriptor<ScanRecord>()).map(\.favoriteOrder) == [4])
+    let scans = try ModelContext(container).fetch(FetchDescriptor<ScanRecord>())
+    #expect(scans.map(\.favoriteOrder) == [4])
+    #expect(scans.map(\.searchWordList) == [["ID", "card"]])
+    #expect(scans.map(\.searchWordsVersion) == [1])
 }

@@ -29,6 +29,10 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case scansExported(kind: ExportKind, count: Int)
     /// Search found this many scans for a word the person kept (M19). Never the word.
     case searchSaved(resultCount: Int)
+    /// How the review's filing suggestion ended (M10). Never what it suggested.
+    case suggestionOutcome(SuggestionOutcome)
+    /// At save, after a suggestion arrived: whether the saved title and collection differ from the suggested ones (M10).
+    case suggestionChanged(title: Bool, collection: Bool)
 
     public var name: String {
         switch self {
@@ -50,6 +54,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .favoritesChanged: "favoritesChanged"
         case .scansExported: "scansExported"
         case .searchSaved: "searchSaved"
+        case .suggestionOutcome: "suggestionOutcome"
+        case .suggestionChanged: "suggestionChanged"
         }
     }
 
@@ -74,6 +80,9 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .scansExported(let kind, let count):
             [.kind: .token(.init(kind)), .count: .token(.init(CountBucket(count)))]
         case .searchSaved(let resultCount): [.resultCount: .token(.init(CountBucket(resultCount)))]
+        case .suggestionOutcome(let outcome): [.outcome: .token(.init(outcome))]
+        case .suggestionChanged(let title, let collection):
+            [.titleChanged: .bool(title), .collectionChanged: .bool(collection)]
         }
     }
 }

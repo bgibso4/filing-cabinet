@@ -33,6 +33,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var notificationsUnanswered = false
     /// `-Photos authorized|denied`: a fake Photos answers with this access, so no system prompt shows.
     public private(set) var photos: PhotosAuthorization?
+    /// `-Suggestions arrives|slow|unavailable`: a scripted suggester for the review (M5).
+    public private(set) var suggestions: SuggestionsFlag?
 
     private static let fakeCameraRange = 1...3
 
@@ -61,18 +63,27 @@ public struct LaunchOptions: Sendable, Equatable {
     }
 
     private mutating func setValue(of flag: String, to value: String?) {
-        guard let value else { return }
+        guard let value, !setChoice(of: flag, to: value) else { return }
         switch flag {
         case "-FakeCamera": fakeCameraPages = Int(value).flatMap { Self.fakeCameraRange ~= $0 ? $0 : nil }
         case "-FixedDate": fixedDate = Self.noonUTC(value)
         case "-SeedScans": seedScans = Self.count(value)
         case "-SeedTrash": seedTrash = Self.count(value)
         case "-SeedFavorites": seedFavorites = Self.count(value)
+        default: break
+        }
+    }
+
+    /// Sets the flag if its value names one of a fixed set of choices; false when it is not one of those flags.
+    private mutating func setChoice(of flag: String, to value: String) -> Bool {
+        switch flag {
         case "-TextReader": reader = ReaderKind(rawValue: value) ?? reader
         case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
         case "-Photos": photos = PhotosAuthorization(rawValue: value)
-        default: break
+        case "-Suggestions": suggestions = SuggestionsFlag(rawValue: value)
+        default: return false
         }
+        return true
     }
 
     /// A seed count: zero or more.

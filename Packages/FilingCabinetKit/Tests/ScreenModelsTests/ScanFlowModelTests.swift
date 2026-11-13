@@ -22,15 +22,30 @@ private struct Harness {
             library: FakeLibrary(),
             clock: clock,
             analytics: RecordingAnalytics(),
-            readingWaitLimit: .seconds(1)
+            readingWaitLimit: .seconds(1),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: true,
+            suggestionWaitLimit: .seconds(5),
+            wordsWriter: SearchWordsWriter(
+                suggester: FakeScanSuggester.unavailable(),
+                library: FakeLibrary(),
+                backgroundTime: FakeBackgroundTime()
+            )
         )
     }
 
-    init(_ status: CameraAuthorization, grants: Bool = false) {
+    init(
+        _ status: CameraAuthorization,
+        grants: Bool = false,
+        suggester: FakeScanSuggester = .unavailable(),
+        suggestionsOn: Bool = true
+    ) {
         model = ScanFlowModel(
             cameraAccess: FakeCameraAccess(status: status, grantsOnRequest: grants),
             clock: Self.clock,
             analytics: analytics,
+            suggester: suggester,
+            suggestionsOn: { suggestionsOn },
             makeReview: Self.makeReview
         )
     }
@@ -233,7 +248,13 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     let analytics = RecordingAnalytics()
     let access = PromptingCameraAccess()
     let model = ScanFlowModel(
-        cameraAccess: access, clock: Harness.clock, analytics: analytics, makeReview: Harness.makeReview)
+        cameraAccess: access,
+        clock: Harness.clock,
+        analytics: analytics,
+        suggester: FakeScanSuggester.unavailable(),
+        suggestionsOn: { true },
+        makeReview: Harness.makeReview
+    )
     let first = Task { await model.scan(from: .home, preselected: nil) }
     while access.requests == 0 { await Task.yield() }
 
@@ -244,4 +265,104 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
     #expect(access.requests == 1)
     #expect(analytics.events == [.scanStarted(source: .home)])
     #expect(model.phase == .camera(isRescan: false))
+}
+
+// MARK: - Prewarm (E3)
+
+@Test func prewarmWhenTheCameraOpens() async {
+    let suggester = FakeScanSuggester(filing: .never)
+    let harness = Harness(.authorized, suggester: suggester)
+
+    await harness.model.scan(from: .home, preselected: nil)
+    #expect(suggester.prewarms.map { $0.map(\.id) } == [SuggestionCollection.builtIns.map(\.id)])
+
+    harness.model.cameraFinished([receipt])
+    harness.model.rescan()
+    #expect(suggester.prewarms.count == 2)
+}
+
+@Test func noPrewarmWhenOffOrUnavailable() async {
+    let off = FakeScanSuggester(filing: .never)
+    await Harness(.authorized, suggester: off, suggestionsOn: false).model.scan(from: .home, preselected: nil)
+    let unavailable = FakeScanSuggester.unavailable()
+    await Harness(.authorized, suggester: unavailable).model.scan(from: .home, preselected: nil)
+
+    #expect(off.prewarms.isEmpty)
+    #expect(unavailable.prewarms.isEmpty)
+}
+
+/// The Settings switch is read as each camera opens, so turning it off changes the very next scan.
+@Test func theSwitchTakesEffectOnTheNextScan() async {
+    let suggester = FakeScanSuggester(filing: .never)
+    var isOn = true
+    let model = ScanFlowModel(
+        cameraAccess: FakeCameraAccess(status: .authorized, grantsOnRequest: true),
+        clock: Harness.clock,
+        analytics: RecordingAnalytics(),
+        suggester: suggester,
+        suggestionsOn: { isOn },
+        makeReview: Harness.makeReview
+    )
+
+    await model.scan(from: .home, preselected: nil)
+    model.cameraCancelled()
+    isOn = false
+    await model.scan(from: .home, preselected: nil)
+
+    #expect(suggester.prewarms.count == 1)
+}
+
+/// Counts the flow's scan started and ended calls, which pause and resume the background words pass.
+@MainActor
+private final class ScanHooks {
+    var started = 0
+    var ended = 0
+
+    func flow(_ status: CameraAuthorization = .authorized) -> ScanFlowModel {
+        ScanFlowModel(
+            cameraAccess: FakeCameraAccess(status: status, grantsOnRequest: false),
+            clock: Harness.clock,
+            analytics: RecordingAnalytics(),
+            suggester: FakeScanSuggester.unavailable(),
+            suggestionsOn: { true },
+            makeReview: Harness.makeReview,
+            scanStarted: { self.started += 1 },
+            scanEnded: { self.ended += 1 })
+    }
+}
+
+@Test func aScanStartsAtTheTapAndEndsWithTheReview() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow()
+
+    await model.scan(from: .home, preselected: nil)
+    #expect((hooks.started, hooks.ended) == (1, 0))
+    model.cameraFinished([receipt])
+    model.rescan()
+    model.cameraCancelled()  // a rescan's cancel goes back to review: the scan goes on
+    #expect((hooks.started, hooks.ended) == (1, 0))
+
+    model.reviewEnded(saved: nil)
+    #expect((hooks.started, hooks.ended) == (1, 1))
+}
+
+@Test func aCancelledCameraEndsTheScan() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow()
+
+    await model.scan(from: .home, preselected: nil)
+    model.cameraCancelled()
+
+    #expect((hooks.started, hooks.ended) == (1, 1))
+}
+
+@Test func theCameraOffSheetEndsTheScanWhenDismissed() async {
+    let hooks = ScanHooks()
+    let model = hooks.flow(.denied)
+
+    await model.scan(from: .home, preselected: nil)
+    #expect((hooks.started, hooks.ended) == (1, 0))
+    model.dismissCameraOff()
+
+    #expect((hooks.started, hooks.ended) == (1, 1))
 }

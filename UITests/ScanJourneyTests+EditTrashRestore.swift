@@ -5,9 +5,13 @@ import XCTest
 
 /// The steps of `testScanEditTrashRestore`, one screen each. Kept out of `ScanJourneyTests.swift` for its length.
 extension ScanJourneyTests {
-    /// From Home, the collection's only scan, checked by its tile label, opens in the viewer.
+    /// From Home, the collection's only scan, opens in the viewer. `label` checks the tile's label: its start and its
+    /// end, because the middle is the scan's day, which is the real one in this journey.
     func openOnlyTile(
-        of collection: BuiltInCollection, in app: XCUIApplication, label: String? = nil, line: UInt = #line
+        of collection: BuiltInCollection,
+        in app: XCUIApplication,
+        label: (start: String, end: String)? = nil,
+        line: UInt = #line
     ) {
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
         XCTAssertTrue(row.satisfies("exists == true AND label CONTAINS '1'", within: 5), row.label, line: line)
@@ -16,7 +20,9 @@ extension ScanJourneyTests {
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
         ).firstMatch
         XCTAssertTrue(tile.appears(within: 5), line: line)
-        if let label { XCTAssertEqual(tile.label, label, line: line) }
+        if let label {
+            XCTAssertTrue(tile.label.hasPrefix(label.start) && tile.label.hasSuffix(label.end), tile.label, line: line)
+        }
         tile.tap()
         XCTAssertTrue(
             app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5), line: line)

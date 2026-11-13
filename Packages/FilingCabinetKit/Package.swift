@@ -54,6 +54,14 @@ let package = Package(
             resources: [.copy("Fixtures")],
             swiftSettings: moduleSettings
         ),
+        // The made-up test set and the suggestion evaluation (Plan 5). The file checks and the report's scoring run
+        // in Fast; the model run only in the SuggestionEvaluation scheme (`make eval-suggestions`).
+        .testTarget(
+            name: "SuggestionEvaluationTests",
+            dependencies: ["Core", "Understanding"],
+            resources: [.copy("Fixtures")],
+            swiftSettings: moduleSettings
+        ),
         // The reader bake-off (A12): a report, not a gate. Runs only in the ReaderComparison scheme on macOS.
         .testTarget(
             name: "ReaderComparisonTests",

@@ -26,7 +26,7 @@ private func favorites(_ titles: String...) -> [ScanSummary] {
     #expect(harness.grid.tiles.map(\.title) == ["License", "Lease", "Passport"])
     #expect(harness.grid.tiles.map(\.isFavorite) == [true, false, true])
     #expect(harness.grid.tiles.map(\.isUnfavorited) == [false, true, false])
-    #expect(harness.grid.tiles[1].accessibilityLabel == "Lease, Wallet, Kept forever, not a favorite")
+    #expect(harness.grid.tiles[1].accessibilityLabel == "Lease, Wallet, Oct 11, Kept forever, not a favorite")
     #expect(harness.analytics.events == [.favoritesChanged(isFavorite: false, count: 1)])
 
     // Leaving and coming back builds the screen's model again: the tile is gone.

@@ -36,6 +36,7 @@ struct FilingCabinetApp: App {
                 .id(generation)
                 .onOpenURL { url in
                     guard let relaunched = environment.relaunched(by: url) else { return }
+                    environment.leftForeground()
                     environment = relaunched
                     generation += 1
                 }
@@ -43,6 +44,7 @@ struct FilingCabinetApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                environment.enteredForeground()
                 environment.lifecycle.sceneBecameActive()
                 // Now, so the first frame after midnight doesn't show yesterday.
                 environment.today.refresh()
@@ -50,7 +52,10 @@ struct FilingCabinetApp: App {
             case .background:
                 // Leaving the app clears Home's cleanup banner (M4).
                 environment.banner.clear()
-            default:
+                environment.leftForeground()
+            case .inactive:
+                environment.leftForeground()
+            @unknown default:
                 break
             }
         }

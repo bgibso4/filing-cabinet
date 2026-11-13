@@ -11,6 +11,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
+    Suggesting/              Apple Intelligence: the ScanSuggester seam, the on-device model's two calls (title and collection, then search words), prompts, title casing
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
     Export/                  a scan as a PDF (ScanPDF), temporary export files and their launch cleanup
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
@@ -18,7 +19,9 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Shared/                  HeaderRest, HeaderInsets, HeaderSettling: the header's maths
     Viewer/                  DetailsMotion (panel progress, page fit, settle target), DetailsSpring: Details' maths
     Cleanup/                 cleanup notes and Home's banner
-    Search/                  search matching (text folded once), history, recently viewed, the Search model
+    Search/                  search matching (text folded once, hidden words by part-prefix), history, recently viewed, the Search model
+    Suggestions/             the background pass that gives older scans their search words
+    Review/                  the review's card-or-sheet state, the wait limit, the words call after Save
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
                              own titles, styled by HeaderAppearance)
@@ -28,11 +31,12 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Search/                  the Search screen: our own field, filter chips, result rows
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
-                             ReaderComparisonTests (the bake-off report, not a gate)
+                             ReaderComparisonTests (the bake-off report, not a gate),
+                             SuggestionEvaluationTests (`make eval-suggestions`: the made-up scans and the report, not a gate)
 SnapshotTests/               app-hosted snapshot tests; references live beside the tests
 UITests/                     journey UI tests, with identifier coverage and accessibility audits
 DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
-scripts/                     token generator, compare, pre-commit, lint-rule tests
+scripts/                     token generator, compare, pre-commit, lint-rule tests; make-eval-scans.swift makes the made-up test scans
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
 design/                      design handoff and tokens.json (source of the generated tokens)
 docs/superpowers/specs/      requirements and design specs
@@ -66,6 +70,7 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make run` / `make run-fake` | launch in the simulator / with UI-test flags (`READER=text\|documents` picks the reader) |
 | `make device` | build and install on a connected iPhone (`DEVICE=<name>`, `READER=text\|documents`) |
 | `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
+| `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model's two calls (title and collection, then search words), on every made-up case (page 1's image goes in, `IMAGE=0` for text only; `CASES=` runs some cases: ids, or prefixes like `wallet-`), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
 | `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
 | `make test-hooks` | bats tests for the hook scripts |
 | `make test-scripts` | bats tests for the test-run scripts (`affected`, `retest`, `audit-report`) |
@@ -101,6 +106,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-SeedFavorites <n>` | with `-SeedScans`, the first `n` seeded scans are favourites, in seed order |
 | `-Photos authorized\|denied` | a fake Photos answers Save to Photos with that access, so no system prompt shows |
 | `-FailSave` | the next page write fails with a full disk |
+| `-Suggestions arrives\|slow\|unavailable` | the review's suggester is a fake: City Pharmacy Receipt in Receipts (and its words after Save) after 0.3 s, never, or unavailable. Under `-UITest` it is unavailable unless this says otherwise |
 | `-ReduceMotion` | the capture layer and Search fade rather than slide, and Home's count doesn't pop |
 
 UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.

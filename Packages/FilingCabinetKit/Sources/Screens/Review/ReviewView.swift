@@ -2,9 +2,10 @@ import Core
 import ScreenModels
 import SwiftUI
 
-/// Review after the camera, option G's sheet (Review.dc.html lines 209-311): Close, the "New scan" pill and Rescan
-/// on top, the scan (paged, with a strip, when there are several), and the sheet with the title, collection, expiry
-/// and Save.
+/// Review after the camera, option G (Review.dc.html lines 209-311): Close, the "New scan" pill and Rescan on top, the
+/// scan (paged, with a strip, when there are several), and below it the suggestion card or the sheet with the title,
+/// collection, expiry and Save. When the card gives way to the sheet, the sheet rises over it and the scan shrinks to
+/// make room (the growth mock, option 3: claude.ai/artifact/ULgeFhB5rS6qNzMwLebT5N).
 public struct ReviewView: View {
     @Bindable private var model: ReviewModel
     private let onClose: () -> Void
@@ -16,11 +17,17 @@ public struct ReviewView: View {
     @State private var pageRegion = CGRect.zero
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.reducesMotion) private var reducesMotion
 
     // Review.dc.html lines 211-212: the page is at most 358 pt wide (16 pt in from each side) and, in the sheet state,
     // 332 pt tall, 16 pt below the top buttons.
     private static let pageMaxWidth: CGFloat = 358
     private static let pageMaxHeight: CGFloat = 332
+    // Review.dc.html line 397: with the card, the page is at most 598 pt tall, or 552 pt above a page strip.
+    private static let cardPageMaxHeight: CGFloat = 598
+    private static let cardStripPageMaxHeight: CGFloat = 552
+    // ULgeF `.page` and `.sheet`: the scan shrinks and the sheet rises over 0.35-0.4 s on cubic-bezier(.3, .7, .2, 1).
+    private static let growth = Animation.timingCurve(0.3, 0.7, 0.2, 1, duration: 0.4)
     // No mock for the largest text (12-03 is the card): the scan keeps this much height while the sheet scrolls.
     private static let pageMinHeight: CGFloat = 120
 
@@ -45,12 +52,16 @@ public struct ReviewView: View {
                 // Where a page fits at rest; the pager behind everything draws it.
                 Color.clear
                     .frame(maxWidth: Self.pageMaxWidth)
-                    .frame(minHeight: Self.pageMinHeight, maxHeight: Self.pageMaxHeight)
+                    .frame(minHeight: Self.pageMinHeight, maxHeight: pageMaxHeight)
+                    .overlay { sweep }
                     // Measured inside the padding: the page fits the region itself.
                     .onGeometryChange(for: CGRect.self) {
                         $0.frame(in: .global)
-                    } action: {
-                        pageRegion = $0
+                    } action: { region in
+                        // The page follows the region as the card gives way to the sheet; the first fit is not animated.
+                        withAnimation(pageRegion.isEmpty || reducesMotion ? nil : Self.growth) {
+                            pageRegion = region
+                        }
                     }
                     .padding(.top, Tokens.Spacing.s4)
                     .padding(.horizontal, Tokens.Spacing.s4)
@@ -64,8 +75,9 @@ public struct ReviewView: View {
                     .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }
-            ReviewSheet(model: model, onSave: save)
+            bottom
         }
+        .animation(reducesMotion ? nil : Self.growth, value: model.presentation)
         // The sheet sits 8 pt above the screen's bottom edge, over the home indicator's strip, as in the mock.
         // The keyboard still pushes it up.
         .ignoresSafeArea(.container, edges: .bottom)
@@ -73,6 +85,11 @@ public struct ReviewView: View {
         .background(Tokens.Color.bgGrouped)
         // Reading starts as review opens, once per page set (a rescan's pages start their own).
         .task { await model.startReading() }
+        // M11: a light tap and VoiceOver's "Suggested: City Pharmacy Receipt, Receipts" when the suggestion lands.
+        .sensoryFeedback(.selection, trigger: model.suggestionAnnouncement)
+        .onChange(of: model.suggestionAnnouncement) { _, announcement in
+            if let announcement { AccessibilityNotification.Announcement(announcement).post() }
+        }
         .alert(Text("Discard this scan?", bundle: #bundle), isPresented: $isConfirmingDiscard) {
             Button(role: .cancel) {
             } label: {
@@ -95,6 +112,39 @@ public struct ReviewView: View {
             Button(action: retrySave) { Text("Try again", bundle: #bundle) }
         } message: { alert in
             Text(alert.message)
+        }
+    }
+
+    // MARK: Bottom
+
+    /// The card, or the sheet rising over it. One subview for `ReviewLayout`, though both show while one gives way.
+    private var bottom: some View {
+        ZStack(alignment: .bottom) {
+            switch model.presentation {
+            case .card(let isReading):
+                ReviewCard(model: model, isReading: isReading, onSave: save)
+                    .transition(.opacity)
+            case .sheet:
+                ReviewSheet(model: model, onSave: save)
+                    .transition(.move(edge: .bottom))
+            }
+        }
+    }
+
+    /// The card leaves the scan more room than the sheet.
+    private var pageMaxHeight: CGFloat {
+        guard model.presentation != .sheet else { return Self.pageMaxHeight }
+        return model.pages.count > 1 ? Self.cardStripPageMaxHeight : Self.cardPageMaxHeight
+    }
+
+    /// The scanner bar over the page (not the region around it) while the model reads, unless the page is zoomed.
+    @ViewBuilder private var sweep: some View {
+        if model.presentation == .card(isReading: true), !model.isPageZoomed,
+            model.pages.indices.contains(model.currentPage), model.pages[model.currentPage].height > 0
+        {
+            let page = model.pages[model.currentPage]
+            ScanSweep()
+                .aspectRatio(CGFloat(page.width) / CGFloat(page.height), contentMode: .fit)
         }
     }
 
@@ -173,7 +223,8 @@ public struct ReviewView: View {
                     pageKey: index,
                     isCurrent: index == model.currentPage,
                     label: nil,
-                    fitInsets: fitInsets
+                    fitInsets: fitInsets,
+                    animatesFit: true
                 ) { isZoomed in
                     if index == model.currentPage { model.isPageZoomed = isZoomed }
                 }

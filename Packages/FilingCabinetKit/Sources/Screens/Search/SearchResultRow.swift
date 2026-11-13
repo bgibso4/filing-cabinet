@@ -90,10 +90,7 @@ struct SearchResultRow: View {
                 .font(Tokens.Typography.body)
                 .foregroundStyle(Tokens.Color.textPrimary)
                 .lineLimit(lineLimit)
-            Text(snippet)
-                .font(Tokens.Typography.subheadline)
-                .foregroundStyle(Tokens.Color.textSecondary)
-                .lineLimit(lineLimit)
+            secondLine(lineLimit: lineLimit)
             // At large text the line wraps, and the dot stays with its first line (as the viewer's header).
             HStack(alignment: typeSize.isAccessibilitySize ? .firstTextBaseline : .center, spacing: Self.dotGap) {
                 CollectionDot(collection: result.collection)
@@ -104,11 +101,42 @@ struct SearchResultRow: View {
         }
     }
 
+    @ViewBuilder
+    private func secondLine(lineLimit: Int?) -> some View {
+        switch result.secondLine {
+        case .snippet(let line, let bold):
+            Text(snippet(line, bold: bold))
+                .font(Tokens.Typography.subheadline)
+                .foregroundStyle(Tokens.Color.textSecondary)
+                .lineLimit(lineLimit)
+        case .hiddenWord(let query):
+            // The scan has no such word on it: a sparkle and what the model's hidden word matched (M8).
+            HStack(alignment: .firstTextBaseline, spacing: Self.dotGap) {
+                Image(systemName: "sparkles")
+                    .accessibilityHidden(true)
+                Text(matches(query))
+                    .lineLimit(lineLimit)
+            }
+            .font(Tokens.Typography.subheadline)
+            .foregroundStyle(Tokens.Color.textSecondary)
+        }
+    }
+
     /// The matching line, each match semibold in the primary colour (Search.dc.html line 95).
-    private var snippet: AttributedString {
-        var text = AttributedString(result.snippet)
-        for match in result.bold {
+    private func snippet(_ line: String, bold: [Range<String.Index>]) -> AttributedString {
+        var text = AttributedString(line)
+        for match in bold {
             guard let range = Range(match, in: text) else { continue }
+            text[range].font = Tokens.Typography.subheadline.weight(.semibold)
+            text[range].foregroundColor = Tokens.Color.textPrimary
+        }
+        return text
+    }
+
+    /// "Matches ID", the query semibold in the primary colour, as a snippet's matches are.
+    private func matches(_ query: String) -> AttributedString {
+        var text = AttributedString(SearchResult.matchesLine(query))
+        if let range = text.range(of: query, options: .backwards) {
             text[range].font = Tokens.Typography.subheadline.weight(.semibold)
             text[range].foregroundColor = Tokens.Color.textPrimary
         }

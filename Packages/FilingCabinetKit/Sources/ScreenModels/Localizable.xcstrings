@@ -1,6 +1,10 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Names, files and finds your scans" : {},
+    "Turn it on in iPhone Settings first" : {},
+    "Runs on this iPhone. Your scans never leave it." : {},
+    "Reading your older scans so search can find them ·\u00A0%lld\u00A0of\u00A0%lld" : {},
     "Dark" : {},
     "Light" : {},
     "System" : {},
@@ -161,6 +165,8 @@
     "Save" : {},
     "Save to %@" : {},
     "Saved to %@" : {},
+    "Suggested: %@, %@" : {},
+    "Suggested: %@" : {},
     "Couldn’t save this scan" : {},
     "Your iPhone is out of space. Free some up, then try again. Your pages are still here." : {},
     "Something went wrong. Your pages are still here." : {},
@@ -197,6 +203,11 @@
     "Handwritten notes" : {},
     "IDs and cards" : {},
     "Kept forever" : {},
+    "%@ · Forever" : {},
+    "%@, %@" : {},
+    "%@ · %lldd left" : {},
+    "%@ · %lld mo left" : {},
+    "%@ · %lld yr left" : {},
     "Notes" : {},
     "Purchase receipts" : {},
     "Receipts" : {},
@@ -278,11 +289,14 @@
     "Search reads the words on every scan. Check the spelling or try another word." : {},
     "%lld scans in %@ and %@ mention “%@”." : {},
     "%lld scans in other collections mention “%@”." : {},
+    "Matches %@" : {},
     "Saved to Photos" : {},
     "Saved to Files" : {},
     "Copied" : {},
     "Couldn’t save to Photos" : {},
-    "Couldn’t save to Files" : {}
+    "Couldn’t save to Files" : {},
+    "%@ · kept forever" : {},
+    "%@ · kept %@" : {}
   },
   "version" : "1.0"
 }

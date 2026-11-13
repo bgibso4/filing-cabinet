@@ -26,6 +26,9 @@ final class SearchSnapshotTests: XCTestCase {
         history fill: @MainActor (SearchHistory) -> Void = { _ in }
     ) -> some View {
         let library = Fixtures.library(.home)
+        for id in Fixtures.homeScans(titled: "Driver’s license") {
+            library.updateSearchWords(["ID", "driver license", "identity"], version: 1, for: id)
+        }
         for (title, text) in Self.texts {
             for id in Fixtures.homeScans(titled: title) { library.updateSearchText(text, for: id) }
         }
@@ -73,6 +76,12 @@ final class SearchSnapshotTests: XCTestCase {
     @MainActor
     func testResults() throws {
         try SnapshotHost.assertScreen(search(query: "renew"), testName: "search_results")
+    }
+
+    /// The Driver’s license never prints "identity": the model's hidden word finds it, with a sparkle (M8).
+    @MainActor
+    func testHiddenWordResult() throws {
+        try SnapshotHost.assertScreen(search(query: "identity"), testName: "search_hidden_word")
     }
 
     @MainActor

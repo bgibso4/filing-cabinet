@@ -65,6 +65,13 @@ private var three: [ScanSummary] { [coatCheck, pharmacy, lease] }
     #expect(model.tiles.map(\.collection) == [.receipts, .documents, .throwaways])
 }
 
+/// M12: only library grids got the date line; a Trash tile still reads its days left, with no date.
+@Test func trashTilesKeepDaysLeft() {
+    let model = TrashHarness([coatCheck]).model
+    #expect(model.tiles.map(\.daysLeftText) == ["28 days left"])
+    #expect(model.tiles.first?.accessibilityLabel == "Coat check, Throwaways, 28 days left")
+}
+
 /// Requirements 06 · Accessibility: a tile reads as one line.
 @Test func aTileReadsTitleCollectionAndDaysLeft() {
     let model = TrashHarness([coatCheck]).model

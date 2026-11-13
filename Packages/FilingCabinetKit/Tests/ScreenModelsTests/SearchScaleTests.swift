@@ -34,7 +34,13 @@ private let clock = AppClock.fixed(noon, calendar: utc)
             trashedDay: nil)
     }
     let library = FakeLibrary(scans: scans, clock: clock)
-    for scan in scans { library.updateSearchText("Renewal notice for \(scan.title)", for: scan.id) }
+    for scan in scans {
+        library.updateSearchText("Renewal notice for \(scan.title)", for: scan.id)
+        library.updateSearchWords(
+            ["ID", "driver license", "card", "identity", "wallet", "permit", "state", "photo"],
+            version: 1,
+            for: scan.id)
+    }
     let fresh = try FreshDefaults()
     defer { fresh.cleanUp() }
     let visits = Mutex(0)
@@ -44,9 +50,9 @@ private let clock = AppClock.fixed(noon, calendar: utc)
         clock: clock,
         history: SearchHistory(defaults: fresh.defaults),
         analytics: RecordingAnalytics(),
-        matching: { title, text, terms in
+        matching: { title, text, words, terms in
             visits.withLock { $0 += 1 }
-            return SearchMatch.match(title: title, text: text, terms: terms)
+            return SearchMatch.match(title: title, text: text, words: words, terms: terms)
         })
 
     model.query = "renew"

@@ -3,8 +3,8 @@ import ScreenModels
 import SwiftUI
 import UIKit
 
-/// Settings from Home's gear (10-01): Collections and Notifications, then the footer. The Apple Intelligence row comes
-/// with Plan 3 and Send feedback with Plan 5.
+/// Settings from Home's gear (10-01): Collections, Appearance, then Apple Intelligence and Notifications with the line
+/// about Apple Intelligence under them (Plan 5's demo), then the footer. Send feedback comes with a later plan.
 public struct SettingsView: View {
     private let model: SettingsModel
     private let onOpenCollections: () -> Void
@@ -20,6 +20,9 @@ public struct SettingsView: View {
     private static let rowTrailingPadding: CGFloat = 14
     // Settings2.dc.html line 43: the footer is 28 pt under the last group.
     private static let footerTopGap: CGFloat = 28
+    // Plan 5's demo (`.progress`): the bar under the reading line is 4 pt tall with 2 pt corners.
+    private static let progressHeight: CGFloat = 4
+    private static let progressRadius: CGFloat = 2
 
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.openURL) private var openURL
@@ -41,8 +44,16 @@ public struct SettingsView: View {
                     .padding(.top, Self.groupGap)
                 group { appearanceRow }
                     .padding(.top, Self.groupGap)
-                group { notificationsRow }
-                    .padding(.top, Self.groupGap)
+                group {
+                    intelligenceRow
+                    notificationsRow
+                }
+                .padding(.top, Self.groupGap)
+                if let footer = model.intelligence.footer {
+                    intelligenceFooter(footer, progress: model.intelligence.progress)
+                        .padding(.top, Tokens.Spacing.s2)
+                        .padding(.horizontal, Tokens.Spacing.s4)
+                }
                 Text(model.footer)
                     .font(Tokens.Typography.footnote)
                     .foregroundStyle(Tokens.Color.textSecondary)
@@ -122,7 +133,7 @@ public struct SettingsView: View {
     /// The switch carries the name and note for VoiceOver; the text beside it is only drawn, so it can sit above the
     /// switch at accessibility sizes.
     private var notificationsRow: some View {
-        row(icon: "bell") {
+        row(icon: "bell", showsSeparator: true) {
             notificationsText
                 .accessibilityHidden(true)
         } trailing: {
@@ -130,6 +141,59 @@ public struct SettingsView: View {
                 .toggleStyle(MonochromeToggleStyle())
                 .accessibilityIdentifier(AccessibilityID.Settings.notifications)
         }
+    }
+
+    /// Like Notifications: the switch carries the name and note. Without Apple Intelligence it is off and dimmed (10-06).
+    private var intelligenceRow: some View {
+        let row = model.intelligence
+        return self.row(icon: "sparkles") {
+            intelligenceText(row)
+                .accessibilityHidden(true)
+        } trailing: {
+            Toggle(isOn: intelligenceOn) { intelligenceText(row) }
+                .toggleStyle(MonochromeToggleStyle())
+                .disabled(!row.isAvailable)
+                .accessibilityIdentifier(AccessibilityID.Settings.intelligence)
+        }
+    }
+
+    private func intelligenceText(_ row: IntelligenceRow) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Apple Intelligence", bundle: #bundle)
+                .font(Tokens.Typography.body)
+                .foregroundStyle(Tokens.Color.textPrimary)
+            Text(row.subtitle)
+                .font(Tokens.Typography.footnote)
+                .foregroundStyle(Tokens.Color.textSecondary)
+        }
+    }
+
+    /// While older scans are read, how far it has got, with a thin bar; otherwise the privacy line.
+    private func intelligenceFooter(_ footer: String, progress: Double?) -> some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
+            Text(footer)
+                .font(Tokens.Typography.footnote)
+                .foregroundStyle(Tokens.Color.textSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            if let progress {
+                progressBar(progress)
+                    // The line above already says how far it has got.
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
+    private func progressBar(_ progress: Double) -> some View {
+        RoundedRectangle(cornerRadius: Self.progressRadius)
+            .fill(Tokens.Color.bgFill)
+            .frame(height: Self.progressHeight)
+            .overlay(alignment: .leading) {
+                GeometryReader { proxy in
+                    RoundedRectangle(cornerRadius: Self.progressRadius)
+                        .fill(Tokens.Color.textSecondary)
+                        .frame(width: proxy.size.width * progress)
+                }
+            }
     }
 
     private var notificationsText: some View {
@@ -144,19 +208,25 @@ public struct SettingsView: View {
     }
 
     /// An icon, the text, then the value or switch. At accessibility sizes the icon goes and the value or switch moves
-    /// under the text, so a name never breaks mid-word (12-05).
+    /// under the text, so a name never breaks mid-word (12-05). `showsSeparator` draws a hairline above the row, from
+    /// where its text starts to the group's edge (10-01).
     private func row(
-        icon: String, @ViewBuilder text: () -> some View, @ViewBuilder trailing: () -> some View
+        icon: String,
+        showsSeparator: Bool = false,
+        @ViewBuilder text: () -> some View,
+        @ViewBuilder trailing: () -> some View
     ) -> some View {
         Group {
             if typeSize.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
-                    text()
-                    HStack(spacing: Tokens.Spacing.s2) {
-                        Spacer(minLength: 0)
-                        trailing()
-                    }
-                }
+                framed(
+                    VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
+                        text()
+                        HStack(spacing: Tokens.Spacing.s2) {
+                            Spacer(minLength: 0)
+                            trailing()
+                        }
+                    },
+                    showsSeparator: showsSeparator)
             } else {
                 HStack(spacing: Tokens.Spacing.s3) {
                     Image(systemName: icon)
@@ -165,18 +235,21 @@ public struct SettingsView: View {
                         .foregroundStyle(Tokens.Color.textSecondary)
                         .frame(width: Self.iconWidth)
                         .accessibilityHidden(true)
-                    HStack(spacing: Tokens.Spacing.s2) {
-                        text()
-                        Spacer(minLength: 0)
-                        trailing()
-                    }
+                    framed(
+                        HStack(spacing: Tokens.Spacing.s2) {
+                            text()
+                            Spacer(minLength: 0)
+                            trailing()
+                        },
+                        showsSeparator: showsSeparator)
                 }
             }
         }
-        .padding(.vertical, Self.rowVerticalPadding)
         .padding(.leading, Tokens.Spacing.s4)
-        .padding(.trailing, Self.rowTrailingPadding)
-        .frame(minHeight: Self.rowMinHeight)
+    }
+
+    private var intelligenceOn: Binding<Bool> {
+        Binding(get: { model.intelligence.isOn }, set: { model.setIntelligence($0) })
     }
 
     /// The switch shows what the model says. Turning it on while iOS blocks notes sends the person to iPhone Settings,
@@ -192,5 +265,16 @@ public struct SettingsView: View {
                     openURL(url)
                 }
             })
+    }
+
+    /// A row's text and value: padded, at least 50 pt tall, with the separator on its top edge.
+    private func framed(_ content: some View, showsSeparator: Bool) -> some View {
+        content
+            .padding(.vertical, Self.rowVerticalPadding)
+            .padding(.trailing, Self.rowTrailingPadding)
+            .frame(minHeight: Self.rowMinHeight)
+            .overlay(alignment: .top) {
+                if showsSeparator { Hairline() }
+            }
     }
 }

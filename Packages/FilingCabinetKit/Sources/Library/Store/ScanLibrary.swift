@@ -23,6 +23,10 @@ public protocol ScanLibrary: AnyObject {
     /// scan stays saved.
     func updateSearchText(_ text: String, for id: ScanID)
 
+    /// Stores the model's hidden search words for the scan and the prompt version that made them, and bumps
+    /// `searchTextRevision`. A scan with no record is ignored; a failure is logged.
+    func updateSearchWords(_ words: [String], version: Int, for id: ScanID)
+
     func rename(_ id: ScanID, to title: String) throws(LibraryError)
 
     /// Keeps the scan's own expiry. A scan the move expires goes to Trash today; one already there stays (M1).
@@ -61,6 +65,13 @@ public protocol ScanLibrary: AnyObject {
 
     /// Every scan's recognized text, Trash included, as read, in one fetch. Empty when the fetch fails.
     func searchTexts() -> [ScanID: String]
+
+    /// Every scan's hidden search words, Trash included, in one fetch. Empty when the fetch fails.
+    func searchWords() -> [ScanID: [String]]
+
+    /// The scans in the library, not Trash, that the model has not read at `version` or later: never read, or read
+    /// by an older version. Newest first (M9).
+    func scansNeedingWords(version: Int) -> [ScanID]
 
     /// The scan's recognized text, as read; nil when there is no such scan or the fetch fails.
     func searchText(for id: ScanID) -> String?

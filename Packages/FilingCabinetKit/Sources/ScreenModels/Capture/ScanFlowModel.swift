@@ -1,6 +1,7 @@
 import Core
 import CoreGraphics
 import Observation
+import Understanding
 
 /// One scan from the Scan button to the end of review: camera permission, the camera, rescans and review.
 /// The root presents the capture layer while `phase` is `.camera` or `.review`, and the camera-off sheet for
@@ -26,22 +27,37 @@ public final class ScanFlowModel {
     @ObservationIgnored private let clock: AppClock
     @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let makeReview: (ReviewInput) -> ReviewModel
+    @ObservationIgnored private let suggester: any ScanSuggester
+    /// Read as each camera opens, so the Settings switch takes effect on the next scan.
+    @ObservationIgnored private let suggestionsOn: () -> Bool
     /// Where the scan in progress started; set by `scan`, read when the first camera finishes.
     @ObservationIgnored private var source = ScanSource.home
     @ObservationIgnored private var preselected: BuiltInCollection?
     /// True while the system asks for camera access.
     @ObservationIgnored private var isAskingForCamera = false
+    /// Told when a scan starts (the Scan tap) and when it ends (saved, discarded, cancelled or the camera-off sheet
+    /// dismissed), so the background words pass leaves the model to review meanwhile.
+    @ObservationIgnored private let scanStarted: () -> Void
+    @ObservationIgnored private let scanEnded: () -> Void
 
     public init(
         cameraAccess: any CameraAccess,
         clock: AppClock,
         analytics: any Analytics,
-        makeReview: @escaping (ReviewInput) -> ReviewModel
+        suggester: any ScanSuggester,
+        suggestionsOn: @escaping () -> Bool,
+        makeReview: @escaping (ReviewInput) -> ReviewModel,
+        scanStarted: @escaping () -> Void = {},
+        scanEnded: @escaping () -> Void = {}
     ) {
         self.cameraAccess = cameraAccess
         self.clock = clock
         self.analytics = analytics
+        self.suggester = suggester
+        self.suggestionsOn = suggestionsOn
         self.makeReview = makeReview
+        self.scanStarted = scanStarted
+        self.scanEnded = scanEnded
     }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
@@ -49,6 +65,7 @@ public final class ScanFlowModel {
     /// then), so a second tap can't start a second scan.
     package func scan(from source: ScanSource, preselected: BuiltInCollection?) async {
         guard phase == .idle, !isAskingForCamera else { return }
+        scanStarted()
         analytics.send(.scanStarted(source: source))
         self.source = source
         self.preselected = preselected
@@ -64,7 +81,7 @@ public final class ScanFlowModel {
             allowed = false
         }
         if allowed {
-            phase = .camera(isRescan: false)
+            openCamera(isRescan: false)
         } else {
             analytics.send(.cameraDenied)
             phase = .cameraOff
@@ -102,11 +119,11 @@ public final class ScanFlowModel {
     package var leavingCameraEndsTheScan: Bool { reviewInput == nil }
 
     package func rescan() {
-        phase = .camera(isRescan: true)
+        openCamera(isRescan: true)
     }
 
     package func dismissCameraOff() {
-        phase = .idle
+        endScan()
     }
 
     /// Review saved (`saved`) or discarded the scan. The view calls this once the layer has slid away, so the haptic
@@ -115,12 +132,25 @@ public final class ScanFlowModel {
         if let saved { lastSaved = saved }
         reviewInput = nil
         review = nil
+        endScan()
+    }
+
+    /// Shows the camera, warming the model meanwhile so the review's suggestion comes sooner (E3).
+    private func openCamera(isRescan: Bool) {
+        if suggester.answers(whenOn: suggestionsOn()) {
+            suggester.prewarm(collections: SuggestionCollection.builtIns)
+        }
+        phase = .camera(isRescan: isRescan)
+    }
+
+    private func endScan() {
         phase = .idle
+        scanEnded()
     }
 
     private func leaveCamera() {
         if leavingCameraEndsTheScan {
-            phase = .idle
+            endScan()
         } else {
             phase = .review
         }

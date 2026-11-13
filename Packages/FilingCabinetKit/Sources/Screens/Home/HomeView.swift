@@ -177,6 +177,9 @@ private final class PreviewLibrary: ScanLibrary {
     func reorderFavorites(_ ids: [ScanID]) throws(LibraryError) {}
     func searchTexts() -> [ScanID: String] { [:] }
     func searchText(for id: ScanID) -> String? { nil }
+    func updateSearchWords(_ words: [String], version: Int, for id: ScanID) {}
+    func searchWords() -> [ScanID: [String]] { [:] }
+    func scansNeedingWords(version: Int) -> [ScanID] { [] }
 }
 
 /// No thumbnails: the preview library has no scans.

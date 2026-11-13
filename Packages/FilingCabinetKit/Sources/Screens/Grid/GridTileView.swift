@@ -59,7 +59,7 @@ struct GridTileView: View {
                         .lineLimit(typeSize <= .large ? 1 : nil)
                 }
                 .padding(.top, Tokens.Spacing.s1)
-                Text(tile.timeLeft)
+                Text(tile.detail)
                     .font(Tokens.Typography.caption)
                     .fontWeight(tile.isSoon ? .semibold : .regular)
                     .foregroundStyle(tile.isSoon ? Tokens.Color.expirySoon : Tokens.Color.textSecondary)
