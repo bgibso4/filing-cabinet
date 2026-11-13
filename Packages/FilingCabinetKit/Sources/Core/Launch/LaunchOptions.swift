@@ -41,6 +41,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var showWelcome = false
     /// `-RatingDue`: under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating.
     public private(set) var ratingDue = false
+    /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
+    public private(set) var request: RequestFlag?
 
     private static let fakeCameraRange = 1...3
 
@@ -81,6 +83,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-SeedScans": seedScans = Self.count(value)
         case "-SeedTrash": seedTrash = Self.count(value)
         case "-SeedFavorites": seedFavorites = Self.count(value)
+        case "-Request": request = RequestFlag(value)
         default: break
         }
     }

@@ -82,8 +82,14 @@ public final class SearchModel {
     /// adds up.
     @ObservationIgnored private var places: [ScanID: Place] = [:]
 
+    /// `initialQuery` is a search from outside the app (Find a scan): it is in the field and its results show at once.
     public convenience init(
-        library: any ScanLibrary, today: Today, clock: AppClock, history: SearchHistory, analytics: any Analytics
+        library: any ScanLibrary,
+        today: Today,
+        clock: AppClock,
+        history: SearchHistory,
+        analytics: any Analytics,
+        initialQuery: String = ""
     ) {
         self.init(
             library: library,
@@ -91,6 +97,7 @@ public final class SearchModel {
             clock: clock,
             history: history,
             analytics: analytics,
+            initialQuery: initialQuery,
             matching: { SearchMatch.match(title: $0, text: $1, words: $2, terms: $3) })
     }
 
@@ -101,8 +108,10 @@ public final class SearchModel {
         clock: AppClock,
         history: SearchHistory,
         analytics: any Analytics,
+        initialQuery: String = "",
         matching: @escaping Matching
     ) {
+        query = initialQuery
         self.matching = matching
         self.library = library
         self.today = today

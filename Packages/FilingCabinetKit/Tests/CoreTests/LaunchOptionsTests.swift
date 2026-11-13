@@ -21,6 +21,7 @@ private let everyFlag = [
     "-Suggestions", "slow",
     "-FailLibraryOpen",
     "-ShowWelcome",
+    "-Request", "scan",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -44,6 +45,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.suggestions == .slow)
     #expect(options.failLibraryOpen == .always)
     #expect(options.showWelcome)
+    #expect(options.request == .scan)
 }
 
 @Test func parsesSeedFavorites() {
@@ -70,6 +72,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.photos == nil)
     #expect(options.suggestions == nil)
     #expect(options.failLibraryOpen == nil)
+    #expect(options.request == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -165,4 +168,18 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: true).showWelcome)
     #expect(!LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).showWelcome)
     #expect(!LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: false).showWelcome)
+}
+
+@Test func parsesRequest() {
+    func request(_ value: String) -> RequestFlag? {
+        LaunchOptions(arguments: ["-Request", value], isDebugBuild: true).request
+    }
+    #expect(request("scan") == .scan)
+    #expect(request("search:city pharmacy") == .search("city pharmacy"))
+    #expect(request("open:2") == .open(seeded: 2))
+    #expect(request("open:0") == nil)
+    #expect(request("open:x") == nil)
+    #expect(request("search:") == nil)
+    #expect(request("print") == nil)
+    #expect(LaunchOptions(arguments: ["-Request", "scan"], isDebugBuild: false).request == nil)
 }

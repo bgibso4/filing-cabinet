@@ -126,8 +126,11 @@ final class AppEnvironment {
     /// Makes Search's model, keeping what it saves in the app-wide history the viewer records into.
     private static func searchMaker(
         store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
-    ) -> () -> SearchModel {
-        { SearchModel(library: store, today: today, clock: clock, history: history, analytics: analytics) }
+    ) -> (String) -> SearchModel {
+        { query in
+            SearchModel(
+                library: store, today: today, clock: clock, history: history, analytics: analytics, initialQuery: query)
+        }
     }
 
     /// Unknown flags are ignored, and a Release build ignores every flag (M9). Throws when the library can't open;

@@ -28,9 +28,10 @@ public enum LibrarySeed {
     /// Each scan's search text is the lines its pages show ("Sample scan 1", "Page 1"), so Search finds real words.
     /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
     /// favourites, in seed order.
+    /// Scan `n` (from 0) has the ID `scanID(at: n)`.
     @MainActor
     public static func seed(_ store: ScanStore, count: Int, favorites: Int = 0, clock: AppClock) async throws {
-        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock)
+        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock, id: scanID(at:))
         try store.setFavorite(true, for: Array(ids.prefix(favorites)))
     }
 
@@ -38,17 +39,27 @@ public enum LibrarySeed {
     /// today, as if moved there by hand. Their titles differ from `seed`'s, so both can seed one library.
     @MainActor
     public static func seedTrash(_ store: ScanStore, count: Int, clock: AppClock) async throws {
-        let ids = try await save(store, count: count, titled: "Trashed scan", clock: clock)
+        let ids = try await save(store, count: count, titled: "Trashed scan", clock: clock) { _ in ScanID() }
         for (index, id) in ids.enumerated() {
             try store.moveToTrash([id], on: clock.today.adding(days: -index, in: clock.calendar))
         }
     }
 
-    /// The saved scans' IDs, in order: "<title> 1" first.
+    /// The ID `seed` gives its scan `index` (from 0), known before it is saved, so `-Request open:<n>` can name the
+    /// nth seeded scan (M15). The same in every seeded library.
+    public static func scanID(at index: Int) -> ScanID {
+        // 5EED0000-0000-4000-8000-0000<index as 8 hex digits>: a valid version 4 UUID no random one is likely to be.
+        let byte = { (shift: Int) in UInt8(truncatingIfNeeded: index >> shift) }
+        return ScanID(
+            uuid: UUID(
+                uuid: (0x5E, 0xED, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, byte(24), byte(16), byte(8), byte(0))))
+    }
+
+    /// The saved scans' IDs, in order: "<title> 1" first. `id` gives scan `n` (from 0) its ID.
     @MainActor
-    private static func save(_ store: ScanStore, count: Int, titled prefix: String, clock: AppClock) async throws
-        -> [ScanID]
-    {
+    private static func save(
+        _ store: ScanStore, count: Int, titled prefix: String, clock: AppClock, id makeID: (Int) -> ScanID
+    ) async throws -> [ScanID] {
         let now = clock.now()
         let collections = BuiltInCollection.allCases
         var ids: [ScanID] = []
@@ -60,7 +71,7 @@ public enum LibrarySeed {
                 SyntheticPages.page(lines: lines.map { ($0, titleSize) }, size: pageSize)
             }
             let scannedAt = clock.calendar.date(byAdding: .day, value: -index, to: now) ?? now
-            let id = ScanID()
+            let id = makeID(index)
             try await store.save(
                 ScanDraft(
                     id: id,

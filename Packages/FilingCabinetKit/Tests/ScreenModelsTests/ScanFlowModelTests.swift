@@ -209,7 +209,7 @@ private let other = SyntheticPages.page(lines: [("TWO", 40)], size: CGSize(width
     #expect(harness.model.lastSaved == nil)
 }
 
-@Test(arguments: [ScanSource.home, .grid])
+@Test(arguments: [ScanSource.home, .grid, .outside])
 func scanStartedCarriesItsSource(_ source: ScanSource) async {
     let harness = Harness(.authorized)
     await harness.model.scan(from: source, preselected: nil)

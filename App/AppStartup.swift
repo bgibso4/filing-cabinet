@@ -3,9 +3,13 @@ import Foundation
 import Observation
 import ScreenModels
 
+#if DEBUG
+    import TestSupport
+#endif
+
 /// Opens the library: the app (`ready`), or the screen that says the library couldn't open (`failed`, #40), whose Try
 /// again opens it once more. Nothing falls back to an empty library. Also opens everything again for a UI test's
-/// relaunch.
+/// relaunch. `requests` outlives both: it is made once per process, before any intent can run.
 @MainActor
 @Observable
 final class AppStartup {
@@ -20,16 +24,20 @@ final class AppStartup {
     @ObservationIgnored private var arguments: [String]
     /// The failure screen's events: with no environment, nothing else can send them.
     @ObservationIgnored private let analytics: any Analytics
+    /// Requests from outside the app: the root acts on them, the failure screen drops them.
+    let requests: ExternalRequests
 
-    init(arguments: [String]) {
+    init(arguments: [String], requests: ExternalRequests) {
         let analytics = LogAnalytics()
         self.arguments = arguments
         self.analytics = analytics
+        self.requests = requests
         // Try again calls back into this startup, which can't be captured until `state` is set; it is filled in below,
         // before anyone can tap.
         weak var startup: AppStartup?
         state = Self.open(arguments: arguments, analytics: analytics) { startup?.retry() ?? false }
         startup = self
+        sendLaunchRequest(arguments)
     }
 
     /// The app's collaborators once the library is open; nil while the failure screen shows.
@@ -47,6 +55,7 @@ final class AppStartup {
         environment?.leftForeground()
         arguments = newArguments
         state = Self.open(arguments: newArguments, analytics: analytics) { [weak self] in self?.retry() ?? false }
+        sendLaunchRequest(newArguments)
     }
 
     /// Try again (the failure screen's model calls it): true, with the app ready, when the library opened.
@@ -67,6 +76,20 @@ final class AppStartup {
             analytics.send(.libraryOpenFailed)
             return .failed(LibraryFailureModel(error: error.underlying, analytics: analytics, retry: retry))
         }
+    }
+
+    /// `-Request`: a UI test's request from outside the app, sent as an intent would send it (M15). `open:<n>` is the
+    /// nth scan `-SeedScans` saves (`LibrarySeed.scanID(at:)`), in the library once launch has seeded it. Try again
+    /// sends nothing: the failure screen dropped the request.
+    private func sendLaunchRequest(_ arguments: [String]) {
+        #if DEBUG
+            switch LaunchOptions(arguments: arguments, isDebugBuild: AppEnvironment.isDebugBuild).request {
+            case .scan: requests.send(.scan)
+            case .search(let text): requests.send(.search(text))
+            case .open(let seeded): requests.send(.open(LibrarySeed.scanID(at: seeded - 1)))
+            case nil: break
+            }
+        #endif
     }
 
     private static func isUITest(_ arguments: [String]) -> Bool {

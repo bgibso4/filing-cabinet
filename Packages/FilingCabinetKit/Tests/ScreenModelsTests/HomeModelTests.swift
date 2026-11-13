@@ -277,3 +277,17 @@ private func favorites(_ count: Int, order: (Int) -> Int = { $0 }) -> [ScanSumma
     let home = model(scans(.receipts, 4))
     #expect(home.favorites.isEmpty)
 }
+
+@Test func isInLibraryOnlyForLibraryScans() {
+    let kept = scans(.wallet, 1)[0]
+    var trashed = scans(.wallet, 1)[0]
+    trashed.trashedDay = CalendarDay(year: 2026, month: 10, day: 12)
+    // Throwaways keep a week: this one has expired.
+    let expired = scans(.throwaways, 1, daysAgo: 30)[0]
+    let home = model([kept, trashed, expired])
+
+    #expect(home.isInLibrary(kept.id))
+    #expect(!home.isInLibrary(trashed.id))
+    #expect(!home.isInLibrary(expired.id))
+    #expect(!home.isInLibrary(ScanID()))
+}

@@ -1,4 +1,6 @@
+import Core
 import Foundation
+import TestSupport
 import Testing
 import UIKit
 
@@ -10,10 +12,10 @@ import UIKit
 @Suite(.serialized)
 struct AppStartupTests {
     /// `-UITest` turns animations off for the process; the snapshot tests that follow keep theirs.
-    private func startup(_ flags: [String]) -> AppStartup {
+    private func startup(_ flags: [String], requests: ExternalRequests = ExternalRequests()) -> AppStartup {
         let animations = UIView.areAnimationsEnabled
         defer { UIView.setAnimationsEnabled(animations) }
-        return AppStartup(arguments: ["-UITest", "-Notifications", "authorized"] + flags)
+        return AppStartup(arguments: ["-UITest", "-Notifications", "authorized"] + flags, requests: requests)
     }
 
     private func isFailed(_ startup: AppStartup) -> Bool {
@@ -45,5 +47,28 @@ struct AppStartupTests {
         defer { UIView.setAnimationsEnabled(animations) }
         #expect(startup.retry())
         #expect(startup.environment != nil)
+    }
+
+    @Test func requestFlagIsSentAtLaunch() {
+        let requests = ExternalRequests()
+        _ = startup(["-Request", "search:lease"], requests: requests)
+        #expect(requests.pending == .search("lease"))
+    }
+
+    @Test func openRequestNamesTheNthSeededScan() {
+        let requests = ExternalRequests()
+        _ = startup(["-SeedScans", "3", "-Request", "open:2"], requests: requests)
+        #expect(requests.pending == .open(LibrarySeed.scanID(at: 1)))
+    }
+
+    @Test func tryAgainSendsTheRequestNoMore() {
+        let requests = ExternalRequests()
+        let startup = startup(["-FailLibraryOpen", "once", "-Request", "scan"], requests: requests)
+        // What the failure screen does with it.
+        _ = requests.take()
+        let animations = UIView.areAnimationsEnabled
+        defer { UIView.setAnimationsEnabled(animations) }
+        #expect(startup.retry())
+        #expect(requests.pending == nil)
     }
 }

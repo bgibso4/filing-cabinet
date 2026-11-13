@@ -105,7 +105,7 @@ private struct Expected {
 }
 
 @Test func tokensKeepTheirRawValues() {
-    #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
+    #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid", "outside"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])
     #expect(FailureReason.allCases.map(\.rawValue) == ["diskFull", "writeFailed"])
     #expect(EditedField.allCases.map(\.rawValue) == ["title", "collection", "expiry"])

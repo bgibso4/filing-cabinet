@@ -5,13 +5,19 @@ import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
 /// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
-/// over it. On a first launch the welcome sheet covers Home until it is completed.
+/// over it. On a first launch the welcome sheet covers Home until it is completed. Requests from outside the app (the
+/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9).
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
+    private let requests: ExternalRequests
     @State private var path: [AppRoute] = []
     /// True while Search covers Home.
     @State private var isSearching = false
+    /// The text Search opens with: a request's, or empty from Home's field.
+    @State private var searchQuery = ""
+    /// Bumped when a request replaces an open Search's query, so Search is made again with it.
+    @State private var searchRequests = 0
     /// Reduce Motion as Search went up: it fades rather than slides, in and out (B17).
     @State private var searchFades = false
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
@@ -21,10 +27,12 @@ public struct RootView: View {
     /// update.
     @State private var restores = 0
 
-    /// `canScan` is false until launch cleanup has finished, so a scan never races it.
-    public init(dependencies: RootDependencies, canScan: Bool) {
+    /// `canScan` is false until launch cleanup has finished, so a scan never races it, and no request is acted on
+    /// before then.
+    public init(dependencies: RootDependencies, canScan: Bool, requests: ExternalRequests) {
         self.dependencies = dependencies
         self.canScan = canScan
+        self.requests = requests
     }
 
     public var body: some View {
@@ -34,7 +42,7 @@ public struct RootView: View {
                 thumbnails: dependencies.thumbnails,
                 canScan: canScan,
                 onScan: { Task { await flow.scan(from: .home, preselected: nil) } },
-                onSearch: openSearch,
+                onSearch: { openSearch(query: "") },
                 onOpen: { path.append($0) }
             )
             // Clear covers keep Home in the window under them; out of the accessibility tree meanwhile.
@@ -71,12 +79,13 @@ public struct RootView: View {
         }
         .fullScreenCover(isPresented: $isSearching) {
             SearchCover(
-                makeModel: dependencies.makeSearch,
+                makeModel: { [searchQuery] in dependencies.makeSearch(searchQuery) },
                 thumbnails: dependencies.thumbnails,
                 viewer: { viewer($0, .library) },
                 fades: searchFades,
                 onClosed: { isSearching = false }
             )
+            .id(searchRequests)
             // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
             .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
         }
@@ -88,6 +97,8 @@ public struct RootView: View {
             WelcomeSheet(model: dependencies.welcome)
         }
         .task { await dependencies.welcome.start() }
+        // A request from outside the app, once nothing it must wait for is in the way.
+        .onChange(of: requestMoment, initial: true) { actOnRequest() }
         // Back from iOS's notification ask: the welcome closes even if the answer never comes (M11).
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { dependencies.welcome.becameActive() }
@@ -176,9 +187,58 @@ public struct RootView: View {
         }
     }
 
+    /// Everything that decides what a pending request does; a change asks again.
+    private var requestMoment: RequestMoment {
+        RequestMoment(
+            pending: requests.pending, canScan: canScan, welcomeFinished: welcomeFinished, flowPhase: flow.phase)
+    }
+
+    /// Completed, and its sheet gone. Before the welcome starts, `step` is nil but it isn't completed.
+    private var welcomeFinished: Bool {
+        dependencies.welcome.isFinished && dependencies.welcome.step == nil
+    }
+
+    /// Takes the pending request and acts on it (`RequestRouting`), unless it has to wait. Nothing is acted on before
+    /// launch has finished.
+    private func actOnRequest() {
+        guard canScan, let request = requests.pending else { return }
+        let state = RootState(
+            welcomeFinished: welcomeFinished,
+            flowPhase: flow.phase,
+            isSearching: isSearching,
+            pathDepth: path.count,
+            isInLibrary: dependencies.home.isInLibrary)
+        let action = RequestRouting.action(for: request, state: state)
+        guard action != .wait else { return }
+        _ = requests.take()
+        switch action {
+        case .wait, .ignore, .showReview:
+            // A review already open is the capture layer, over everything: it is what shows.
+            break
+        case .startScan:
+            // From Home, so saving or cancelling lands there.
+            isSearching = false
+            path = []
+            Task { await flow.scan(from: .outside, preselected: nil) }
+        case .search(let text, let closeOthers):
+            if closeOthers { path = [] }
+            if isSearching {
+                // Made again with the new text; whatever was pushed on Search's own stack goes with it.
+                searchQuery = text
+                searchRequests += 1
+            } else {
+                openSearch(query: text)
+            }
+        case .open(let id, let closeOthers):
+            if closeOthers { isSearching = false }
+            path = [.scan(id)]
+        }
+    }
+
     /// Slides Search up with the cover's own slide; with Reduce Motion puts the cover up at once and lets Search fade in
     /// (SearchCover). `forcesReduceMotion` is read here because this view sets it for what is under it.
-    private func openSearch() {
+    private func openSearch(query: String) {
+        searchQuery = query
         searchFades = systemReducesMotion || dependencies.forcesReduceMotion
         var transaction = Transaction()
         transaction.disablesAnimations = searchFades
@@ -209,4 +269,16 @@ public struct RootView: View {
                 )
             })
     }
+}
+
+/// What RootView's request handling depends on.
+private struct RequestMoment: Equatable {
+    // periphery:ignore - read only by the synthesized Equatable
+    let pending: ExternalRequest?
+    // periphery:ignore - read only by the synthesized Equatable
+    let canScan: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let welcomeFinished: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let flowPhase: ScanFlowModel.Phase
 }

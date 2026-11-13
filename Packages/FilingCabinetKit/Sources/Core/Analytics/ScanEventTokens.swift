@@ -2,6 +2,8 @@
 public enum ScanSource: String, CaseIterable, AnalyticsToken {
     case home
     case grid
+    /// The Scan control, Shortcuts or Siri.
+    case outside
 }
 
 /// Which screen a scan was cancelled from.

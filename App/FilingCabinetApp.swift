@@ -1,14 +1,21 @@
+import Core
 import Foundation
 import Screens
 import SwiftUI
 
 @main
 struct FilingCabinetApp: App {
-    @State private var startup = AppStartup(arguments: CommandLine.arguments)
+    @State private var startup: AppStartup
     @Environment(\.scenePhase) private var scenePhase
+    /// Requests from outside the app. One per process, made here so it exists before any intent runs; it outlives a UI
+    /// test's relaunch and Try again.
+    private let requests: ExternalRequests
 
     init() {
         HeaderAppearance.install()
+        let requests = ExternalRequests()
+        self.requests = requests
+        startup = AppStartup(arguments: CommandLine.arguments, requests: requests)
     }
 
     var body: some Scene {
@@ -23,6 +30,10 @@ struct FilingCabinetApp: App {
                     // Never Home or Scan while the library can't open (#40).
                     LibraryFailureView(model: model)
                         .id(ObjectIdentifier(model))
+                        // Dropped, not kept: a request must never act later, after a Try again that works.
+                        .onChange(of: requests.pending, initial: true) { _, pending in
+                            if pending != nil { _ = requests.take() }
+                        }
                 }
             }
             // Only a UI test's relaunch: anything else from outside the app is dropped while the library has failed.
@@ -51,7 +62,7 @@ struct FilingCabinetApp: App {
 
     /// The app once the library is open.
     private func app(_ environment: AppEnvironment) -> some View {
-        RootView(dependencies: environment.root, canScan: environment.isReady)
+        RootView(dependencies: environment.root, canScan: environment.isReady, requests: requests)
             .task { await environment.launch() }
             .task { await environment.notifier.run() }
             .task {

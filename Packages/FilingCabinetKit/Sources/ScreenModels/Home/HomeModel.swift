@@ -96,6 +96,16 @@ public final class HomeModel {
         }
     }
 
+    /// True when the scan is in the library now (not in Trash, expired or deleted), so a request from outside the app
+    /// may open it. Reads the library itself, not what Home shows while held.
+    package func isInLibrary(_ id: ScanID) -> Bool {
+        guard let scan = library.scans.first(where: { $0.id == id }) else { return false }
+        guard case .library = scan.place(lifespans: library.lifespans, today: today.day, in: calendar) else {
+            return false
+        }
+        return true
+    }
+
     // M18: the row shows at most 10 favourites. Its header links to the grid whenever it shows (B15).
     private static let favoritesShown = 10
 

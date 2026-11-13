@@ -46,6 +46,22 @@ final class LibraryFailureJourneyTests: XCTestCase {
         XCTAssertFalse(app.staticTexts[AccessibilityID.LibraryFailure.title].exists)
     }
 
+    /// A request from outside the app (here the Scan control's) is dropped: no camera over the failure screen, and none
+    /// after a Try again that opens the library.
+    func testRequestIsIgnored() {
+        let app = launchApp(["-FailLibraryOpen", "once", "-Request", "scan", "-FakeCamera", "1"], fresh: true)
+        let tryAgain = app.buttons[AccessibilityID.LibraryFailure.tryAgain]
+        XCTAssertTrue(tryAgain.appears(within: 5))
+        let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
+        XCTAssertFalse(finish.exists)
+        XCTAssertTrue(app.staticTexts[AccessibilityID.LibraryFailure.title].exists, "the failure screen stays")
+
+        tryAgain.tap()
+
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isEnabled == true", within: 5))
+        XCTAssertFalse(finish.appears(within: 2), "the dropped request doesn't open the camera later")
+    }
+
     func testAuditAtLargestTextOfTheFailureScreen() throws {
         let app = launchApp(["-FailLibraryOpen"], largestText: true, fresh: true)
         XCTAssertTrue(app.buttons[AccessibilityID.LibraryFailure.tryAgain].appears(within: 5))
