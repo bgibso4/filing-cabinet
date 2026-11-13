@@ -6,6 +6,7 @@ import UIKit
 /// Settings from Home's gear (10-01): Collections, Appearance, then Apple Intelligence and Notifications with the line
 /// about Apple Intelligence under them (Plan 5's demo), then Send feedback and the Privacy policy (Plan 6), then the footer.
 public struct SettingsView: View {
+    // `model`, `openURL`, `feedbackDraft`, `group` and `row` are not private: SettingsView+Feedback.swift uses them.
     let model: SettingsModel
     private let onOpenCollections: () -> Void
 

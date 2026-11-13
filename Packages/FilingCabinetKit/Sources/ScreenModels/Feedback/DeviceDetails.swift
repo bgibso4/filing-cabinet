@@ -17,6 +17,7 @@ package struct DeviceDetails: Equatable, Sendable {
         let machine = withUnsafeBytes(of: &uts.machine) { raw in
             String(bytes: raw.prefix { $0 != 0 }, encoding: .utf8) ?? ""
         }
+        // The fallbacks apply only where the bundle has no Info.plist version keys (a test host or a macOS test run).
         return Self(
             version: bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0",
             build: bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1",
