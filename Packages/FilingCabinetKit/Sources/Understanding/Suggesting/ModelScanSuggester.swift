@@ -143,7 +143,7 @@ public final class ModelScanSuggester: ScanSuggester {
         case let error as SystemLanguageModel.Error:
             UnderstandingLog.logger.error("Suggester: model assets \(String(describing: error), privacy: .private)")
         case let error as LanguageModelSession.Error:
-            UnderstandingLog.logger.error("Suggester: session \(String(describing: error), privacy: .public)")
+            UnderstandingLog.logger.error("Suggester: session \(String(describing: error), privacy: .private)")
         case let error as GeneratedContent.ParsingError:
             UnderstandingLog.logger.error(
                 "Suggester: answer not parsed \(String(describing: error.underlyingError), privacy: .private)")
