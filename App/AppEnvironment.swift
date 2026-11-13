@@ -198,9 +198,15 @@ final class AppEnvironment {
         wordsPass.resume()
     }
 
-    /// Leaving the foreground, or replaced by a UI test's relaunch: older scans' reading stops until `becameActive`.
+    /// Leaving the foreground, or replaced by a UI test's relaunch: older scans' reading stops, and a `resume()` still
+    /// to come from launch or `becameActive` does nothing until `enteredForeground`.
     func leftForeground() {
-        wordsPass.pause()
+        wordsPass.leftForeground()
+    }
+
+    /// Back in the foreground: called at once on `.active`, before `becameActive`'s awaits, so they can't race it.
+    func enteredForeground() {
+        wordsPass.enteredForeground()
     }
 
     /// Deletes every scan past its 30 days in Trash, and reports a pass that deleted any.

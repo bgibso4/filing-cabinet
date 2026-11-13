@@ -252,3 +252,36 @@ func waitsWhileAScanIsUnderWay() async throws {
     busy.withLock { $0 = false }
     #expect(await harness.asked(1))
 }
+
+/// Launch or coming back awaits other work before `resume()`; if the app left meanwhile, the pass stays stopped (M9).
+@Test(.timeLimit(.minutes(1)))
+func resumeOutsideTheForegroundDoesNothing() async throws {
+    let harness = try PassHarness(["Lease"])
+    defer { harness.cleanUp() }
+
+    harness.pass.leftForeground()
+    harness.pass.resume()
+    try await Task.sleep(for: .milliseconds(50))
+    #expect(harness.suggester.titles.isEmpty)
+    #expect(harness.pass.progress == nil)
+
+    harness.pass.enteredForeground()
+    harness.pass.resume()
+    #expect(await harness.asked(1))
+}
+
+@Test(.timeLimit(.minutes(1)))
+func leavingTheForegroundStopsReading() async throws {
+    let harness = try PassHarness(["Lease", "Letter"])
+    defer { harness.cleanUp() }
+
+    harness.pass.resume()
+    #expect(await harness.asked(1))
+    harness.pass.leftForeground()
+    harness.suggester.answer(PassHarness.words)
+
+    #expect(harness.pass.progress == nil)
+    try await Task.sleep(for: .milliseconds(50))
+    #expect(harness.suggester.titles == ["Lease"])
+    #expect(harness.needing() == harness.ids)
+}

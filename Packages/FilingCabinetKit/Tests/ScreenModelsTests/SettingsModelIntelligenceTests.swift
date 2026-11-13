@@ -72,11 +72,9 @@ private let privacyLine = "Runs on this iPhone. Your scans never leave it."
     let row = harness.model.intelligence
     #expect(!row.isAvailable)
     #expect(!row.isOn)
-    #expect(row.subtitle == "Names, files and finds your scans")
-    #expect(
-        row.footer
-            == "Apple Intelligence isn’t available on this iPhone. Titles come from the text, and you choose each collection."
-    )
+    // 10-06: the subtitle says what to do, and no line sits under the group.
+    #expect(row.subtitle == "Turn it on in iPhone Settings first")
+    #expect(row.footer == nil)
     // The person's wish is kept for when the model arrives.
     #expect(harness.preferences.appleIntelligenceOn)
 }
@@ -90,7 +88,8 @@ func footerShowsProgressWhileReading() async throws {
 
     #expect(await ReviewHarness.eventually { harness.model.intelligence.progress != nil })
     #expect(
-        harness.model.intelligence.footer == "Reading your older scans so search can find them · 0\u{00A0}of\u{00A0}4")
+        harness.model.intelligence.footer
+            == "Reading your older scans so search can find them ·\u{00A0}0\u{00A0}of\u{00A0}4")
     #expect(harness.model.intelligence.progress == 0)
 }
 

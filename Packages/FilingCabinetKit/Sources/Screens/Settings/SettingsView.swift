@@ -49,9 +49,11 @@ public struct SettingsView: View {
                     notificationsRow
                 }
                 .padding(.top, Self.groupGap)
-                intelligenceFooter
-                    .padding(.top, Tokens.Spacing.s2)
-                    .padding(.horizontal, Tokens.Spacing.s4)
+                if let footer = model.intelligence.footer {
+                    intelligenceFooter(footer, progress: model.intelligence.progress)
+                        .padding(.top, Tokens.Spacing.s2)
+                        .padding(.horizontal, Tokens.Spacing.s4)
+                }
                 Text(model.footer)
                     .font(Tokens.Typography.footnote)
                     .foregroundStyle(Tokens.Color.textSecondary)
@@ -166,16 +168,14 @@ public struct SettingsView: View {
         }
     }
 
-    /// While older scans are read, how far it has got, with a thin bar; otherwise the privacy line, or why Apple
-    /// Intelligence isn't available.
-    private var intelligenceFooter: some View {
-        let row = model.intelligence
-        return VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
-            Text(row.footer)
+    /// While older scans are read, how far it has got, with a thin bar; otherwise the privacy line.
+    private func intelligenceFooter(_ footer: String, progress: Double?) -> some View {
+        VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
+            Text(footer)
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            if let progress = row.progress {
+            if let progress {
                 progressBar(progress)
                     // The line above already says how far it has got.
                     .accessibilityHidden(true)
@@ -248,12 +248,12 @@ public struct SettingsView: View {
         .padding(.leading, Tokens.Spacing.s4)
     }
 
-    /// The switch shows what the model says. Turning it on while iOS blocks notes sends the person to iPhone Settings,
-    /// the only place that can change it; the switch stays off.
     private var intelligenceOn: Binding<Bool> {
         Binding(get: { model.intelligence.isOn }, set: { model.setIntelligence($0) })
     }
 
+    /// The switch shows what the model says. Turning it on while iOS blocks notes sends the person to iPhone Settings,
+    /// the only place that can change it; the switch stays off.
     private var notificationsOn: Binding<Bool> {
         Binding(
             get: { model.notificationsSwitchIsOn },

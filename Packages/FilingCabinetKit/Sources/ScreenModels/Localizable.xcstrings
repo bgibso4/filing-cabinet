@@ -2,9 +2,9 @@
   "sourceLanguage" : "en",
   "strings" : {
     "Names, files and finds your scans" : {},
-    "Apple Intelligence isn’t available on this iPhone. Titles come from the text, and you choose each collection." : {},
+    "Turn it on in iPhone Settings first" : {},
     "Runs on this iPhone. Your scans never leave it." : {},
-    "Reading your older scans so search can find them · %lld\u00A0of\u00A0%lld" : {},
+    "Reading your older scans so search can find them ·\u00A0%lld\u00A0of\u00A0%lld" : {},
     "Dark" : {},
     "Light" : {},
     "System" : {},

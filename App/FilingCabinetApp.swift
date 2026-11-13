@@ -44,6 +44,7 @@ struct FilingCabinetApp: App {
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
+                environment.enteredForeground()
                 environment.lifecycle.sceneBecameActive()
                 // Now, so the first frame after midnight doesn't show yesterday.
                 environment.today.refresh()

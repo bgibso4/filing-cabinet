@@ -51,7 +51,9 @@ public final class SettingsModel {
         return IntelligenceRow(
             isAvailable: isAvailable,
             isOn: suggester.answers(whenOn: preferences.appleIntelligenceOn),
-            subtitle: String(localized: "Names, files and finds your scans", bundle: #bundle),
+            subtitle: isAvailable
+                ? String(localized: "Names, files and finds your scans", bundle: #bundle)
+                : String(localized: "Turn it on in iPhone Settings first", bundle: #bundle),
             footer: Self.intelligenceFooter(isAvailable: isAvailable, progress: progress),
             progress: progress.map { Double($0.done) / Double(max($0.total, 1)) })
     }
@@ -97,20 +99,15 @@ public final class SettingsModel {
         return nil
     }
 
-    private static func intelligenceFooter(isAvailable: Bool, progress: SearchWordsPass.Progress?) -> String {
-        guard isAvailable else {
-            return String(
-                localized:
-                    "Apple Intelligence isn’t available on this iPhone. Titles come from the text, and you choose each collection.",
-                bundle: #bundle)
-        }
+    private static func intelligenceFooter(isAvailable: Bool, progress: SearchWordsPass.Progress?) -> String? {
+        guard isAvailable else { return nil }
         guard let progress else {
             return String(localized: "Runs on this iPhone. Your scans never leave it.", bundle: #bundle)
         }
-        // No-break spaces keep "12 of 91" on one line when the line wraps.
+        // No-break spaces keep "· 12 of 91" together when the line wraps.
         return String(
             localized:
-                "Reading your older scans so search can find them · \(progress.done)\u{00A0}of\u{00A0}\(progress.total)",
+                "Reading your older scans so search can find them ·\u{00A0}\(progress.done)\u{00A0}of\u{00A0}\(progress.total)",
             bundle: #bundle)
     }
 }

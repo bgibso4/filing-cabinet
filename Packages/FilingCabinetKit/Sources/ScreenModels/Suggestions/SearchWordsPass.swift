@@ -5,14 +5,17 @@ import Understanding
 
 /// Gives the library's scans that have no search words from this prompt version their words: scans saved before
 /// Apple Intelligence, and scans whose words call after Save failed or was cut short (M9). Only while the app is in
-/// the foreground: the app calls `resume()` at launch and on coming back, and `pause()` on leaving.
+/// the foreground: the app calls `resume()` at launch and on coming back, and `leftForeground()` on leaving, after
+/// which `resume()` does nothing until `enteredForeground()` (the app's own work before `resume()` may outlast a stay).
 ///
 /// One scan at a time, newest first. Each scan is asked about with its stored text, its own title and its
 /// collection's name, and only its words change. A scan whose call fails or times out is skipped until the next
 /// `resume()`. The list is asked for again before each scan, so a scan deleted or moved to Trash meanwhile is skipped.
 ///
 /// The pass waits while `isBusy` (a scan under way, or a words call after Save), so it never competes with review for
-/// the model. It checks every `busyRecheck`; a scan takes seconds, so the check costs nothing to speak of.
+/// the model. It checks every `busyRecheck`; a scan takes seconds, so the check costs nothing to speak of. A call
+/// already in flight when Scan is tapped isn't cancelled: it can overlap the review for up to its 30 s limit, and
+/// `isBusy` holds back only the next one.
 @MainActor
 @Observable
 public final class SearchWordsPass {
@@ -38,6 +41,8 @@ public final class SearchWordsPass {
     @ObservationIgnored private var run: Task<Void, Never>?
     /// Tells the current run from one `pause()` has cancelled but which hasn't ended yet.
     @ObservationIgnored private var runNumber = 0
+    /// The app launches into the foreground; `leftForeground()` and `enteredForeground()` keep this current.
+    @ObservationIgnored private var isInForeground = true
 
     /// `isBusy` is true while the model is wanted elsewhere: a scan under way, or a words call after Save.
     public convenience init(
@@ -76,9 +81,10 @@ public final class SearchWordsPass {
         self.busyRecheck = busyRecheck
     }
 
-    /// Starts reading, unless it already is, the switch is off or the model can't answer.
+    /// Starts reading, unless it already is, the app isn't in the foreground, the switch is off or the model can't
+    /// answer.
     public func resume() {
-        guard run == nil, isAllowed else { return }
+        guard run == nil, isInForeground, isAllowed else { return }
         runNumber += 1
         let number = runNumber
         run = Task { [weak self] in
@@ -92,6 +98,17 @@ public final class SearchWordsPass {
         run?.cancel()
         run = nil
         progress = nil
+    }
+
+    /// The app is in the foreground again; the caller resumes once its own launch work allows.
+    public func enteredForeground() {
+        isInForeground = true
+    }
+
+    /// The app has left the foreground: reading stops, and `resume()` waits for `enteredForeground()`.
+    public func leftForeground() {
+        isInForeground = false
+        pause()
     }
 
     private var isAllowed: Bool { suggester.answers(whenOn: preferences.appleIntelligenceOn) }
@@ -108,7 +125,10 @@ public final class SearchWordsPass {
             guard let id = needing.first(where: { !tried.contains($0) }) else { return }
             tried.insert(id)
             guard let scan = inLibrary.first(where: { $0.id == id }) else { continue }
-            progress = Progress(done: inLibrary.count - needing.count, total: inLibrary.count)
+            // Counted against one list, so the library's and this pass's idea of today can't disagree.
+            let unread = Set(needing)
+            progress = Progress(
+                done: inLibrary.count { !unread.contains($0.id) }, total: inLibrary.count)
             await read(scan)
         }
     }
