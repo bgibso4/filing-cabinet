@@ -66,9 +66,7 @@ final class AppEnvironment {
         self.today = today
         self.store = store
         lifecycle = AppLifecycleModel(analytics: analytics)
-        let defaults = Self.preferencesDefaults(isUITest: options.isUITest)
-        let preferences = AppPreferences(defaults: defaults)
-        let history = SearchHistory(defaults: defaults)
+        let (preferences, history) = Self.makeKept(options: options)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
         let banner = CleanupBanner(
@@ -98,7 +96,8 @@ final class AppEnvironment {
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion,
-            preferences: preferences
+            preferences: preferences,
+            welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics)
         )
     }
 
@@ -231,6 +230,17 @@ final class AppEnvironment {
         }
         defaults.removePersistentDomain(forName: suite)
         return defaults
+    }
+
+    /// What is kept in the phone's defaults: the settings and Search's history. UI tests start past the welcome unless
+    /// `-ShowWelcome` asks to see it (M1).
+    private static func makeKept(options: LaunchOptions) -> (AppPreferences, SearchHistory) {
+        let defaults = preferencesDefaults(isUITest: options.isUITest)
+        let preferences = AppPreferences(defaults: defaults)
+        if options.isUITest {
+            preferences.welcomeDone = !options.showWelcome
+        }
+        return (preferences, SearchHistory(defaults: defaults))
     }
 
     /// The system's notifications, or a scripted answer for `-Notifications` (none for `-NotificationsUnanswered`).

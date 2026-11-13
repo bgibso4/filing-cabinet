@@ -222,6 +222,15 @@ public enum AccessibilityID {
         public static var all: [String] { [title, sendReport, tryAgain] }
     }
 
+    /// The first-launch welcome (01-03, 01-04).
+    public enum Welcome {
+        public static let `continue` = "welcome.continue"
+        public static let turnOn = "welcome.turnOn"
+        public static let notNow = "welcome.notNow"
+
+        public static var all: [String] { [`continue`, turnOn, notNow] }
+    }
+
     /// Settings › Collections (10-02): one row per collection.
     public enum Collections {
 
@@ -296,5 +305,6 @@ public enum AccessibilityID {
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Feedback.all + Collections.all + CollectionSettings.all
             + Search.all + [Search.clearQuery, Search.clear, Search.searchAll] + LibraryFailure.all
+            + Welcome.all
     }
 }

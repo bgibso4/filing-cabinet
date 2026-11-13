@@ -150,3 +150,10 @@ private struct Expected {
     }
     #expect(SuggestionOutcome.allCases.map(\.rawValue) == ["arrived", "timedOut", "failed", "unavailable"])
 }
+
+@Test func welcomeFinishedCarriesOnlyWhetherNotificationsAreAllowed() {
+    let event = AnalyticsEvent.welcomeFinished(notifications: true)
+    #expect(event.name == "welcomeFinished")
+    #expect(event.payload == [.notifications: .bool(true)])
+    #expect(AnalyticsEvent.welcomeFinished(notifications: false).payload == [.notifications: .bool(false)])
+}

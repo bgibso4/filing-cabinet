@@ -92,3 +92,8 @@ import Testing
     #expect(AccessibilityID.LibraryFailure.all.allSatisfy { $0.hasPrefix("libraryFailure.") })
     #expect(Set(AccessibilityID.LibraryFailure.all).isSubset(of: AccessibilityID.all))
 }
+
+@Test func welcomeIdentifiersArePrefixedAndInAll() {
+    #expect(AccessibilityID.Welcome.all.allSatisfy { $0.hasPrefix("welcome.") })
+    #expect(Set(AccessibilityID.Welcome.all).isSubset(of: AccessibilityID.all))
+}

@@ -45,13 +45,12 @@ public struct LibraryFailureView: View {
     private var message: some View {
         VStack(spacing: 0) {
             // B1: a thin red X in a pale red circle. Title 2 follows Dynamic Type, and the well grows with it.
-            Image(systemName: "xmark")
-                .font(Tokens.Typography.title2.weight(.light))
-                .foregroundStyle(Tokens.Color.destructive)
-                .padding(Tokens.Spacing.s3)
-                .frame(minWidth: Self.wellSize, minHeight: Self.wellSize)
-                .background(Tokens.Color.destructive.opacity(Self.wellOpacity), in: .circle)
-                .accessibilityHidden(true)
+            SymbolWell(
+                systemName: "xmark",
+                font: Tokens.Typography.title2.weight(.light),
+                foreground: Tokens.Color.destructive,
+                fill: Tokens.Color.destructive.opacity(Self.wellOpacity),
+                size: Self.wellSize)
             Text("Your library couldn’t open", bundle: #bundle)
                 .font(Tokens.Typography.title1)
                 .foregroundStyle(Tokens.Color.textPrimary)
@@ -84,17 +83,9 @@ public struct LibraryFailureView: View {
             ) {
                 Text("Send report", bundle: #bundle)
             }
-            Button(action: tryAgain) {
+            TextButton(identifier: AccessibilityID.LibraryFailure.tryAgain, action: tryAgain) {
                 Text("Try again", bundle: #bundle)
-                    .font(Tokens.Typography.body)
-                    .foregroundStyle(Tokens.Color.textPrimary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, Tokens.Spacing.s6)
-                    .frame(minHeight: Tokens.Spacing.tapMin)
-                    .contentShape(.rect)
             }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier(AccessibilityID.LibraryFailure.tryAgain)
         }
         .padding(.horizontal, Self.sidePadding)
         .padding(.bottom, Tokens.Spacing.s2)

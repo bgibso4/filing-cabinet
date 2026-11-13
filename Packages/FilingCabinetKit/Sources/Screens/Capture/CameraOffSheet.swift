@@ -96,13 +96,12 @@ public struct CameraOffSheet: View {
     private var message: some View {
         VStack(spacing: 0) {
             // Large title is the mock's 34 pt glyph, and it follows Dynamic Type; the well grows with it.
-            Image(systemName: "video.slash")
-                .font(Tokens.Typography.largeTitle.weight(.regular))
-                .foregroundStyle(Tokens.Color.textSecondary)
-                .padding(Tokens.Spacing.s3)
-                .frame(minWidth: Self.wellSize, minHeight: Self.wellSize)
-                .background(Tokens.Color.bgWell, in: .circle)
-                .accessibilityHidden(true)
+            SymbolWell(
+                systemName: "video.slash",
+                font: Tokens.Typography.largeTitle.weight(.regular),
+                foreground: Tokens.Color.textSecondary,
+                fill: Tokens.Color.bgWell,
+                size: Self.wellSize)
             Text("Camera access is off", bundle: #bundle)
                 .font(Tokens.Typography.title1)
                 .foregroundStyle(Tokens.Color.textPrimary)

@@ -4,7 +4,7 @@ import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
 /// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
-/// over it.
+/// over it. On a first launch the welcome sheet covers Home until it is completed.
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
@@ -14,6 +14,7 @@ public struct RootView: View {
     /// Reduce Motion as Search went up: it fades rather than slides, in and out (B17).
     @State private var searchFades = false
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
+    @Environment(\.scenePhase) private var scenePhase
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -75,6 +76,15 @@ public struct RootView: View {
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
         }
+        // Over Home, which can't scan or ask for anything while it is covered (Plan 6 §4).
+        .sheet(isPresented: isWelcoming) {
+            WelcomeSheet(model: dependencies.welcome)
+        }
+        .task { await dependencies.welcome.start() }
+        // Back from iOS's notification ask: the welcome closes even if the answer never comes (M11).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { dependencies.welcome.becameActive() }
+        }
         // Outermost, so the capture layer's cover gets it as well as Home.
         .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
         // Settings › Appearance; nil follows the phone. Here so the cover and sheets, which present from this view,
@@ -103,6 +113,11 @@ public struct RootView: View {
             },
             set: { _ in }
         )
+    }
+
+    /// The welcome can't be swiped away; the model decides when it closes.
+    private var isWelcoming: Binding<Bool> {
+        Binding(get: { dependencies.welcome.step != nil }, set: { _ in })
     }
 
     /// Swiping the sheet down closes it like the close button.

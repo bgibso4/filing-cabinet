@@ -27,6 +27,11 @@ public final class AppPreferences {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
     }
 
+    /// The first-launch welcome has been completed on this install; until then it shows at every launch (Plan 6 §4).
+    public var welcomeDone: Bool {
+        didSet { defaults.set(welcomeDone, forKey: Key.welcomeDone) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// Whether cleanup notes reach the person: they want them and iOS allows them.
@@ -38,6 +43,7 @@ public final class AppPreferences {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
         appleIntelligenceOn = defaults.object(forKey: Key.appleIntelligenceOn) as? Bool ?? true
+        welcomeDone = defaults.bool(forKey: Key.welcomeDone)
         appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
@@ -49,5 +55,6 @@ public final class AppPreferences {
         static let appearance = "appearance"
         static let appleIntelligenceOn = "appleIntelligenceOn"
         static let cleanupSeenThrough = "cleanupSeenThrough"
+        static let welcomeDone = "welcomeDone"
     }
 }

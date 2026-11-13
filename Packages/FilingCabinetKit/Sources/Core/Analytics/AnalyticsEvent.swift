@@ -37,6 +37,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case feedbackOpened(kind: FeedbackKind)
     /// The library couldn't open at launch or on Try again, so the failure screen shows (#40). Never the error.
     case libraryOpenFailed
+    /// The first-launch welcome closed (M14): whether iOS lets the app post cleanup notes by then.
+    case welcomeFinished(notifications: Bool)
 
     public var name: String {
         switch self {
@@ -62,6 +64,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .suggestionChanged: "suggestionChanged"
         case .feedbackOpened: "feedbackOpened"
         case .libraryOpenFailed: "libraryOpenFailed"
+        case .welcomeFinished: "welcomeFinished"
         }
     }
 
@@ -90,6 +93,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .suggestionChanged(let title, let collection):
             [.titleChanged: .bool(title), .collectionChanged: .bool(collection)]
         case .feedbackOpened(let kind): [.kind: .token(.init(kind))]
+        case .welcomeFinished(let notifications): [.notifications: .bool(notifications)]
         }
     }
 }

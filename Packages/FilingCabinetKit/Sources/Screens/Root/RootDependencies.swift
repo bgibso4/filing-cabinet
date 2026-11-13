@@ -21,6 +21,8 @@ public struct RootDependencies {
     let forcesReduceMotion: Bool
     /// Read at the root for Settings › Appearance.
     let preferences: AppPreferences
+    /// The first-launch welcome, a sheet over Home until it is completed.
+    let welcome: WelcomeModel
 
     public init(
         home: HomeModel,
@@ -37,7 +39,8 @@ public struct RootDependencies {
         pages: any PageImageProviding,
         cameraMode: CameraMode,
         forcesReduceMotion: Bool,
-        preferences: AppPreferences
+        preferences: AppPreferences,
+        welcome: WelcomeModel
     ) {
         self.home = home
         self.flow = flow
@@ -54,5 +57,6 @@ public struct RootDependencies {
         self.cameraMode = cameraMode
         self.forcesReduceMotion = forcesReduceMotion
         self.preferences = preferences
+        self.welcome = welcome
     }
 }

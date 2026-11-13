@@ -20,6 +20,7 @@ private let everyFlag = [
     "-Photos", "denied",
     "-Suggestions", "slow",
     "-FailLibraryOpen",
+    "-ShowWelcome",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -42,6 +43,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.photos == .denied)
     #expect(options.suggestions == .slow)
     #expect(options.failLibraryOpen == .always)
+    #expect(options.showWelcome)
 }
 
 @Test func parsesSeedFavorites() {
@@ -157,4 +159,10 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: true).failLibraryOpen == .once)
     #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: false).failLibraryOpen == nil)
     #expect(LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).failLibraryOpen == nil)
+}
+
+@Test func parsesShowWelcome() {
+    #expect(LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: true).showWelcome)
+    #expect(!LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).showWelcome)
+    #expect(!LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: false).showWelcome)
 }

@@ -72,7 +72,9 @@ Packages/FilingCabinetKit/Sources/ScreenModels/Feedback/ SettingsJourneyTests Se
 # The screen shown when the library can't open (#40).
 Packages/FilingCabinetKit/Sources/Screens/Startup/ LibraryFailureJourneyTests LibraryFailureSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Startup/ LibraryFailureJourneyTests LibraryFailureSnapshotTests
-Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests WelcomeJourneyTests WelcomeSnapshotTests
 # Older scans' search words: the pass's progress shows in Settings.
 Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests
 Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests

@@ -77,7 +77,23 @@
     "Privacy policy" : {},
     "Your library couldn’t open" : {},
     "Your scans are still on this iPhone and nothing was deleted. Send a report so it can be fixed, then try again." : {},
-    "Send report" : {}
+    "Send report" : {},
+    "Welcome to\nFiling Cabinet" : {},
+    "Scan in one tap" : {},
+    "Point your camera at any paper. Several pages make one scan." : {},
+    "Sorted into collections" : {},
+    "Every scan goes into a collection, so it’s easy to find later." : {},
+    "Cleans up after itself" : {},
+    "Things you only need for a while expire on their own." : {},
+    "Private by design" : {},
+    "No account. Scans stay on your iPhone and in your iCloud backup." : {},
+    "Continue" : {},
+    "Know when\nit cleans up" : {},
+    "Expired scans move to Trash on their own. Get a short note when that happens." : {},
+    "Cleaned up 3 receipts" : {},
+    "They’re in Trash for 30 days if you need them." : {},
+    "At most one a day" : {},
+    "Turn on notifications" : {}
   },
   "version" : "1.0"
 }
