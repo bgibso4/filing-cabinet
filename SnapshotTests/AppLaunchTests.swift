@@ -14,7 +14,7 @@ struct AppLaunchTests {
         // `-UITest` turns animations off for the process; the snapshot tests that follow keep theirs.
         let animations = UIView.areAnimationsEnabled
         defer { UIView.setAnimationsEnabled(animations) }
-        let environment = AppEnvironment.make(arguments: ["-UITest", "-Notifications", "authorized"])
+        let environment = try AppEnvironment.make(arguments: ["-UITest", "-Notifications", "authorized"])
 
         await environment.launch()
 

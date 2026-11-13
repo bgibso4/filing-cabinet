@@ -4,9 +4,7 @@ import SwiftUI
 
 @main
 struct FilingCabinetApp: App {
-    @State private var environment = AppEnvironment.make(arguments: CommandLine.arguments)
-    /// Bumped by a UI test's relaunch (`RelaunchURL`), so every view is built again for the new environment.
-    @State private var generation = 0
+    @State private var startup = AppStartup(arguments: CommandLine.arguments)
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -15,33 +13,23 @@ struct FilingCabinetApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(dependencies: environment.root, canScan: environment.isReady)
-                .task { await environment.launch() }
-                .task { await environment.notifier.run() }
-                .task {
-                    // Midnight or a clock change: the system posts a day change (M5), and notes are planned again.
-                    for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {
-                        environment.today.refresh()
-                        environment.notifier.reschedule()
-                    }
+            Group {
+                switch startup.state {
+                case .ready(let environment):
+                    app(environment)
+                        // A UI test's relaunch brings a new environment: every view is built again for it.
+                        .id(ObjectIdentifier(environment))
+                case .failed(let model):
+                    // Never Home or Scan while the library can't open (#40).
+                    LibraryFailureView(model: model)
+                        .id(ObjectIdentifier(model))
                 }
-                .task {
-                    // A time zone change can move today, and the day each scan enters Trash even when today stays;
-                    // the day change isn't documented to come then, so this plans again on its own.
-                    for await _ in NotificationCenter.default.notifications(named: .NSSystemTimeZoneDidChange) {
-                        environment.today.refresh()
-                        environment.notifier.reschedule()
-                    }
-                }
-                .id(generation)
-                .onOpenURL { url in
-                    guard let relaunched = environment.relaunched(by: url) else { return }
-                    environment.leftForeground()
-                    environment = relaunched
-                    generation += 1
-                }
+            }
+            // Only a UI test's relaunch: anything else from outside the app is dropped while the library has failed.
+            .onOpenURL { startup.relaunch(by: $0) }
         }
         .onChange(of: scenePhase) { _, phase in
+            guard let environment = startup.environment else { return }
             switch phase {
             case .active:
                 environment.enteredForeground()
@@ -59,5 +47,27 @@ struct FilingCabinetApp: App {
                 break
             }
         }
+    }
+
+    /// The app once the library is open.
+    private func app(_ environment: AppEnvironment) -> some View {
+        RootView(dependencies: environment.root, canScan: environment.isReady)
+            .task { await environment.launch() }
+            .task { await environment.notifier.run() }
+            .task {
+                // Midnight or a clock change: the system posts a day change (M5), and notes are planned again.
+                for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {
+                    environment.today.refresh()
+                    environment.notifier.reschedule()
+                }
+            }
+            .task {
+                // A time zone change can move today, and the day each scan enters Trash even when today stays;
+                // the day change isn't documented to come then, so this plans again on its own.
+                for await _ in NotificationCenter.default.notifications(named: .NSSystemTimeZoneDidChange) {
+                    environment.today.refresh()
+                    environment.notifier.reschedule()
+                }
+            }
     }
 }

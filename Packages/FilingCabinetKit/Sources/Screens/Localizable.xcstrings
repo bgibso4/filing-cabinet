@@ -74,7 +74,10 @@
     "No mail app" : {},
     "Copy" : {},
     "Send feedback" : {},
-    "Privacy policy" : {}
+    "Privacy policy" : {},
+    "Your library couldn’t open" : {},
+    "Your scans are still on this iPhone and nothing was deleted. Send a report so it can be fixed, then try again." : {},
+    "Send report" : {}
   },
   "version" : "1.0"
 }

@@ -1,8 +1,8 @@
 import Foundation
 
 /// What a feedback email says about this phone: the app and system versions and the device model. Never anything
-/// from the library.
-package struct DeviceDetails: Equatable, Sendable {
+/// from the library. Public for the failure screen's model, which the app makes (#40).
+public struct DeviceDetails: Equatable, Sendable {
     let version: String
     let build: String
     /// "iOS 27.2".
@@ -10,7 +10,7 @@ package struct DeviceDetails: Equatable, Sendable {
     /// The hardware identifier, e.g. "iPhone17,3".
     let model: String
 
-    package static func current(bundle: Bundle = .main) -> Self {
+    public static func current(bundle: Bundle = .main) -> Self {
         let system = ProcessInfo.processInfo.operatingSystemVersion
         var uts = utsname()
         uname(&uts)

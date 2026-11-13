@@ -92,6 +92,11 @@ private struct Expected {
     }
 }
 
+@Test func libraryOpenFailedCarriesNothing() {
+    #expect(AnalyticsEvent.libraryOpenFailed.name == "libraryOpenFailed")
+    #expect(AnalyticsEvent.libraryOpenFailed.payload.isEmpty)
+}
+
 @Test func feedbackEventCarriesOnlyItsKind() {
     let event = AnalyticsEvent.feedbackOpened(kind: .report)
     #expect(event.name == "feedbackOpened")

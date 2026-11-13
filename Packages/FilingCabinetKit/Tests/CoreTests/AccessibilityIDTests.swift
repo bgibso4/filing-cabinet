@@ -87,3 +87,8 @@ import Testing
     #expect(Set(search).isSubset(of: AccessibilityID.all))
     #expect(AccessibilityID.Home.all.contains(AccessibilityID.Home.search))
 }
+
+@Test func libraryFailureIdentifiersArePrefixedAndInAll() {
+    #expect(AccessibilityID.LibraryFailure.all.allSatisfy { $0.hasPrefix("libraryFailure.") })
+    #expect(Set(AccessibilityID.LibraryFailure.all).isSubset(of: AccessibilityID.all))
+}

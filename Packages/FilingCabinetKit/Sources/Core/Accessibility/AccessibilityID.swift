@@ -213,6 +213,15 @@ public enum AccessibilityID {
         public static var all: [String] { [noMailAlert, copy] }
     }
 
+    /// The screen shown when the library can't open (#40).
+    public enum LibraryFailure {
+        public static let title = "libraryFailure.title"
+        public static let sendReport = "libraryFailure.sendReport"
+        public static let tryAgain = "libraryFailure.tryAgain"
+
+        public static var all: [String] { [title, sendReport, tryAgain] }
+    }
+
     /// Settings › Collections (10-02): one row per collection.
     public enum Collections {
 
@@ -286,6 +295,6 @@ public enum AccessibilityID {
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Feedback.all + Collections.all + CollectionSettings.all
-            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll]
+            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll] + LibraryFailure.all
     }
 }

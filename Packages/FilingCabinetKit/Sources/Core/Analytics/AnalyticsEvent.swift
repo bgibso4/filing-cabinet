@@ -35,6 +35,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case suggestionChanged(title: Bool, collection: Bool)
     /// The person opened a feedback email, from Settings or the failure screen (M14). Never what they write.
     case feedbackOpened(kind: FeedbackKind)
+    /// The library couldn't open at launch or on Try again, so the failure screen shows (#40). Never the error.
+    case libraryOpenFailed
 
     public var name: String {
         switch self {
@@ -59,12 +61,13 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .suggestionOutcome: "suggestionOutcome"
         case .suggestionChanged: "suggestionChanged"
         case .feedbackOpened: "feedbackOpened"
+        case .libraryOpenFailed: "libraryOpenFailed"
         }
     }
 
     public var payload: [AnalyticsKey: AnalyticsValue] {
         switch self {
-        case .appOpened, .cameraDenied, .cameraFailed: [:]
+        case .appOpened, .cameraDenied, .cameraFailed, .libraryOpenFailed: [:]
         case .scanStarted(let source): [.source: .token(.init(source))]
         case .scanCancelled(let stage): [.stage: .token(.init(stage))]
         case .scanSaved(let pageCount, let collection):

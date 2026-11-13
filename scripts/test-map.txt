@@ -67,8 +67,11 @@ Packages/FilingCabinetKit/Sources/ScreenModels/Search/ SearchJourneyTests Search
 Packages/FilingCabinetKit/Sources/Screens/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
 Packages/FilingCabinetKit/Sources/Screens/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
-Packages/FilingCabinetKit/Sources/Screens/Feedback/ SettingsJourneyTests SettingsSnapshotTests
-Packages/FilingCabinetKit/Sources/ScreenModels/Feedback/ SettingsJourneyTests SettingsSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Feedback/ SettingsJourneyTests SettingsSnapshotTests LibraryFailureJourneyTests LibraryFailureSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Feedback/ SettingsJourneyTests SettingsSnapshotTests LibraryFailureJourneyTests LibraryFailureSnapshotTests
+# The screen shown when the library can't open (#40).
+Packages/FilingCabinetKit/Sources/Screens/Startup/ LibraryFailureJourneyTests LibraryFailureSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Startup/ LibraryFailureJourneyTests LibraryFailureSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
 # Older scans' search words: the pass's progress shows in Settings.
 Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests
@@ -83,4 +86,4 @@ Packages/FilingCabinetKit/Sources/Understanding/ ScanJourneyTests ReviewSnapshot
 
 SELF CPUImageMatchTests
 # The app's launch: App/, Library/ and Core/ already run everything, so it needs no row of its own.
-SELF AppLaunchTests
+SELF AppLaunchTests AppStartupTests

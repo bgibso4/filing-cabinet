@@ -127,21 +127,11 @@ public struct CameraOffSheet: View {
     }
 
     private var openSettingsButton: some View {
-        Button(action: openSettings) {
+        CapsuleButton(
+            identifier: AccessibilityID.CameraOff.openSettings, minHeight: Self.buttonMinHeight, action: openSettings
+        ) {
             Text("Open Settings", bundle: #bundle)
-                .font(Tokens.Typography.headline)
-                .foregroundStyle(Tokens.Color.bgGrouped)
-                .multilineTextAlignment(.center)
-                // Wraps rather than truncates when the text is large.
-                .fixedSize(horizontal: false, vertical: true)
-                // Keeps large text off the capsule's ends; at default sizes the pill is wider than the label anyway.
-                .padding(.horizontal, Tokens.Spacing.s6)
-                .padding(.vertical, Tokens.Spacing.s2)
-                .frame(maxWidth: .infinity, minHeight: Self.buttonMinHeight)
-                .background(Tokens.Color.tint, in: .capsule)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityID.CameraOff.openSettings)
         .padding(.top, Self.buttonGap)
         .padding([.horizontal, .bottom], Self.sidePadding)
     }

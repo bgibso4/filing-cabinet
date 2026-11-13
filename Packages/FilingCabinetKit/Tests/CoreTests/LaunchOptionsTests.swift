@@ -19,6 +19,7 @@ private let everyFlag = [
     "-NotificationsUnanswered",
     "-Photos", "denied",
     "-Suggestions", "slow",
+    "-FailLibraryOpen",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -40,6 +41,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.notificationsUnanswered)
     #expect(options.photos == .denied)
     #expect(options.suggestions == .slow)
+    #expect(options.failLibraryOpen == .always)
 }
 
 @Test func parsesSeedFavorites() {
@@ -65,6 +67,7 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(!options.notificationsUnanswered)
     #expect(options.photos == nil)
     #expect(options.suggestions == nil)
+    #expect(options.failLibraryOpen == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -146,4 +149,12 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
 
 @Test func unknownSuggestionsValueIsIgnored() {
     #expect(LaunchOptions(arguments: ["-Suggestions", "sometimes"], isDebugBuild: true).suggestions == nil)
+}
+
+@Test func parsesFailLibraryOpen() {
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen"], isDebugBuild: true).failLibraryOpen == .always)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "-UITest"], isDebugBuild: true).failLibraryOpen == .always)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: true).failLibraryOpen == .once)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: false).failLibraryOpen == nil)
+    #expect(LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).failLibraryOpen == nil)
 }
