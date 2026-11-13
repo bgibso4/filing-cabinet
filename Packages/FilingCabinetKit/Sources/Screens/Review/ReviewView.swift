@@ -223,7 +223,8 @@ public struct ReviewView: View {
                     pageKey: index,
                     isCurrent: index == model.currentPage,
                     label: nil,
-                    fitInsets: fitInsets
+                    fitInsets: fitInsets,
+                    animatesFit: true
                 ) { isZoomed in
                     if index == model.currentPage { model.isPageZoomed = isZoomed }
                 }

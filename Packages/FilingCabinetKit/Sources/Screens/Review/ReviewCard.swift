@@ -76,6 +76,7 @@ struct ReviewCard: View {
         .padding(.bottom, Self.bottomPadding)
         .background(background, in: .rect(cornerRadius: Self.cornerRadius))
         .contentShape(.rect(cornerRadius: Self.cornerRadius))
+        // Anywhere on the card opens the sheet, Save too while it is off (reading, or no collection): intended.
         .onTapGesture(perform: model.openSheet)
         .simultaneousGesture(openDrag)
         .animation(reducesMotion ? Self.reducedFade : Self.crossFade, value: isReading)
@@ -128,7 +129,8 @@ struct ReviewCard: View {
 
     private var reading: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Shimmer(base: placeholder, highlight: shimmerHighlight)
+            // Still once the suggestion lands: the layer stays, faded out, for the cross-fade.
+            Shimmer(base: placeholder, highlight: shimmerHighlight, isActive: isReading)
                 .frame(width: Self.barWidth, height: Self.barHeight)
                 .clipShape(.capsule)
                 .padding(.vertical, Self.barMargin)

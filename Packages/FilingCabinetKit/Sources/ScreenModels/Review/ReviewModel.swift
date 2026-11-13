@@ -366,6 +366,10 @@ extension ReviewModel {
     /// "Suggested: City Pharmacy receipt, Receipts" once a suggestion fills the fields, for VoiceOver and the haptic.
     package var suggestionAnnouncement: String? { suggestion.announcement }
 
+    /// Whether the collection is the user's (picked, or the scan began inside it) rather than empty or the
+    /// suggestion's: the sheet's collection haptic plays only for a pick, as the suggestion has its own (M11).
+    package var isCollectionPicked: Bool { isCollectionChosen }
+
     /// The card's line under the title (03-02): "Receipts · kept 3 months", "Documents · kept forever", or "Choose a
     /// collection" before there is one.
     package var cardLine: String {

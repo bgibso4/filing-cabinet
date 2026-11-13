@@ -1,11 +1,12 @@
 import SwiftUI
 
 /// A placeholder that fills its frame with `base`, a lighter band passing across it left to right while something
-/// loads (the loading mock, option B: claude.ai/artifact/SZ5Ntg5vThvnYN3KAgv14Q, `.bar`). Under Reduce Motion it is
-/// plain `base`.
+/// loads (the loading mock, option B: claude.ai/artifact/SZ5Ntg5vThvnYN3KAgv14Q, `.bar`). Once loading ends
+/// (`isActive` false), and under Reduce Motion, it is plain `base` and draws no more frames.
 struct Shimmer: View {
     let base: Color
     let highlight: Color
+    let isActive: Bool
 
     // SZ5N `.bar`: one pass every 1.3 s, linear.
     private static let period: TimeInterval = 1.3
@@ -19,7 +20,7 @@ struct Shimmer: View {
     @Environment(\.reducesMotion) private var reducesMotion
 
     var body: some View {
-        if reducesMotion {
+        if reducesMotion || !isActive {
             Rectangle().fill(base)
         } else {
             LoopingProgress(period: Self.period) { progress in

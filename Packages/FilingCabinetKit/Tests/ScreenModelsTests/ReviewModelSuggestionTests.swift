@@ -46,6 +46,18 @@ private func startAndSettle(_ harness: ReviewHarness) async {
 
 // MARK: - Arrival
 
+/// The sheet's collection haptic plays only for the user's own pick; the suggestion's fill has its own (M11).
+@Test(.timeLimit(.minutes(1)))
+func onlyTheUsersPickCountsAsPicked() async {
+    let harness = review()
+    await startAndSettle(harness)
+    #expect(harness.model.collection == .receipts)
+    #expect(!harness.model.isCollectionPicked)
+
+    harness.model.choose(.notes)
+    #expect(harness.model.isCollectionPicked)
+}
+
 @Test(.timeLimit(.minutes(1)))
 func arrivalFillsTitleAndCollection() async {
     let harness = review()
