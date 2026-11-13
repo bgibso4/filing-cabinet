@@ -79,7 +79,8 @@ final class AppStartup {
     }
 
     /// `-Request`: a UI test's request from outside the app, sent as an intent would send it (M15). `open:<n>` is the
-    /// nth scan `-SeedScans` saves (`LibrarySeed.scanID(at:)`), in the library once launch has seeded it. Try again
+    /// nth scan `-SeedScans` saves under `-UITest` (`LibrarySeed.scanID(at:)`), in the library once launch has seeded
+    /// it; without `-UITest` seeded IDs are random, so it names no scan and is ignored. Try again
     /// sends nothing: the failure screen dropped the request.
     private func sendLaunchRequest(_ arguments: [String]) {
         #if DEBUG

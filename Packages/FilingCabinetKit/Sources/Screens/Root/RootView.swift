@@ -14,10 +14,12 @@ public struct RootView: View {
     @State private var path: [AppRoute] = []
     /// True while Search covers Home.
     @State private var isSearching = false
+    /// From Search going up until its cover has gone, which is after `isSearching` turns false when it slides away.
+    @State private var searchCoverIsUp = false
     /// The text Search opens with: a request's, or empty from Home's field.
     @State private var searchQuery = ""
-    /// Bumped when a request replaces an open Search's query, so Search is made again with it.
-    @State private var searchRequests = 0
+    /// Bumped to close Search through its own close (slide or fade), for a request.
+    @State private var searchCloses = 0
     /// Reduce Motion as Search went up: it fades rather than slides, in and out (B17).
     @State private var searchFades = false
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
@@ -77,18 +79,23 @@ public struct RootView: View {
                 // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
         }
-        .fullScreenCover(isPresented: $isSearching) {
-            SearchCover(
-                makeModel: { [searchQuery] in dependencies.makeSearch(searchQuery) },
-                thumbnails: dependencies.thumbnails,
-                viewer: { viewer($0, .library) },
-                fades: searchFades,
-                onClosed: { isSearching = false }
-            )
-            .id(searchRequests)
-            // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
-            .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
-        }
+        // The request handling waits for `onDismiss`: until then Search's cover is still leaving.
+        .fullScreenCover(
+            isPresented: $isSearching,
+            onDismiss: { searchCoverIsUp = false },
+            content: {
+                SearchCover(
+                    makeModel: { [searchQuery] in dependencies.makeSearch(searchQuery) },
+                    thumbnails: dependencies.thumbnails,
+                    viewer: { viewer($0, .library) },
+                    fades: searchFades,
+                    closes: searchCloses,
+                    onClosed: { isSearching = false }
+                )
+                // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
+                .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
+            }
+        )
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
         }
@@ -190,7 +197,12 @@ public struct RootView: View {
     /// Everything that decides what a pending request does; a change asks again.
     private var requestMoment: RequestMoment {
         RequestMoment(
-            pending: requests.pending, canScan: canScan, welcomeFinished: welcomeFinished, flowPhase: flow.phase)
+            pending: requests.pending,
+            canScan: canScan,
+            welcomeFinished: welcomeFinished,
+            flowPhase: flow.phase,
+            searchCoverIsUp: searchCoverIsUp,
+            pathDepth: path.count)
     }
 
     /// Completed, and its sheet gone. Before the welcome starts, `step` is nil but it isn't completed.
@@ -198,39 +210,37 @@ public struct RootView: View {
         dependencies.welcome.isFinished && dependencies.welcome.step == nil
     }
 
-    /// Takes the pending request and acts on it (`RequestRouting`), unless it has to wait. Nothing is acted on before
-    /// launch has finished.
+    /// Acts on the pending request (`RequestRouting`): one close step at a time, each leaving it pending, until it is
+    /// taken and carried out or dropped. Nothing is acted on before launch has finished.
     private func actOnRequest() {
         guard canScan, let request = requests.pending else { return }
         let state = RootState(
             welcomeFinished: welcomeFinished,
             flowPhase: flow.phase,
-            isSearching: isSearching,
+            isSearching: searchCoverIsUp,
             pathDepth: path.count,
             isInLibrary: dependencies.home.isInLibrary)
-        let action = RequestRouting.action(for: request, state: state)
-        guard action != .wait else { return }
-        _ = requests.take()
-        switch action {
-        case .wait, .ignore, .showReview:
-            // A review already open is the capture layer, over everything: it is what shows.
+        switch RequestRouting.action(for: request, state: state) {
+        case .wait:
             break
+        case .closeSearch:
+            // Asked again while the cover is leaving, so only the first asks Search to close. The request stays pending
+            // and is routed again once the cover has gone (`onDismiss`).
+            if isSearching { searchCloses += 1 }
+        case .popToHome:
+            path = []
+        case .ignore, .showReview:
+            // A review already open is the capture layer, over everything: it is what shows.
+            _ = requests.take()
         case .startScan:
             // From Home, so saving or cancelling lands there.
-            isSearching = false
-            path = []
+            _ = requests.take()
             Task { await flow.scan(from: .outside, preselected: nil) }
-        case .search(let text, let closeOthers):
-            if closeOthers { path = [] }
-            if isSearching {
-                // Made again with the new text; whatever was pushed on Search's own stack goes with it.
-                searchQuery = text
-                searchRequests += 1
-            } else {
-                openSearch(query: text)
-            }
-        case .open(let id, let closeOthers):
-            if closeOthers { isSearching = false }
+        case .search(let text):
+            _ = requests.take()
+            openSearch(query: text)
+        case .open(let id):
+            _ = requests.take()
             path = [.scan(id)]
         }
     }
@@ -239,6 +249,7 @@ public struct RootView: View {
     /// (SearchCover). `forcesReduceMotion` is read here because this view sets it for what is under it.
     private func openSearch(query: String) {
         searchQuery = query
+        searchCoverIsUp = true
         searchFades = systemReducesMotion || dependencies.forcesReduceMotion
         var transaction = Transaction()
         transaction.disablesAnimations = searchFades
@@ -281,4 +292,8 @@ private struct RequestMoment: Equatable {
     let welcomeFinished: Bool
     // periphery:ignore - read only by the synthesized Equatable
     let flowPhase: ScanFlowModel.Phase
+    // periphery:ignore - read only by the synthesized Equatable
+    let searchCoverIsUp: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let pathDepth: Int
 }

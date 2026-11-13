@@ -28,7 +28,18 @@ func waitsForTheWelcome(_ request: ExternalRequest) {
 
 @Test func scanFromHomeStartsTheCamera() {
     #expect(RequestRouting.action(for: .scan, state: state()) == .startScan)
-    #expect(RequestRouting.action(for: .scan, state: state(isSearching: true, pathDepth: 2)) == .startScan)
+}
+
+@Test func scanWhileSearchingClosesSearchFirst() {
+    #expect(RequestRouting.action(for: .scan, state: state(isSearching: true)) == .closeSearch)
+    // Once Search's cover has gone, the same request is routed again.
+    #expect(RequestRouting.action(for: .scan, state: state()) == .startScan)
+}
+
+@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
+func searchClosesBeforeTheScreensUnderIt(_ request: ExternalRequest) {
+    #expect(RequestRouting.action(for: request, state: state(isSearching: true, pathDepth: 2)) == .closeSearch)
+    #expect(RequestRouting.action(for: request, state: state(pathDepth: 2)) == .popToHome)
 }
 
 @Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
@@ -52,28 +63,27 @@ func cameraOffSheetHoldsSearchAndOpenUntilItCloses(_ request: ExternalRequest) {
 }
 
 @Test func searchOpensSearch() {
-    #expect(RequestRouting.action(for: .search("lease"), state: state()) == .search("lease", closeOthers: false))
+    #expect(RequestRouting.action(for: .search("lease"), state: state()) == .search("lease"))
 }
 
 @Test func searchReplacesTheQuery() {
-    #expect(
-        RequestRouting.action(for: .search("lease"), state: state(isSearching: true))
-            == .search("lease", closeOthers: true))
-    #expect(
-        RequestRouting.action(for: .search("lease"), state: state(pathDepth: 1))
-            == .search("lease", closeOthers: true))
+    // Search already open: it closes, then opens again with the new text.
+    #expect(RequestRouting.action(for: .search("lease"), state: state(isSearching: true)) == .closeSearch)
+    #expect(RequestRouting.action(for: .search("lease"), state: state()) == .search("lease"))
 }
 
 @Test func openFromHomePushesTheViewer() {
-    #expect(RequestRouting.action(for: .open(scan), state: state()) == .open(scan, closeOthers: false))
+    #expect(RequestRouting.action(for: .open(scan), state: state()) == .open(scan))
 }
 
 @Test func openClosesDetailsAndSearch() {
-    // Details is a panel in the viewer, so a pushed viewer (with or without it) is a path deeper than Home.
-    #expect(RequestRouting.action(for: .open(scan), state: state(pathDepth: 1)) == .open(scan, closeOthers: true))
-    #expect(RequestRouting.action(for: .open(scan), state: state(isSearching: true)) == .open(scan, closeOthers: true))
+    #expect(RequestRouting.action(for: .open(scan), state: state(isSearching: true)) == .closeSearch)
+    // Details is a panel in the viewer: popping the viewer closes it, even when it is this scan's viewer.
+    #expect(RequestRouting.action(for: .open(scan), state: state(pathDepth: 1)) == .popToHome)
+    #expect(RequestRouting.action(for: .open(scan), state: state()) == .open(scan))
 }
 
 @Test func openIgnoresAScanNoLongerInTheLibrary() {
+    // Nothing is closed for it.
     #expect(RequestRouting.action(for: .open(scan), state: state(isSearching: true, missing: scan)) == .ignore)
 }

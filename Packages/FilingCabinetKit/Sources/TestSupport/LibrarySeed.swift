@@ -28,10 +28,15 @@ public enum LibrarySeed {
     /// Each scan's search text is the lines its pages show ("Sample scan 1", "Page 1"), so Search finds real words.
     /// Scan `n` (from 0) is dated `n` days before `clock.now()`, so the newest is first. The first `favorites` are
     /// favourites, in seed order.
-    /// Scan `n` (from 0) has the ID `scanID(at: n)`.
+    /// With `knownIDs`, scan `n` (from 0) has the ID `scanID(at: n)`; only for a library that starts empty (UI tests'),
+    /// as a second seeding would reuse them.
     @MainActor
-    public static func seed(_ store: ScanStore, count: Int, favorites: Int = 0, clock: AppClock) async throws {
-        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock, id: scanID(at:))
+    public static func seed(
+        _ store: ScanStore, count: Int, favorites: Int = 0, knownIDs: Bool = false, clock: AppClock
+    ) async throws {
+        let ids = try await save(store, count: count, titled: "Sample scan", clock: clock) {
+            knownIDs ? scanID(at: $0) : ScanID()
+        }
         try store.setFavorite(true, for: Array(ids.prefix(favorites)))
     }
 
@@ -45,8 +50,8 @@ public enum LibrarySeed {
         }
     }
 
-    /// The ID `seed` gives its scan `index` (from 0), known before it is saved, so `-Request open:<n>` can name the
-    /// nth seeded scan (M15). The same in every seeded library.
+    /// The ID `seed(knownIDs: true)` gives its scan `index` (from 0), known before it is saved, so `-Request open:<n>`
+    /// can name the nth seeded scan (M15). The same in every such library.
     public static func scanID(at index: Int) -> ScanID {
         // 5EED0000-0000-4000-8000-0000<index as 8 hex digits>: a valid version 4 UUID no random one is likely to be.
         let byte = { (shift: Int) in UInt8(truncatingIfNeeded: index >> shift) }

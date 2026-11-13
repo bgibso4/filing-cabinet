@@ -154,8 +154,13 @@ final class AppEnvironment {
         #if DEBUG
             if let count = options.seedScans {
                 do {
+                    // Known IDs only in a UI test's library, which starts empty: a dev library may hold earlier seeds.
                     try await LibrarySeed.seed(
-                        store, count: count, favorites: options.seedFavorites ?? 0, clock: clock)
+                        store,
+                        count: count,
+                        favorites: options.seedFavorites ?? 0,
+                        knownIDs: options.isUITest,
+                        clock: clock)
                 } catch {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
