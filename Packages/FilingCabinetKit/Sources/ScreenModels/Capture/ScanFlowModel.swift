@@ -28,7 +28,8 @@ public final class ScanFlowModel {
     @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let makeReview: (ReviewInput) -> ReviewModel
     @ObservationIgnored private let suggester: any ScanSuggester
-    @ObservationIgnored private let suggestionsOn: Bool
+    /// Read as each camera opens, so the Settings switch takes effect on the next scan.
+    @ObservationIgnored private let suggestionsOn: () -> Bool
     /// Where the scan in progress started; set by `scan`, read when the first camera finishes.
     @ObservationIgnored private var source = ScanSource.home
     @ObservationIgnored private var preselected: BuiltInCollection?
@@ -40,7 +41,7 @@ public final class ScanFlowModel {
         clock: AppClock,
         analytics: any Analytics,
         suggester: any ScanSuggester,
-        suggestionsOn: Bool,
+        suggestionsOn: @escaping () -> Bool,
         makeReview: @escaping (ReviewInput) -> ReviewModel
     ) {
         self.cameraAccess = cameraAccess
@@ -50,6 +51,9 @@ public final class ScanFlowModel {
         self.suggestionsOn = suggestionsOn
         self.makeReview = makeReview
     }
+
+    /// True from the Scan tap until review ends: the background words pass waits meanwhile.
+    public var isScanning: Bool { phase != .idle || isAskingForCamera }
 
     /// Opens the camera, asking for access first if the user hasn't been asked; otherwise shows the camera-off sheet.
     /// Does nothing while a scan is under way, including while the permission prompt is up (`phase` is still idle
@@ -127,7 +131,7 @@ public final class ScanFlowModel {
 
     /// Shows the camera, warming the model meanwhile so the review's suggestion comes sooner (E3).
     private func openCamera(isRescan: Bool) {
-        if suggester.answers(whenOn: suggestionsOn) {
+        if suggester.answers(whenOn: suggestionsOn()) {
             suggester.prewarm(collections: SuggestionCollection.builtIns)
         }
         phase = .camera(isRescan: isRescan)

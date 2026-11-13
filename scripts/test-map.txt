@@ -68,6 +68,8 @@ Packages/FilingCabinetKit/Sources/Screens/Details/ DetailsJourneyTests ScanJourn
 Packages/FilingCabinetKit/Sources/ScreenModels/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
 Packages/FilingCabinetKit/Sources/Screens/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
+# Older scans' search words: the pass's progress shows in Settings.
+Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests
 Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests

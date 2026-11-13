@@ -130,3 +130,21 @@ func runningOutOfTimeEndsACallIgnoringCancellation() async throws {
 
     #expect(library.scansNeedingWords(version: ScanSuggestion.promptVersion) == [id])
 }
+
+/// The background pass waits behind a words call after Save, so it reads `isWriting`.
+@Test(.timeLimit(.minutes(1)))
+func isWritingUntilTheCallEnds() async throws {
+    let library = FakeLibrary()
+    let id = try await savedScan(in: library)
+    let writer = SearchWordsWriter(
+        suggester: FakeScanSuggester(filing: .fails, words: .arrives(["receipt"], after: .milliseconds(50))),
+        library: library,
+        backgroundTime: FakeBackgroundTime())
+    #expect(!writer.isWriting)
+
+    let task = writer.write(for: id, input: input, title: "City Pharmacy", collectionName: "Receipts")
+    #expect(writer.isWriting)
+    await task.value
+
+    #expect(await ReviewHarness.eventually { !writer.isWriting })
+}

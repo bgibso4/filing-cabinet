@@ -5,7 +5,6 @@ import Observation
 import ScreenModels
 import Screens
 import UIKit
-import Understanding
 import os
 
 #if DEBUG
@@ -37,6 +36,8 @@ final class AppEnvironment {
     @ObservationIgnored let root: RootDependencies
     @ObservationIgnored private let options: LaunchOptions
     @ObservationIgnored private let preferences: AppPreferences
+    /// Gives older scans their search words while the app is in the foreground (M9).
+    @ObservationIgnored private let wordsPass: SearchWordsPass
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -74,21 +75,22 @@ final class AppEnvironment {
         self.banner = banner
         notifier = CleanupNotifier(
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
+        let scanning = Scanning(
+            options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
+        wordsPass = scanning.wordsPass
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
-            flow: Self.makeFlow(options: options, store: store, clock: clock, analytics: analytics),
+            flow: scanning.flow,
             makeGrid: Self.gridMaker(store: store, today: today, clock: clock, analytics: analytics, export: export),
             makeTrash: { TrashModel(library: store, today: today, calendar: clock.calendar, analytics: analytics) },
             makeViewer: Self.viewerMaker(
                 store: store, today: today, clock: clock, analytics: analytics, with: viewerShared),
             makeDetails: { DetailsModel(id: $0, library: store, today: today, clock: clock, analytics: analytics) },
-            makeSettings: { SettingsModel(preferences: preferences, notifications: notifications) },
+            makeSettings: { scanning.settings(preferences: preferences, notifications: notifications) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
-            makeCollectionSettings: {
-                CollectionSettingsModel(
-                    collection: $0, library: store, today: today, calendar: clock.calendar, analytics: analytics)
-            },
+            makeCollectionSettings: Self.collectionSettingsMaker(
+                store: store, today: today, clock: clock, analytics: analytics),
             makeSearch: Self.searchMaker(
                 store: store, today: today, clock: clock, analytics: analytics, history: history),
             thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
@@ -97,6 +99,16 @@ final class AppEnvironment {
             forcesReduceMotion: options.reduceMotion,
             preferences: preferences
         )
+    }
+
+    /// Makes a collection's Settings screen model (10-03).
+    private static func collectionSettingsMaker(
+        store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics
+    ) -> (BuiltInCollection) -> CollectionSettingsModel {
+        { collection in
+            CollectionSettingsModel(
+                collection: collection, library: store, today: today, calendar: clock.calendar, analytics: analytics)
+        }
     }
 
     /// Makes a grid's model; `export` makes the PDFs its selection shares.
@@ -172,6 +184,7 @@ final class AppEnvironment {
         #endif
         // Before asking iOS about notifications: Scan doesn't need the answer, and iOS can be slow to give it.
         isReady = true
+        wordsPass.resume()
         await banner.refreshAuthorization()
     }
 
@@ -182,6 +195,12 @@ final class AppEnvironment {
         await banner.refreshAuthorization()
         guard isReady else { return }
         await purgeTrash()
+        wordsPass.resume()
+    }
+
+    /// Leaving the foreground, or replaced by a UI test's relaunch: older scans' reading stops until `becameActive`.
+    func leftForeground() {
+        wordsPass.pause()
     }
 
     /// Deletes every scan past its 30 days in Trash, and reports a pass that deleted any.
@@ -251,7 +270,7 @@ final class AppEnvironment {
     }
 
     /// The system's answer, or a scripted one for `-CameraDenied` and the fake camera (which needs no permission).
-    private static func cameraAccess(options: LaunchOptions) -> any CameraAccess {
+    static func cameraAccess(options: LaunchOptions) -> any CameraAccess {
         #if DEBUG
             if options.cameraDenied { return FakeCameraAccess(status: .denied, grantsOnRequest: false) }
             if options.fakeCameraPages != nil { return FakeCameraAccess(status: .authorized, grantsOnRequest: true) }
@@ -302,75 +321,5 @@ extension AppEnvironment {
             if let authorization = options.photos { return FakePhotoSaving(authorization) }
         #endif
         return SystemPhotoSaving()
-    }
-}
-
-/// The scan flow: reading and the model's suggestions.
-extension AppEnvironment {
-    /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
-    private static let readingWaitLimit = Duration.seconds(1)
-    /// How long the card waits for the model before growing into the sheet (M6, E1).
-    private static let suggestionWaitLimit = Duration.seconds(5)
-    /// Suggestions are on until the Settings switch arrives (Plan 5 Task 10).
-    private static let suggestionsOn = true
-    /// How long `-Suggestions arrives` takes to answer each call.
-    private static let fakeSuggestionDelay = Duration.milliseconds(300)
-
-    /// The scan flow, with its reader built here so the reader flags apply from launch.
-    private static func makeFlow(
-        options: LaunchOptions, store: ScanStore, clock: AppClock, analytics: any Analytics
-    ) -> ScanFlowModel {
-        let scanReader = makeScanReader(options: options)
-        let suggester = makeSuggester(options: options)
-        let wordsWriter = SearchWordsWriter(
-            suggester: suggester, library: store, backgroundTime: SystemBackgroundTime())
-        return ScanFlowModel(
-            cameraAccess: cameraAccess(options: options),
-            clock: clock,
-            analytics: analytics,
-            suggester: suggester,
-            suggestionsOn: suggestionsOn,
-            makeReview: { input in
-                ReviewModel(
-                    input: input,
-                    reader: scanReader,
-                    library: store,
-                    clock: clock,
-                    analytics: analytics,
-                    readingWaitLimit: readingWaitLimit,
-                    suggester: suggester,
-                    suggestionsOn: suggestionsOn,
-                    suggestionWaitLimit: suggestionWaitLimit,
-                    wordsWriter: wordsWriter
-                )
-            }
-        )
-    }
-
-    private static func makeScanReader(options: LaunchOptions) -> ScanReader {
-        #if DEBUG
-            if options.fakeReader { return ScanReader(reader: FakeTextReader.readsCityPharmacy()) }
-        #endif
-        return ScanReader(reader: options.reader.makeReader())
-    }
-
-    /// The on-device model, or a scripted one for `-Suggestions`. UI tests get an unavailable one unless the flag says
-    /// otherwise, so every journey keeps today's full sheet (M5).
-    private static func makeSuggester(options: LaunchOptions) -> any ScanSuggester {
-        #if DEBUG
-            switch options.suggestions {
-            case .arrives:
-                return FakeScanSuggester(
-                    filing: .arrives(FakeScanSuggester.cityPharmacy(), after: fakeSuggestionDelay),
-                    words: .arrives(FakeScanSuggester.cityPharmacyWords, after: fakeSuggestionDelay))
-            case .slow:
-                return FakeScanSuggester(filing: .never, words: .never)
-            case .unavailable:
-                return FakeScanSuggester.unavailable()
-            case nil:
-                if options.isUITest { return FakeScanSuggester.unavailable() }
-            }
-        #endif
-        return ModelScanSuggester()
     }
 }

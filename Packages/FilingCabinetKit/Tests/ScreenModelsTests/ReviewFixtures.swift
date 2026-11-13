@@ -72,7 +72,7 @@ struct ReviewHarness {
             clock: clock,
             analytics: RecordingAnalytics(),
             suggester: FakeScanSuggester.unavailable(),
-            suggestionsOn: true,
+            suggestionsOn: { true },
             makeReview: { input in
                 ReviewModel(
                     input: input,

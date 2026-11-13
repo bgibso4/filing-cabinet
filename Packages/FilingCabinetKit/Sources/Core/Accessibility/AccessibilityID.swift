@@ -196,9 +196,10 @@ public enum AccessibilityID {
         public static let collections = "settings.collections"
         public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
+        public static let intelligence = "settings.intelligence"
 
         public static var all: [String] {
-            [collections, appearance, notifications]
+            [collections, appearance, intelligence, notifications]
         }
     }
 

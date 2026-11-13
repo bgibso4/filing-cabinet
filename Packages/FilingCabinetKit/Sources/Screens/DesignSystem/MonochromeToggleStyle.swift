@@ -10,14 +10,17 @@ struct MonochromeToggleStyle: ToggleStyle {
     private static let trackHeight: CGFloat = 31
     private static let knobInset: CGFloat = 2
     private static let knobSize: CGFloat = 27
+    // Plan 5's demo (Settings, Apple Intelligence not available): a switch that can't be used is drawn at 40%.
+    private static let disabledOpacity = 0.4
 
     @Environment(\.reducesMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         Button {
             configuration.isOn.toggle()
         } label: {
-            track(isOn: configuration.isOn)
+            drawn(isOn: configuration.isOn)
                 // The tap target is 44 pt tall; the negative padding keeps the row laid out around the 31 pt track.
                 .frame(minHeight: Tokens.Spacing.tapMin)
                 .contentShape(.rect)
@@ -28,6 +31,16 @@ struct MonochromeToggleStyle: ToggleStyle {
         .sensoryFeedback(.selection, trigger: configuration.isOn)
         .accessibilityRepresentation {
             Toggle(isOn: configuration.$isOn) { configuration.label }
+        }
+    }
+
+    /// A branch rather than `.opacity(1)` when enabled: an opacity modifier, even at 1, can fail the audit's contrast.
+    @ViewBuilder
+    private func drawn(isOn: Bool) -> some View {
+        if isEnabled {
+            track(isOn: isOn)
+        } else {
+            track(isOn: isOn).opacity(Self.disabledOpacity)
         }
     }
 

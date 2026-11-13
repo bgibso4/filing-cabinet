@@ -36,6 +36,7 @@ struct FilingCabinetApp: App {
                 .id(generation)
                 .onOpenURL { url in
                     guard let relaunched = environment.relaunched(by: url) else { return }
+                    environment.leftForeground()
                     environment = relaunched
                     generation += 1
                 }
@@ -50,7 +51,10 @@ struct FilingCabinetApp: App {
             case .background:
                 // Leaving the app clears Home's cleanup banner (M4).
                 environment.banner.clear()
-            default:
+                environment.leftForeground()
+            case .inactive:
+                environment.leftForeground()
+            @unknown default:
                 break
             }
         }

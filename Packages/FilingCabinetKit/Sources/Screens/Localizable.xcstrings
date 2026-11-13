@@ -69,7 +69,8 @@
     "Filing Cabinet needs access to Photos to save scans there. Tap Open Settings, then Photos, and choose Add Photos Only." : {},
     "Change the title, collection or expiry" : {},
     "Reading your scan…" : {},
-    "Save" : {}
+    "Save" : {},
+    "Apple Intelligence" : {}
   },
   "version" : "1.0"
 }

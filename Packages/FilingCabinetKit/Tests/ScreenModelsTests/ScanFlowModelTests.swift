@@ -45,7 +45,7 @@ private struct Harness {
             clock: Self.clock,
             analytics: analytics,
             suggester: suggester,
-            suggestionsOn: suggestionsOn,
+            suggestionsOn: { suggestionsOn },
             makeReview: Self.makeReview
         )
     }
@@ -252,7 +252,7 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
         clock: Harness.clock,
         analytics: analytics,
         suggester: FakeScanSuggester.unavailable(),
-        suggestionsOn: true,
+        suggestionsOn: { true },
         makeReview: Harness.makeReview
     )
     let first = Task { await model.scan(from: .home, preselected: nil) }
@@ -289,4 +289,35 @@ func scanningAgainWhileThePromptIsUpDoesNothing() async {
 
     #expect(off.prewarms.isEmpty)
     #expect(unavailable.prewarms.isEmpty)
+}
+
+/// The Settings switch is read as each camera opens, so turning it off changes the very next scan.
+@Test func theSwitchTakesEffectOnTheNextScan() async {
+    let suggester = FakeScanSuggester(filing: .never)
+    var isOn = true
+    let model = ScanFlowModel(
+        cameraAccess: FakeCameraAccess(status: .authorized, grantsOnRequest: true),
+        clock: Harness.clock,
+        analytics: RecordingAnalytics(),
+        suggester: suggester,
+        suggestionsOn: { isOn },
+        makeReview: Harness.makeReview
+    )
+
+    await model.scan(from: .home, preselected: nil)
+    model.cameraCancelled()
+    isOn = false
+    await model.scan(from: .home, preselected: nil)
+
+    #expect(suggester.prewarms.count == 1)
+}
+
+/// The background words pass waits while a scan is under way.
+@Test func isScanningFromTheTapUntilReviewEnds() async {
+    let harness = Harness(.authorized)
+    #expect(!harness.model.isScanning)
+    await harness.reachReview([receipt])
+    #expect(harness.model.isScanning)
+    harness.model.reviewEnded(saved: nil)
+    #expect(!harness.model.isScanning)
 }
