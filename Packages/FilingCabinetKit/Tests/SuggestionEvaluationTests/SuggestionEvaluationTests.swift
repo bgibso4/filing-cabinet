@@ -28,16 +28,6 @@ struct SuggestionEvaluationTests {
             ? nil : URL(filePath: ($0 as NSString).expandingTildeInPath, directoryHint: .isDirectory)
     }
 
-    /// `VARIANT=`: the title styles compared, a comma list of `TitleStyle` names in the order given; `parts` when not
-    /// set. An unknown name fails the run rather than being skipped.
-    private static func titleStyles() throws -> [TitleStyle] {
-        guard let list = environment["FC_EVAL_VARIANT"], !list.allSatisfy(\.isWhitespace) else { return [.parts] }
-        return try list.split(separator: ",").map { name in
-            let name = name.trimmingCharacters(in: .whitespaces)
-            return try #require(TitleStyle(rawValue: name), "unknown VARIANT \(name): use whole, parts")
-        }
-    }
-
     /// Each model call is cancelled after this, so one hung model call can't stall the run.
     private static let callLimit = Duration.seconds(30)
 
@@ -48,11 +38,10 @@ struct SuggestionEvaluationTests {
     @Test(.enabled(if: environment["FC_EVAL_SUGGESTIONS"] == "1", "runs only in make eval-suggestions"))
     func writesTheReport() async throws {
         let includesImage = Self.environment["FC_EVAL_IMAGE"] != "0"
-        let styles = try Self.titleStyles()
-        let suggesters = styles.map { ($0, ModelScanSuggester(includesImage: includesImage, titleStyle: $0)) }
+        let suggester = ModelScanSuggester(includesImage: includesImage)
         let outcome: EvaluationReport.Outcome
-        if suggesters[0].1.availability == .available {
-            outcome = .ran(try await Self.run(suggesters, includesImage: includesImage))
+        if suggester.availability == .available {
+            outcome = .ran(try await Self.run(suggester, includesImage: includesImage))
         } else {
             // Only ModelScanSuggester imports FoundationModels, so the system's own reason isn't read here.
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
@@ -64,23 +53,32 @@ struct SuggestionEvaluationTests {
         try EvaluationReport(outcome: outcome).markdown.write(to: output, atomically: true, encoding: .utf8)
         #expect(FileManager.default.fileExists(atPath: output.path))
         if case .ran(let run) = outcome {
-            let page = ReviewPage.html(for: try run.results.map { try Self.reviewEntry(for: $0) })
+            let page = ReviewPage.html(for: try run.reviewed.map { try Self.reviewEntry(for: $0) })
             try page.write(to: folder.appending(path: "review.html"), atomically: true, encoding: .utf8)
         }
     }
 
     /// `make eval-merge`: the made-up cases take Ben's answers for their ids into the source tree's `cases.json`, the
-    /// private ones into `<PRIVATE>/cases.json`; each file only the answers for its own cases.
+    /// private ones into `<PRIVATE>/cases.json`; each file only the answers for its own cases. What each file took, and
+    /// any answers none took, go to `build/eval-merge.txt` for the Makefile to print.
     @Test(.enabled(if: environment["FC_EVAL_JUDGED"].map { !$0.isEmpty } ?? false, "runs only in make eval-merge"))
     func mergesJudgements() throws {
         let path = try #require(Self.environment["FC_EVAL_JUDGED"])
         let judgements = try JSONDecoder().decode(
             [Judgement].self, from: Data(contentsOf: URL(filePath: (path as NSString).expandingTildeInPath)))
         let madeUp = Self.root.appending(path: "Packages/FilingCabinetKit/Tests/SuggestionEvaluationTests/Fixtures")
-        for folder in [madeUp] + [Self.privateFolder].compactMap({ $0 }) {
-            let ids = Set(try EvaluationCase.loadAll(from: folder).map(\.id))
-            try JudgementMerge.apply(judgements.filter { ids.contains($0.id) }, toCasesIn: folder)
+        var folders = [(folder: madeUp, file: "Fixtures/cases.json")]
+        if let folder = Self.privateFolder { folders.append((folder: folder, file: "the private cases.json")) }
+        // The made-up and private ids never overlap, so each judgement applies to one file at most.
+        let applied = try folders.map {
+            (file: $0.file, count: try JudgementMerge.apply(judgements, toCasesIn: $0.folder))
         }
+        let unmatched = judgements.count - applied.reduce(0) { $0 + $1.count }
+        let summary = JudgementMerge.summary(
+            applied: applied, unmatched: unmatched, privateGiven: Self.privateFolder != nil)
+        let build = Self.root.appending(path: "build")
+        try FileManager.default.createDirectory(at: build, withIntermediateDirectories: true)
+        try summary.write(to: build.appending(path: "eval-merge.txt"), atomically: true, encoding: .utf8)
     }
 
     /// Page 1 as a JPEG (any size the scan came in, at most 1200 px wide or tall), with the model's title and collection.
@@ -104,23 +102,24 @@ struct SuggestionEvaluationTests {
             isPrivate: result.isPrivate,
             image: data as Data,
             collectionID: result.suggestion?.collectionID,
-            titles: result.filings.map { (style: $0.style.rawValue, title: $0.call.answer?.title) }
+            title: result.suggestion?.title
         )
     }
 
     /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test.
-    /// `suggesters` holds one per title style, the first the primary: its title goes to the words call.
-    private static func run(_ suggesters: [(TitleStyle, ModelScanSuggester)], includesImage: Bool) async throws
-        -> EvaluationRun
-    {
-        let suggester = suggesters[0].1
+    private static func run(_ suggester: ModelScanSuggester, includesImage: Bool) async throws -> EvaluationRun {
         let reader = ScanReader(reader: ReaderKind.text.makeReader())
         var results: [EvaluationRun.Result] = []
         var inputs: [SuggestionInput] = []
         let filter = environment["FC_EVAL_CASES"].flatMap { $0.allSatisfy(\.isWhitespace) ? nil : $0 }
         var cases = EvaluationCase.selected(try EvaluationCase.loadAll(), by: filter).map { ($0, false) }
         if let folder = privateFolder {
-            cases += EvaluationCase.selected(try EvaluationCase.loadAll(from: folder), by: filter).map { ($0, true) }
+            let mine = EvaluationCase.selected(try EvaluationCase.loadAll(from: folder), by: filter)
+            let unfiled = EvaluationCase.unfiled(mine)
+            try #require(
+                unfiled.isEmpty,
+                "judged with no collection, set one in the private cases.json: \(unfiled.joined(separator: ", "))")
+            cases += mine.map { ($0, true) }
         }
         for (item, isPrivate) in cases {
             let scans = (isPrivate ? privateFolder ?? EvaluationCase.fixtures : EvaluationCase.fixtures)
@@ -132,11 +131,7 @@ struct SuggestionEvaluationTests {
             }
             let input = SuggestionInput(
                 pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
-            var filings: [(style: TitleStyle, call: TimedCall<ScanSuggestion>)] = []
-            for (style, suggester) in suggesters {
-                filings.append((style, await TimedCall.run(limit: callLimit) { await suggester.suggestFiling(input) }))
-            }
-            let filing = filings[0].call
+            let filing = await TimedCall.run(limit: callLimit) { await suggester.suggestFiling(input) }
             // As saved: the suggestion where it gave one, else what the person would have chosen.
             let title = filing.answer?.title ?? item.titles.first ?? ""
             let collectionID = filing.answer?.collectionID ?? item.collection
@@ -149,7 +144,7 @@ struct SuggestionEvaluationTests {
                 EvaluationRun.Result(
                     item: item,
                     pageText: texts.joined(separator: "\n"),
-                    filings: filings,
+                    filing: filing,
                     words: words,
                     isPrivate: isPrivate
                 ))

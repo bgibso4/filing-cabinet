@@ -155,68 +155,15 @@ private func clean(words: [String]) -> [String] {
     #expect(clean(title: "Passport · Pass").title == "Passport · Pass")
 }
 
-private func composed(_ name: String?, _ kind: String?) -> String? {
-    SuggestionCleanup.composedTitle(name: name, kind: kind)
-}
-
-@Test func nameAndKindJoin() {
-    #expect(composed("InBody", "Report") == "InBody Report")
-}
-
-@Test func noNameGivesKind() {
-    #expect(composed("", "Library Card") == "Library Card")
-    #expect(composed(nil, "Library Card") == "Library Card")
-}
-
-@Test func nameEndingInKindIsNotRepeated() {
-    #expect(composed("City Pharmacy Receipt", "Receipt") == "City Pharmacy Receipt")
-    #expect(composed("City Pharmacy RECEIPT", "receipt") == "City Pharmacy RECEIPT")
-    // Only a whole word counts: "Receipts" does not end in the word "Receipt".
-    #expect(composed("City Receipts", "Receipt") == "City Receipts Receipt")
-}
-
-@Test func nameEqualToKindIsDropped() {
-    #expect(composed("Receipt", "receipt") == "receipt")
-}
-
-@Test func noKindGivesName() {
-    #expect(composed("Maple Street Hardware", "") == "Maple Street Hardware")
-    #expect(composed("Maple Street Hardware", nil) == "Maple Street Hardware")
-}
-
-@Test func bothEmptyIsNil() {
-    #expect(composed("", "") == nil)
-    #expect(composed("  \n ", "   ") == nil)
-    #expect(composed(nil, nil) == nil)
-}
-
-@Test func spacingIsTrimmedAndCollapsed() {
-    #expect(composed("  InBody  ", " Body   Scan ") == "InBody Body Scan")
-}
-
-@Test func longNameIsCutBeforeTheKind() {
-    let name = "Northwind Property Management Services Inc"
-    #expect(name.count > 40)
-
-    let title = SuggestionCleanup.composedTitle(name: name, kind: "Receipt")
-
-    #expect(title == "Northwind Property Management Receipt")
-    #expect(clean(title: title).title?.hasSuffix("Receipt") == true)
-    #expect((clean(title: title).title?.count ?? 99) <= 40)
-}
-
-@Test func longNameEndingInTheKindKeepsTheKind() {
-    let name = "Northwind Property Management Services Receipt"
-    #expect(name.count == 46)
-
-    let title = clean(title: composed(name, "Receipt")).title
-
-    #expect(title == "Northwind Property Management Receipt")
-    #expect((title?.count ?? 99) <= 40)
-}
-
-@Test func aNameOfOneLongWordLeavesTheKindAlone() {
-    let title = composed(String(repeating: "a", count: 45), "Receipt")
-
-    #expect(title == "Receipt")
+/// The title Ben asked for (2026-11-14): "Name · Kind", or the kind alone. Cleanup keeps the middot and cases each
+/// side on its own.
+@Test func aNameAndKindTitleKeepsItsMiddot() {
+    #expect(clean(title: "Bayview Dental · insurance card").title == "Bayview Dental · Insurance Card")
+    #expect(clean(title: "maple street hardware · receipt").title == "Maple Street Hardware · Receipt")
+    #expect(clean(title: "Spanish 102 · handout").title == "Spanish 102 · Handout")
+    #expect(clean(title: "fishing license").title == "Fishing License")
+    // At the 40-character limit, nothing is cut.
+    let atTheLimit = "Northwind Property Mgmt · Insurance Card"
+    #expect(atTheLimit.count == 40)
+    #expect(clean(title: atTheLimit).title == atTheLimit)
 }

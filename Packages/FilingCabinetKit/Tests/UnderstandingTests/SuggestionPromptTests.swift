@@ -83,9 +83,8 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     #expect(!prompt.contains(String(repeating: "b", count: 100)))
 }
 
-@Test(arguments: TitleStyle.allCases)
-func instructionsHaveNoPlaceholdersAndNameNoCollection(style: TitleStyle) {
-    let instructions = SuggestionPrompt.instructions(for: style)
+@Test func instructionsHaveNoPlaceholdersAndNameNoCollection() {
+    let instructions = SuggestionPrompt.instructions
 
     #expect(!instructions.contains("<") && !instructions.contains(">"))
     for collection in SuggestionCollection.builtIns {
@@ -95,20 +94,9 @@ func instructionsHaveNoPlaceholdersAndNameNoCollection(style: TitleStyle) {
     #expect(!instructions.lowercased().contains("throwaway"))
 }
 
-@Test func eachStyleHasItsOwnInstructions() {
-    let whole = SuggestionPrompt.instructions(for: .whole)
-    let parts = SuggestionPrompt.instructions(for: .parts)
-
-    #expect(whole != parts)
-    #expect(whole.contains("From the scan, give two things.") && whole.contains("Title:"))
-    #expect(parts.contains("From the scan, give three things.") && parts.contains("Name:") && parts.contains("Kind:"))
-    #expect(!whole.contains("Kind:") && !parts.contains("Title:"))
-}
-
-/// The title definition's rules (spec, "What a good title is"), in each style's own words.
-@Test(arguments: TitleStyle.allCases)
-func instructionsCarryTheTitleDefinition(style: TitleStyle) {
-    let instructions = SuggestionPrompt.instructions(for: style)
+/// The title definition's rules (spec, "What a good title is").
+@Test func instructionsCarryTheTitleDefinition() {
+    let instructions = SuggestionPrompt.instructions
 
     // The owner's-name rule: no code rule catches a name.
     #expect(instructions.contains("Never the name of the person"))
@@ -118,8 +106,19 @@ func instructionsCarryTheTitleDefinition(style: TitleStyle) {
     // A plain 1–2 word kind, and business card only when it is one.
     #expect(instructions.contains("plain noun of 1 or 2 words"))
     #expect(instructions.contains("business card only for"))
-    // No dates.
-    #expect(instructions.contains("No dates") || instructions.contains("no dates"))
+    // Nothing after the kind: no dates.
+    #expect(instructions.contains("Nothing after the kind: no dates"))
+}
+
+/// Ben (2026-11-14): "Name · Kind" with a middot, the kind alone with no name; every example follows it.
+@Test func instructionsAskForNameMiddotKind() {
+    let instructions = SuggestionPrompt.instructions
+
+    #expect(instructions.contains(#"the name, then " · ", then the kind"#))
+    #expect(instructions.contains(#""Maple Street Hardware · Receipt""#))
+    #expect(instructions.contains(#""Bayview Dental · Insurance Card""#))
+    #expect(instructions.contains(#"With no name, the kind alone, for example "Fishing License""#))
+    #expect(!instructions.contains("Maple Street Hardware Receipt"))
 }
 
 @Test func promptStartsWithTheCollectionsPrefix() {

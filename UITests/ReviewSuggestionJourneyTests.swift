@@ -3,12 +3,12 @@ import XCTest
 
 /// Review with the model's suggestion (M6, M11): the slim card while it reads, filled when the suggestion lands, and
 /// the full sheet when the card is opened, the model is too slow, or it isn't available. `-Suggestions arrives` answers
-/// City Pharmacy after 0.3 s; `slow` never answers, so the 5 s wait passes.
+/// City Pharmacy after 0.3 s; `slow` never answers, so the 10 s wait passes.
 @MainActor
 final class ReviewSuggestionJourneyTests: XCTestCase {
     private typealias Review = AccessibilityID.Review
 
-    /// Longer than the 5 s wait for a suggestion, with room for a slow simulator.
+    /// Longer than the 10 s wait for a suggestion, with room for a slow simulator.
     private static let pastTheWait: TimeInterval = 15
 
     override func setUp() {

@@ -67,4 +67,15 @@ struct EvaluationPrivateReportTests {
         #expect(report.collectionAccuracy(in: "receipts") == EvaluationReport.Tally(hits: 1, total: 1))
         #expect(report.collectionAccuracy(quality: "clean") == EvaluationReport.Tally(hits: 1, total: 1))
     }
+
+    @Test func theReviewPageTakesOnlyPrivateCasesWhenThereAreAny() {
+        let madeUp = Base.result(Base.item("a"), collection: "receipts")
+        let mine = Base.result(Base.item("p"), collection: "notes", isPrivate: true)
+        func run(_ results: [EvaluationRun.Result]) -> EvaluationRun {
+            EvaluationRun(includesImage: false, results: results, probes: [], filter: nil)
+        }
+
+        #expect(run([madeUp, mine]).reviewed.map(\.item.id) == ["p"])
+        #expect(run([madeUp]).reviewed.map(\.item.id) == ["a"])
+    }
 }

@@ -31,9 +31,26 @@ enum JudgementMerge {
         }
     }
 
-    /// Reads `<folder>/cases.json`, merges the judgements for its cases and writes it back.
-    static func apply(_ judgements: [Judgement], toCasesIn folder: URL) throws {
+    /// Reads `<folder>/cases.json`, merges the judgements for its cases and writes it back. Returns how many
+    /// judgements were for its cases.
+    @discardableResult
+    static func apply(_ judgements: [Judgement], toCasesIn folder: URL) throws -> Int {
         let cases = try EvaluationCase.loadAll(from: folder)
-        try EvaluationCase.write(merged(cases, with: judgements), to: folder)
+        let ids = Set(cases.map(\.id))
+        let mine = judgements.filter { ids.contains($0.id) }
+        try EvaluationCase.write(merged(cases, with: mine), to: folder)
+        return mine.count
+    }
+
+    /// What `make eval-merge` prints: how many judgements each cases file took, then a warning for any no file took.
+    /// Without `PRIVATE=` those are most likely the private cases' answers.
+    static func summary(applied: [(file: String, count: Int)], unmatched: Int, privateGiven: Bool) -> String {
+        var lines = applied.map { "Applied \($0.count) judgements to \($0.file)" }
+        if unmatched > 0 {
+            lines.append(
+                "Warning: \(unmatched) judgements match no case and were not applied"
+                    + (privateGiven ? "." : ". If they are private cases, run again with PRIVATE=<folder>."))
+        }
+        return lines.map { $0 + "\n" }.joined()
     }
 }

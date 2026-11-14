@@ -46,4 +46,22 @@ struct EvaluationCaseTests {
         #expect(cases.map(\.id) == ["mine", "judged"])
         #expect(cases.map(\.isJudged) == [false, true])
     }
+
+    @Test func judgedCasesWithNoCollectionAreNamed() {
+        func unfiled(_ id: String, titles: [String]) -> EvaluationCase {
+            EvaluationCase(
+                id: id,
+                files: ["\(id).jpg"],
+                collection: "",
+                titles: titles,
+                searches: [],
+                quality: "clean",
+                collections: nil
+            )
+        }
+
+        let cases = [Self.item(titles: ["Alpha"]), unfiled("p1", titles: ["Alpha"]), unfiled("p2", titles: [])]
+
+        #expect(EvaluationCase.unfiled(cases) == ["p1"])
+    }
 }

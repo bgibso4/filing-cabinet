@@ -3,9 +3,7 @@ import Testing
 
 /// The review page's HTML, on canned entries.
 struct ReviewPageTests {
-    private static func entry(_ id: String, isPrivate: Bool = false, titles: [(String, String?)] = [("whole", "Alpha")])
-        -> ReviewPage.Entry
-    {
+    private static func entry(_ id: String, isPrivate: Bool = false, title: String? = "Alpha") -> ReviewPage.Entry {
         ReviewPage.Entry(
             item: EvaluationCase(
                 id: id,
@@ -19,11 +17,11 @@ struct ReviewPageTests {
             isPrivate: isPrivate,
             image: Data([0xFF, 0xD8, 0xFF, 0xD9]),
             collectionID: "notes",
-            titles: titles.map { (style: $0.0, title: $0.1) }
+            title: title
         )
     }
 
-    /// What Ben sees: the page without the JSON block that holds the label to style mapping for the script.
+    /// What Ben sees: the page without the JSON block that holds the titles for the script.
     private static func visible(_ html: String) -> String {
         guard let start = html.range(of: "<script type=\"application/json\""),
             let end = html.range(of: "</script>", range: start.upperBound..<html.endIndex)
@@ -40,28 +38,11 @@ struct ReviewPageTests {
         #expect(html.contains("Download answers"))
     }
 
-    @Test func variantsAreBlind() {
-        let html = ReviewPage.html(for: [
-            Self.entry("one", titles: [("whole", "Alpha"), ("parts", "Beta")]),
-            Self.entry("two", titles: [("whole", "Gamma"), ("parts", "Delta")]),
-        ])
-        let seen = Self.visible(html)
+    @Test func eachCaseShowsItsTitleToJudge() {
+        let html = Self.visible(ReviewPage.html(for: [Self.entry("one", title: "Bayview Dental · Insurance Card")]))
 
-        #expect(!seen.contains("whole"))
-        #expect(!seen.contains("parts"))
-        #expect(seen.contains("data-label=\"A\"") && seen.contains("data-label=\"B\""))
-        // The script still has the mapping, to put the real style in each downloaded judgement.
-        #expect(html.contains("\"style\":\"parts\""))
-    }
-
-    @Test func theOrderIsShuffledPerCaseButStable() {
-        let entries = ["a", "b", "c", "d", "e", "f"].map {
-            Self.entry($0, titles: [("whole", "W"), ("parts", "P")])
-        }
-        let firsts = entries.map { ReviewPage.labelled($0).first?.style }
-
-        #expect(Set(firsts.compactMap { $0 }) == ["whole", "parts"])
-        #expect(firsts == entries.map { ReviewPage.labelled($0).first?.style })
+        #expect(html.contains("<span class=\"text\">Bayview Dental · Insurance Card</span>"))
+        #expect(html.components(separatedBy: "data-verdict=\"yes\"").count - 1 == 1)
     }
 
     @Test func privateCasesGetACollectionPicker() {
@@ -78,22 +59,22 @@ struct ReviewPageTests {
     }
 
     @Test func titlesAreEscaped() {
-        let html = ReviewPage.html(for: [Self.entry("one", titles: [("whole", "A <b>&\" </script>")])])
+        let html = ReviewPage.html(for: [Self.entry("one", title: "A <b>&\" </script>")])
 
         #expect(Self.visible(html).contains("A &lt;b&gt;&amp;&quot; &lt;/script&gt;"))
         #expect(html.components(separatedBy: "</script>").count - 1 == 2)
     }
 
     @Test func aMissingTitleCannotBeJudged() {
-        let html = ReviewPage.html(for: [Self.entry("one", titles: [("whole", nil)])])
+        let html = ReviewPage.html(for: [Self.entry("one", title: nil)])
 
         #expect(html.contains("no suggestion"))
         #expect(!Self.visible(html).contains("data-verdict=\"yes\""))
     }
 
     @Test func theStorageKeyBelongsToTheRun() {
-        let run = [Self.entry("one", titles: [("whole", "Alpha")])]
-        let other = [Self.entry("one", titles: [("whole", "Beta")])]
+        let run = [Self.entry("one", title: "Alpha")]
+        let other = [Self.entry("one", title: "Beta")]
 
         #expect(ReviewPage.storageKey(for: run) == ReviewPage.storageKey(for: run))
         #expect(ReviewPage.storageKey(for: run) != ReviewPage.storageKey(for: other))

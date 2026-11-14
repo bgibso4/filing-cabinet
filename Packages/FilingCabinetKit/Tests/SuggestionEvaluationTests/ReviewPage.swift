@@ -1,9 +1,8 @@
 import Foundation
 
 /// The page Ben opens from Finder to judge the model's titles: one self-contained HTML file (inline style and script,
-/// images as data URIs, no network). Titles are labelled "A", "B" in a per-case shuffled order so he can't tell which
-/// style made which; the label to style mapping lives only in a JSON block the script reads, and the downloaded
-/// `judgements.json` carries the style as each judgement's `variant`.
+/// images as data URIs, no network). The titles also sit in a JSON block the script reads, so each downloaded
+/// judgement in `judgements.json` carries the title it judged.
 enum ReviewPage {
     struct Entry {
         let item: EvaluationCase
@@ -12,13 +11,7 @@ enum ReviewPage {
         let image: Data
         /// The collection the model suggested, if it did.
         let collectionID: String?
-        /// One per title style, in any order; nil where the model gave none.
-        let titles: [(style: String, title: String?)]
-    }
-
-    struct Labelled {
-        let label: String
-        let style: String
+        /// Nil where the model gave none.
         let title: String?
     }
 
@@ -40,26 +33,17 @@ enum ReviewPage {
             <main>
             \(rows)
             </main>
-            <script type="application/json" id="variants">\(variantsJSON(entries))</script>
+            <script type="application/json" id="titles">\(titlesJSON(entries))</script>
             <script>const KEY = '\(storageKey(for: entries))';
             \(script)</script>
             </body></html>
             """
     }
 
-    /// Labels for a case's titles in a shuffled order: seeded by the case id, so the same case always comes out the same.
-    static func labelled(_ entry: Entry) -> [Labelled] {
-        let shuffled = entry.titles.sorted { seed(entry.item.id + $0.style) < seed(entry.item.id + $1.style) }
-        return shuffled.enumerated().map {
-            Labelled(
-                label: String(UnicodeScalar(UInt8(65 + $0.offset))), style: $0.element.style, title: $0.element.title)
-        }
-    }
-
-    /// Where the page keeps answers in the browser: scoped to the run (the labels and titles on the page), so a page
-    /// made from another run never reads this one's answers.
+    /// Where the page keeps answers in the browser: scoped to the run (the titles on the page), so a page made from
+    /// another run never reads this one's answers.
     static func storageKey(for entries: [Entry]) -> String {
-        "fc-eval-answers-" + String(seed(variantsJSON(entries)), radix: 16)
+        "fc-eval-answers-" + String(seed(titlesJSON(entries)), radix: 16)
     }
 
     /// FNV-1a: stable across runs, unlike `hashValue`.
@@ -67,45 +51,31 @@ enum ReviewPage {
         text.utf8.reduce(14_695_981_039_346_656_037) { ($0 ^ UInt64($1)) &* 1_099_511_628_211 }
     }
 
-    private struct Variant: Encodable {
-        let style: String
-        let title: String
-    }
-
-    private static func variantsJSON(_ entries: [Entry]) -> String {
-        var all: [String: [String: Variant]] = [:]
-        for entry in entries {
-            all[entry.item.id] = Dictionary(
-                uniqueKeysWithValues: labelled(entry).map {
-                    ($0.label, Variant(style: $0.style, title: $0.title ?? ""))
-                })
-        }
+    /// Each case's title by id; "" where the model gave none.
+    private static func titlesJSON(_ entries: [Entry]) -> String {
+        let all = Dictionary(entries.map { ($0.item.id, $0.title ?? "") }) { first, _ in first }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]  // escapes "/", so "</script>" can't end the block early
-        // try? is safe: a [String: Variant] always encodes; "{}" only keeps the page valid.
+        // try? is safe: a [String: String] always encodes; "{}" only keeps the page valid.
         return (try? encoder.encode(all)).flatMap { String(bytes: $0, encoding: .utf8) } ?? "{}"
     }
 
     private static func row(_ entry: Entry) -> String {
         let id = escape(entry.item.id)
-        let titles = labelled(entry).map { labelled in
-            let (label, title) = (labelled.label, labelled.title)
-            guard let title else {
-                return
-                    "<div class=\"title\" data-label=\"\(label)\"><b>\(label)</b><span class=\"none\">no suggestion</span></div>"
-            }
-            return """
-                <div class="title" data-label="\(label)"><b>\(label)</b><span class="text">\(escape(title))</span>\
+        let title =
+            entry.title.map { title in
+                """
+                <div class="title"><span class="text">\(escape(title))</span>\
                 <button type="button" class="yes" data-verdict="yes" aria-label="Right">✓</button>\
                 <button type="button" class="no" data-verdict="no" aria-label="Wrong">✗</button></div>
                 """
-        }.joined(separator: "\n")
+            } ?? "<div class=\"title\"><span class=\"none\">no suggestion</span></div>"
         let picker = entry.isPrivate ? collectionPicker(entry) : ""
         return """
             <section class="case" data-id="\(id)">
             <img src="data:image/jpeg;base64,\(entry.image.base64EncodedString())" alt="Scan \(id)">
             <div class="answers"><h2>\(id)</h2>
-            \(titles)
+            \(title)
             <label>What I'd call it <input type="text" class="better" autocomplete="off"></label>
             \(picker)
             </div></section>
@@ -142,7 +112,7 @@ enum ReviewPage {
         .case img { width: 360px; max-width: 100%; height: auto; align-self: flex-start; cursor: zoom-in; }
         .case img.big { width: 100%; cursor: zoom-out; }
         .answers { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
-        .title { display: flex; align-items: center; gap: 8px; } .title b { width: 1.4em; color: var(--muted); }
+        .title { display: flex; align-items: center; gap: 8px; }
         .title .text { flex: 1; } .none { color: var(--muted); font-style: italic; }
         button { font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--fg); \
         border-radius: 8px; padding: 4px 12px; cursor: pointer; }
@@ -154,28 +124,23 @@ enum ReviewPage {
         """
 
     private static let script = """
-        const variants = JSON.parse(document.getElementById('variants').textContent);
+        const titles = JSON.parse(document.getElementById('titles').textContent);
         let answers = {};
         try { answers = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { answers = {}; }
-        // An answer stays only for a title still on the page under the same label.
+        // A verdict stays only for the title still on the page.
         for (const id of Object.keys(answers)) {
-          const a = answers[id], here = variants[id] || {};
-          for (const label of Object.keys(a.verdicts || {})) {
-            const v = a.verdicts[label];
-            if (!here[label] || !v || here[label].title !== v.title) delete a.verdicts[label];
-          }
+          const a = answers[id];
+          if (!a.verdict || titles[id] === undefined || a.verdict.title !== titles[id]) a.verdict = null;
         }
         const save = () => { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} };
-        const mine = id => (answers[id] = answers[id] || { verdicts: {}, better: '', collection: '' });
-        const isJudged = a => a && (Object.keys(a.verdicts).length > 0 || a.better.trim() !== '' || a.collection !== '');
+        const mine = id => (answers[id] = answers[id] || { verdict: null, better: '', collection: '' });
+        const isJudged = a => a && (!!a.verdict || a.better.trim() !== '' || a.collection !== '');
         function refresh() {
           let n = 0;
           document.querySelectorAll('.case').forEach(section => {
             const a = answers[section.dataset.id];
-            section.querySelectorAll('.title').forEach(row => {
-              row.querySelectorAll('button').forEach(b => {
-                b.classList.toggle('on', !!a && (a.verdicts[row.dataset.label] || {}).verdict === b.dataset.verdict);
-              });
+            section.querySelectorAll('.title button').forEach(b => {
+              b.classList.toggle('on', !!a && !!a.verdict && a.verdict.verdict === b.dataset.verdict);
             });
             const done = isJudged(a);
             section.classList.toggle('done', done);
@@ -192,9 +157,9 @@ enum ReviewPage {
           }
           section.querySelector('img').addEventListener('click', e => e.target.classList.toggle('big'));
           section.querySelectorAll('.title button').forEach(b => b.addEventListener('click', () => {
-            const v = mine(id).verdicts, label = b.closest('.title').dataset.label;
-            if (v[label] && v[label].verdict === b.dataset.verdict) delete v[label];
-            else v[label] = { verdict: b.dataset.verdict, title: variants[id][label].title };
+            const a = mine(id);
+            a.verdict = a.verdict && a.verdict.verdict === b.dataset.verdict
+              ? null : { verdict: b.dataset.verdict, title: titles[id] };
             save(); refresh();
           }));
           section.querySelector('.better').addEventListener('input', e => { mine(id).better = e.target.value; save(); refresh(); });
@@ -203,18 +168,14 @@ enum ReviewPage {
         });
         document.getElementById('download').addEventListener('click', () => {
           const out = [];
-          for (const id of Object.keys(variants)) {
+          for (const id of Object.keys(titles)) {
             const a = answers[id];
             if (!isJudged(a)) continue;
             const better = a.better.trim() || null, collection = a.collection || null;
-            const labels = Object.keys(a.verdicts).filter(label => variants[id][label]);
             // Nothing ticked: a "no" on an empty title carries the typed title or collection and removes nothing.
-            if (labels.length === 0) {
-              const first = Object.keys(variants[id] || {}).sort()[0];
-              if (first) out.push({ id, variant: variants[id][first].style, title: '', verdict: 'no', better, collection });
-            }
-            labels.forEach(label => out.push({ id, variant: variants[id][label].style, title: variants[id][label].title,
-              verdict: a.verdicts[label].verdict, better, collection }));
+            out.push(a.verdict
+              ? { id, title: a.verdict.title, verdict: a.verdict.verdict, better, collection }
+              : { id, title: '', verdict: 'no', better, collection });
           }
           const link = document.createElement('a');
           link.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
