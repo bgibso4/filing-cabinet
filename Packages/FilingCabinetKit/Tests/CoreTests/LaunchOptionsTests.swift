@@ -170,6 +170,12 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(!LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: false).showWelcome)
 }
 
+@Test func parsesHoldScan() {
+    #expect(LaunchOptions(arguments: ["-HoldScan"], isDebugBuild: true).holdScan)
+    #expect(!LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).holdScan)
+    #expect(!LaunchOptions(arguments: ["-HoldScan"], isDebugBuild: false).holdScan)
+}
+
 @Test func parsesRequest() {
     func request(_ value: String) -> RequestFlag? {
         LaunchOptions(arguments: ["-Request", value], isDebugBuild: true).request

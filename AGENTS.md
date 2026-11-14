@@ -110,6 +110,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-Suggestions arrives\|slow\|unavailable` | the review's suggester is a fake: City Pharmacy Receipt in Receipts (and its words after Save) after 0.3 s, never, or unavailable. Under `-UITest` it is unavailable unless this says otherwise |
 | `-FailLibraryOpen [once]` | opening the library fails, so the "Your library couldn’t open" screen shows; with `once` only the first attempt fails, so Try again opens it |
 | `-ShowWelcome` | the first-launch welcome shows; under `-UITest` it otherwise counts as done |
+| `-HoldScan` | launch finishes (seeding included) but Scan stays disabled, for auditing that state on a still Home |
 | `-ReduceMotion` | the capture layer, Search and the welcome's second screen fade rather than move, and Home's count doesn't pop |
 
 UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.

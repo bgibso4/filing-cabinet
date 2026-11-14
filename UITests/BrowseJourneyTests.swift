@@ -9,8 +9,8 @@ final class BrowseJourneyTests: XCTestCase {
 
     /// Waits for seeding to finish: Home's cleanup banner comes in as the last seeded scan lands, and an audit taken
     /// mid-way caught it half drawn (CI run 42500722527, "Contrast failed" on the banner).
-    private func seededApp(largestText: Bool = false) -> XCUIApplication {
-        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: largestText)
+    private func seededApp(largestText: Bool = false, flags: [String] = []) -> XCUIApplication {
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"] + flags, largestText: largestText)
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout))
         return app
@@ -292,11 +292,12 @@ final class BrowseJourneyTests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
     }
 
-    /// Scan stays disabled until seeding ends. No launch option holds seeding open, so this checks the state the moment
-    /// Scan exists, with nothing else waited on first, and audits straight after.
+    /// Scan stays disabled until launch ends. `-HoldScan` keeps it disabled after seeding, so the audit runs on a still
+    /// Home. Auditing while 60 scans were still seeding failed on CI (runs 43120343687, 43134191294, 43421303926): the
+    /// counts ticked and popped and the rows moved through the whole audit, and it reported 'Receipts' as low contrast
+    /// though its own element screenshot reads black on white.
     func testAuditAtLargestTextOfDisabledScan() throws {
-        let app = launchApp(["-SeedScans", "60", "-FixedDate", "2026-10-12"], largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 30))
+        let app = seededApp(largestText: true, flags: ["-HoldScan"])
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isEnabled)
         try audit(app)
     }

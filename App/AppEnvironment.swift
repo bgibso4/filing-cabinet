@@ -185,7 +185,8 @@ final class AppEnvironment {
             }
         #endif
         // Before asking iOS about notifications: Scan doesn't need the answer, and iOS can be slow to give it.
-        isReady = true
+        // `-HoldScan` keeps Scan disabled once seeding is done, so its audit sees a still Home.
+        isReady = !options.holdScan
         wordsPass.resume()
         await banner.refreshAuthorization()
     }

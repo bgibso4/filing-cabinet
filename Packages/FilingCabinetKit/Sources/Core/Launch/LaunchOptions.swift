@@ -41,6 +41,8 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var showWelcome = false
     /// `-RatingDue`: under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating.
     public private(set) var ratingDue = false
+    /// `-HoldScan`: launch finishes everything but enabling Scan, so a test can check disabled Scan on a still Home.
+    public private(set) var holdScan = false
     /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
     public private(set) var request: RequestFlag?
 
@@ -58,20 +60,24 @@ public struct LaunchOptions: Sendable, Equatable {
         }
     }
 
+    /// The flags that need no value, each turning on one field.
+    private static var switches: [String: WritableKeyPath<Self, Bool>] {
+        [
+            "-UITest": \.isUITest, "-CameraDenied": \.cameraDenied, "-FailSave": \.failNextSave,
+            "-FakeReader": \.fakeReader, "-ReduceMotion": \.reduceMotion,
+            "-NotificationsUnanswered": \.notificationsUnanswered, "-ShowWelcome": \.showWelcome,
+            "-RatingDue": \.ratingDue, "-HoldScan": \.holdScan,
+        ]
+    }
+
     /// Sets the flag if it needs no value (`next` may qualify it); false when it is not one of those.
     private mutating func setSwitch(_ flag: String, next: String?) -> Bool {
-        switch flag {
-        case "-FailLibraryOpen": failLibraryOpen = next == "once" ? .once : .always
-        case "-UITest": isUITest = true
-        case "-CameraDenied": cameraDenied = true
-        case "-FailSave": failNextSave = true
-        case "-FakeReader": fakeReader = true
-        case "-ReduceMotion": reduceMotion = true
-        case "-NotificationsUnanswered": notificationsUnanswered = true
-        case "-ShowWelcome": showWelcome = true
-        case "-RatingDue": ratingDue = true
-        default: return false
+        if flag == "-FailLibraryOpen" {
+            failLibraryOpen = next == "once" ? .once : .always
+            return true
         }
+        guard let field = Self.switches[flag] else { return false }
+        self[keyPath: field] = true
         return true
     }
 
