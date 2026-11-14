@@ -5,14 +5,19 @@ A private, Photos-style library for personal documents (IDs, receipts, notes, ca
 ## Map
 
 ```
-App/                         app target: entry point, environment wiring, Info.plist, privacy manifest
+App/                         app target: entry point, environment wiring, Info.plist, privacy manifest, the app icon (AppIcon.icon), the Siri phrases
+Intents/                     App Intents (Scan a document, Find a scan), compiled into the app and the controls extension
+Controls/                    the Scan control: a widget extension for Control Center, the Lock Screen and the Action button
+site/                        the privacy policy page, published to GitHub Pages by .github/workflows/pages.yml
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
+    Requests/                requests from outside the app (scan, search, open a scan) and the hand-off that carries them to the root
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
     Suggesting/              Apple Intelligence: the ScanSuggester seam, the on-device model's two calls (title and collection, then search words), prompts, title casing
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
+    Spotlight/               a scan as a Spotlight item (titles only) and the index seam
     Export/                  a scan as a PDF (ScanPDF), temporary export files and their launch cleanup
   Sources/ScreenModels/      per-screen models and strings (Details, Trash, Settings among them). Mac-buildable,
                              tested in Fast
@@ -22,6 +27,12 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Search/                  search matching (text folded once, hidden words by part-prefix), history, recently viewed, the Search model
     Suggestions/             the background pass that gives older scans their search words
     Review/                  the review's card-or-sheet state, the wait limit, the words call after Save
+    Welcome/                 the first-launch welcome and its notification ask
+    Startup/                 the "library couldn't open" screen's model
+    Feedback/                the feedback and report emails, device details, the privacy policy address
+    Rating/                  the rating prompt's rule (10 saves on 3 different days)
+    Spotlight/               keeps Spotlight in step with the library
+    App/                     routing a request from outside the app to the camera, Search or a scan
   Sources/Screens/           SwiftUI views and design system. iOS-only
     DesignSystem/            tokens and shared views; HeaderScrollView gives every screen its header (the system bar's
                              own titles, styled by HeaderAppearance)
@@ -29,6 +40,8 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Details/                 DetailsPanel (the panel that replaces the system sheet), DetailsGrabber
     Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
     Search/                  the Search screen: our own field, filter chips, result rows
+    Welcome/, Startup/       the welcome screens and the "library couldn't open" screen
+    Feedback/                the mail composer behind Send feedback and Send report
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
                              ReaderComparisonTests (the bake-off report, not a gate),
@@ -37,6 +50,7 @@ SnapshotTests/               app-hosted snapshot tests; references live beside t
 UITests/                     journey UI tests, with identifier coverage and accessibility audits
 DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
 scripts/                     token generator, compare, pre-commit, lint-rule tests; make-eval-scans.swift makes the made-up test scans
+scripts/testflight/          TestFlight: archive.sh (archive and upload), asc.swift (App Store Connect API), plan.sh (what a push needs), with bats tests
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
 design/                      design handoff and tokens.json (source of the generated tokens)
 docs/superpowers/specs/      requirements and design specs
@@ -111,6 +125,8 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-FailLibraryOpen [once]` | opening the library fails, so the "Your library couldn’t open" screen shows; with `once` only the first attempt fails, so Try again opens it |
 | `-ShowWelcome` | the first-launch welcome shows; under `-UITest` it otherwise counts as done |
 | `-HoldScan` | launch finishes (seeding included) but Scan stays disabled, for auditing that state on a still Home |
+| `-RatingDue` | under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating |
+| `-Request scan\|search:<text>\|open:<n>` | a request from outside the app is sent at launch; `open:<n>` is the nth scan `-SeedScans` saves, from 1 |
 | `-ReduceMotion` | the capture layer, Search and the welcome's second screen fade rather than move, and Home's count doesn't pop |
 
 UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.
