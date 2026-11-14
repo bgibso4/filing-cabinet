@@ -90,4 +90,13 @@ struct ReviewPageTests {
         #expect(html.contains("no suggestion"))
         #expect(!Self.visible(html).contains("data-verdict=\"yes\""))
     }
+
+    @Test func theStorageKeyBelongsToTheRun() {
+        let run = [Self.entry("one", titles: [("whole", "Alpha")])]
+        let other = [Self.entry("one", titles: [("whole", "Beta")])]
+
+        #expect(ReviewPage.storageKey(for: run) == ReviewPage.storageKey(for: run))
+        #expect(ReviewPage.storageKey(for: run) != ReviewPage.storageKey(for: other))
+        #expect(ReviewPage.html(for: run).contains("'\(ReviewPage.storageKey(for: run))'"))
+    }
 }

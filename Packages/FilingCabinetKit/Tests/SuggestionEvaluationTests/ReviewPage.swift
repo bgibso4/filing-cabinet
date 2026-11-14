@@ -41,7 +41,8 @@ enum ReviewPage {
             \(rows)
             </main>
             <script type="application/json" id="variants">\(variantsJSON(entries))</script>
-            <script>\(script)</script>
+            <script>const KEY = '\(storageKey(for: entries))';
+            \(script)</script>
             </body></html>
             """
     }
@@ -53,6 +54,12 @@ enum ReviewPage {
             Labelled(
                 label: String(UnicodeScalar(UInt8(65 + $0.offset))), style: $0.element.style, title: $0.element.title)
         }
+    }
+
+    /// Where the page keeps answers in the browser: scoped to the run (the labels and titles on the page), so a page
+    /// made from another run never reads this one's answers.
+    static func storageKey(for entries: [Entry]) -> String {
+        "fc-eval-answers-" + String(seed(variantsJSON(entries)), radix: 16)
     }
 
     /// FNV-1a: stable across runs, unlike `hashValue`.
@@ -148,9 +155,16 @@ enum ReviewPage {
 
     private static let script = """
         const variants = JSON.parse(document.getElementById('variants').textContent);
-        const KEY = 'fc-eval-answers';
         let answers = {};
         try { answers = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { answers = {}; }
+        // An answer stays only for a title still on the page under the same label.
+        for (const id of Object.keys(answers)) {
+          const a = answers[id], here = variants[id] || {};
+          for (const label of Object.keys(a.verdicts || {})) {
+            const v = a.verdicts[label];
+            if (!here[label] || !v || here[label].title !== v.title) delete a.verdicts[label];
+          }
+        }
         const save = () => { try { localStorage.setItem(KEY, JSON.stringify(answers)); } catch (e) {} };
         const mine = id => (answers[id] = answers[id] || { verdicts: {}, better: '', collection: '' });
         const isJudged = a => a && (Object.keys(a.verdicts).length > 0 || a.better.trim() !== '' || a.collection !== '');
@@ -160,7 +174,7 @@ enum ReviewPage {
             const a = answers[section.dataset.id];
             section.querySelectorAll('.title').forEach(row => {
               row.querySelectorAll('button').forEach(b => {
-                b.classList.toggle('on', !!a && a.verdicts[row.dataset.label] === b.dataset.verdict);
+                b.classList.toggle('on', !!a && (a.verdicts[row.dataset.label] || {}).verdict === b.dataset.verdict);
               });
             });
             const done = isJudged(a);
@@ -179,7 +193,8 @@ enum ReviewPage {
           section.querySelector('img').addEventListener('click', e => e.target.classList.toggle('big'));
           section.querySelectorAll('.title button').forEach(b => b.addEventListener('click', () => {
             const v = mine(id).verdicts, label = b.closest('.title').dataset.label;
-            if (v[label] === b.dataset.verdict) delete v[label]; else v[label] = b.dataset.verdict;
+            if (v[label] && v[label].verdict === b.dataset.verdict) delete v[label];
+            else v[label] = { verdict: b.dataset.verdict, title: variants[id][label].title };
             save(); refresh();
           }));
           section.querySelector('.better').addEventListener('input', e => { mine(id).better = e.target.value; save(); refresh(); });
@@ -188,18 +203,18 @@ enum ReviewPage {
         });
         document.getElementById('download').addEventListener('click', () => {
           const out = [];
-          for (const id of Object.keys(answers)) {
+          for (const id of Object.keys(variants)) {
             const a = answers[id];
             if (!isJudged(a)) continue;
             const better = a.better.trim() || null, collection = a.collection || null;
-            const labels = Object.keys(a.verdicts);
+            const labels = Object.keys(a.verdicts).filter(label => variants[id][label]);
             // Nothing ticked: a "no" on an empty title carries the typed title or collection and removes nothing.
             if (labels.length === 0) {
               const first = Object.keys(variants[id] || {}).sort()[0];
               if (first) out.push({ id, variant: variants[id][first].style, title: '', verdict: 'no', better, collection });
             }
             labels.forEach(label => out.push({ id, variant: variants[id][label].style, title: variants[id][label].title,
-              verdict: a.verdicts[label], better, collection }));
+              verdict: a.verdicts[label].verdict, better, collection }));
           }
           const link = document.createElement('a');
           link.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }));
