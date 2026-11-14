@@ -1,0 +1,114 @@
+name: TestFlight
+
+# Every merge to main that CI passed goes to TestFlight: the internal group (Ben) gets it automatically. Run workflow
+# by hand to upload main again; tick "Also send to friends" to send that build to the external group "Friends" too
+# (each new version waits for Apple's beta review first).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      friends:
+        description: Also send to friends
+        type: boolean
+        default: false
+
+# One upload at a time, in order; never cancel one that's running.
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # Whether to upload: a CI run on a push to main that passed, and whose commit changed more than docs/, site/ and
+  # Markdown. A dispatch always uploads.
+  plan:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    outputs:
+      upload: ${{ steps.plan.outputs.upload }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+      - id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          upload=true
+          if [ "$EVENT" = workflow_run ] && scripts/docs-only.sh HEAD^1 HEAD; then
+            upload=false; echo "Only docs/, site/ and Markdown changed: no upload."
+          fi
+          echo "upload=$upload" >> "$GITHUB_OUTPUT"
+
+  upload:
+    needs: plan
+    if: needs.plan.outputs.upload == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 90
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      # The build number is the run number plus one: build 1.0 (1) came from the signing spike. A re-run keeps the
+      # number, so re-run only a run that failed before its upload.
+      - name: Build number and key path
+        run: |
+          echo "BUILD_NUMBER=$((GITHUB_RUN_NUMBER + 1))" >> "$GITHUB_ENV"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Select Xcode 27
+        run: |
+          app="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$app" ] || { echo "error: no Xcode 27 on this image" >&2; exit 1; }
+          sudo xcode-select -s "$app/Contents/Developer"
+          xcodebuild -version
+
+      - name: Install tools
+        run: brew install xcodegen xcbeautify
+
+      # The key lives only in $RUNNER_TEMP for this job; the always() step at the end deletes it.
+      - name: Write the API key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          umask 077
+          printf '%s\n' "$ASC_KEY_P8" > "$ASC_KEY_PATH"
+
+      # The archive must never create a certificate (each run used to add an Apple Development one, and Apple caps
+      # them). Count them before and after.
+      - name: Count development certificates
+        id: certificates
+        run: echo "before=$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)" >> "$GITHUB_OUTPUT"
+
+      - name: Archive and upload
+        run: make testflight-archive
+
+      - name: Check no certificate was created
+        env:
+          BEFORE: ${{ steps.certificates.outputs.before }}
+        run: |
+          after="$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)"
+          echo "Development certificates: $BEFORE before, $after after"
+          [ "$after" -le "$BEFORE" ] || { echo "error: the run created a development certificate; revoke it in Certificates, Identifiers & Profiles" >&2; exit 1; }
+
+      - name: Send to friends
+        if: github.event_name == 'workflow_dispatch' && inputs.friends
+        run: |
+          swift scripts/testflight/asc.swift send-to-friends --build "$BUILD_NUMBER" \
+            --whats-new "$(git log -1 --format=%s)"
+
+      - name: Delete the API key
+        if: always()
+        run: rm -f "$ASC_KEY_PATH"

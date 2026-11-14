@@ -37,7 +37,7 @@ jobs:
           if [ "$EVENT" = pull_request ]; then
             if [ "$DRAFT" = true ]; then
               sim=false; echo "Draft PR: checks only."
-            elif ! git diff --name-only "$BASE...$HEAD" | grep -qvE '^docs/|^site/|\.md$'; then
+            elif scripts/docs-only.sh "$BASE...$HEAD"; then
               sim=false; echo "Only docs/, site/ and Markdown changed: checks only."
             fi
           fi

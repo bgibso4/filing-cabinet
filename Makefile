@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf testflight-archive
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -169,13 +169,18 @@ device-perf: generate
 	done
 	@echo "Timings:"; for file in $(PERF_DIR)/*/*.txt; do cat "$$file"; echo; done
 
+# Archive for the App Store and upload to TestFlight (the TestFlight workflow runs this). Needs ASC_KEY_ID,
+# ASC_ISSUER_ID, ASC_KEY_PATH (the .p8 file) and BUILD_NUMBER in the environment; see scripts/testflight/archive.sh.
+testflight-archive: generate
+	@PROJECT='$(PROJECT)' DERIVED='$(CURDIR)/.build/DerivedDataRelease' XCB_FLAGS='$(XCB_FLAGS)' scripts/testflight/archive.sh
+
 # Unit tests for the Claude Code hook scripts.
 test-hooks:
 	bats scripts/hooks/tests
 
-# bats tests for the test-run scripts (affected, sim-tests, audit-report).
+# bats tests for the scripts (affected, sim-tests, audit-report, docs-only, the TestFlight archive).
 test-scripts:
-	bats scripts/tests
+	bats scripts/tests scripts/testflight/tests
 
 # Fixture tests for the SwiftLint custom rules.
 test-lint:
