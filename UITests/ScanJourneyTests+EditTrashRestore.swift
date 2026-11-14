@@ -9,6 +9,9 @@ extension ScanJourneyTests {
     func dismissRatingPrompt(in app: XCUIApplication) {
         let notNow = app.buttons["Not Now"]
         guard notNow.appears(within: 5) else { return }
+        // The prompt scales down into place and ignores taps until it has; a tap while it still read 1.004× its
+        // resting size was dropped and the prompt stayed (2026-11-13). Tap once its frame holds still.
+        XCTAssertTrue(notNow.holdsStill(within: 5), "the rating prompt never settled")
         notNow.tap()
         XCTAssertTrue(notNow.disappears(within: 5))
     }

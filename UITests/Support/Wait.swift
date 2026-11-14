@@ -20,6 +20,19 @@ extension XCUIElement {
     func disappears(within timeout: TimeInterval) -> Bool {
         satisfies("exists == false", within: timeout)
     }
+
+    /// True once two reads of this element's frame in a row agree, within `timeout` seconds: whatever moved or scaled
+    /// it has stopped. For an element whose resting frame isn't known ahead, such as a system prompt's button.
+    func holdsStill(within timeout: TimeInterval) -> Bool {
+        let deadline = Date.now.addingTimeInterval(timeout)
+        var last = frame
+        while Date.now < deadline {
+            let next = frame
+            if next == last { return true }
+            last = next
+        }
+        return false
+    }
 }
 
 extension XCUIElementQuery {
