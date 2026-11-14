@@ -82,7 +82,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         # TelemetryDeck's app ID, read through Info.plist. Committed: it ships in the app anyway. Empty means the log,
         # even in Release (AnalyticsSink).
-        TELEMETRYDECK_APP_ID: ""
+        TELEMETRYDECK_APP_ID: 7D50637B-92F9-416D-AFF5-E252A581276B
 
   # The Scan control (Control Center, Lock Screen, Action button). Links Core only: its intent runs in the app.
   FilingCabinetControls:
