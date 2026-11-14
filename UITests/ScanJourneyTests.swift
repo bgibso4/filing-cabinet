@@ -104,7 +104,7 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome(flags: ["-ReduceMotion"])
     }
 
-    /// Apple limits how often its prompt shows, so it is dismissed if it does.
+    /// The save that makes a rating due ends on Home as usual, with Apple's prompt over it; Not Now leaves Home as it was.
     func testRatingDueDoesNotDisturbTheSave() {
         saveReceiptFromHome(flags: ["-RatingDue"], dismissingRating: true)
     }
