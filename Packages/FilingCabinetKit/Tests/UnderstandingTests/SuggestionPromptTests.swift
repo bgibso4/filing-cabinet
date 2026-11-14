@@ -100,13 +100,26 @@ func instructionsHaveNoPlaceholdersAndNameNoCollection(style: TitleStyle) {
     let parts = SuggestionPrompt.instructions(for: .parts)
 
     #expect(whole != parts)
-    // The app's instructions stay as they were before the styles existed.
-    #expect(whole.contains("From the scan, give two things."))
-    #expect(parts.contains("Name:") && parts.contains("Kind:"))
-    #expect(!whole.contains("Kind:"))
-    // The owner's-name rule stays in both: no code rule catches a name.
-    #expect(whole.contains("Never the name of the person"))
-    #expect(parts.contains("Never the name of the person"))
+    #expect(whole.contains("From the scan, give two things.") && whole.contains("Title:"))
+    #expect(parts.contains("From the scan, give three things.") && parts.contains("Name:") && parts.contains("Kind:"))
+    #expect(!whole.contains("Kind:") && !parts.contains("Title:"))
+}
+
+/// The title definition's rules (spec, "What a good title is"), in each style's own words.
+@Test(arguments: TitleStyle.allCases)
+func instructionsCarryTheTitleDefinition(style: TitleStyle) {
+    let instructions = SuggestionPrompt.instructions(for: style)
+
+    // The owner's-name rule: no code rule catches a name.
+    #expect(instructions.contains("Never the name of the person"))
+    // The short name people say, never a stand-in or a web address.
+    #expect(instructions.contains("short name people say"))
+    #expect(instructions.contains(#""Shop", "Store" or "Team""#) && instructions.contains("Never a web address"))
+    // A plain 1–2 word kind, and business card only when it is one.
+    #expect(instructions.contains("plain noun of 1 or 2 words"))
+    #expect(instructions.contains("business card only for"))
+    // No dates.
+    #expect(instructions.contains("No dates") || instructions.contains("no dates"))
 }
 
 @Test func promptStartsWithTheCollectionsPrefix() {

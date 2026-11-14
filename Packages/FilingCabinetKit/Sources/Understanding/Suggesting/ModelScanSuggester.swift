@@ -200,19 +200,21 @@ public final class ModelScanSuggester: ScanSuggester {
                 [
                     DynamicGenerationSchema.Property(
                         name: "title",
-                        description:
-                            "What the document is and who it is from, never its owner's name, at most 40 characters",
+                        description: "The name, then the kind of document, 2 to 4 words; "
+                            + "never a stand-in, web address or its owner's name",
                         schema: text)
                 ]
             case .parts:
                 [
                     DynamicGenerationSchema.Property(
                         name: "name",
-                        description:
-                            "The store, company, school or issuer as printed, never its owner's name, or empty",
+                        description: "Who it is from, the short name people say; "
+                            + "never a stand-in, web address or its owner's name; or empty",
                         schema: text),
                     DynamicGenerationSchema.Property(
-                        name: "kind", description: "What kind of document it is, 1 to 2 words", schema: text),
+                        name: "kind",
+                        description: "What kind of document it is, a plain noun of 1 or 2 words",
+                        schema: text),
                 ]
             }
         let root = DynamicGenerationSchema(
