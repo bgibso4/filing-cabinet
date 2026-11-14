@@ -104,6 +104,27 @@ Part 5 ships, `suggestionOutcome` counts arrive in TelemetryDeck from TestFlight
     `titles` lists where his judgement differs (the made-up set's file is committed; its edits are fine).
 - A second round after the prompt change: Ben judges both variants' titles side by side on the private set (the decision rule, Part 4).
 
+### What a good title is (from Ben's round-1 review, 2026-11-14)
+
+Drawn from Ben's ✓/✗ on 33 of his real scans (today's prompt, ~3 in 4 kept) and what he said while reviewing. The
+examples here are made up; the real ones stay in the private folder.
+
+1. **Name first, then the kind.** The name is who or what it's from, so it classifies at a glance: "Harbor Gas
+   Receipt", "Northwind Business Card". Kind first ("Receipt · Harbor Gas") reads worse; the same words in that order
+   were ✗ where name first was ✓.
+2. **The name people use, as short as stays specific.** "Northwind", not "Northwind Financial Group"; "Bayview Dental", not
+   "Bayview Dental Plans of Oregon". Accurate but long titles were kept, reluctantly: shorter wins when unsure. Familiar
+   short forms are fine ("DMV"), with their usual capitals ("IRS").
+3. **The real name, never a stand-in.** Not "Shop", "Store" or "Team", not a web address ("harborgas.com" →
+   "Harbor Gas"), not a slogan or stray page text.
+4. **The kind is a plain 1–2 word noun** (Receipt, Business Card, Gift Card, ID, Ticket, Manual, Report). Ben
+   doesn't blame the model for kinds it can't know from the page (a sticker, a ski pass), but a wrong kind is the
+   most common miss, and "Business Card" is the model's fallback guess, so it should not be used unless the page is one.
+5. **No dates.** Where repeats of one document need a date to tell apart (a series of reports), that is #88's job.
+
+So variant 2 gets **no `detail` part** (my call: Ben wants shorter, and his ✓ titles never needed a third part); the
+made-up set's middot titles are rewritten to name + kind where they are expected answers.
+
 ### Part 4: better titles
 - **Variant 2 (parts):** the filing schema becomes `name: String` (may be empty), `kind: String`, `collection` (one of
   the ids, as today). Instructions describe name and kind with examples drawn from Ben's ✓ titles. `SuggestionCleanup`
@@ -161,6 +182,10 @@ Part 5 ships, `suggestionOutcome` counts arrive in TelemetryDeck from TestFlight
 | ~30 real scans, outside the repo, never committed | Ben (agreed) |
 | No dates in titles; document dates go to #88 | Ben |
 | Approach 2, compared against a refined 1 | Ben |
+| A good title: name first, then kind; the short name people use; shorter wins (the definition above) | Ben (2026-11-14) |
+| Gift cards belong in Wallet | Ben (2026-11-14) |
+| No `detail` part in variant 2 | my call, from Ben's review |
+| Part 0's Console capture missed the info lines (not included, only ~4 min kept), so #90 gets no counts from it; the phone check retries | my call |
 | The winner is picked by Ben ticking both variants' titles side by side | Ben |
 | TelemetryDeck in this branch | Ben |
 | Real-scan folder `~/FilingCabinetPrivate/eval/`, `PRIVATE=` switch, review page as a local file | my call |
