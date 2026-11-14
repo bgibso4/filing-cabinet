@@ -178,7 +178,7 @@ testflight-archive: generate
 test-hooks:
 	bats scripts/hooks/tests
 
-# bats tests for the scripts (affected, sim-tests, audit-report, docs-only, the TestFlight archive).
+# bats tests for the scripts (affected, sim-tests, audit-report, docs-only, the TestFlight plan, archive and asc.swift).
 test-scripts:
 	bats scripts/tests scripts/testflight/tests
 

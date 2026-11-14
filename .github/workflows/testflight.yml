@@ -1,8 +1,9 @@
 name: TestFlight
 
 # Every merge to main that CI passed goes to TestFlight: the internal group (Ben) gets it automatically. Run workflow
-# by hand to upload main again; tick "Also send to friends" to send that build to the external group "Friends" too
-# (each new version waits for Apple's beta review first).
+# (on main, once CI has passed for its head) archives and uploads main's head again as a new build; tick "Also send
+# to friends" to send that new build to the external group "Friends" too (each new version waits for Apple's beta
+# review first).
 on:
   workflow_run:
     workflows: [CI]
@@ -15,6 +16,9 @@ on:
         type: boolean
         default: false
 
+# The commit in the run's name: plan.sh finds the last upload's commit by it.
+run-name: TestFlight ${{ github.event.workflow_run.head_sha || github.sha }}
+
 # One upload at a time, in order; never cancel one that's running.
 concurrency:
   group: testflight
@@ -24,28 +28,34 @@ permissions:
   contents: read
 
 jobs:
-  # Whether to upload: a CI run on a push to main that passed, and whose commit changed more than docs/, site/ and
-  # Markdown. A dispatch always uploads.
+  # Whether to upload (scripts/testflight/plan.sh): after a green CI run on a push to main, unless only docs/, site/
+  # and Markdown changed since the last upload; on a dispatch, only main and only once CI has passed for it.
   plan:
     if: >-
       github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       upload: ${{ steps.plan.outputs.upload }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-          fetch-depth: 2
+          # The last upload can be several merges back.
+          fetch-depth: 0
+          persist-credentials: false
       - id: plan
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
+          SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          REF: ${{ github.ref }}
         run: |
-          upload=true
-          if [ "$EVENT" = workflow_run ] && scripts/docs-only.sh HEAD^1 HEAD; then
-            upload=false; echo "Only docs/, site/ and Markdown changed: no upload."
-          fi
+          upload="$(scripts/testflight/plan.sh "$EVENT" "$SHA" "$REF")"
           echo "upload=$upload" >> "$GITHUB_OUTPUT"
 
   upload:
@@ -67,6 +77,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
 
       - name: Select Xcode 27
         run: |
@@ -90,16 +101,22 @@ jobs:
       # them). Count them before and after.
       - name: Count development certificates
         id: certificates
-        run: echo "before=$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)" >> "$GITHUB_OUTPUT"
+        run: |
+          count="$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)" ||
+            { echo "error: couldn't count the development certificates, so the run can't prove it made none" >&2; exit 1; }
+          echo "before=$count" >> "$GITHUB_OUTPUT"
 
       - name: Archive and upload
         run: make testflight-archive
 
+      # Also after a failed archive or export: either could have made one.
       - name: Check no certificate was created
+        if: always() && steps.certificates.outputs.before != ''
         env:
           BEFORE: ${{ steps.certificates.outputs.before }}
         run: |
-          after="$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)"
+          after="$(swift scripts/testflight/asc.swift count-certificates --type DEVELOPMENT)" ||
+            { echo "error: couldn't count the development certificates after the upload" >&2; exit 1; }
           echo "Development certificates: $BEFORE before, $after after"
           [ "$after" -le "$BEFORE" ] || { echo "error: the run created a development certificate; revoke it in Certificates, Identifiers & Profiles" >&2; exit 1; }
 

@@ -72,9 +72,9 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make compare-readers` | reader bake-off on macOS: both readers on every synthetic scan, report at `build/reader-comparison.md` (not a gate) |
 | `make eval-suggestions` | suggestion evaluation on macOS: the text reader, then the on-device model's two calls (title and collection, then search words), on every made-up case (page 1's image goes in, `IMAGE=0` for text only; `CASES=` runs some cases: ids, or prefixes like `wallet-`), report at `build/suggestion-eval.md` (not a gate; says so in one line when the model is unavailable) |
 | `make device-perf DEVICE=<name>` | reader cold and warm timing on a connected iPhone, attachments in `build/device-perf/`; not part of `full` or CI |
-| `make testflight-archive` | archive (ad-hoc signed, no certificate) and upload to TestFlight with cloud signing; needs `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH` and `BUILD_NUMBER`. The TestFlight workflow runs it after every green CI on `main`; Run workflow with "Also send to friends" also sends the build to the Friends group (`scripts/testflight/asc.swift`) |
+| `make testflight-archive` | archive (ad-hoc signed, no certificate) and upload to TestFlight with cloud signing; needs `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH` and `BUILD_NUMBER`. The TestFlight workflow runs it after every green CI on `main`, unless only docs changed since the last upload (`scripts/testflight/plan.sh`). Run workflow (on `main`, once CI passed) uploads main's head again; "Also send to friends" sends that new build to the Friends group (`scripts/testflight/asc.swift`) |
 | `make test-hooks` | bats tests for the hook scripts |
-| `make test-scripts` | bats tests for the scripts (`affected`, `retest`, `audit-report`, `docs-only`, the TestFlight archive) |
+| `make test-scripts` | bats tests for the scripts (`affected`, `retest`, `audit-report`, `docs-only`, the TestFlight plan, archive and `asc.swift selftest`) |
 | `make test-lint` | fixture tests for the SwiftLint custom rules |
 | `make check-resolved` | fail if Xcode rewrote the resolved packages |
 

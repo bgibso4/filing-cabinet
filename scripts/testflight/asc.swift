@@ -12,11 +12,16 @@ let usage = """
           the reads (the groups, Test Information, the build and its state) and says what it would change.
       count-certificates [--type <certificateType>]
           Prints how many certificates the team has (of that type, e.g. DEVELOPMENT). Read-only.
+      selftest
+          Checks the token's shape and the beta review decision offline (scripts/testflight/tests/asc.bats).
     """
 let bundleID = "com.cadre.filingcabinet"
 let friendsGroup = "Friends"
 let pollInterval: Duration = .seconds(30)
 let processingTimeout: Duration = .seconds(45 * 60)
+/// GETs that hit a network error, a 5xx or a 429 are tried this many times in all, this far apart.
+let getAttempts = 3
+let retryDelay: Duration = .seconds(10)
 
 struct Failure: Error {
     let message: String
@@ -73,6 +78,7 @@ struct Client {
             .replacingOccurrences(of: "=", with: "")
     }
 
+    /// Sends a request; a GET is retried after a network error, a 5xx or a 429.
     @discardableResult
     func send(_ method: String, _ path: String, query: [String: String] = [:], body: JSON? = nil) async throws -> JSON {
         guard var components = URLComponents(string: "https://api.appstoreconnect.apple.com" + path) else {
@@ -84,22 +90,32 @@ struct Client {
         guard let url = components.url else { throw Failure(message: "bad query for \(path)") }
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.setValue("Bearer \(try token())", forHTTPHeaderField: "Authorization")
         if let body {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         }
-        let (data, response) = try await URLSession.shared.data(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        // A 204 has no body.
-        let json = data.isEmpty ? [:] : (try JSONSerialization.jsonObject(with: data) as? JSON ?? [:])
-        guard (200..<300).contains(status) else {
-            let error = (json["errors"] as? [JSON])?.first
-            let title = error?["title"] as? String ?? "HTTP \(status)"
-            let detail = (error?["detail"] as? String).map { ": \($0)" } ?? ""
-            throw Failure(message: "App Store Connect, \(method) \(path) (HTTP \(status)): \(title)\(detail)")
+        let retries = method == "GET"
+        var attempt = 1
+        while true {
+            request.setValue("Bearer \(try token())", forHTTPHeaderField: "Authorization")
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if (200..<300).contains(status) {
+                    // A 204 has no body.
+                    return data.isEmpty ? [:] : (try JSONSerialization.jsonObject(with: data) as? JSON ?? [:])
+                }
+                let message = apiError(method: method, path: path, status: status, body: data)
+                guard retries, status >= 500 || status == 429, attempt < getAttempts else {
+                    throw Failure(message: message)
+                }
+                say("\(message); trying again")
+            } catch let error as URLError where retries && attempt < getAttempts {
+                say("App Store Connect, \(method) \(path): \(error.localizedDescription); trying again")
+            }
+            attempt += 1
+            try await Task.sleep(for: retryDelay)
         }
-        return json
     }
 
     func list(_ path: String, query: [String: String] = [:]) async throws -> [Resource] {
@@ -130,6 +146,31 @@ func makeClient() -> Client {
     return Client(keyID: keyID, issuerID: issuerID, key: key)
 }
 
+/// The API's error title and detail, or just the status when the body isn't the API's JSON (a proxy's 5xx page).
+func apiError(method: String, path: String, status: Int, body: Data) -> String {
+    // try?: a body that isn't JSON still gets reported, by its status.
+    let json = (try? JSONSerialization.jsonObject(with: body)) as? JSON
+    let error = (json?["errors"] as? [JSON])?.first
+    let title = (error?["title"] as? String).map { ": \($0)" } ?? ""
+    let detail = (error?["detail"] as? String).map { " \($0)" } ?? ""
+    return "App Store Connect, \(method) \(path) (HTTP \(status))\(title)\(detail)"
+}
+
+/// What a build's external TestFlight state calls for: submit a beta review; nothing (under review, approved or
+/// already with testers); wait (Apple is still working on it); or fail (it needs a person, or the state is unknown).
+enum ReviewStep: Equatable { case submit, done, wait, fail }
+
+func reviewStep(for state: String) -> ReviewStep {
+    switch state {
+    case "READY_FOR_BETA_SUBMISSION": .submit
+    case "WAITING_FOR_BETA_REVIEW", "IN_BETA_REVIEW", "BETA_APPROVED", "READY_FOR_BETA_TESTING", "IN_BETA_TESTING",
+        "IN_EXPORT_COMPLIANCE_REVIEW":
+        .done
+    case "PROCESSING": .wait
+    default: .fail
+    }
+}
+
 // MARK: - Commands
 
 func appID(_ client: Client) async throws -> Resource {
@@ -141,9 +182,10 @@ func appID(_ client: Client) async throws -> Resource {
 }
 
 /// Waits until the build has processed, and returns it.
-func processedBuild(_ number: String, app: String, client: Client) async throws -> Resource {
+func processedBuild(
+    _ number: String, app: String, deadline: ContinuousClock.Instant, client: Client
+) async throws -> Resource {
     let clock = ContinuousClock()
-    let deadline = clock.now + processingTimeout
     var last = ""
     while true {
         let builds = try await client.list("/v1/builds", query: ["filter[app]": app, "filter[version]": number])
@@ -217,7 +259,8 @@ func sendToFriends(build number: String, whatsNew: String, dryRun: Bool, client:
         say("Would stop: \(message)")
     }
 
-    let build = try await processedBuild(number, app: app.id, client: client)
+    let deadline = ContinuousClock.now + processingTimeout
+    let build = try await processedBuild(number, app: app.id, deadline: deadline, client: client)
     let locale = app.string("primaryLocale") ?? "en-US"
     if dryRun {
         say("Would set What to Test (\(locale)): \(whatsNew)")
@@ -235,9 +278,7 @@ func sendToFriends(build number: String, whatsNew: String, dryRun: Bool, client:
         }
     }
 
-    let state = try await client.one("/v1/builds/\(build.id)/buildBetaDetail")?.string("externalBuildState") ?? "?"
-    say("External state: \(state)")
-    guard state == "READY_FOR_BETA_SUBMISSION" else { return }
+    guard try await reviewStep(build, number: number, deadline: deadline, client: client) == .submit else { return }
     if dryRun {
         say("Would submit build \(number) for beta review")
     } else {
@@ -247,12 +288,78 @@ func sendToFriends(build number: String, whatsNew: String, dryRun: Bool, client:
     }
 }
 
+/// The build's review step once Apple has finished with it (.submit or .done); a state that needs a person throws.
+func reviewStep(
+    _ build: Resource, number: String, deadline: ContinuousClock.Instant, client: Client
+) async throws -> ReviewStep {
+    while true {
+        let detail = try await client.one("/v1/builds/\(build.id)/buildBetaDetail")
+        let state = detail?.string("externalBuildState") ?? "none"
+        switch reviewStep(for: state) {
+        case .wait:
+            guard ContinuousClock.now < deadline else { throw Failure(message: "build \(number) stayed \(state)") }
+            try await Task.sleep(for: pollInterval)
+        case .fail: throw Failure(message: "build \(number) is \(state) in TestFlight; see App Store Connect")
+        case let step:
+            say("External state: \(state)")
+            return step
+        }
+    }
+}
+
 func countCertificates(type: String?, client: Client) async throws {
     var query = ["limit": "200"]
     query["filter[certificateType]"] = type
     let json = try await client.send("GET", "/v1/certificates", query: query)
     let total = ((json["meta"] as? JSON)?["paging"] as? JSON)?["total"] as? Int
     say(String(total ?? (json["data"] as? [JSON])?.count ?? 0))
+}
+
+// MARK: - Self-test
+
+func decodeBase64URL(_ text: String) -> Data? {
+    var base64 = text.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+    base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
+    return Data(base64Encoded: base64)
+}
+
+/// Offline checks of the token and the review decision; the first failure ends it.
+func selftest() throws {
+    func check(_ condition: Bool, _ what: String) throws {
+        if !condition { throw Failure(message: "selftest: \(what)") }
+    }
+    let key = P256.Signing.PrivateKey()
+    let client = Client(keyID: "KEY123", issuerID: "issuer-1", key: key)
+    let parts = try client.token().split(separator: ".").map(String.init)
+    try check(parts.count == 3, "the token has three parts")
+    try check(parts.allSatisfy { !$0.contains(where: { "+/=".contains($0) }) }, "the token is base64url")
+    let decoded = parts.map { decodeBase64URL($0) ?? Data() }
+    // try?: a part that isn't JSON fails the checks below.
+    let objects = decoded.prefix(2).map { (try? JSONSerialization.jsonObject(with: $0)) as? JSON ?? [:] }
+    let (header, payload) = (objects[0], objects[1])
+    try check(header.count == 3, "the header has alg, kid and typ only")
+    try check(header["alg"] as? String == "ES256" && header["kid"] as? String == "KEY123", "the header's alg and kid")
+    try check(header["typ"] as? String == "JWT", "the header's typ")
+    try check(payload["iss"] as? String == "issuer-1", "the payload's iss")
+    try check(payload["aud"] as? String == "appstoreconnect-v1", "the payload's aud")
+    let lifetime = (payload["exp"] as? Int ?? 0) - Int(Date().timeIntervalSince1970)
+    try check((14 * 60...15 * 60).contains(lifetime), "the token expires in 15 minutes")
+    let signature = try P256.Signing.ECDSASignature(rawRepresentation: decoded[2])
+    let input = Data((parts[0] + "." + parts[1]).utf8)
+    try check(key.publicKey.isValidSignature(signature, for: input), "the signature verifies")
+
+    let steps: [String: ReviewStep] = [
+        "READY_FOR_BETA_SUBMISSION": .submit, "WAITING_FOR_BETA_REVIEW": .done, "IN_BETA_REVIEW": .done,
+        "BETA_APPROVED": .done, "IN_BETA_TESTING": .done, "PROCESSING": .wait, "MISSING_EXPORT_COMPLIANCE": .fail,
+        "BETA_REJECTED": .fail, "EXPIRED": .fail, "PROCESSING_EXCEPTION": .fail, "SOMETHING_NEW": .fail, "none": .fail,
+    ]
+    for (state, step) in steps { try check(reviewStep(for: state) == step, "\(state) is \(step)") }
+    let html = apiError(method: "GET", path: "/v1/builds", status: 502, body: Data("<html>Bad Gateway</html>".utf8))
+    try check(html == "App Store Connect, GET /v1/builds (HTTP 502)", "a non-JSON error reports its status")
+    let body = Data(#"{"errors":[{"title":"Not found","detail":"No build."}]}"#.utf8)
+    let api = apiError(method: "GET", path: "/v1/builds", status: 404, body: body)
+    try check(api == "App Store Connect, GET /v1/builds (HTTP 404): Not found No build.", "an API error's title")
+    say("selftest: ok")
 }
 
 // MARK: - Main
@@ -279,6 +386,8 @@ do {
             build: number, whatsNew: whatsNew, dryRun: arguments.contains("--dry-run"), client: makeClient())
     case "count-certificates":
         try await countCertificates(type: option("--type"), client: makeClient())
+    case "selftest":
+        try selftest()
     default:
         fail("unknown command \(command)\n\(usage)")
     }
