@@ -100,6 +100,8 @@ func instructionsHaveNoPlaceholdersAndNameNoCollection(style: TitleStyle) {
     let parts = SuggestionPrompt.instructions(for: .parts)
 
     #expect(whole != parts)
+    // The app's instructions stay as they were before the styles existed.
+    #expect(whole.contains("From the scan, give two things."))
     #expect(parts.contains("Name:") && parts.contains("Kind:"))
     #expect(!whole.contains("Kind:"))
     // The owner's-name rule stays in both: no code rule catches a name.

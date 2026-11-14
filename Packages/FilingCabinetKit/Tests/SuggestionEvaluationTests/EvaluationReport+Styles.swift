@@ -16,8 +16,8 @@ extension EvaluationReport {
             rows.append(row("Found by search\(label)") { Self.foundBySearch($0, style: only) })
         }
         if run.styles.contains(.parts) {
-            rows.append(row("Name matched (parts)") { Self.partsMatches($0).name })
-            rows.append(row("Kind matched (parts)") { Self.partsMatches($0).kind })
+            rows.append(row("Name matched (parts, answered)") { Self.partsMatches($0).name })
+            rows.append(row("Kind matched (parts, answered)") { Self.partsMatches($0).kind })
         }
         return rows
     }

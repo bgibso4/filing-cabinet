@@ -6,17 +6,22 @@ package enum SuggestionCleanup {
     private static let maximumWords = 8
 
     /// The model's `name` and `kind` as one title, ready for `clean`. Both trimmed and collapsed; a name equal to the
-    /// kind is dropped, and a name already ending in the kind's words stands alone. Over 40 characters, the name loses
+    /// kind is dropped, and a name already ending in the kind's words is not given the kind twice. Over 40 characters, the name loses
     /// its last words until the kind fits after it (the kind alone when no word of the name does). Nil when both are
     /// empty.
     package static func composedTitle(name: String?, kind: String?) -> String? {
         let name = collapse(name ?? "")
-        let kind = collapse(kind ?? "")
+        var kind = collapse(kind ?? "")
         let (lowerName, lowerKind) = (name.lowercased(), kind.lowercased())
         if kind.isEmpty { return name.isEmpty ? nil : name }
         if name.isEmpty || lowerName == lowerKind { return kind }
-        if lowerName.hasSuffix(" " + lowerKind) { return name }
         var words = name.split(separator: " ")
+        if lowerName.hasSuffix(" " + lowerKind) {
+            // The name already ends in the kind: keep its own spelling of the kind and cut only what comes before it.
+            let kindWords = kind.split(separator: " ").count
+            kind = words.suffix(kindWords).joined(separator: " ")
+            words.removeLast(kindWords)
+        }
         while !words.isEmpty, words.joined(separator: " ").count + 1 + kind.count > titleLimit {
             words.removeLast()
         }

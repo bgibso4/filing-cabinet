@@ -36,8 +36,8 @@ struct EvaluationStyleTests {
 
         #expect(markdown.contains("| Titles, right (whole) | 0/1 (0%) |"))
         #expect(markdown.contains("| Titles, right (parts) | 1/1 (100%) |"))
-        #expect(markdown.contains("| Name matched (parts) | 1/1 (100%) |"))
-        #expect(markdown.contains("| Kind matched (parts) | 1/1 (100%) |"))
+        #expect(markdown.contains("| Name matched (parts, answered) | 1/1 (100%) |"))
+        #expect(markdown.contains("| Kind matched (parts, answered) | 1/1 (100%) |"))
         #expect(markdown.contains("| Case | Set | Expected | Got (whole) | Got (parts) |"))
     }
 

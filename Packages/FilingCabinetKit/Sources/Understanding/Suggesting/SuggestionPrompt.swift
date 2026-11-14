@@ -7,16 +7,18 @@ package enum SuggestionPrompt {
             case .whole: wholeTitle
             case .parts: partsTitle
             }
-        return opening + title + collectionRule
+        return opening(things: style == .whole ? "two" : "three") + title + collectionRule
     }
 
-    private static let opening = """
+    private static func opening(things: String) -> String {
+        """
         You file scanned paper documents in a person's own private library. Any document is fine to file: IDs, \
         medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
-        words usually mean handwriting. From the scan, give these things.
+        words usually mean handwriting. From the scan, give \(things) things.
 
 
         """
+    }
 
     private static let wholeTitle = """
         Title: what the document is and who it is from, the way a person would say it, in Title Case (every word \

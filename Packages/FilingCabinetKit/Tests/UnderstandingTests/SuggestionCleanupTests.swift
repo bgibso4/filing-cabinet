@@ -205,6 +205,16 @@ private func composed(_ name: String?, _ kind: String?) -> String? {
     #expect((clean(title: title).title?.count ?? 99) <= 40)
 }
 
+@Test func longNameEndingInTheKindKeepsTheKind() {
+    let name = "Northwind Property Management Services Receipt"
+    #expect(name.count == 46)
+
+    let title = clean(title: composed(name, "Receipt")).title
+
+    #expect(title == "Northwind Property Management Receipt")
+    #expect((title?.count ?? 99) <= 40)
+}
+
 @Test func aNameOfOneLongWordLeavesTheKindAlone() {
     let title = composed(String(repeating: "a", count: 45), "Receipt")
 
