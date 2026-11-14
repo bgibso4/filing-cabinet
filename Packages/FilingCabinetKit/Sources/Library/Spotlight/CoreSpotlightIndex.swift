@@ -29,7 +29,7 @@ public struct CoreSpotlightIndex: SpotlightIndexing {
     }
 
     /// The title, the detail and the thumbnail; no text content and no keywords (A10).
-    private static func searchableItem(_ item: SpotlightItem) -> CSSearchableItem {
+    package static func searchableItem(_ item: SpotlightItem) -> CSSearchableItem {
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
         attributes.displayName = item.title
         attributes.contentDescription = item.detail

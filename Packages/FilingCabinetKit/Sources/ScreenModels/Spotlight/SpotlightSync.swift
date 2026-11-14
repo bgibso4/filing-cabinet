@@ -5,22 +5,29 @@ import Observation
 
 /// Keeps iPhone search in step with the library (A10): while `run()` runs, every scan in the library, not Trash, is
 /// indexed by its title, "Receipts · 3 pages" and page 1's thumbnail. A change indexes what changed and removes what
-/// left. The app runs one once launch has purged Trash, so a purged scan is never indexed.
+/// left. Each run starts clean: its first pass clears the index and indexes everything, so nothing an earlier run
+/// failed to remove stays. The app runs one once launch has purged Trash, so a purged scan is never indexed.
 @MainActor
+@Observable
 public final class SpotlightSync {
     /// Bump to rebuild every phone's index once: a new item shape or a fix to an old one.
     package static let version = 1
     /// Thumbnails read and sent per index call, so a first build of a large library never holds them all at once.
     private static let batchSize = 100
 
-    private let library: any ScanLibrary
-    private let today: Today
-    private let index: any SpotlightIndexing
-    private let thumbnails: @Sendable (ScanID) async -> Data?
-    private let preferences: AppPreferences
+    /// Bumped by `syncAgain()`: a pass with no change to the library, to retry what failed.
+    private var nudges = 0
+
+    @ObservationIgnored private let library: any ScanLibrary
+    @ObservationIgnored private let today: Today
+    @ObservationIgnored private let index: any SpotlightIndexing
+    @ObservationIgnored private let thumbnails: @Sendable (ScanID) async -> Data?
+    @ObservationIgnored private let preferences: AppPreferences
     /// What the index holds, without thumbnails (page 1 never changes, so they don't need comparing). A failed call
     /// leaves its scans as they were here, so the next pass tries them again.
-    private var indexed: [ScanID: SpotlightItem] = [:]
+    @ObservationIgnored private var indexed: [ScanID: SpotlightItem] = [:]
+    /// False until a pass has cleared the index and indexed everything; until then each pass starts by clearing it.
+    @ObservationIgnored private var isClean = false
 
     /// `thumbnails` gives page 1's cached JPEG, or nil.
     public init(
@@ -40,14 +47,23 @@ public final class SpotlightSync {
     /// Syncs now and after every change, one pass at a time, until cancelled.
     public func run() async {
         // Read for their changes only: each pass reads the library and the day as they are then.
-        let changes = Observations { _ = (self.library.scans, self.library.lifespans, self.today.day) }
+        let changes = Observations {
+            _ = (self.library.scans, self.library.lifespans, self.today.day)
+            return self.nudges
+        }
         for await _ in changes {
             await sync()
         }
     }
 
+    /// Syncs again with nothing changed, after the current pass: the app calls it when it comes back, since a pass
+    /// while the phone was locked fails (the index is readable only while unlocked) and nothing else would retry it.
+    public func syncAgain() {
+        nudges += 1
+    }
+
     private func sync() async {
-        let rebuilding = preferences.spotlightVersion < Self.version
+        let rebuilding = !isClean || preferences.spotlightVersion < Self.version
         if rebuilding {
             do {
                 try await index.removeAll()
@@ -74,7 +90,10 @@ public final class SpotlightSync {
                 succeeded = false
             }
         }
-        if rebuilding && succeeded { preferences.spotlightVersion = Self.version }
+        if rebuilding && succeeded {
+            isClean = true
+            preferences.spotlightVersion = Self.version
+        }
     }
 
     /// Indexes the items with their thumbnails and records them; false when the call failed.

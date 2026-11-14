@@ -43,6 +43,7 @@ private struct SyncHarness {
     let index = FakeSpotlightIndex()
     let preferences: AppPreferences
     private let fresh: FreshDefaults
+    let sync: SpotlightSync
     private let running: Task<Void, Never>
 
     init(_ scans: [ScanSummary], storedVersion: Int = SpotlightSync.version, failFirstCall: Bool = false) throws {
@@ -56,6 +57,7 @@ private struct SyncHarness {
         if failFirstCall { index.failNextCall() }
         let sync = SpotlightSync(
             library: library, today: today, index: index, thumbnails: { _ in jpeg }, preferences: preferences)
+        self.sync = sync
         running = Task { await sync.run() }
     }
 
@@ -199,7 +201,8 @@ private func eventually(_ condition: () -> Bool) async throws -> Bool {
 
     harness.index.failNextCall()
     try harness.library.rename(receipt.id, to: "Corner Market")
-    #expect(try await eventually { harness.index.calls.last == .index([receipt.id]) })
+    // The first pass made two calls; the rename's failed call is the third.
+    #expect(try await eventually { harness.index.calls.count == 3 })
     #expect(harness.titles == ["City Pharmacy", "Lecture"])
 
     try harness.library.rename(other.id, to: "Seminar")
@@ -232,12 +235,57 @@ private func eventually(_ condition: () -> Bool) async throws -> Bool {
 }
 
 @MainActor
-@Test func sameVersionDoesNotReindex() async throws {
-    let harness = try SyncHarness([scan("City Pharmacy")])
+@Test func everyStartBeginsClean() async throws {
+    let receipt = scan("City Pharmacy")
+    let harness = try SyncHarness([receipt])
     defer { harness.cleanUp() }
 
+    // Whatever a removal that failed in an earlier run left behind goes first (the sync's own state starts empty).
+    #expect(try await eventually { harness.index.calls == [.removeAll, .index([receipt.id])] })
+}
+
+@MainActor
+@Test func failedFirstPassStartsCleanAgain() async throws {
+    let receipt = scan("City Pharmacy")
+    let harness = try SyncHarness([receipt], failFirstCall: true)
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.index.calls == [.removeAll] })
+
+    harness.sync.syncAgain()
+
+    #expect(try await eventually { harness.index.calls == [.removeAll, .removeAll, .index([receipt.id])] })
+}
+
+@MainActor
+@Test func sameVersionDoesNotReindex() async throws {
+    let receipt = scan("City Pharmacy")
+    let harness = try SyncHarness([receipt])
+    defer { harness.cleanUp() }
     #expect(try await eventually { harness.titles == ["City Pharmacy"] })
-    #expect(!harness.index.calls.contains(.removeAll))
+
+    try harness.library.rename(receipt.id, to: "Corner Market")
+
+    #expect(try await eventually { harness.titles == ["Corner Market"] })
+    #expect(harness.index.calls.filter { $0 == .removeAll }.count == 1)
+}
+
+@MainActor
+@Test func comingBackRetriesAFailedCall() async throws {
+    let receipt = scan("City Pharmacy")
+    let harness = try SyncHarness([receipt])
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.titles == ["City Pharmacy"] })
+
+    // As while the phone is locked: the protected index refuses the call.
+    harness.index.failNextCall()
+    try harness.library.rename(receipt.id, to: "Corner Market")
+    // The first pass made two calls; the rename's failed call is the third.
+    #expect(try await eventually { harness.index.calls.count == 3 })
+    #expect(harness.titles == ["City Pharmacy"])
+
+    harness.sync.syncAgain()
+
+    #expect(try await eventually { harness.titles == ["Corner Market"] })
 }
 
 @MainActor

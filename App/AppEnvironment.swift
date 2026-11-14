@@ -191,9 +191,11 @@ final class AppEnvironment {
     }
 
     /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
-    /// have come meanwhile. Once launch has finished, Trash is purged again.
+    /// have come meanwhile, and a Spotlight call made while the phone was locked failed. Once launch has finished, Trash
+    /// is purged again.
     func becameActive() async {
         notifier.reschedule()
+        spotlight.syncAgain()
         await banner.refreshAuthorization()
         guard isReady else { return }
         await purgeTrash()
