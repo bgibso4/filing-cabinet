@@ -53,6 +53,8 @@ final class AppStartup {
         guard Self.isUITest(arguments), let newArguments = RelaunchURL.arguments(from: url), Self.isUITest(newArguments)
         else { return }
         environment?.leftForeground()
+        // `requests` outlives the relaunch: drop what the last test left untaken, so it can't act in the next one.
+        _ = requests.take()
         arguments = newArguments
         state = Self.open(arguments: newArguments, analytics: analytics) { [weak self] in self?.retry() ?? false }
         sendLaunchRequest(newArguments)

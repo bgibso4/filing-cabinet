@@ -71,4 +71,15 @@ struct AppStartupTests {
         #expect(startup.retry())
         #expect(requests.pending == nil)
     }
+
+    /// A UI test's relaunch starts the next test: a request the last one left untaken doesn't carry over.
+    @Test func relaunchDropsTheUntakenRequest() throws {
+        let requests = ExternalRequests()
+        let startup = startup(["-Request", "scan"], requests: requests)
+        let url = try #require(RelaunchURL.make(arguments: ["-UITest", "-Notifications", "authorized"]))
+        let animations = UIView.areAnimationsEnabled
+        defer { UIView.setAnimationsEnabled(animations) }
+        startup.relaunch(by: url)
+        #expect(requests.pending == nil)
+    }
 }
