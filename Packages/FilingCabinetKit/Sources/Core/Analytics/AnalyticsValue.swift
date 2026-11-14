@@ -17,8 +17,8 @@ package protocol AnalyticsToken: RawRepresentable, Sendable where RawValue == St
 
 /// The erased form of a token. It has no string initializer, so arbitrary text cannot get in.
 public struct AnalyticsTokenValue: Sendable, Equatable {
-    // periphery:ignore - read by the synthesized Equatable and by LogAnalytics' description of the payload
-    private let raw: String
+    /// Readable inside `Core` only, so the app target cannot take the text back out.
+    let raw: String
 
     package init(_ token: some AnalyticsToken) {
         raw = token.rawValue
