@@ -28,6 +28,16 @@ struct SuggestionEvaluationTests {
             ? nil : URL(filePath: ($0 as NSString).expandingTildeInPath, directoryHint: .isDirectory)
     }
 
+    /// `VARIANT=`: the title styles compared, a comma list of `TitleStyle` names in the order given; `parts` when not
+    /// set. An unknown name fails the run rather than being skipped.
+    private static func titleStyles() throws -> [TitleStyle] {
+        guard let list = environment["FC_EVAL_VARIANT"], !list.allSatisfy(\.isWhitespace) else { return [.parts] }
+        return try list.split(separator: ",").map { name in
+            let name = name.trimmingCharacters(in: .whitespaces)
+            return try #require(TitleStyle(rawValue: name), "unknown VARIANT \(name): use whole, parts")
+        }
+    }
+
     /// Each model call is cancelled after this, so one hung model call can't stall the run.
     private static let callLimit = Duration.seconds(30)
 
@@ -38,10 +48,11 @@ struct SuggestionEvaluationTests {
     @Test(.enabled(if: environment["FC_EVAL_SUGGESTIONS"] == "1", "runs only in make eval-suggestions"))
     func writesTheReport() async throws {
         let includesImage = Self.environment["FC_EVAL_IMAGE"] != "0"
-        let suggester = ModelScanSuggester(includesImage: includesImage)
+        let styles = try Self.titleStyles()
+        let suggesters = styles.map { ($0, ModelScanSuggester(includesImage: includesImage, titleStyle: $0)) }
         let outcome: EvaluationReport.Outcome
-        if suggester.availability == .available {
-            outcome = .ran(try await Self.run(suggester, includesImage: includesImage))
+        if suggesters[0].1.availability == .available {
+            outcome = .ran(try await Self.run(suggesters, includesImage: includesImage))
         } else {
             // Only ModelScanSuggester imports FoundationModels, so the system's own reason isn't read here.
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
@@ -53,7 +64,6 @@ struct SuggestionEvaluationTests {
         try EvaluationReport(outcome: outcome).markdown.write(to: output, atomically: true, encoding: .utf8)
         #expect(FileManager.default.fileExists(atPath: output.path))
         if case .ran(let run) = outcome {
-            // One title style today; the page takes one entry per style.
             let page = ReviewPage.html(for: try run.results.map { try Self.reviewEntry(for: $0) })
             try page.write(to: folder.appending(path: "review.html"), atomically: true, encoding: .utf8)
         }
@@ -94,12 +104,16 @@ struct SuggestionEvaluationTests {
             isPrivate: result.isPrivate,
             image: data as Data,
             collectionID: result.suggestion?.collectionID,
-            titles: [(style: "whole", title: result.suggestion?.title)]
+            titles: result.filings.map { (style: $0.style.rawValue, title: $0.call.answer?.title) }
         )
     }
 
     /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test.
-    private static func run(_ suggester: ModelScanSuggester, includesImage: Bool) async throws -> EvaluationRun {
+    /// `suggesters` holds one per title style, the first the primary: its title goes to the words call.
+    private static func run(_ suggesters: [(TitleStyle, ModelScanSuggester)], includesImage: Bool) async throws
+        -> EvaluationRun
+    {
+        let suggester = suggesters[0].1
         let reader = ScanReader(reader: ReaderKind.text.makeReader())
         var results: [EvaluationRun.Result] = []
         var inputs: [SuggestionInput] = []
@@ -118,7 +132,11 @@ struct SuggestionEvaluationTests {
             }
             let input = SuggestionInput(
                 pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
-            let filing = await TimedCall.run(limit: callLimit) { await suggester.suggestFiling(input) }
+            var filings: [(style: TitleStyle, call: TimedCall<ScanSuggestion>)] = []
+            for (style, suggester) in suggesters {
+                filings.append((style, await TimedCall.run(limit: callLimit) { await suggester.suggestFiling(input) }))
+            }
+            let filing = filings[0].call
             // As saved: the suggestion where it gave one, else what the person would have chosen.
             let title = filing.answer?.title ?? item.titles.first ?? ""
             let collectionID = filing.answer?.collectionID ?? item.collection
@@ -131,7 +149,7 @@ struct SuggestionEvaluationTests {
                 EvaluationRun.Result(
                     item: item,
                     pageText: texts.joined(separator: "\n"),
-                    filing: filing,
+                    filings: filings,
                     words: words,
                     isPrivate: isPrivate
                 ))

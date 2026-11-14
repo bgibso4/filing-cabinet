@@ -154,3 +154,59 @@ private func clean(words: [String]) -> [String] {
 @Test func aPartSharingOnlyPartOfAWordIsKept() {
     #expect(clean(title: "Passport · Pass").title == "Passport · Pass")
 }
+
+private func composed(_ name: String?, _ kind: String?) -> String? {
+    SuggestionCleanup.composedTitle(name: name, kind: kind)
+}
+
+@Test func nameAndKindJoin() {
+    #expect(composed("InBody", "Report") == "InBody Report")
+}
+
+@Test func noNameGivesKind() {
+    #expect(composed("", "Library Card") == "Library Card")
+    #expect(composed(nil, "Library Card") == "Library Card")
+}
+
+@Test func nameEndingInKindIsNotRepeated() {
+    #expect(composed("City Pharmacy Receipt", "Receipt") == "City Pharmacy Receipt")
+    #expect(composed("City Pharmacy RECEIPT", "receipt") == "City Pharmacy RECEIPT")
+    // Only a whole word counts: "Receipts" does not end in the word "Receipt".
+    #expect(composed("City Receipts", "Receipt") == "City Receipts Receipt")
+}
+
+@Test func nameEqualToKindIsDropped() {
+    #expect(composed("Receipt", "receipt") == "receipt")
+}
+
+@Test func noKindGivesName() {
+    #expect(composed("Maple Street Hardware", "") == "Maple Street Hardware")
+    #expect(composed("Maple Street Hardware", nil) == "Maple Street Hardware")
+}
+
+@Test func bothEmptyIsNil() {
+    #expect(composed("", "") == nil)
+    #expect(composed("  \n ", "   ") == nil)
+    #expect(composed(nil, nil) == nil)
+}
+
+@Test func spacingIsTrimmedAndCollapsed() {
+    #expect(composed("  InBody  ", " Body   Scan ") == "InBody Body Scan")
+}
+
+@Test func longNameIsCutBeforeTheKind() {
+    let name = "Northwind Property Management Services Inc"
+    #expect(name.count > 40)
+
+    let title = SuggestionCleanup.composedTitle(name: name, kind: "Receipt")
+
+    #expect(title == "Northwind Property Management Receipt")
+    #expect(clean(title: title).title?.hasSuffix("Receipt") == true)
+    #expect((clean(title: title).title?.count ?? 99) <= 40)
+}
+
+@Test func aNameOfOneLongWordLeavesTheKindAlone() {
+    let title = composed(String(repeating: "a", count: 45), "Receipt")
+
+    #expect(title == "Receipt")
+}

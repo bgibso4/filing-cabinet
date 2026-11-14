@@ -83,8 +83,9 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     #expect(!prompt.contains(String(repeating: "b", count: 100)))
 }
 
-@Test func instructionsHaveNoPlaceholdersAndNameNoCollection() {
-    let instructions = SuggestionPrompt.instructions
+@Test(arguments: TitleStyle.allCases)
+func instructionsHaveNoPlaceholdersAndNameNoCollection(style: TitleStyle) {
+    let instructions = SuggestionPrompt.instructions(for: style)
 
     #expect(!instructions.contains("<") && !instructions.contains(">"))
     for collection in SuggestionCollection.builtIns {
@@ -92,6 +93,18 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     }
     #expect(!instructions.lowercased().contains("wallet"))
     #expect(!instructions.lowercased().contains("throwaway"))
+}
+
+@Test func eachStyleHasItsOwnInstructions() {
+    let whole = SuggestionPrompt.instructions(for: .whole)
+    let parts = SuggestionPrompt.instructions(for: .parts)
+
+    #expect(whole != parts)
+    #expect(parts.contains("Name:") && parts.contains("Kind:"))
+    #expect(!whole.contains("Kind:"))
+    // The owner's-name rule stays in both: no code rule catches a name.
+    #expect(whole.contains("Never the name of the person"))
+    #expect(parts.contains("Never the name of the person"))
 }
 
 @Test func promptStartsWithTheCollectionsPrefix() {

@@ -1,5 +1,7 @@
 import Foundation
 
+@testable import Understanding
+
 /// One scan in `Fixtures/cases.json` (`scripts/make-eval-scans.swift`) and the rules that score an answer for it.
 struct EvaluationCase: Sendable {
     let id: String
@@ -43,6 +45,22 @@ struct EvaluationCase: Sendable {
         guard let title else { return false }
         let answer = Self.loosened(title)
         return titles.contains { Self.loosened($0) == answer }
+    }
+
+    /// The `.parts` name matched when an expected title starts with it, on word boundaries and folded; no name matches
+    /// when an expected title is the kind alone.
+    func nameMatches(_ parts: TitleParts) -> Bool {
+        let name = Self.loosened(parts.name)
+        return titles.map(Self.loosened).contains { title in
+            name.isEmpty ? title == Self.loosened(parts.kind) : title == name || title.hasPrefix(name + " ")
+        }
+    }
+
+    /// The `.parts` kind matched when an expected title ends with it, on word boundaries and folded. An empty kind
+    /// never matches.
+    func kindMatches(_ parts: TitleParts) -> Bool {
+        let kind = Self.loosened(parts.kind)
+        return !kind.isEmpty && titles.map(Self.loosened).contains { $0 == kind || $0.hasSuffix(" " + kind) }
     }
 
     /// The searches no hidden word can find, in case order.

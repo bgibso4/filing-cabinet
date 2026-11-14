@@ -115,6 +115,6 @@ extension AppEnvironment {
                 if options.isUITest { return FakeScanSuggester.unavailable() }
             }
         #endif
-        return ModelScanSuggester()
+        return ModelScanSuggester(titleStyle: .whole)
     }
 }

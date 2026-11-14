@@ -55,21 +55,29 @@ struct EvaluationReport {
         return values.sorted()[min(max(rank, 1), values.count) - 1]
     }
 
-    private static func collections(_ results: [EvaluationRun.Result]) -> Tally {
-        Tally(hits: results.count { $0.suggestion?.collectionID == $0.item.collection }, total: results.count)
+    static func collections(_ results: [EvaluationRun.Result], style: TitleStyle? = nil) -> Tally {
+        Tally(
+            hits: results.count { suggestion($0, style)?.collectionID == $0.item.collection }, total: results.count)
     }
 
-    private static func collections(_ results: [EvaluationRun.Result], quality: String) -> Tally {
-        collections(results.filter { $0.item.quality == quality })
+    static func collections(
+        _ results: [EvaluationRun.Result], quality: String, style: TitleStyle? = nil
+    ) -> Tally {
+        collections(results.filter { $0.item.quality == quality }, style: style)
     }
 
-    private static func titles(_ results: [EvaluationRun.Result]) -> Tally {
-        Tally(hits: results.count { $0.item.isRightTitle($0.suggestion?.title) }, total: results.count)
+    static func titles(_ results: [EvaluationRun.Result], style: TitleStyle? = nil) -> Tally {
+        Tally(hits: results.count { $0.item.isRightTitle(suggestion($0, style)?.title) }, total: results.count)
+    }
+
+    /// `style`'s answer, or the primary style's when none is named.
+    static func suggestion(_ result: EvaluationRun.Result, _ style: TitleStyle?) -> ScanSuggestion? {
+        style.map(result.suggestion(for:)) ?? result.suggestion
     }
 
     /// The headline: searches Search finds from the suggested title, the page text and the hidden words.
-    private static func foundBySearch(_ results: [EvaluationRun.Result]) -> Tally {
-        searches(results, missed: unfound)
+    static func foundBySearch(_ results: [EvaluationRun.Result], style: TitleStyle? = nil) -> Tally {
+        searches(results) { unfound($0, style: style) }
     }
 
     /// Searches the hidden words alone find.
@@ -84,9 +92,9 @@ struct EvaluationReport {
         return Tally(hits: total - results.reduce(0) { $0 + missed($1).count }, total: total)
     }
 
-    private static func unfound(_ result: EvaluationRun.Result) -> [String] {
+    private static func unfound(_ result: EvaluationRun.Result, style: TitleStyle? = nil) -> [String] {
         result.item.unfoundSearches(
-            title: result.suggestion?.title, text: result.pageText, words: result.searchWords)
+            title: suggestion(result, style)?.title, text: result.pageText, words: result.searchWords)
     }
 
     // MARK: - Sections
@@ -134,11 +142,10 @@ struct EvaluationReport {
         return [
             "## Summary", "", "| Measure | " + columns.map(\.name).joined(separator: " | ") + " |",
             "|---|" + String(repeating: "---|", count: columns.count),
-            row("Collection, all scans", Self.collections),
+            row("Collection, all scans") { Self.collections($0) },
             row("Collection, clean scans") { Self.collections($0, quality: "clean") },
             row("Collection, low-quality scans") { Self.collections($0, quality: "low") },
-            row("Titles, right", Self.titles),
-            row("Found by search", Self.foundBySearch),
+        ] + styleRows(run, row: row) + [
             row("Search recall, hidden words only", Self.wordsOnly),
             "",
             "| Measure | Result |", "|---|---|",
@@ -199,14 +206,24 @@ struct EvaluationReport {
     }
 
     private func titleMisses(_ run: EvaluationRun) -> [String] {
-        let misses = Self.madeUp(run).filter { !$0.result.item.isRightTitle($0.result.suggestion?.title) }
+        let several = run.styles.count > 1
+        let misses = Self.madeUp(run).filter { entry in
+            run.styles.contains { !entry.result.item.isRightTitle(entry.result.suggestion(for: $0)?.title) }
+        }
+        let gots = several ? run.styles.map { "Got (\($0.rawValue))" } : ["Got"]
         return [
-            "## Titles not right (\(misses.count))", "", "| Case | Set | Expected | Got |", "|---|---|---|---|",
+            "## Titles not right (\(misses.count))", "",
+            "| Case | Set | Expected | " + gots.joined(separator: " | ") + " |",
+            "|---|---|---|" + String(repeating: "---|", count: gots.count),
         ]
             + misses.map { index, result in
                 "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(result.item.titles.joined(separator: " / "))) | "
-                    + "\(Self.cell(Self.title(result.suggestion))) |"
-            } + [""] + Self.privateIDs(run) { !$0.item.isRightTitle($0.suggestion?.title) }
+                    + run.styles.map { Self.cell(Self.title(result.suggestion(for: $0))) }.joined(separator: " | ")
+                    + " |"
+            } + [""]
+            + Self.privateIDs(run) { result in
+                run.styles.contains { !result.item.isRightTitle(result.suggestion(for: $0)?.title) }
+            }
     }
 
     private func unfoundSearches(_ run: EvaluationRun) -> [String] {

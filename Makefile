@@ -142,15 +142,18 @@ compare-readers: generate
 # set, in the app's two calls (title and collection, then search words). A report, not a gate; slow (minutes). Page 1's
 # image goes in with the text (IMAGE=0: text only); CASES="wallet-,notes-bio-class" runs only those cases (ids, or
 # prefixes ending in "-") and skips the probes. PRIVATE=~/FilingCabinetPrivate/eval adds that folder's cases (outside the
-# repo) and writes the report there.
+# repo) and writes the report there. VARIANT=whole,parts compares title styles (a comma list; the first one's title goes
+# to the words call); parts when not set.
 IMAGE ?= 1
 CASES ?=
 PRIVATE ?=
+VARIANT ?= parts
 
 eval-suggestions: generate
 	set -o pipefail; TEST_RUNNER_FC_EVAL_IMAGE=$(IMAGE) TEST_RUNNER_FC_EVAL_CASES="$(CASES)" \
-		TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
-		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+		TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" TEST_RUNNER_FC_EVAL_VARIANT="$(VARIANT)" \
+		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme SuggestionEvaluation \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@echo "Report: $(if $(PRIVATE),$(PRIVATE),build)/suggestion-eval.md"
 
 # Folds the answers downloaded from build/review.html (judgements.json) into the cases files: Fixtures/cases.json for

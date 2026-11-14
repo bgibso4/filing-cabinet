@@ -5,6 +5,24 @@ package enum SuggestionCleanup {
     private static let wordLimit = 40
     private static let maximumWords = 8
 
+    /// The model's `name` and `kind` as one title, ready for `clean`. Both trimmed and collapsed; a name equal to the
+    /// kind is dropped, and a name already ending in the kind's words stands alone. Over 40 characters, the name loses
+    /// its last words until the kind fits after it (the kind alone when no word of the name does). Nil when both are
+    /// empty.
+    package static func composedTitle(name: String?, kind: String?) -> String? {
+        let name = collapse(name ?? "")
+        let kind = collapse(kind ?? "")
+        let (lowerName, lowerKind) = (name.lowercased(), kind.lowercased())
+        if kind.isEmpty { return name.isEmpty ? nil : name }
+        if name.isEmpty || lowerName == lowerKind { return kind }
+        if lowerName.hasSuffix(" " + lowerKind) { return name }
+        var words = name.split(separator: " ")
+        while !words.isEmpty, words.joined(separator: " ").count + 1 + kind.count > titleLimit {
+            words.removeLast()
+        }
+        return (words.map(String.init) + [kind]).joined(separator: " ")
+    }
+
     package static func clean(title: String?, collectionID: String?, allowed: [SuggestionCollection]) -> ScanSuggestion
     {
         ScanSuggestion(

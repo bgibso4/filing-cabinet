@@ -17,12 +17,15 @@ public final class ModelScanSuggester: ScanSuggester {
     private static let charactersPerToken = 3
 
     private let includesImage: Bool
+    private let titleStyle: TitleStyle
     /// The session `prewarm` made, waiting for the next `suggestFiling` to take it.
     private let prewarmed = Mutex<LanguageModelSession?>(nil)
 
     /// `includesImage` sends page 1 alongside the text to the filing call when the model can see images (E2).
-    public init(includesImage: Bool = true) {
+    /// `titleStyle` has no default: each caller says how titles are asked for.
+    public init(includesImage: Bool = true, titleStyle: TitleStyle) {
         self.includesImage = includesImage
+        self.titleStyle = titleStyle
     }
 
     public var availability: SuggesterAvailability {
@@ -35,7 +38,7 @@ public final class ModelScanSuggester: ScanSuggester {
         let model = SystemLanguageModel.default
         guard case .available = model.availability else { return }
         let session = prewarmed.withLock { waiting in
-            let session = waiting ?? Self.session(model: model)
+            let session = waiting ?? Self.session(model: model, style: titleStyle)
             waiting = session
             return session
         }
@@ -57,7 +60,8 @@ public final class ModelScanSuggester: ScanSuggester {
             let session = prewarmed.withLock { $0.take() }
             let wasPrewarmed = session != nil
             let suggestion = try await respond(
-                to: input, image: image, session: session ?? Self.session(model: model), model: model)
+                to: input, image: image, session: session ?? Self.session(model: model, style: titleStyle), model: model
+            )
             UnderstandingLog.logger.info(
                 """
                 Suggester: filed in \(ContinuousClock.now - start, privacy: .public), \
@@ -96,9 +100,9 @@ public final class ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// A fresh session with the suggester's instructions.
-    private static func session(model: SystemLanguageModel) -> LanguageModelSession {
-        LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions)
+    /// A fresh session with the instructions for `style`.
+    private static func session(model: SystemLanguageModel, style: TitleStyle) -> LanguageModelSession {
+        LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions(for: style))
     }
 
     /// The filing call's answer from `session`, passed through `SuggestionCleanup`.
@@ -107,7 +111,8 @@ public final class ModelScanSuggester: ScanSuggester {
     ) async throws -> ScanSuggestion {
         let budget = max(model.contextSize - Self.reservedTokens, 0) * Self.charactersPerToken
         let prompt = SuggestionPrompt.prompt(for: input, budget: budget)
-        let schema = try Self.schema(collectionIDs: SuggestionPrompt.collectionIDs(in: input.collections))
+        let schema = try Self.schema(
+            style: titleStyle, collectionIDs: SuggestionPrompt.collectionIDs(in: input.collections))
         // Greedy: the same scan gets the same answer, which suits classification.
         let options = GenerationOptions(samplingMode: .greedy)
         let response: LanguageModelSession.Response<GeneratedContent>
@@ -121,11 +126,23 @@ public final class ModelScanSuggester: ScanSuggester {
         }
         try Task.checkCancellation()
         let content = response.content
-        return SuggestionCleanup.clean(
-            title: try content.value(String.self, forProperty: "title"),
-            collectionID: try content.value(String.self, forProperty: "collection"),
-            allowed: input.collections
-        )
+        var parts: TitleParts?
+        let title: String?
+        switch titleStyle {
+        case .whole:
+            title = try content.value(String.self, forProperty: "title")
+        case .parts:
+            let name = try content.value(String.self, forProperty: "name")
+            let kind = try content.value(String.self, forProperty: "kind")
+            title = SuggestionCleanup.composedTitle(name: name, kind: kind)
+            parts = TitleParts(
+                name: name.split(whereSeparator: \.isWhitespace).joined(separator: " "),
+                kind: kind.split(whereSeparator: \.isWhitespace).joined(separator: " "))
+        }
+        let collectionID = try content.value(String.self, forProperty: "collection")
+        var suggestion = SuggestionCleanup.clean(title: title, collectionID: collectionID, allowed: input.collections)
+        suggestion.titleParts = parts
+        return suggestion
     }
 
     /// Every failure means "no suggestion"; the log names the kind, never the scan's content.
@@ -169,21 +186,38 @@ public final class ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// `title` and `collection` (any of `collectionIDs`).
-    private static func schema(collectionIDs: [String]) throws -> GenerationSchema {
+    /// The title's properties for `style` (`title`, or `name` and `kind`), then `collection` (any of `collectionIDs`).
+    private static func schema(style: TitleStyle, collectionIDs: [String]) throws -> GenerationSchema {
         let collection = DynamicGenerationSchema(
             name: "CollectionID",
             description: "The id of the one collection the scan belongs in",
             anyOf: collectionIDs
         )
-        let title = DynamicGenerationSchema.Property(
-            name: "title",
-            description: "What the document is and who it is from, never its owner's name, at most 40 characters",
-            schema: DynamicGenerationSchema(type: String.self)
-        )
+        let text = DynamicGenerationSchema(type: String.self)
+        let titleProperties =
+            switch style {
+            case .whole:
+                [
+                    DynamicGenerationSchema.Property(
+                        name: "title",
+                        description:
+                            "What the document is and who it is from, never its owner's name, at most 40 characters",
+                        schema: text)
+                ]
+            case .parts:
+                [
+                    DynamicGenerationSchema.Property(
+                        name: "name",
+                        description:
+                            "The store, company, school or issuer as printed, never its owner's name, or empty",
+                        schema: text),
+                    DynamicGenerationSchema.Property(
+                        name: "kind", description: "What kind of document it is, 1 to 2 words", schema: text),
+                ]
+            }
         let root = DynamicGenerationSchema(
             name: "ScanSuggestion",
-            properties: [title, DynamicGenerationSchema.Property(name: "collection", schema: collection)]
+            properties: titleProperties + [DynamicGenerationSchema.Property(name: "collection", schema: collection)]
         )
         return try GenerationSchema(root: root, dependencies: [])
     }

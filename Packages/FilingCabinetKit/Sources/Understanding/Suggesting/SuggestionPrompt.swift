@@ -1,10 +1,24 @@
 /// The text sent to the model. Not user copy: plain English, never localized.
 package enum SuggestionPrompt {
-    package static let instructions = """
+    /// The instructions for a title style: the shared opening and collection rule around that style's title text.
+    package static func instructions(for style: TitleStyle) -> String {
+        let title =
+            switch style {
+            case .whole: wholeTitle
+            case .parts: partsTitle
+            }
+        return opening + title + collectionRule
+    }
+
+    private static let opening = """
         You file scanned paper documents in a person's own private library. Any document is fine to file: IDs, \
         medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
-        words usually mean handwriting. From the scan, give two things.
+        words usually mean handwriting. From the scan, give these things.
 
+
+        """
+
+    private static let wholeTitle = """
         Title: what the document is and who it is from, the way a person would say it, in Title Case (every word \
         capitalised, short words like "of" and "the" lowercase inside it), at most 40 characters, for example \
         "Maple Street Hardware Receipt", "Fishing License", "2025 W-2 · Northwind" or "Biology Handout · Cell \
@@ -12,6 +26,21 @@ package enum SuggestionPrompt {
         it is (business card, membership card, ID badge, receipt, bill, ticket stub, call notes), never a vague \
         word like "contact" or "document". Never the name of the person the document belongs to or is written for.
 
+
+        """
+
+    private static let partsTitle = """
+        Name: the store, company, school, issuer or subject the document is from or about, as it is printed, for \
+        example "Maple Street Hardware", "Northwind" or "Biology Handout". Empty when the document has none. Never \
+        the name of the person the document belongs to or is written for.
+
+        Kind: exactly what kind of document it is, in 1 or 2 words (business card, membership card, ID badge, \
+        receipt, bill, ticket stub, call notes, fishing license), never a vague word like "contact" or "document".
+
+
+        """
+
+    private static let collectionRule = """
         Collection: the id of the one collection whose description names this kind of document. A small card or \
         badge a person carries (an ID, license, membership, insurance or business card) is a card, whatever its \
         text says; a full page (a letter, form, bill, statement or handwritten notes) is never a card. Choose a \

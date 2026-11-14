@@ -9,6 +9,10 @@ public struct ScanSuggestion: Sendable, Equatable {
     /// One of the collection ids the model was handed, or nil.
     package let collectionID: String?
 
+    // periphery:ignore - read by the SuggestionEvaluation target, which Periphery doesn't scan
+    /// The name and kind the title was joined from, in the `.parts` style; nil in `.whole`.
+    package var titleParts: TitleParts?
+
     package init(title: String?, collectionID: String?) {
         self.title = title
         self.collectionID = collectionID
