@@ -88,10 +88,10 @@ private func clean(words: [String]) -> [String] {
 
 /// Over 40 characters, "Name · Kind" keeps its kind: the name loses its last words until the title fits.
 @Test func aLongNameIsCutBeforeTheKind() {
-    let title = "Certificate of Vehicle Registration · Northwind"
+    let title = "Annual Property Tax Assessment Notice · Letter"
     #expect(title.count > 40)
 
-    #expect(clean(title: title).title == "Certificate of Vehicle · Northwind")
+    #expect(clean(title: title).title == "Annual Property Tax Assessment · Letter")
 }
 
 @Test func aNameWithNoWordThatFitsLeavesTheKindAlone() {

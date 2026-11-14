@@ -28,6 +28,10 @@ struct EvaluationCaseTests {
         #expect(Self.item(titles: ["W-2"]).isRightTitle("W2"))
     }
 
+    @Test func aNameAndKindAnswerMatchesATitleWrittenWithoutTheMiddot() {
+        #expect(Self.item(titles: ["Harbor Gas Receipt"]).isRightTitle("Harbor Gas \u{00B7} Receipt"))
+    }
+
     @Test func noTitlesIsUnjudged() {
         #expect(!Self.item(titles: []).isJudged)
         #expect(Self.item(titles: ["X"]).isJudged)

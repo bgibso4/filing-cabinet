@@ -85,8 +85,8 @@ final class AppStartup {
         }
     }
 
-    /// TelemetryDeck in a Release build that has an app ID (#3); the log otherwise, so Debug builds and Ben's own
-    /// installs never reach the dashboard.
+    /// TelemetryDeck in a Release build that has an app ID (#3); the log otherwise, so Debug builds (`make device`, UI
+    /// tests) never reach the dashboard.
     private static func makeAnalytics() -> any Analytics {
         let appID = Bundle.main.object(forInfoDictionaryKey: "TelemetryDeckAppID") as? String
         switch AnalyticsSink.choose(isDebugBuild: AppEnvironment.isDebugBuild, appID: appID) {

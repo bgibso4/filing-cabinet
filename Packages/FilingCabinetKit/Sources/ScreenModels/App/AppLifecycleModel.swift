@@ -7,7 +7,7 @@ import Observation
 public final class AppLifecycleModel {
     private let analytics: any Analytics
     /// True from the stay's `appOpened` until the app goes to the background.
-    private var isCounted = false
+    @ObservationIgnored private var isCounted = false
 
     public init(analytics: any Analytics) {
         self.analytics = analytics

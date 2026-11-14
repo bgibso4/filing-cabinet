@@ -164,6 +164,7 @@ eval-merge: generate
 	@rm -f build/eval-merge.txt
 	set -o pipefail; TEST_RUNNER_FC_EVAL_JUDGED="$(JUDGED)" TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" \
 		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme SuggestionEvaluation \
+		'-only-testing:SuggestionEvaluationTests/SuggestionEvaluationTests/mergesJudgements()' \
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@cat build/eval-merge.txt
 
