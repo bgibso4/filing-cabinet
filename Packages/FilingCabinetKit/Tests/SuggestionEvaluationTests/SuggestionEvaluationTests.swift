@@ -11,7 +11,8 @@ import Testing
 /// slow and needs Apple Intelligence, so it runs only when `FC_EVAL_SUGGESTIONS=1` (`make eval-suggestions`); in
 /// Fast and CI it is skipped. Each case gets the app's two calls: title and collection, then search words. Page 1's
 /// image goes to the first unless `FC_EVAL_IMAGE=0` (`IMAGE=0`); `FC_EVAL_CASES` (`CASES=`) runs only some cases and
-/// skips the probes.
+/// skips the probes. `FC_EVAL_PRIVATE` (`PRIVATE=`) is a folder outside the repo (`cases.json` and `scans/`) whose cases
+/// run after the made-up ones; the report is then written there, not to `build/`.
 @Suite(.timeLimit(.minutes(30)))
 struct SuggestionEvaluationTests {
     private static let environment = ProcessInfo.processInfo.environment
@@ -19,6 +20,12 @@ struct SuggestionEvaluationTests {
     private static let root = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .deletingLastPathComponent().deletingLastPathComponent()
+
+    /// `PRIVATE=`: the private set's folder, with a leading `~` expanded; nil when not set.
+    private static let privateFolder: URL? = environment["FC_EVAL_PRIVATE"].flatMap {
+        $0.allSatisfy(\.isWhitespace)
+            ? nil : URL(filePath: ($0 as NSString).expandingTildeInPath, directoryHint: .isDirectory)
+    }
 
     /// Each model call is cancelled after this, so one hung model call can't stall the run.
     private static let callLimit = Duration.seconds(30)
@@ -39,7 +46,7 @@ struct SuggestionEvaluationTests {
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
         }
 
-        let output = Self.root.appending(path: "build/suggestion-eval.md")
+        let output = (Self.privateFolder ?? Self.root.appending(path: "build")).appending(path: "suggestion-eval.md")
         try FileManager.default.createDirectory(
             at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
         try EvaluationReport(outcome: outcome).markdown.write(to: output, atomically: true, encoding: .utf8)
@@ -52,8 +59,14 @@ struct SuggestionEvaluationTests {
         var results: [EvaluationRun.Result] = []
         var inputs: [SuggestionInput] = []
         let filter = environment["FC_EVAL_CASES"].flatMap { $0.allSatisfy(\.isWhitespace) ? nil : $0 }
-        for item in EvaluationCase.selected(try EvaluationCase.loadAll(), by: filter) {
-            let images = try item.files.map(loadImage)
+        var cases = EvaluationCase.selected(try EvaluationCase.loadAll(), by: filter).map { ($0, false) }
+        if let folder = privateFolder {
+            cases += EvaluationCase.selected(try EvaluationCase.loadAll(from: folder), by: filter).map { ($0, true) }
+        }
+        for (item, isPrivate) in cases {
+            let scans = (isPrivate ? privateFolder ?? EvaluationCase.fixtures : EvaluationCase.fixtures)
+                .appending(path: "scans")
+            let images = try item.files.map { try loadImage($0, in: scans) }
             var texts: [String] = []
             for image in images {
                 texts.append(await reader.read([image]).searchText)
@@ -71,7 +84,12 @@ struct SuggestionEvaluationTests {
             inputs.append(input)
             results.append(
                 EvaluationRun.Result(
-                    item: item, pageText: texts.joined(separator: "\n"), filing: filing, words: words))
+                    item: item,
+                    pageText: texts.joined(separator: "\n"),
+                    filing: filing,
+                    words: words,
+                    isPrivate: isPrivate
+                ))
         }
         var probes: [EvaluationRun.Probe] = []
         if filter == nil { probes.append(await longScan(suggester, from: inputs)) }
@@ -129,8 +147,8 @@ struct SuggestionEvaluationTests {
         return try ids.map { id in try #require(known.first { $0.id == id }, "unknown collection \(id)") }
     }
 
-    private static func loadImage(_ file: String) throws -> CGImage {
-        let url = EvaluationCase.fixtures.appending(path: "scans/\(file)")
+    private static func loadImage(_ file: String, in scans: URL) throws -> CGImage {
+        let url = scans.appending(path: file)
         let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil), "can't open \(file)")
         return try #require(CGImageSourceCreateImageAtIndex(source, 0, nil), "can't decode \(file)")
     }

@@ -141,15 +141,17 @@ compare-readers: generate
 # The suggestion evaluation (Plan 5) on this Mac: the text reader, then the on-device model, over the made-up test
 # set, in the app's two calls (title and collection, then search words). A report, not a gate; slow (minutes). Page 1's
 # image goes in with the text (IMAGE=0: text only); CASES="wallet-,notes-bio-class" runs only those cases (ids, or
-# prefixes ending in "-") and skips the probes.
+# prefixes ending in "-") and skips the probes. PRIVATE=~/FilingCabinetPrivate/eval adds that folder's cases (outside the
+# repo) and writes the report there.
 IMAGE ?= 1
 CASES ?=
+PRIVATE ?=
 
 eval-suggestions: generate
 	set -o pipefail; TEST_RUNNER_FC_EVAL_IMAGE=$(IMAGE) TEST_RUNNER_FC_EVAL_CASES="$(CASES)" \
-		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
+		TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
 		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
-	@echo "Report: build/suggestion-eval.md"
+	@echo "Report: $(if $(PRIVATE),$(PRIVATE),build)/suggestion-eval.md"
 
 # Reader timing on a connected iPhone (A12, A14). Not part of `full` or CI. XCTest runs every class of one
 # invocation in one process, so each cold-read class gets its own `xcodebuild test` (a fresh app launch) and the

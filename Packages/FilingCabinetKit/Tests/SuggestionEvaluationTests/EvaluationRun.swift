@@ -9,6 +9,8 @@ struct EvaluationRun {
         let pageText: String
         let filing: TimedCall<ScanSuggestion>
         let words: TimedCall<[String]>
+        /// From the private set (`PRIVATE=`), not the made-up one: counted in its own column, never in Tune or Holdout.
+        var isPrivate = false
 
         /// Nil when the model gave none (any failure or a timeout).
         var suggestion: ScanSuggestion? { filing.answer }

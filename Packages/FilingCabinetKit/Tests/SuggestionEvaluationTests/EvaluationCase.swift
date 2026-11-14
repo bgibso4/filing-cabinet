@@ -1,7 +1,7 @@
 import Foundation
 
 /// One scan in `Fixtures/cases.json` (`scripts/make-eval-scans.swift`) and the rules that score an answer for it.
-struct EvaluationCase: Decodable, Sendable {
+struct EvaluationCase: Sendable {
     let id: String
     let files: [String]
     /// The collection id the scan belongs in.
@@ -18,9 +18,13 @@ struct EvaluationCase: Decodable, Sendable {
     /// The cases folder inside the test bundle.
     static let fixtures = Bundle.module.url(forResource: "Fixtures", withExtension: nil) ?? URL(filePath: "/missing")
 
-    static func loadAll() throws -> [Self] {
-        try JSONDecoder().decode([Self].self, from: Data(contentsOf: fixtures.appending(path: "cases.json")))
+    /// `<folder>/cases.json`; the scans are at `<folder>/scans/<file>`.
+    static func loadAll(from folder: URL = fixtures) throws -> [Self] {
+        try JSONDecoder().decode([Self].self, from: Data(contentsOf: folder.appending(path: "cases.json")))
     }
+
+    /// Whether there is an answer to score against: a case with no `titles` is a scan waiting to be judged.
+    var isJudged: Bool { !titles.isEmpty }
 
     /// `CASES=`: the cases whose id is in the comma list, or starts with an entry ending in "-" ("wallet-"); every
     /// case for no list.
@@ -33,27 +37,12 @@ struct EvaluationCase: Decodable, Sendable {
         }
     }
 
-    /// Right when it is one of `titles`, ignoring case, accents and spacing.
+    /// Right when the whole title equals one of `titles`, folding case, accents, spacing and punctuation: "Driver's
+    /// License" is right for "drivers  license", but "InBody Report · Body Composition" is not right for "InBody Report".
     func isRightTitle(_ title: String?) -> Bool {
         guard let title else { return false }
-        return titles.contains { Self.normalized($0) == Self.normalized(title) }
-    }
-
-    /// Acceptable when, folded (case, accents, spacing, punctuation), one of `titles` holds the answer's words in a
-    /// row or the answer holds one of `titles`: "Pharmacy receipt" for "City Pharmacy receipt", or "Driver's License ·
-    /// Sample State" for "Driver's License". Whole words only, so "Pass" is not "Passport". A one-word answer counts
-    /// only when it is a whole expected title, so a bare "Receipt" never does.
-    func isAcceptableTitle(_ title: String?) -> Bool {
-        guard let title else { return false }
-        let loosened = Self.loosened(title)
-        guard loosened.contains(where: \.isLetter) else { return false }
-        let answer = " \(loosened) "
-        let isOneWord = !loosened.contains(" ")
-        return titles.contains { expected in
-            let expected = " \(Self.loosened(expected)) "
-            if isOneWord { return answer == expected }
-            return answer.contains(expected) || expected.contains(answer)
-        }
+        let answer = Self.loosened(title)
+        return titles.contains { Self.loosened($0) == answer }
     }
 
     /// The searches no hidden word can find, in case order.
@@ -108,5 +97,23 @@ struct EvaluationCase: Decodable, Sendable {
 
     private static func normalized(_ text: String) -> String {
         folded(text).split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    }
+}
+
+/// A case with only an id and files (a private scan not yet judged) decodes; the rest default to empty.
+extension EvaluationCase: Decodable {
+    private enum CodingKeys: String, CodingKey {
+        case id, files, collection, titles, searches, quality, collections
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        files = try container.decode([String].self, forKey: .files)
+        collection = try container.decodeIfPresent(String.self, forKey: .collection) ?? ""
+        titles = try container.decodeIfPresent([String].self, forKey: .titles) ?? []
+        searches = try container.decodeIfPresent([String].self, forKey: .searches) ?? []
+        quality = try container.decodeIfPresent(String.self, forKey: .quality) ?? "clean"
+        collections = try container.decodeIfPresent([String].self, forKey: .collections)
     }
 }

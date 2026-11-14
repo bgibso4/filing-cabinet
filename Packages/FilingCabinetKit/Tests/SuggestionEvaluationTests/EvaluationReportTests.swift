@@ -28,7 +28,8 @@ struct EvaluationReportTests {
         title: String? = "City Pharmacy",
         words: [String] = [],
         text: String = "",
-        milliseconds: Double = 100
+        milliseconds: Double = 100,
+        isPrivate: Bool = false
     ) -> EvaluationRun.Result {
         EvaluationRun.Result(
             item: item,
@@ -38,7 +39,8 @@ struct EvaluationReportTests {
                 milliseconds: milliseconds,
                 timedOut: false
             ),
-            words: TimedCall(answer: words, milliseconds: milliseconds / 2, timedOut: false)
+            words: TimedCall(answer: words, milliseconds: milliseconds / 2, timedOut: false),
+            isPrivate: isPrivate
         )
     }
 
@@ -95,26 +97,6 @@ struct EvaluationReportTests {
         #expect(item.isRightTitle("Pharmacy receipt"))
         #expect(!item.isRightTitle("City Pharmacy Receipt"))
         #expect(!item.isRightTitle(nil))
-    }
-
-    @Test func titleIsAcceptableWhenOneContainsTheOther() {
-        let item = Self.item("a", titles: ["Driver's License", "Sampleland Passport", "2026 W-2"])
-
-        #expect(item.isAcceptableTitle("Drivers license · Sample State"))
-        #expect(item.isAcceptableTitle("Sampleland passport · 2026"))
-        #expect(item.isAcceptableTitle("2026 W2 · Northwind"))
-        #expect(!item.isAcceptableTitle("Pass"))
-        #expect(!item.isAcceptableTitle("Library card"))
-        #expect(!item.isAcceptableTitle(nil))
-    }
-
-    @Test func bareOneWordTitleIsAcceptableOnlyWhenExact() {
-        let item = Self.item("a", titles: ["City Pharmacy receipt", "Passport"])
-
-        #expect(!item.isAcceptableTitle("Receipt"))
-        #expect(!item.isAcceptableTitle("pharmacy"))
-        #expect(item.isAcceptableTitle("passport"))
-        #expect(item.isAcceptableTitle("Pharmacy receipt"))
     }
 
     @Test func emptyQueryNeverMatches() {
@@ -189,15 +171,59 @@ struct EvaluationReportTests {
         #expect(!EvaluationCase.matches("is", words: ["i"]))
     }
 
-    @Test func summaryShowsAcceptableAndExactTitles() {
+    @Test func summaryShowsStrictTitles() {
         let item = Self.item("a", titles: ["City Pharmacy"])
         let markdown = Self.report([
             Self.result(item, collection: "receipts", title: "City Pharmacy"),
             Self.result(item, collection: "receipts", title: "City Pharmacy receipt"),
         ]).markdown
 
-        #expect(markdown.contains("| Titles, acceptable | 2/2 (100%) |"))
-        #expect(markdown.contains("| Titles, exact | 1/2 (50%) |"))
+        #expect(markdown.contains("| Titles, right | 1/2 (50%) |"))
+        #expect(!markdown.contains("Titles, acceptable"))
+        #expect(!markdown.contains("Private"))
+    }
+
+    @Test func privateCasesHaveTheirOwnColumn() {
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts"),
+            Self.result(Self.item("b"), collection: "receipts"),
+            Self.result(Self.item("p"), collection: "documents", isPrivate: true),
+        ]).markdown
+
+        #expect(markdown.contains("| Measure | All | Tune | Holdout | Private |"))
+        #expect(markdown.contains("| Collection, all scans | 2/3 (67%) | 1/1 (100%) | 1/1 (100%) | 0/1 (0%) |"))
+    }
+
+    @Test func unjudgedPrivateCasesCountNowhere() {
+        let unjudged = Self.item("u", collection: "", titles: [], searches: [])
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts"),
+            Self.result(unjudged, collection: "receipts", isPrivate: true),
+        ]).markdown
+
+        #expect(markdown.contains("| Collection, all scans | 1/1 (100%) | 1/1 (100%) | 0/0 | 0/0 |"))
+        #expect(markdown.contains("| u | unjudged |"))
+        #expect(!markdown.contains("| u | tune |"))
+    }
+
+    @Test func tuneAndHoldoutIgnorePrivateCases() {
+        let markdown = Self.report([
+            Self.result(Self.item("a"), collection: "receipts"),
+            Self.result(Self.item("p"), collection: "notes", isPrivate: true),
+            Self.result(Self.item("b"), collection: "receipts"),
+        ]).markdown
+
+        #expect(markdown.contains("| Collection, all scans | 2/3 (67%) | 1/1 (100%) | 1/1 (100%) | 0/1 (0%) |"))
+    }
+
+    @Test func privateMissesAreListedByIdOnly() {
+        let markdown = Self.report([
+            Self.result(Self.item("p", titles: ["Secret"]), collection: "receipts", title: "Other", isPrivate: true)
+        ]).markdown
+
+        #expect(markdown.contains("### Private (1)\n\np\n"))
+        #expect(!markdown.contains("| p | tune"))
+        #expect(!markdown.contains("| p | holdout"))
     }
 
     @Test func tuneIsEvenIndexesAndHoldoutOdd() {
