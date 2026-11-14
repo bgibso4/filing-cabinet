@@ -4,7 +4,7 @@ import Testing
 
 /// The report's scoring on canned results; no model runs here.
 struct EvaluationReportTests {
-    private static func item(
+    static func item(
         _ id: String,
         collection: String = "receipts",
         titles: [String] = ["City Pharmacy"],
@@ -22,7 +22,7 @@ struct EvaluationReportTests {
         )
     }
 
-    private static func result(
+    static func result(
         _ item: EvaluationCase,
         collection: String?,
         title: String? = "City Pharmacy",
@@ -55,7 +55,7 @@ struct EvaluationReportTests {
         )
     }
 
-    private static func report(
+    static func report(
         _ results: [EvaluationRun.Result], includesImage: Bool = false
     ) -> EvaluationReport {
         EvaluationReport(
@@ -181,49 +181,6 @@ struct EvaluationReportTests {
         #expect(markdown.contains("| Titles, right | 1/2 (50%) |"))
         #expect(!markdown.contains("Titles, acceptable"))
         #expect(!markdown.contains("Private"))
-    }
-
-    @Test func privateCasesHaveTheirOwnColumn() {
-        let markdown = Self.report([
-            Self.result(Self.item("a"), collection: "receipts"),
-            Self.result(Self.item("b"), collection: "receipts"),
-            Self.result(Self.item("p"), collection: "documents", isPrivate: true),
-        ]).markdown
-
-        #expect(markdown.contains("| Measure | All | Tune | Holdout | Private |"))
-        #expect(markdown.contains("| Collection, all scans | 2/3 (67%) | 1/1 (100%) | 1/1 (100%) | 0/1 (0%) |"))
-    }
-
-    @Test func unjudgedPrivateCasesCountNowhere() {
-        let unjudged = Self.item("u", collection: "", titles: [], searches: [])
-        let markdown = Self.report([
-            Self.result(Self.item("a"), collection: "receipts"),
-            Self.result(unjudged, collection: "receipts", isPrivate: true),
-        ]).markdown
-
-        #expect(markdown.contains("| Collection, all scans | 1/1 (100%) | 1/1 (100%) | 0/0 | 0/0 |"))
-        #expect(markdown.contains("| u | unjudged |"))
-        #expect(!markdown.contains("| u | tune |"))
-    }
-
-    @Test func tuneAndHoldoutIgnorePrivateCases() {
-        let markdown = Self.report([
-            Self.result(Self.item("a"), collection: "receipts"),
-            Self.result(Self.item("p"), collection: "notes", isPrivate: true),
-            Self.result(Self.item("b"), collection: "receipts"),
-        ]).markdown
-
-        #expect(markdown.contains("| Collection, all scans | 2/3 (67%) | 1/1 (100%) | 1/1 (100%) | 0/1 (0%) |"))
-    }
-
-    @Test func privateMissesAreListedByIdOnly() {
-        let markdown = Self.report([
-            Self.result(Self.item("p", titles: ["Secret"]), collection: "receipts", title: "Other", isPrivate: true)
-        ]).markdown
-
-        #expect(markdown.contains("### Private (1)\n\np\n"))
-        #expect(!markdown.contains("| p | tune"))
-        #expect(!markdown.contains("| p | holdout"))
     }
 
     @Test func tuneIsEvenIndexesAndHoldoutOdd() {

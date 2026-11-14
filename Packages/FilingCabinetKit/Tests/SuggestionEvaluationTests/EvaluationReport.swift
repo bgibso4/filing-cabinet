@@ -157,13 +157,13 @@ struct EvaluationReport {
         results.enumerated().filter { $0.offset.isMultiple(of: 2) == even }.map(\.element)
     }
 
-    /// The score columns. All and Private count judged cases only; Tune and Holdout count the made-up cases at their
-    /// positions in cases.json. Private shows only when the run has private cases.
+    /// The score columns. All, Tune and Holdout count the made-up cases only (All is safe to quote outside); Private counts
+    /// the judged private cases. Tune and Holdout use positions in cases.json. Private shows only when the run has private cases.
     private static func columns(_ run: EvaluationRun) -> [(name: String, results: [EvaluationRun.Result])] {
         let madeUp = run.results.filter { !$0.isPrivate }
         let judged = run.results.filter(\.item.isJudged)
         var columns = [
-            (name: "All", results: judged), (name: "Tune", results: split(madeUp, even: true)),
+            (name: "All", results: madeUp), (name: "Tune", results: split(madeUp, even: true)),
             (name: "Holdout", results: split(madeUp, even: false)),
         ]
         if madeUp.count != run.results.count {
