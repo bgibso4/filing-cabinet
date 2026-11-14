@@ -465,18 +465,21 @@ reuse(
     titles: ["Passport", "Sampleland Passport"], searches: ["travel", "ID", "international"])
 reuse(
     "wallet-work-id", "wallet", ["scan-workid.jpg"],
-    titles: ["Work ID", "Northwind Labs ID", "Staff ID Badge"], searches: ["employer", "badge", "office"])
+    titles: ["Work ID", "Northwind Labs ID", "Staff ID Badge", "Northwind Labs ID Card"],
+    searches: ["employer", "badge", "office"])
 reuse(
     "wallet-coworking-badge", "wallet", ["scan-badge-tall.jpg"],
-    titles: ["Riverside Coworking Badge", "Coworking Membership"],
+    titles: ["Riverside Coworking Badge", "Coworking Membership", "Riverside Coworking Card"],
     searches: ["office", "membership", "workspace"])
 reuse(
     "wallet-gym-card", "wallet", ["scan-gym.jpg"],
-    titles: ["Ironworks Fitness Card", "Gym Membership"],
+    titles: ["Ironworks Fitness Card", "Gym Membership", "Ironworks Fitness Club Card"],
     searches: ["workout", "exercise", "membership"])
 reuse(
     "wallet-health-insurance", "wallet", ["scan-insurance.jpg"],
-    titles: ["Northfield Mutual Insurance Card", "Health Insurance Card", "Health Insurance"],
+    titles: [
+        "Northfield Mutual Insurance Card", "Health Insurance Card", "Health Insurance", "Northfield Mutual ID Card",
+    ],
     searches: ["medical", "doctor", "coverage"])
 reuse(
     "wallet-library-card", "wallet", ["scan-library.jpg"],
@@ -506,7 +509,8 @@ gen(
             ["Address", "100 SAMPLE RD"], ["DOB", "00/00/0000"],
         ],
         foot: ["Sample card, not valid"], tint: 2),
-    titles: ["Eastlake Driver License", "Operator License", "Driver License"], searches: ["driving", "ID", "DMV"],
+    titles: ["Eastlake Driver License", "Operator License", "Driver License", "Eastlake Operator License"],
+    searches: ["driving", "ID", "DMV"],
     low: .rotate(6))
 gen(
     "wallet-license-westmoor", "wallet",
@@ -517,7 +521,8 @@ gen(
             ["Name", "MORGAN, ALEX"], ["ID no.", "W0000000"], ["Issued", "00/00/0000"], ["Expires", "00/00/0000"],
         ],
         foot: ["Sample card, not valid"], tint: 3),
-    titles: ["Westmoor State ID", "State ID Card", "Identification Card"], searches: ["DMV", "identity", "photo"])
+    titles: ["Westmoor State ID", "State ID Card", "Identification Card", "Westmoor State ID Card"],
+    searches: ["DMV", "identity", "photo"])
 gen(
     "wallet-business-card-chen", "wallet",
     Doc(
@@ -543,7 +548,8 @@ gen(
             ["Card no.", "0000 0000 0000"], ["Balance", "$00.00"], ["Fare", "Adult"], ["Valid", "Anytown Metro"],
         ],
         foot: ["Sample card, not valid"], tint: 6),
-    titles: ["Metro Go Transit Card", "Transit Card", "Metro Card"], searches: ["subway", "bus", "commute"])
+    titles: ["Metro Go Transit Card", "Transit Card", "Metro Card", "Anytown Metro Transit Card"],
+    searches: ["subway", "bus", "commute"])
 gen(
     "wallet-student-id", "wallet",
     Doc(
