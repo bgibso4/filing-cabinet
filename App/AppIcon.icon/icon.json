@@ -1,65 +1,77 @@
 {
-  "fill-specializations" : [
+  "fill-specializations": [
     {
-      "value" : {
-        "solid" : "srgb:0.94902,0.94902,0.96863,1.00000"
+      "value": {
+        "solid": "srgb:0.94902,0.94902,0.96863,1.00000"
       }
     },
     {
-      "appearance" : "dark",
-      "value" : {
-        "solid" : "srgb:0.10980,0.10980,0.11765,1.00000"
+      "appearance": "dark",
+      "value": {
+        "solid": "srgb:0.10980,0.10980,0.11765,1.00000"
       }
     }
   ],
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "glass" : false,
-          "image-name" : "folder.svg",
-          "name" : "folder"
-        }
-      ],
-      "shadow" : {
-        "kind" : "none",
-        "opacity" : 0.5
-      },
-      "specular" : false,
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
-      }
-    },
-    {
-      "layers" : [
-        {
-          "glass" : false,
-          "image-name-specializations" : [
+          "glass": false,
+          "image-name-specializations": [
             {
-              "value" : "corners-light.svg"
+              "value": "folder.svg"
             },
             {
-              "appearance" : "dark",
-              "value" : "corners-dark.svg"
+              "appearance": "tinted",
+              "value": "folder-mono.svg"
             }
           ],
-          "name" : "corners"
+          "name": "folder"
         }
       ],
-      "shadow" : {
-        "kind" : "none",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "none",
+        "opacity": 0.5
       },
-      "specular" : false,
-      "translucency" : {
-        "enabled" : false,
-        "value" : 0.5
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
+      }
+    },
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name-specializations": [
+            {
+              "value": "corners-light.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "corners-dark.svg"
+            },
+            {
+              "appearance": "tinted",
+              "value": "corners-dark.svg"
+            }
+          ],
+          "name": "corners"
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0.5
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "squares" : [
+  "supported-platforms": {
+    "squares": [
       "iOS"
     ]
   }
