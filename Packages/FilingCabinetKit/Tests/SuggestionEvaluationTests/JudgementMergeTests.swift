@@ -102,6 +102,23 @@ struct JudgementMergeTests {
         #expect(!text.contains("titles") && !text.contains("\"collection\""))
     }
 
+    @Test func applyCountsOnlyTheJudgementsForItsOwnCases() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "merge-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer {
+            // Best-effort cleanup of a temp folder.
+            try? FileManager.default.removeItem(at: folder)
+        }
+        try EvaluationCase.write([Self.item("a")], to: folder)
+
+        let applied = try JudgementMerge.apply(
+            [Self.judgement(.right, "Beta", id: "a"), Self.judgement(.right, "Gamma", id: "elsewhere")],
+            toCasesIn: folder)
+
+        #expect(applied == 1)
+        #expect(try EvaluationCase.loadAll(from: folder)[0].titles == ["Alpha", "Beta"])
+    }
+
     @Test func theSummaryCountsWhatEachFileTook() {
         let applied = [(file: "Fixtures/cases.json", count: 7), (file: "the private cases.json", count: 30)]
 

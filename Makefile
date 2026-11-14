@@ -153,9 +153,10 @@ eval-suggestions: generate
 		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@echo "Report: $(if $(PRIVATE),$(PRIVATE),build)/suggestion-eval.md"
 
-# Folds the answers downloaded from build/review.html (judgements.json) into the cases files: Fixtures/cases.json for
-# the made-up ids, and with PRIVATE=<folder> that folder's cases.json for the private ones. Prints how many each file
-# took, and warns about answers no file took. Review the diff, then commit.
+# Folds the answers downloaded from review.html (judgements.json) into the cases files: Fixtures/cases.json for the
+# made-up ids, and with PRIVATE=<folder> that folder's cases.json for the private ones. review.html is in build/, or in
+# the PRIVATE folder when make eval-suggestions had PRIVATE=. Prints how many each file took, and warns about answers no
+# file took. Review the diff, then commit.
 JUDGED ?=
 
 eval-merge: generate

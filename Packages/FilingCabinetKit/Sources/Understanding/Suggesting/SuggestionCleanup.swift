@@ -18,22 +18,35 @@ package enum SuggestionCleanup {
 
     /// Nil when it holds a placeholder (`<`, `>`) or has under 3 letters. Otherwise trimmed, collapsed, its spaced
     /// dashes made middots, stripped of edge and empty separators and of parts repeating an earlier one, cased by
-    /// `TitleCasing` and cut to 40 characters on a word
-    /// boundary (never ending on a separator).
+    /// `TitleCasing` and brought within 40 characters by `shortened`.
     private static func cleanTitle(_ raw: String) -> String? {
         guard !raw.contains(where: { $0 == "<" || $0 == ">" }) else { return nil }
         let collapsed = TitleCasing.cased(withoutRepeatedParts(trimmedSeparators(middots(collapse(raw)))))
-        let cut: String
-        if collapsed.count <= titleLimit {
-            cut = collapsed
-        } else {
-            let prefix = collapsed.prefix(titleLimit)
-            let breaksOnAWord = collapsed[prefix.endIndex] == " "
-            // One word longer than the limit has no boundary to cut on, so it is cut at the limit.
-            let lastSpace = breaksOnAWord ? prefix.endIndex : prefix.lastIndex(of: " ") ?? prefix.endIndex
-            cut = trimmedSeparators(String(prefix[..<lastSpace]))
-        }
+        let cut = collapsed.count <= titleLimit ? collapsed : shortened(collapsed)
         return cut.count(where: \.isLetter) >= minimumTitleLetters ? cut : nil
+    }
+
+    /// A title over 40 characters made to fit. "Name · Kind" keeps its kind: the name loses its last words until the
+    /// title fits, and the kind stands alone when no word of the name does. Any other title is cut on a word boundary.
+    private static func shortened(_ title: String) -> String {
+        let parts = title.split(separator: " · ")
+        guard parts.count == 2, parts[1].count <= titleLimit else { return cutOnAWord(title) }
+        let kind = parts[1]
+        var name = parts[0].split(separator: " ")
+        while !name.isEmpty, name.joined(separator: " ").count + " · ".count + kind.count > titleLimit {
+            name.removeLast()
+        }
+        let kept = trimmedSeparators(name.joined(separator: " "))
+        return kept.isEmpty ? String(kind) : "\(kept) · \(kind)"
+    }
+
+    /// Cut to 40 characters on a word boundary, never ending on a separator.
+    private static func cutOnAWord(_ title: String) -> String {
+        let prefix = title.prefix(titleLimit)
+        let breaksOnAWord = title[prefix.endIndex] == " "
+        // One word longer than the limit has no boundary to cut on, so it is cut at the limit.
+        let lastSpace = breaksOnAWord ? prefix.endIndex : prefix.lastIndex(of: " ") ?? prefix.endIndex
+        return trimmedSeparators(String(prefix[..<lastSpace]))
     }
 
     /// Lowercased unless all caps ("ID", "W-2"), 1–40 characters, first spelling kept, at most 8.

@@ -112,7 +112,8 @@ examples here are made up; the real ones stay in the private folder.
 1. **Name first, then the kind.** The name is who or what it's from, so it classifies at a glance: "Harbor Gas
    Receipt", "Northwind Business Card". Kind first ("Receipt · Harbor Gas") reads worse; the same words in that order
    were ✗ where name first was ✓. Shipped as "Name · Kind" with a middot ("Harbor Gas · Receipt"), or the kind alone
-   when there is no name ("Fishing License") (Ben, 2026-11-14). The strict matcher drops punctuation, so expected
+   when there is no name ("Fishing License") (Ben, 2026-11-14). Over 40 characters the name is shortened, never the
+   kind dropped. The strict matcher drops punctuation, so expected
    titles are written without it.
 2. **The name people use, as short as stays specific.** "Northwind", not "Northwind Financial Group"; "Bayview Dental", not
    "Bayview Dental Plans of Oregon". Accurate but long titles were kept, reluctantly: shorter wins when unsure. Familiar
@@ -203,7 +204,7 @@ made-up set's middot titles are rewritten to name + kind where they are expected
 | Middot titles: optional third part or rewritten expectations, after the review | my call |
 | The winner: variant 1 (`.whole`), 20 ticks to 1 in the blind pick on the private set; `.parts` removed | Ben (2026-11-14) |
 | Titles are "Name · Kind" with a middot when there is a name, the kind alone when not | Ben (2026-11-14) |
-| Made-up set, strict matcher, full run (Task 8, before the middot): holdout titles right 20/43 against the baseline's 13/43; collection, all 83/87 against 78/87; collection, holdout 42/43 against 41/43 | measured |
+| Made-up set, strict matcher, full run on the prompt that ships (middot, kind kept on long names; 2026-11-14): holdout titles right 21/43 against the 13/43 floor; collection, all 82/87 against 78/87; collection, holdout 42/43 against 41/43; no suggestion 0 of 87. (Task 8's run before the middot: 20/43, 83/87, 42/43.) | measured |
 | The phone check happens after the PR opens (Ben away) | Ben |
 | With `PRIVATE=`, the review page shows only the private cases | Ben |
 | One shared analytics sink (`AppStartup` and `AppEnvironment` each make one today) | my call |

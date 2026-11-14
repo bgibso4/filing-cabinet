@@ -86,9 +86,25 @@ private func clean(words: [String]) -> [String] {
     #expect(clean(title: "2025 W-2 ·  · Northwind").title == "2025 W-2 · Northwind")
 }
 
-@Test func titleCutNeverEndsOnASeparator() {
-    #expect(
-        clean(title: "Certificate of Vehicle Registration · Northwind").title == "Certificate of Vehicle Registration")
+/// Over 40 characters, "Name · Kind" keeps its kind: the name loses its last words until the title fits.
+@Test func aLongNameIsCutBeforeTheKind() {
+    let title = "Certificate of Vehicle Registration · Northwind"
+    #expect(title.count > 40)
+
+    #expect(clean(title: title).title == "Certificate of Vehicle · Northwind")
+}
+
+@Test func aNameWithNoWordThatFitsLeavesTheKindAlone() {
+    let name = String(repeating: "a", count: 34)
+
+    #expect(clean(title: "\(name) · Receipt").title == "Receipt")
+}
+
+@Test func aLongTitleWithNoNameIsCutOnAWord() {
+    let title = "Northwind Property Management Lease Renewal Form"
+    #expect(title.count > 40)
+
+    #expect(clean(title: title).title == "Northwind Property Management Lease")
 }
 
 @Test func titleOfOnlySeparatorsIsDropped() {
