@@ -111,7 +111,9 @@ examples here are made up; the real ones stay in the private folder.
 
 1. **Name first, then the kind.** The name is who or what it's from, so it classifies at a glance: "Harbor Gas
    Receipt", "Northwind Business Card". Kind first ("Receipt · Harbor Gas") reads worse; the same words in that order
-   were ✗ where name first was ✓.
+   were ✗ where name first was ✓. Shipped as "Name · Kind" with a middot ("Harbor Gas · Receipt"), or the kind alone
+   when there is no name ("Fishing License") (Ben, 2026-11-14). The strict matcher drops punctuation, so expected
+   titles are written without it.
 2. **The name people use, as short as stays specific.** "Northwind", not "Northwind Financial Group"; "Bayview Dental", not
    "Bayview Dental Plans of Oregon". Accurate but long titles were kept, reluctantly: shorter wins when unsure. Familiar
    short forms are fine ("DMV"), with their usual capitals ("IRS").
@@ -148,6 +150,10 @@ made-up set's middot titles are rewritten to name + kind where they are expected
   collection accuracy must not fall more than a couple of points. Ties go to 2. Ben confirms the pick from the report
   before the losing variant is deleted.
 - After the pick, Ben checks on his phone (`make device`) with a handful of fresh real scans: the phone iteration loop.
+  Ben was away when the branch was finished, so the phone check happens after the PR opens; fixes from it follow the
+  phone iteration loop on the same branch.
+- **Outcome (2026-11-14).** Ben's blind pick on his real scans: variant 1 (`.whole`) 20 ticks, variant 2 (`.parts`) 1.
+  `.whole` ships with "Name · Kind" titles; `.parts`, its name/kind report rows and the `VARIANT=` switch are removed.
 
 ### Part 5: TelemetryDeck
 - Add the TelemetryDeck Swift SDK (`exact:` pin) to the app target only (not the package: `Core` stays dependency
@@ -195,6 +201,11 @@ made-up set's middot titles are rewritten to name + kind where they are expected
 | Part 0 as a live Console session during Part 2's scanning | my call |
 | No code rule for owners' names (prompt only) | my call |
 | Middot titles: optional third part or rewritten expectations, after the review | my call |
+| The winner: variant 1 (`.whole`), 20 ticks to 1 in the blind pick on the private set; `.parts` removed | Ben (2026-11-14) |
+| Titles are "Name · Kind" with a middot when there is a name, the kind alone when not | Ben (2026-11-14) |
+| Made-up set, strict matcher, full run (Task 8, before the middot): holdout titles right 20/43 against the baseline's 13/43; collection, all 83/87 against 78/87; collection, holdout 42/43 against 41/43 | measured |
+| The phone check happens after the PR opens (Ben away) | Ben |
+| With `PRIVATE=`, the review page shows only the private cases | Ben |
 | One shared analytics sink (`AppStartup` and `AppEnvironment` each make one today) | my call |
 | `promptVersion` not bumped | my call (it versions the words) |
 
@@ -210,5 +221,5 @@ made-up set's middot titles are rewritten to name + kind where they are expected
 ## Order
 
 Part 0 + Part 2 together (Ben scans at the Mac, current build) → Part 1 → Part 3 (needs Ben's review) → Part 4 →
-phone check. Part 5 is independent and can be built first while waiting on Ben. Building starts on `ai-followup` off
+phone check (after the PR opens). Part 5 is independent and can be built first while waiting on Ben. Building starts on `ai-followup` off
 `origin/main` after Plan 6 merges, or in a herdr worktree if Ben asks for one.
