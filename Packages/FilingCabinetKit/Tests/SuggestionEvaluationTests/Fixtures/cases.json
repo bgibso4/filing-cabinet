@@ -67,7 +67,8 @@
     "titles" : [
       "Work ID",
       "Northwind Labs ID",
-      "Staff ID Badge"
+      "Staff ID Badge",
+      "Northwind Labs ID Card"
     ]
   },
   {
@@ -84,7 +85,8 @@
     ],
     "titles" : [
       "Riverside Coworking Badge",
-      "Coworking Membership"
+      "Coworking Membership",
+      "Riverside Coworking Card"
     ]
   },
   {
@@ -101,7 +103,8 @@
     ],
     "titles" : [
       "Ironworks Fitness Card",
-      "Gym Membership"
+      "Gym Membership",
+      "Ironworks Fitness Club Card"
     ]
   },
   {
@@ -119,7 +122,8 @@
     "titles" : [
       "Northfield Mutual Insurance Card",
       "Health Insurance Card",
-      "Health Insurance"
+      "Health Insurance",
+      "Northfield Mutual ID Card"
     ]
   },
   {
@@ -190,7 +194,8 @@
     "titles" : [
       "Eastlake Driver License",
       "Operator License",
-      "Driver License"
+      "Driver License",
+      "Eastlake Operator License"
     ]
   },
   {
@@ -208,7 +213,8 @@
     "titles" : [
       "Westmoor State ID",
       "State ID Card",
-      "Identification Card"
+      "Identification Card",
+      "Westmoor State ID Card"
     ]
   },
   {
@@ -260,7 +266,8 @@
     "titles" : [
       "Metro Go Transit Card",
       "Transit Card",
-      "Metro Card"
+      "Metro Card",
+      "Anytown Metro Transit Card"
     ]
   },
   {
