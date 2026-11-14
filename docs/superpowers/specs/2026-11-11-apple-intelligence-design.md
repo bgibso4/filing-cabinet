@@ -174,6 +174,8 @@ made-up scans, and whether image input improves low-text scans. The image decisi
 
 By Ben:
 - **E1** The wait limit is 5 s, counted from when the card appears.
+- E1 revised 2026-11-13: the wait is 10 s, not 5 s ("I would rather wait longer"; ai-followup).
+- Name · Kind titles (ai-followup, 2026-11-14): "Name · Kind" with a middot when there is a name, the kind alone when not; a title over 40 characters shortens the name, never drops the kind.
 - **E2** Page 1's image goes in with the text.
 - **E3** The model is prewarmed when the camera opens.
 - **The split read:** title and collection first, words after Save (saves about 0.8 s at p50 on the card).

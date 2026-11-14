@@ -67,7 +67,8 @@
     "titles" : [
       "Work ID",
       "Northwind Labs ID",
-      "Staff ID Badge"
+      "Staff ID Badge",
+      "Northwind Labs ID Card"
     ]
   },
   {
@@ -85,7 +86,7 @@
     "titles" : [
       "Riverside Coworking Badge",
       "Coworking Membership",
-      "Riverside Coworking"
+      "Riverside Coworking Card"
     ]
   },
   {
@@ -103,7 +104,7 @@
     "titles" : [
       "Ironworks Fitness Card",
       "Gym Membership",
-      "Ironworks Fitness Club"
+      "Ironworks Fitness Club Card"
     ]
   },
   {
@@ -121,7 +122,8 @@
     "titles" : [
       "Northfield Mutual Insurance Card",
       "Health Insurance Card",
-      "Health Insurance"
+      "Health Insurance",
+      "Northfield Mutual ID Card"
     ]
   },
   {
@@ -192,7 +194,8 @@
     "titles" : [
       "Eastlake Driver License",
       "Operator License",
-      "Driver License"
+      "Driver License",
+      "Eastlake Operator License"
     ]
   },
   {
@@ -210,7 +213,8 @@
     "titles" : [
       "Westmoor State ID",
       "State ID Card",
-      "Identification Card"
+      "Identification Card",
+      "Westmoor State ID Card"
     ]
   },
   {
@@ -227,8 +231,7 @@
     ],
     "titles" : [
       "Priya Nair Business Card",
-      "Studio Fern Business Card",
-      "Priya Nair, Studio Fern"
+      "Studio Fern Business Card"
     ]
   },
   {
@@ -245,8 +248,7 @@
     ],
     "titles" : [
       "Marcus Bell Business Card",
-      "Bell & Sons Business Card",
-      "Marcus Bell, Electrician"
+      "Bell & Sons Business Card"
     ]
   },
   {
@@ -264,7 +266,8 @@
     "titles" : [
       "Metro Go Transit Card",
       "Transit Card",
-      "Metro Card"
+      "Metro Card",
+      "Anytown Metro Transit Card"
     ]
   },
   {
@@ -316,9 +319,7 @@
       "supermarket"
     ],
     "titles" : [
-      "Corner Market Receipt",
-      "Corner Market",
-      "Corner Market Groceries"
+      "Corner Market Receipt"
     ]
   },
   {
@@ -334,9 +335,7 @@
       "lunch"
     ],
     "titles" : [
-      "Bluebird Cafe Receipt",
-      "Bluebird Café",
-      "Bluebird Cafe"
+      "Bluebird Cafe Receipt"
     ]
   },
   {
@@ -353,7 +352,6 @@
     ],
     "titles" : [
       "Harbor Gas Receipt",
-      "Harbor Gas",
       "Gas Station Receipt"
     ]
   },
@@ -370,8 +368,7 @@
       "prescription"
     ],
     "titles" : [
-      "City Pharmacy Receipt",
-      "City Pharmacy"
+      "City Pharmacy Receipt"
     ]
   },
   {
@@ -387,8 +384,7 @@
       "DIY"
     ],
     "titles" : [
-      "Northside Hardware Receipt",
-      "Northside Hardware"
+      "Northside Hardware Receipt"
     ]
   },
   {
@@ -405,8 +401,7 @@
     ],
     "titles" : [
       "Page & Spine Booksellers Receipt",
-      "Page & Spine Receipt",
-      "Page & Spine Booksellers"
+      "Page & Spine Receipt"
     ]
   },
   {
@@ -422,9 +417,7 @@
       "pizza"
     ],
     "titles" : [
-      "Pizzeria Sole Receipt",
-      "Pizzeria Sole",
-      "Pizzeria Sole Dinner"
+      "Pizzeria Sole Receipt"
     ]
   },
   {
@@ -441,7 +434,6 @@
     ],
     "titles" : [
       "Tallow Electric Receipt",
-      "Tallow Electric Laptop Purchase",
       "Laptop Receipt"
     ]
   },
@@ -458,8 +450,7 @@
       "supermarket"
     ],
     "titles" : [
-      "Greenway Grocery Receipt",
-      "Greenway Grocery"
+      "Greenway Grocery Receipt"
     ]
   },
   {
@@ -476,7 +467,6 @@
     ],
     "titles" : [
       "The Daily Grind Receipt",
-      "The Daily Grind Coffee",
       "Daily Grind Receipt"
     ]
   },
@@ -494,7 +484,6 @@
     ],
     "titles" : [
       "Lakeside Fuel Receipt",
-      "Lakeside Fuel",
       "Gas Station Receipt"
     ]
   },
@@ -511,9 +500,7 @@
       "Italian"
     ],
     "titles" : [
-      "Trattoria Luna Receipt",
-      "Trattoria Luna Dinner",
-      "Trattoria Luna"
+      "Trattoria Luna Receipt"
     ]
   },
   {
@@ -531,7 +518,8 @@
     "titles" : [
       "Parcelhouse Order Confirmation",
       "Parcelhouse Online Order",
-      "Online Order Receipt"
+      "Online Order Receipt",
+      "Parcelhouse Receipt"
     ]
   },
   {
@@ -566,7 +554,6 @@
     ],
     "titles" : [
       "Flour & Crown Bakery Receipt",
-      "Flour & Crown Bakery",
       "Bakery Receipt"
     ]
   },
@@ -603,7 +590,7 @@
     "titles" : [
       "Riverbend Food Bank Donation Receipt",
       "Charity Donation Receipt",
-      "Food Bank Donation"
+      "Riverbend Food Bank Receipt"
     ]
   },
   {
@@ -637,7 +624,6 @@
       "lecture"
     ],
     "titles" : [
-      "Bio 210 Glycolysis",
       "Glycolysis Notes",
       "Bio 210 Notes"
     ]
@@ -655,7 +641,6 @@
       "lease"
     ],
     "titles" : [
-      "Call with Landlord",
       "Landlord Call Notes",
       "Landlord Call"
     ]
@@ -673,9 +658,9 @@
       "college"
     ],
     "titles" : [
-      "Hist 101 Industrial Revolution",
       "Industrial Revolution Notes",
-      "History 101 Notes"
+      "History 101 Notes",
+      "Hist 101 Notes"
     ]
   },
   {
@@ -691,7 +676,6 @@
       "class"
     ],
     "titles" : [
-      "Calc II Integration by Parts",
       "Calculus Notes",
       "Calc II Notes"
     ]
@@ -709,7 +693,6 @@
       "science"
     ],
     "titles" : [
-      "Chem 120 Le Chatelier's Principle",
       "Chemistry Notes",
       "Chem 120 Notes"
     ]
@@ -729,7 +712,7 @@
     "titles" : [
       "Weekend To Do",
       "To Do List",
-      "To Do - Weekend"
+      "Weekend To Do List"
     ]
   },
   {
@@ -763,9 +746,8 @@
       "dinner"
     ],
     "titles" : [
-      "Nana's Lentil Soup",
       "Lentil Soup Recipe",
-      "Lentil Soup"
+      "Nana's Lentil Soup Recipe"
     ]
   },
   {
@@ -782,7 +764,6 @@
     ],
     "titles" : [
       "Kickoff Meeting Notes",
-      "Kickoff Meeting - Nov 4",
       "Project Kickoff Notes"
     ]
   },
@@ -799,9 +780,9 @@
       "meeting"
     ],
     "titles" : [
-      "1:1 with Dana",
-      "One on One with Dana",
-      "Meeting Notes with Dana"
+      "Dana 1:1 Notes",
+      "Dana Meeting Notes",
+      "1:1 Meeting Notes"
     ]
   },
   {
@@ -818,8 +799,8 @@
     ],
     "titles" : [
       "Plumber Call Notes",
-      "Call with Plumber",
-      "Plumber Call"
+      "Plumber Call",
+      "Bell & Sons Call Notes"
     ]
   },
   {
@@ -835,7 +816,6 @@
       "chargeback"
     ],
     "titles" : [
-      "Call with Bank",
       "Bank Call Notes",
       "Bank Dispute Call"
     ]
@@ -872,8 +852,7 @@
     ],
     "titles" : [
       "Lisbon Packing List",
-      "Packing List",
-      "Packing - Lisbon"
+      "Packing List"
     ]
   },
   {
@@ -891,7 +870,7 @@
     "titles" : [
       "Deep Work Reading Notes",
       "Book Notes",
-      "Reading Notes - Deep Work"
+      "Deep Work Notes"
     ]
   },
   {
@@ -927,7 +906,6 @@
     ],
     "titles" : [
       "Lease Renewal Agreement",
-      "Lease Renewal Agreement Unit 4B",
       "Apartment Lease Renewal"
     ]
   },
@@ -963,9 +941,8 @@
       "earnings"
     ],
     "titles" : [
-      "2026 W-2",
-      "W-2 Wage and Tax Statement 2026",
-      "Northwind Labs W-2"
+      "Northwind Labs W-2",
+      "W-2"
     ]
   },
   {
@@ -982,9 +959,8 @@
       "earnings"
     ],
     "titles" : [
-      "2026 1099-NEC",
-      "1099-NEC Freelance Income",
-      "Fernwood Studios 1099-NEC"
+      "Fernwood Studios 1099-NEC",
+      "1099-NEC"
     ]
   },
   {
@@ -1000,9 +976,8 @@
       "yield"
     ],
     "titles" : [
-      "2026 1099-INT",
-      "1099-INT Interest Income",
-      "Northfield Savings 1099-INT"
+      "Northfield Savings 1099-INT",
+      "1099-INT"
     ]
   },
   {
@@ -1018,7 +993,7 @@
       "energy"
     ],
     "titles" : [
-      "Brightwater Electric Bill October 2026",
+      "Brightwater Electric Bill",
       "Electric Bill",
       "Brightwater Electric Statement"
     ]
@@ -1037,8 +1012,7 @@
     ],
     "titles" : [
       "Anytown Water Works Bill",
-      "Water Bill",
-      "Water Bill Q3 2026"
+      "Water Bill"
     ]
   },
   {
@@ -1054,9 +1028,9 @@
       "finances"
     ],
     "titles" : [
-      "Northfield Savings Bank Statement October 2026",
-      "Bank Statement October 2026",
-      "Checking Statement"
+      "Northfield Savings Bank Statement",
+      "Checking Statement",
+      "Bank Statement"
     ]
   },
   {
@@ -1072,9 +1046,9 @@
       "reserves"
     ],
     "titles" : [
-      "Harbor Credit Union Statement September 2026",
+      "Harbor Credit Union Statement",
       "Savings Statement",
-      "Bank Statement September 2026"
+      "Bank Statement"
     ]
   },
   {
@@ -1180,9 +1154,9 @@
       "assessment"
     ],
     "titles" : [
-      "Property Tax Notice 2026",
       "Sample County Property Tax Notice",
-      "Property Tax Bill"
+      "Property Tax Bill",
+      "Property Tax Notice"
     ]
   },
   {
@@ -1198,7 +1172,6 @@
       "ticket"
     ],
     "titles" : [
-      "Coat Check 142",
       "Coat Check Ticket",
       "Coat Check"
     ]
@@ -1234,9 +1207,7 @@
       "vehicle"
     ],
     "titles" : [
-      "Valet Ticket 087",
-      "Valet Ticket",
-      "Valet 087"
+      "Valet Ticket"
     ]
   },
   {
@@ -1253,8 +1224,7 @@
     ],
     "titles" : [
       "Wifi Password",
-      "Maple Wifi Note",
-      "Wifi - New Place"
+      "Maple Wifi Note"
     ]
   },
   {
@@ -1270,7 +1240,6 @@
       "ticket"
     ],
     "titles" : [
-      "Coat Check 058",
       "Coat Check Ticket",
       "Coat Check"
     ]
@@ -1290,7 +1259,7 @@
     "titles" : [
       "Lot B Parking Stub",
       "Parking Stub",
-      "Parking Ticket B-214"
+      "Parking Ticket"
     ]
   },
   {
@@ -1308,7 +1277,7 @@
     "titles" : [
       "Riverfront Parking Stub",
       "Parking Stub",
-      "Parking Ticket 0731"
+      "Parking Ticket"
     ]
   },
   {
@@ -1324,7 +1293,6 @@
       "lodging"
     ],
     "titles" : [
-      "Valet Ticket 212",
       "Alder Hotel Valet Ticket",
       "Valet Ticket"
     ]
@@ -1360,9 +1328,7 @@
       "giveaway"
     ],
     "titles" : [
-      "Raffle Ticket 003917",
-      "Raffle Ticket",
-      "Raffle 003917"
+      "Raffle Ticket"
     ]
   },
   {
@@ -1379,7 +1345,6 @@
     ],
     "titles" : [
       "50/50 Raffle Ticket",
-      "Raffle Ticket 114502",
       "School Fair Raffle Ticket"
     ]
   },
@@ -1396,9 +1361,9 @@
       "waiting"
     ],
     "titles" : [
-      "Deli Number 47",
       "Deli Ticket",
-      "Deli Counter Number"
+      "Deli Counter Number",
+      "Deli Counter Ticket"
     ]
   },
   {
@@ -1414,9 +1379,9 @@
       "bread"
     ],
     "titles" : [
-      "Bakery Number 09",
       "Take a Number Ticket",
-      "Bakery Counter Number"
+      "Bakery Counter Number",
+      "Bakery Counter Ticket"
     ]
   },
   {
@@ -1451,8 +1416,7 @@
     ],
     "titles" : [
       "Cinema Ticket Stub",
-      "Movie Ticket Stub",
-      "Cinema 4 Seat H12"
+      "Movie Ticket Stub"
     ]
   },
   {
@@ -1468,7 +1432,6 @@
       "backpack"
     ],
     "titles" : [
-      "Bag Check T-33",
       "Museum Bag Check Ticket",
       "Bag Check Ticket"
     ]
@@ -1494,9 +1457,8 @@
       "earnings"
     ],
     "titles" : [
-      "2026 W-2",
-      "W-2 Wage and Tax Statement 2026",
-      "Northwind Labs W-2"
+      "Northwind Labs W-2",
+      "W-2"
     ]
   },
   {
@@ -1520,9 +1482,8 @@
       "earnings"
     ],
     "titles" : [
-      "2026 1099-NEC",
-      "1099-NEC Freelance Income",
-      "Fernwood Studios 1099-NEC"
+      "Fernwood Studios 1099-NEC",
+      "1099-NEC"
     ]
   },
   {
@@ -1546,9 +1507,8 @@
       "dividend"
     ],
     "titles" : [
-      "2026 1099-INT",
-      "1099-INT Interest Income",
-      "Northfield Savings 1099-INT"
+      "Northfield Savings 1099-INT",
+      "1099-INT"
     ]
   },
   {
@@ -1600,7 +1560,7 @@
     "titles" : [
       "Riverbend Food Bank Donation Receipt",
       "Charity Donation Receipt",
-      "Food Bank Donation"
+      "Riverbend Food Bank Receipt"
     ]
   }
 ]

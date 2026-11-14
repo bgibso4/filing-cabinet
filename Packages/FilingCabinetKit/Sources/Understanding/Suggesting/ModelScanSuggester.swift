@@ -57,7 +57,8 @@ public final class ModelScanSuggester: ScanSuggester {
             let session = prewarmed.withLock { $0.take() }
             let wasPrewarmed = session != nil
             let suggestion = try await respond(
-                to: input, image: image, session: session ?? Self.session(model: model), model: model)
+                to: input, image: image, session: session ?? Self.session(model: model), model: model
+            )
             UnderstandingLog.logger.info(
                 """
                 Suggester: filed in \(ContinuousClock.now - start, privacy: .public), \
@@ -96,7 +97,7 @@ public final class ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// A fresh session with the suggester's instructions.
+    /// A fresh session with the filing call's instructions.
     private static func session(model: SystemLanguageModel) -> LanguageModelSession {
         LanguageModelSession(model: model, instructions: SuggestionPrompt.instructions)
     }
@@ -169,21 +170,23 @@ public final class ModelScanSuggester: ScanSuggester {
         }
     }
 
-    /// `title` and `collection` (any of `collectionIDs`).
+    /// `title`, then `collection` (any of `collectionIDs`).
     private static func schema(collectionIDs: [String]) throws -> GenerationSchema {
         let collection = DynamicGenerationSchema(
             name: "CollectionID",
             description: "The id of the one collection the scan belongs in",
             anyOf: collectionIDs
         )
-        let title = DynamicGenerationSchema.Property(
-            name: "title",
-            description: "What the document is and who it is from, never its owner's name, at most 40 characters",
-            schema: DynamicGenerationSchema(type: String.self)
-        )
         let root = DynamicGenerationSchema(
             name: "ScanSuggestion",
-            properties: [title, DynamicGenerationSchema.Property(name: "collection", schema: collection)]
+            properties: [
+                DynamicGenerationSchema.Property(
+                    name: "title",
+                    description: "The name, \" · \", then the kind of document, or the kind alone; 2 to 4 words; "
+                        + "never a stand-in, web address or its owner's name",
+                    schema: DynamicGenerationSchema(type: String.self)),
+                DynamicGenerationSchema.Property(name: "collection", schema: collection),
+            ]
         )
         return try GenerationSchema(root: root, dependencies: [])
     }

@@ -7,6 +7,7 @@ public struct LogAnalytics: Analytics {
     public init() {}
 
     public func send(_ event: AnalyticsEvent) {
+        // `.public` is safe: payloads hold only tokens, numbers and booleans, by type (#3's recheck).
         Self.logger.info(
             "analytics \(event.name, privacy: .public) \(String(describing: event.payload), privacy: .public)")
     }

@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf testflight-archive
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf testflight-archive eval-merge
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -141,15 +141,32 @@ compare-readers: generate
 # The suggestion evaluation (Plan 5) on this Mac: the text reader, then the on-device model, over the made-up test
 # set, in the app's two calls (title and collection, then search words). A report, not a gate; slow (minutes). Page 1's
 # image goes in with the text (IMAGE=0: text only); CASES="wallet-,notes-bio-class" runs only those cases (ids, or
-# prefixes ending in "-") and skips the probes.
+# prefixes ending in "-") and skips the probes. PRIVATE=~/FilingCabinetPrivate/eval adds that folder's cases (outside the
+# repo) and writes the report there, with review.html (only the private cases) beside it.
 IMAGE ?= 1
 CASES ?=
+PRIVATE ?=
 
 eval-suggestions: generate
 	set -o pipefail; TEST_RUNNER_FC_EVAL_IMAGE=$(IMAGE) TEST_RUNNER_FC_EVAL_CASES="$(CASES)" \
-		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
+		TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
 		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
-	@echo "Report: build/suggestion-eval.md"
+	@echo "Report: $(if $(PRIVATE),$(PRIVATE),build)/suggestion-eval.md"
+
+# Folds the answers downloaded from review.html (judgements.json) into the cases files: Fixtures/cases.json for the
+# made-up ids, and with PRIVATE=<folder> that folder's cases.json for the private ones. review.html is in build/, or in
+# the PRIVATE folder when make eval-suggestions had PRIVATE=. Prints how many each file took, and warns about answers no
+# file took. Review the diff, then commit.
+JUDGED ?=
+
+eval-merge: generate
+	@test -n "$(JUDGED)" || { echo "usage: make eval-merge JUDGED=<judgements.json> [PRIVATE=<folder>]"; exit 2; }
+	@rm -f build/eval-merge.txt
+	set -o pipefail; TEST_RUNNER_FC_EVAL_JUDGED="$(JUDGED)" TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" \
+		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme SuggestionEvaluation \
+		'-only-testing:SuggestionEvaluationTests/SuggestionEvaluationTests/mergesJudgements()' \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+	@cat build/eval-merge.txt
 
 # Reader timing on a connected iPhone (A12, A14). Not part of `full` or CI. XCTest runs every class of one
 # invocation in one process, so each cold-read class gets its own `xcodebuild test` (a fresh app launch) and the

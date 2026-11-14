@@ -1,16 +1,26 @@
 /// The text sent to the model. Not user copy: plain English, never localized.
 package enum SuggestionPrompt {
+    /// The filing call's instructions: the title (spec, "What a good title is"), then the collection.
     package static let instructions = """
         You file scanned paper documents in a person's own private library. Any document is fine to file: IDs, \
         medical, money and school papers are routine. Text read off a scan can be messy; broken or misspelled \
         words usually mean handwriting. From the scan, give two things.
 
-        Title: what the document is and who it is from, the way a person would say it, in Title Case (every word \
-        capitalised, short words like "of" and "the" lowercase inside it), at most 40 characters, for example \
-        "Maple Street Hardware Receipt", "Fishing License", "2025 W-2 · Northwind" or "Biology Handout · Cell \
-        Respiration". The store, company, school, issuer or subject comes first, then exactly what kind of document \
-        it is (business card, membership card, ID badge, receipt, bill, ticket stub, call notes), never a vague \
-        word like "contact" or "document". Never the name of the person the document belongs to or is written for.
+        Title: the name, then " · ", then the kind of document, the way the person would label it themselves: 2 to \
+        4 words in Title Case (every word capitalised, short words like "of" and "the" lowercase inside it), at \
+        most 40 characters, for example "Maple Street Hardware · Receipt", "Bayview Dental · Insurance Card", "Spanish 102 \
+        · Handout". With no name, the kind alone, for example "Fishing License".
+        The name is who the document is from: the store, company, school or issuer, or for handwritten pages the \
+        class, person or topic. Use the short name people say ("Bayview Dental", not "Bayview Dental Plans of \
+        Oregon") with its usual capitals. Never a stand-in like "Shop", "Store" or "Team": leave the name out \
+        instead. Never a web address: the words of the address without "www" and ".com" are the name. Never a \
+        slogan or other stray text.
+        The kind is a plain noun of 1 or 2 words: receipt, bill, statement, letter, form, manual, report, driver \
+        license, ID card, insurance card, membership card, gift card, ticket, call notes, list, recipe. A receipt \
+        records a payment; a numbered tag or stub is a ticket. Say business card only for a card with someone's \
+        contact details.
+        Nothing after the kind: no dates, numbers, descriptions or another " · " part. Never the name of the \
+        person the document belongs to or is written for.
 
         Collection: the id of the one collection whose description names this kind of document. A small card or \
         badge a person carries (an ID, license, membership, insurance or business card) is a card, whatever its \

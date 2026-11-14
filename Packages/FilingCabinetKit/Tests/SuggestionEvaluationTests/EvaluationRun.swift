@@ -9,6 +9,8 @@ struct EvaluationRun {
         let pageText: String
         let filing: TimedCall<ScanSuggestion>
         let words: TimedCall<[String]>
+        /// From the private set (`PRIVATE=`), not the made-up one: counted in its own column, never in Tune or Holdout.
+        var isPrivate = false
 
         /// Nil when the model gave none (any failure or a timeout).
         var suggestion: ScanSuggestion? { filing.answer }
@@ -30,4 +32,9 @@ struct EvaluationRun {
     let probes: [Probe]
     /// `CASES=`: the filter the cases were picked by, or nil for all of them.
     let filter: String?
+
+    /// What the review page shows: the private cases alone when the run has any (Ben judges those), else every case.
+    var reviewed: [Result] {
+        results.contains(where: \.isPrivate) ? results.filter(\.isPrivate) : results
+    }
 }

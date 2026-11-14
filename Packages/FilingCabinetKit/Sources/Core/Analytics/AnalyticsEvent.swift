@@ -100,3 +100,20 @@ public enum AnalyticsEvent: Sendable, Equatable {
         }
     }
 }
+
+extension AnalyticsEvent {
+    /// The payload as strings, for a provider that takes text parameters. Keys are the payload keys' raw values.
+    public var signalParameters: [String: String] {
+        Dictionary(uniqueKeysWithValues: payload.map { key, value in (key.rawValue, value.signalText) })
+    }
+}
+
+extension AnalyticsValue {
+    fileprivate var signalText: String {
+        switch self {
+        case .int(let number): "\(number)"
+        case .bool(let flag): flag ? "true" : "false"
+        case .token(let token): token.raw
+        }
+    }
+}

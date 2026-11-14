@@ -28,7 +28,7 @@ public struct SuggestionCollection: Sendable, Equatable {
                     "Wallet",
                     "IDs and cards a person carries: driver's licenses, state and student IDs, passports, work "
                         + "and building badges, gym, club and library cards, insurance and vaccination cards, "
-                        + "transit cards, business cards"
+                        + "transit cards, gift cards, business cards"
                 )
             case .receipts:
                 ("Receipts", "Receipts for anything bought or paid for: shops, restaurants, fuel, orders, services")

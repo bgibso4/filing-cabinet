@@ -1,7 +1,7 @@
 import Foundation
 import Understanding
 
-/// Renders the suggestion evaluation as Markdown: a summary, accuracy per collection, every title not acceptable, every
+/// Renders the suggestion evaluation as Markdown: a summary, accuracy per collection, every title not right, every
 /// search not found, the probes, then one row per case. Informs; it never decides anything.
 struct EvaluationReport {
     enum Outcome {
@@ -36,7 +36,7 @@ struct EvaluationReport {
     }
 
     private var results: [EvaluationRun.Result] {
-        if case .ran(let run) = outcome { run.results } else { [] }
+        if case .ran(let run) = outcome { run.results.filter { $0.item.isJudged && !$0.isPrivate } } else { [] }
     }
 
     func collectionAccuracy(in collection: String) -> Tally {
@@ -65,10 +65,6 @@ struct EvaluationReport {
 
     private static func titles(_ results: [EvaluationRun.Result]) -> Tally {
         Tally(hits: results.count { $0.item.isRightTitle($0.suggestion?.title) }, total: results.count)
-    }
-
-    private static func acceptableTitles(_ results: [EvaluationRun.Result]) -> Tally {
-        Tally(hits: results.count { $0.item.isAcceptableTitle($0.suggestion?.title) }, total: results.count)
     }
 
     /// The headline: searches Search finds from the suggested title, the page text and the hidden words.
@@ -106,7 +102,11 @@ struct EvaluationReport {
 
     private static func about(_ run: EvaluationRun) -> [String] {
         [
-            "\(run.results.count) cases, read with today's text reader, then the on-device model in two calls, as the "
+            "\(run.results.count) cases"
+                + (run.results.contains(where: \.isPrivate)
+                    ? " (\(run.results.count { $0.isPrivate }) private, from `PRIVATE=`; unjudged ones are in no score)"
+                    : "")
+                + ", read with today's text reader, then the on-device model in two calls, as the "
                 + "app makes them: title and collection "
                 + (run.includesImage ? "with page 1's image (the default)" : "on the text alone (`IMAGE=0`)")
                 + ", then search words given that title and collection (the suggested ones, else the expected ones)."
@@ -123,21 +123,21 @@ struct EvaluationReport {
     /// The headline measures for every case, then for the tune set (even indexes in cases.json, the cases a prompt
     /// is tuned on) and the holdout (odd indexes, read only to check). Times are over the calls that answered.
     private func summary(_ run: EvaluationRun) -> [String] {
-        let sets = [run.results, Self.split(run.results, even: true), Self.split(run.results, even: false)]
+        let columns = Self.columns(run)
         func row(_ measure: String, _ tally: ([EvaluationRun.Result]) -> Tally) -> String {
-            "| \(measure) | " + sets.map { tally($0).text }.joined(separator: " | ") + " |"
+            "| \(measure) | " + columns.map { tally($0.results).text }.joined(separator: " | ") + " |"
         }
         let filingTimes = run.results.map(\.filing).filter { $0.answer != nil }.map(\.milliseconds)
         let wordsTimes = run.results.map(\.words).filter { $0.answer != nil }.map(\.milliseconds)
         let none = run.results.count { $0.suggestion == nil }
         let timedOut = run.results.count { $0.filing.timedOut }
         return [
-            "## Summary", "", "| Measure | All | Tune | Holdout |", "|---|---|---|---|",
+            "## Summary", "", "| Measure | " + columns.map(\.name).joined(separator: " | ") + " |",
+            "|---|" + String(repeating: "---|", count: columns.count),
             row("Collection, all scans", Self.collections),
             row("Collection, clean scans") { Self.collections($0, quality: "clean") },
             row("Collection, low-quality scans") { Self.collections($0, quality: "low") },
-            row("Titles, acceptable", Self.acceptableTitles),
-            row("Titles, exact", Self.titles),
+            row("Titles, right", Self.titles),
             row("Found by search", Self.foundBySearch),
             row("Search recall, hidden words only", Self.wordsOnly),
             "",
@@ -157,33 +157,60 @@ struct EvaluationReport {
         results.enumerated().filter { $0.offset.isMultiple(of: 2) == even }.map(\.element)
     }
 
+    /// The score columns. All, Tune and Holdout count the made-up cases only (All is safe to quote outside); Private counts
+    /// the judged private cases. Tune and Holdout use positions in cases.json. Private shows only when the run has private cases.
+    private static func columns(_ run: EvaluationRun) -> [(name: String, results: [EvaluationRun.Result])] {
+        let madeUp = run.results.filter { !$0.isPrivate }
+        let judged = run.results.filter(\.item.isJudged)
+        var columns = [
+            (name: "All", results: madeUp), (name: "Tune", results: split(madeUp, even: true)),
+            (name: "Holdout", results: split(madeUp, even: false)),
+        ]
+        if madeUp.count != run.results.count {
+            columns.append((name: "Private", results: judged.filter(\.isPrivate)))
+        }
+        return columns
+    }
+
     private func perCollection(_ run: EvaluationRun) -> [String] {
         var seen: Set<String> = []
-        let order = run.results.map(\.item.collection).filter { seen.insert($0).inserted }
-        let sets = [run.results, Self.split(run.results, even: true), Self.split(run.results, even: false)]
-        return ["## Collection by collection", "", "| Collection | All | Tune | Holdout |", "|---|---|---|---|"]
+        let order = run.results.filter(\.item.isJudged).map(\.item.collection).filter { seen.insert($0).inserted }
+        let columns = Self.columns(run)
+        return [
+            "## Collection by collection", "", "| Collection | " + columns.map(\.name).joined(separator: " | ") + " |",
+            "|---|" + String(repeating: "---|", count: columns.count),
+        ]
             + order.map { collection in
                 "| \(collection) | "
-                    + sets.map { Self.collections($0.filter { $0.item.collection == collection }).text }
+                    + columns.map { Self.collections($0.results.filter { $0.item.collection == collection }).text }
                     .joined(separator: " | ") + " |"
             } + [""]
     }
 
+    /// The made-up results with their position in cases.json (the private ones come after and have none).
+    private static func madeUp(_ run: EvaluationRun) -> [(index: Int, result: EvaluationRun.Result)] {
+        Array(run.results.filter { !$0.isPrivate }.enumerated().map { (index: $0.offset, result: $0.element) })
+    }
+
+    /// The ids of the private cases a section lists, under a "Private" heading, with no content.
+    private static func privateIDs(_ run: EvaluationRun, where isListed: (EvaluationRun.Result) -> Bool) -> [String] {
+        let ids = run.results.filter { $0.isPrivate && $0.item.isJudged && isListed($0) }.map(\.item.id)
+        return ids.isEmpty ? [] : ["### Private (\(ids.count))", "", ids.joined(separator: ", "), ""]
+    }
+
     private func titleMisses(_ run: EvaluationRun) -> [String] {
-        let misses = run.results.enumerated().filter {
-            !$0.element.item.isAcceptableTitle($0.element.suggestion?.title)
-        }
+        let misses = Self.madeUp(run).filter { !$0.result.item.isRightTitle($0.result.suggestion?.title) }
         return [
-            "## Titles not acceptable (\(misses.count))", "", "| Case | Set | Expected | Got |", "|---|---|---|---|",
+            "## Titles not right (\(misses.count))", "", "| Case | Set | Expected | Got |", "|---|---|---|---|",
         ]
             + misses.map { index, result in
                 "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(result.item.titles.joined(separator: " / "))) | "
                     + "\(Self.cell(Self.title(result.suggestion))) |"
-            } + [""]
+            } + [""] + Self.privateIDs(run) { !$0.item.isRightTitle($0.suggestion?.title) }
     }
 
     private func unfoundSearches(_ run: EvaluationRun) -> [String] {
-        let rows = run.results.enumerated().compactMap { index, result -> String? in
+        let rows = Self.madeUp(run).compactMap { index, result -> String? in
             let missed = Self.unfound(result)
             guard !missed.isEmpty else { return nil }
             return "| \(result.item.id) | \(Self.set(index)) | \(Self.cell(missed.joined(separator: ", "))) | "
@@ -192,7 +219,7 @@ struct EvaluationReport {
         return [
             "## Searches not found (\(rows.count) cases)", "", "| Case | Set | Not found | Words returned |",
             "|---|---|---|---|",
-        ] + rows + [""]
+        ] + rows + [""] + Self.privateIDs(run) { !Self.unfound($0).isEmpty }
     }
 
     private func probes(_ run: EvaluationRun) -> [String] {
@@ -209,7 +236,8 @@ struct EvaluationReport {
             "|---|---|---|---|---|---|---|",
         ]
             + run.results.map { result in
-                "| \(result.item.id) | \(result.item.collection) | \(Self.collection(result.filing)) | "
+                "| \(result.item.id) | \(result.item.isJudged ? result.item.collection : "unjudged") | "
+                    + "\(Self.collection(result.filing)) | "
                     + "\(Self.cell(result.suggestion?.title ?? "")) | "
                     + "\(Self.cell(result.searchWords.joined(separator: ", "))) | "
                     + "\(Self.milliseconds(result.filing.milliseconds)) | \(Self.milliseconds(result.words.milliseconds)) |"

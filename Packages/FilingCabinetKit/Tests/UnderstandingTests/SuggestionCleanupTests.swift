@@ -86,9 +86,25 @@ private func clean(words: [String]) -> [String] {
     #expect(clean(title: "2025 W-2 ·  · Northwind").title == "2025 W-2 · Northwind")
 }
 
-@Test func titleCutNeverEndsOnASeparator() {
-    #expect(
-        clean(title: "Certificate of Vehicle Registration · Northwind").title == "Certificate of Vehicle Registration")
+/// Over 40 characters, "Name · Kind" keeps its kind: the name loses its last words until the title fits.
+@Test func aLongNameIsCutBeforeTheKind() {
+    let title = "Annual Property Tax Assessment Notice · Letter"
+    #expect(title.count > 40)
+
+    #expect(clean(title: title).title == "Annual Property Tax Assessment · Letter")
+}
+
+@Test func aNameWithNoWordThatFitsLeavesTheKindAlone() {
+    let name = String(repeating: "a", count: 34)
+
+    #expect(clean(title: "\(name) · Receipt").title == "Receipt")
+}
+
+@Test func aLongTitleWithNoNameIsCutOnAWord() {
+    let title = "Northwind Property Management Lease Renewal Form"
+    #expect(title.count > 40)
+
+    #expect(clean(title: title).title == "Northwind Property Management Lease")
 }
 
 @Test func titleOfOnlySeparatorsIsDropped() {
@@ -153,4 +169,17 @@ private func clean(words: [String]) -> [String] {
 
 @Test func aPartSharingOnlyPartOfAWordIsKept() {
     #expect(clean(title: "Passport · Pass").title == "Passport · Pass")
+}
+
+/// The title Ben asked for (2026-11-14): "Name · Kind", or the kind alone. Cleanup keeps the middot and cases each
+/// side on its own.
+@Test func aNameAndKindTitleKeepsItsMiddot() {
+    #expect(clean(title: "Bayview Dental · insurance card").title == "Bayview Dental · Insurance Card")
+    #expect(clean(title: "maple street hardware · receipt").title == "Maple Street Hardware · Receipt")
+    #expect(clean(title: "Spanish 102 · handout").title == "Spanish 102 · Handout")
+    #expect(clean(title: "fishing license").title == "Fishing License")
+    // At the 40-character limit, nothing is cut.
+    let atTheLimit = "Northwind Property Mgmt · Insurance Card"
+    #expect(atTheLimit.count == 40)
+    #expect(clean(title: atTheLimit).title == atTheLimit)
 }

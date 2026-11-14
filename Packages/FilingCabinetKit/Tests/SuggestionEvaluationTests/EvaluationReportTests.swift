@@ -4,7 +4,7 @@ import Testing
 
 /// The report's scoring on canned results; no model runs here.
 struct EvaluationReportTests {
-    private static func item(
+    static func item(
         _ id: String,
         collection: String = "receipts",
         titles: [String] = ["City Pharmacy"],
@@ -22,13 +22,14 @@ struct EvaluationReportTests {
         )
     }
 
-    private static func result(
+    static func result(
         _ item: EvaluationCase,
         collection: String?,
         title: String? = "City Pharmacy",
         words: [String] = [],
         text: String = "",
-        milliseconds: Double = 100
+        milliseconds: Double = 100,
+        isPrivate: Bool = false
     ) -> EvaluationRun.Result {
         EvaluationRun.Result(
             item: item,
@@ -38,7 +39,8 @@ struct EvaluationReportTests {
                 milliseconds: milliseconds,
                 timedOut: false
             ),
-            words: TimedCall(answer: words, milliseconds: milliseconds / 2, timedOut: false)
+            words: TimedCall(answer: words, milliseconds: milliseconds / 2, timedOut: false),
+            isPrivate: isPrivate
         )
     }
 
@@ -53,7 +55,7 @@ struct EvaluationReportTests {
         )
     }
 
-    private static func report(
+    static func report(
         _ results: [EvaluationRun.Result], includesImage: Bool = false
     ) -> EvaluationReport {
         EvaluationReport(
@@ -95,26 +97,6 @@ struct EvaluationReportTests {
         #expect(item.isRightTitle("Pharmacy receipt"))
         #expect(!item.isRightTitle("City Pharmacy Receipt"))
         #expect(!item.isRightTitle(nil))
-    }
-
-    @Test func titleIsAcceptableWhenOneContainsTheOther() {
-        let item = Self.item("a", titles: ["Driver's License", "Sampleland Passport", "2026 W-2"])
-
-        #expect(item.isAcceptableTitle("Drivers license · Sample State"))
-        #expect(item.isAcceptableTitle("Sampleland passport · 2026"))
-        #expect(item.isAcceptableTitle("2026 W2 · Northwind"))
-        #expect(!item.isAcceptableTitle("Pass"))
-        #expect(!item.isAcceptableTitle("Library card"))
-        #expect(!item.isAcceptableTitle(nil))
-    }
-
-    @Test func bareOneWordTitleIsAcceptableOnlyWhenExact() {
-        let item = Self.item("a", titles: ["City Pharmacy receipt", "Passport"])
-
-        #expect(!item.isAcceptableTitle("Receipt"))
-        #expect(!item.isAcceptableTitle("pharmacy"))
-        #expect(item.isAcceptableTitle("passport"))
-        #expect(item.isAcceptableTitle("Pharmacy receipt"))
     }
 
     @Test func emptyQueryNeverMatches() {
@@ -189,15 +171,16 @@ struct EvaluationReportTests {
         #expect(!EvaluationCase.matches("is", words: ["i"]))
     }
 
-    @Test func summaryShowsAcceptableAndExactTitles() {
+    @Test func summaryShowsStrictTitles() {
         let item = Self.item("a", titles: ["City Pharmacy"])
         let markdown = Self.report([
             Self.result(item, collection: "receipts", title: "City Pharmacy"),
             Self.result(item, collection: "receipts", title: "City Pharmacy receipt"),
         ]).markdown
 
-        #expect(markdown.contains("| Titles, acceptable | 2/2 (100%) |"))
-        #expect(markdown.contains("| Titles, exact | 1/2 (50%) |"))
+        #expect(markdown.contains("| Titles, right | 1/2 (50%) |"))
+        #expect(!markdown.contains("Titles, acceptable"))
+        #expect(!markdown.contains("Private"))
     }
 
     @Test func tuneIsEvenIndexesAndHoldoutOdd() {

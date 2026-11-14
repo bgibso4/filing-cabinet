@@ -37,6 +37,8 @@
 	<string>Filing Cabinet uses the camera to scan documents. Scans stay on this iPhone.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Filing Cabinet saves the scans you choose to Photos.</string>
+	<key>TelemetryDeckAppID</key>
+	<string>$(TELEMETRYDECK_APP_ID)</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

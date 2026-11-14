@@ -94,6 +94,33 @@ private func input(_ pages: [String], collections: [SuggestionCollection] = Sugg
     #expect(!instructions.lowercased().contains("throwaway"))
 }
 
+/// The title definition's rules (spec, "What a good title is").
+@Test func instructionsCarryTheTitleDefinition() {
+    let instructions = SuggestionPrompt.instructions
+
+    // The owner's-name rule: no code rule catches a name.
+    #expect(instructions.contains("Never the name of the person"))
+    // The short name people say, never a stand-in or a web address.
+    #expect(instructions.contains("short name people say"))
+    #expect(instructions.contains(#""Shop", "Store" or "Team""#) && instructions.contains("Never a web address"))
+    // A plain 1–2 word kind, and business card only when it is one.
+    #expect(instructions.contains("plain noun of 1 or 2 words"))
+    #expect(instructions.contains("business card only for"))
+    // Nothing after the kind: no dates.
+    #expect(instructions.contains("Nothing after the kind: no dates"))
+}
+
+/// Ben (2026-11-14): "Name · Kind" with a middot, the kind alone with no name; every example follows it.
+@Test func instructionsAskForNameMiddotKind() {
+    let instructions = SuggestionPrompt.instructions
+
+    #expect(instructions.contains(#"the name, then " · ", then the kind"#))
+    #expect(instructions.contains(#""Maple Street Hardware · Receipt""#))
+    #expect(instructions.contains(#""Bayview Dental · Insurance Card""#))
+    #expect(instructions.contains(#"With no name, the kind alone, for example "Fishing License""#))
+    #expect(!instructions.contains("Maple Street Hardware Receipt"))
+}
+
 @Test func promptStartsWithTheCollectionsPrefix() {
     let collections = SuggestionCollection.builtIns
 

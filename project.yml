@@ -28,6 +28,10 @@ packages:
   SnapshotTesting:
     url: https://github.com/pointfreeco/swift-snapshot-testing
     exactVersion: 1.19.7
+  # Release builds' analytics (#3): the app target only, so Core stays free of dependencies.
+  TelemetryDeck:
+    url: https://github.com/TelemetryDeck/SwiftSDK
+    exactVersion: 2.14.2
 
 targets:
   FilingCabinet:
@@ -54,6 +58,8 @@ targets:
         product: ScreenModels
       - package: FilingCabinetKit
         product: Screens
+      - package: TelemetryDeck
+        product: TelemetryDeck
       # Test doubles for the launch flags; the app uses them only under `#if DEBUG` (M9). Built, but linked by Debug
       # alone (OTHER_LDFLAGS below): Xcode links a package product's object whole, so Release would carry the fakes.
       - package: FilingCabinetKit
@@ -74,6 +80,9 @@ targets:
         # iPhone only, portrait only (Info.plist lists the single orientation).
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+        # TelemetryDeck's app ID, read through Info.plist. Committed: it ships in the app anyway. Empty means the log,
+        # even in Release (AnalyticsSink).
+        TELEMETRYDECK_APP_ID: 7D50637B-92F9-416D-AFF5-E252A581276B
 
   # The Scan control (Control Center, Lock Screen, Action button). Links Core only: its intent runs in the app.
   FilingCabinetControls:
