@@ -18,12 +18,15 @@ private struct WelcomeHarness {
         fresh = try FreshDefaults()
         preferences = AppPreferences(defaults: fresh.defaults)
         center = FakeNotificationCenter(authorization: authorization, grantsRequest: grantsRequest, answers: answers)
+        let wait = answers ? Self.answeredWait : Self.stuckWait
         model = WelcomeModel(
-            preferences: preferences, notifications: center, analytics: analytics, authorizationWait: Self.wait)
+            preferences: preferences, notifications: center, analytics: analytics, authorizationWait: wait)
     }
 
-    /// Long enough for the fake to answer, short enough to keep a stuck read quick.
-    static let wait = Duration.milliseconds(50)
+    /// When the fake answers, a bound it can never lose to on a busy machine; the read returns as soon as it answers.
+    static let answeredWait = Duration.seconds(10)
+    /// When the fake never answers, the bound is what the test waits out, so it stays short.
+    static let stuckWait = Duration.milliseconds(50)
 
     /// Starts Turn on notifications from the second screen and returns once iOS has been asked.
     func askAndWait() async -> Task<Void, Never> {
