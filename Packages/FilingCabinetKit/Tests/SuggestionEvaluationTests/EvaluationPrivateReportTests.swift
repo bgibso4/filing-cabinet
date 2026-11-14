@@ -57,4 +57,14 @@ struct EvaluationPrivateReportTests {
         #expect(!markdown.contains("| p | tune"))
         #expect(!markdown.contains("| p | holdout"))
     }
+
+    @Test func collectionAccuracyHelpersIgnorePrivateCases() {
+        let report = Base.report([
+            Base.result(Base.item("a"), collection: "receipts"),
+            Base.result(Base.item("p"), collection: "notes", isPrivate: true),
+        ])
+
+        #expect(report.collectionAccuracy(in: "receipts") == EvaluationReport.Tally(hits: 1, total: 1))
+        #expect(report.collectionAccuracy(quality: "clean") == EvaluationReport.Tally(hits: 1, total: 1))
+    }
 }

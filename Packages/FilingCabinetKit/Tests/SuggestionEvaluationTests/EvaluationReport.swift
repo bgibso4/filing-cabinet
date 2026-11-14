@@ -36,7 +36,7 @@ struct EvaluationReport {
     }
 
     private var results: [EvaluationRun.Result] {
-        if case .ran(let run) = outcome { run.results.filter(\.item.isJudged) } else { [] }
+        if case .ran(let run) = outcome { run.results.filter { $0.item.isJudged && !$0.isPrivate } } else { [] }
     }
 
     func collectionAccuracy(in collection: String) -> Tally {

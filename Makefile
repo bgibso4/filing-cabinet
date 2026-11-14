@@ -15,7 +15,7 @@ DEVICE_PRODUCT := $(DERIVED)/Build/Products/Debug-iphoneos/FilingCabinet.app
 # Name, UDID or serial of the target iPhone (see `xcrun devicectl list devices`).
 DEVICE         ?= iPhone
 
-.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf testflight-archive
+.PHONY: setup sim generate build fast lint format snapshots-record full compare run run-fake device test-hooks test-scripts test-lint unused ci ci-checks ci-sim affected retest audit-report unused-run check-resolved compare-readers eval-suggestions device-perf testflight-archive eval-merge
 
 # Install the git hook and fail loudly, with the install command, when a required tool is missing.
 setup:
@@ -152,6 +152,17 @@ eval-suggestions: generate
 		TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" xcodebuild $(XCB_FLAGS) test -project $(PROJECT) \
 		-scheme SuggestionEvaluation -destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
 	@echo "Report: $(if $(PRIVATE),$(PRIVATE),build)/suggestion-eval.md"
+
+# Folds the answers downloaded from build/review.html (judgements.json) into the cases files: Fixtures/cases.json for
+# the made-up ids, and with PRIVATE=<folder> that folder's cases.json for the private ones. Review the diff, then commit.
+JUDGED ?=
+
+eval-merge: generate
+	@test -n "$(JUDGED)" || { echo "usage: make eval-merge JUDGED=<judgements.json> [PRIVATE=<folder>]"; exit 2; }
+	set -o pipefail; TEST_RUNNER_FC_EVAL_JUDGED="$(JUDGED)" TEST_RUNNER_FC_EVAL_PRIVATE="$(PRIVATE)" \
+		xcodebuild $(XCB_FLAGS) test -project $(PROJECT) -scheme SuggestionEvaluation \
+		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY)
+	@echo "Merged into Fixtures/cases.json$(if $(PRIVATE), and $(PRIVATE)/cases.json)"
 
 # Reader timing on a connected iPhone (A12, A14). Not part of `full` or CI. XCTest runs every class of one
 # invocation in one process, so each cold-read class gets its own `xcodebuild test` (a fresh app launch) and the

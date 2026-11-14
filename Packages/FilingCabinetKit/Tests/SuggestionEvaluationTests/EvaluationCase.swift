@@ -86,7 +86,7 @@ struct EvaluationCase: Sendable {
     }
 
     /// Folded, with punctuation dropped and spacing collapsed: "Driver's License · W-2" → "drivers license w2".
-    private static func loosened(_ text: String) -> String {
+    static func loosened(_ text: String) -> String {
         normalized(
             String(
                 String.UnicodeScalarView(
@@ -100,8 +100,9 @@ struct EvaluationCase: Sendable {
     }
 }
 
-/// A case with only an id and files (a private scan not yet judged) decodes; the rest default to empty.
-extension EvaluationCase: Decodable {
+/// A case with only an id and files (a private scan not yet judged) decodes; the rest default to empty, and encode
+/// leaves those out again, so a file written back reads the same.
+extension EvaluationCase: Codable {
     private enum CodingKeys: String, CodingKey {
         case id, files, collection, titles, searches, quality, collections
     }
@@ -115,5 +116,23 @@ extension EvaluationCase: Decodable {
         searches = try container.decodeIfPresent([String].self, forKey: .searches) ?? []
         quality = try container.decodeIfPresent(String.self, forKey: .quality) ?? "clean"
         collections = try container.decodeIfPresent([String].self, forKey: .collections)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(files, forKey: .files)
+        if !collection.isEmpty { try container.encode(collection, forKey: .collection) }
+        if !titles.isEmpty { try container.encode(titles, forKey: .titles) }
+        if !searches.isEmpty { try container.encode(searches, forKey: .searches) }
+        try container.encode(quality, forKey: .quality)
+        try container.encodeIfPresent(collections, forKey: .collections)
+    }
+
+    /// `<folder>/cases.json` as `loadAll` reads it: pretty, sorted keys, no trailing newline.
+    static func write(_ cases: [Self], to folder: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        try encoder.encode(cases).write(to: folder.appending(path: "cases.json"), options: .atomic)
     }
 }

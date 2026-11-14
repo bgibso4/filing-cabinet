@@ -12,7 +12,8 @@ import Testing
 /// Fast and CI it is skipped. Each case gets the app's two calls: title and collection, then search words. Page 1's
 /// image goes to the first unless `FC_EVAL_IMAGE=0` (`IMAGE=0`); `FC_EVAL_CASES` (`CASES=`) runs only some cases and
 /// skips the probes. `FC_EVAL_PRIVATE` (`PRIVATE=`) is a folder outside the repo (`cases.json` and `scans/`) whose cases
-/// run after the made-up ones; the report is then written there, not to `build/`.
+/// run after the made-up ones; the report is then written there, not to `build/`, with `review.html` beside it.
+/// `FC_EVAL_JUDGED` (`make eval-merge JUDGED=`) merges the answers downloaded from that page into the cases files.
 @Suite(.timeLimit(.minutes(30)))
 struct SuggestionEvaluationTests {
     private static let environment = ProcessInfo.processInfo.environment
@@ -46,11 +47,55 @@ struct SuggestionEvaluationTests {
             outcome = .unavailable(reason: "ModelScanSuggester reports it unavailable")
         }
 
-        let output = (Self.privateFolder ?? Self.root.appending(path: "build")).appending(path: "suggestion-eval.md")
-        try FileManager.default.createDirectory(
-            at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let folder = Self.privateFolder ?? Self.root.appending(path: "build")
+        let output = folder.appending(path: "suggestion-eval.md")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         try EvaluationReport(outcome: outcome).markdown.write(to: output, atomically: true, encoding: .utf8)
         #expect(FileManager.default.fileExists(atPath: output.path))
+        if case .ran(let run) = outcome {
+            // One title style today; the page takes one entry per style.
+            let page = ReviewPage.html(for: try run.results.map { try Self.reviewEntry(for: $0) })
+            try page.write(to: folder.appending(path: "review.html"), atomically: true, encoding: .utf8)
+        }
+    }
+
+    /// `make eval-merge`: the made-up cases take Ben's answers for their ids into the source tree's `cases.json`, the
+    /// private ones into `<PRIVATE>/cases.json`; each file only the answers for its own cases.
+    @Test(.enabled(if: environment["FC_EVAL_JUDGED"].map { !$0.isEmpty } ?? false, "runs only in make eval-merge"))
+    func mergesJudgements() throws {
+        let path = try #require(Self.environment["FC_EVAL_JUDGED"])
+        let judgements = try JSONDecoder().decode(
+            [Judgement].self, from: Data(contentsOf: URL(filePath: (path as NSString).expandingTildeInPath)))
+        let madeUp = Self.root.appending(path: "Packages/FilingCabinetKit/Tests/SuggestionEvaluationTests/Fixtures")
+        for folder in [madeUp] + [Self.privateFolder].compactMap({ $0 }) {
+            let ids = Set(try EvaluationCase.loadAll(from: folder).map(\.id))
+            try JudgementMerge.apply(judgements.filter { ids.contains($0.id) }, toCasesIn: folder)
+        }
+    }
+
+    /// Page 1 as a JPEG (any size the scan came in, at most 1200 px wide or tall), with the model's title and collection.
+    private static func reviewEntry(for result: EvaluationRun.Result) throws -> ReviewPage.Entry {
+        let scans = (result.isPrivate ? privateFolder ?? EvaluationCase.fixtures : EvaluationCase.fixtures)
+            .appending(path: "scans")
+        let file = try #require(result.item.files.first)
+        let source = try #require(CGImageSourceCreateWithURL(scans.appending(path: file) as CFURL, nil))
+        let options =
+            [
+                kCGImageSourceCreateThumbnailFromImageAlways: true, kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: 1200,
+            ] as CFDictionary
+        let image = try #require(CGImageSourceCreateThumbnailAtIndex(source, 0, options))
+        let data = NSMutableData()
+        let jpeg = try #require(CGImageDestinationCreateWithData(data, "public.jpeg" as CFString, 1, nil))
+        CGImageDestinationAddImage(jpeg, image, nil)
+        #expect(CGImageDestinationFinalize(jpeg))
+        return ReviewPage.Entry(
+            item: result.item,
+            isPrivate: result.isPrivate,
+            image: data as Data,
+            collectionID: result.suggestion?.collectionID,
+            titles: [(style: "whole", title: result.suggestion?.title)]
+        )
     }
 
     /// Every case in order, then the probes. A failed answer is a "no suggestion" row, never a failed test.
