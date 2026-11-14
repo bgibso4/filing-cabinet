@@ -92,8 +92,20 @@ private struct Expected {
     }
 }
 
+@Test func libraryOpenFailedCarriesNothing() {
+    #expect(AnalyticsEvent.libraryOpenFailed.name == "libraryOpenFailed")
+    #expect(AnalyticsEvent.libraryOpenFailed.payload.isEmpty)
+}
+
+@Test func feedbackEventCarriesOnlyItsKind() {
+    let event = AnalyticsEvent.feedbackOpened(kind: .report)
+    #expect(event.name == "feedbackOpened")
+    #expect(event.payload == [.kind: .token(.init(FeedbackKind.report))])
+    #expect(FeedbackKind.allCases.map(\.rawValue) == ["feedback", "report"])
+}
+
 @Test func tokensKeepTheirRawValues() {
-    #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid"])
+    #expect(ScanSource.allCases.map(\.rawValue) == ["home", "grid", "outside"])
     #expect(CancelStage.allCases.map(\.rawValue) == ["camera", "review"])
     #expect(FailureReason.allCases.map(\.rawValue) == ["diskFull", "writeFailed"])
     #expect(EditedField.allCases.map(\.rawValue) == ["title", "collection", "expiry"])
@@ -137,4 +149,16 @@ private struct Expected {
         #expect(item.event.payload == item.payload, "\(item.name)")
     }
     #expect(SuggestionOutcome.allCases.map(\.rawValue) == ["arrived", "timedOut", "failed", "unavailable"])
+}
+
+@Test func welcomeFinishedCarriesOnlyWhetherNotificationsAreAllowed() {
+    let event = AnalyticsEvent.welcomeFinished(notifications: true)
+    #expect(event.name == "welcomeFinished")
+    #expect(event.payload == [.notifications: .bool(true)])
+    #expect(AnalyticsEvent.welcomeFinished(notifications: false).payload == [.notifications: .bool(false)])
+}
+
+@Test func ratingRequestedCarriesNothing() {
+    #expect(AnalyticsEvent.ratingRequested.name == "ratingRequested")
+    #expect(AnalyticsEvent.ratingRequested.payload.isEmpty)
 }

@@ -296,7 +296,9 @@
     "Couldn’t save to Photos" : {},
     "Couldn’t save to Files" : {},
     "%@ · kept forever" : {},
-    "%@ · kept %@" : {}
+    "%@ · kept %@" : {},
+    "Send your note to %@" : {},
+    "Still couldn’t open" : {}
   },
   "version" : "1.0"
 }

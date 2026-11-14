@@ -31,6 +31,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>Filing Cabinet uses the camera to scan documents. Scans stay on this iPhone.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

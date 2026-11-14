@@ -19,6 +19,9 @@ private let everyFlag = [
     "-NotificationsUnanswered",
     "-Photos", "denied",
     "-Suggestions", "slow",
+    "-FailLibraryOpen",
+    "-ShowWelcome",
+    "-Request", "scan",
 ]
 
 /// 2026-10-12 at 12:00 UTC.
@@ -40,6 +43,9 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(options.notificationsUnanswered)
     #expect(options.photos == .denied)
     #expect(options.suggestions == .slow)
+    #expect(options.failLibraryOpen == .always)
+    #expect(options.showWelcome)
+    #expect(options.request == .scan)
 }
 
 @Test func parsesSeedFavorites() {
@@ -65,6 +71,8 @@ private let octoberTwelfthNoonUTC = Date(timeIntervalSince1970: 1_791_806_400)
     #expect(!options.notificationsUnanswered)
     #expect(options.photos == nil)
     #expect(options.suggestions == nil)
+    #expect(options.failLibraryOpen == nil)
+    #expect(options.request == nil)
 }
 
 @Test func unknownFlagsAreIgnored() {
@@ -146,4 +154,38 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
 
 @Test func unknownSuggestionsValueIsIgnored() {
     #expect(LaunchOptions(arguments: ["-Suggestions", "sometimes"], isDebugBuild: true).suggestions == nil)
+}
+
+@Test func parsesFailLibraryOpen() {
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen"], isDebugBuild: true).failLibraryOpen == .always)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "-UITest"], isDebugBuild: true).failLibraryOpen == .always)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: true).failLibraryOpen == .once)
+    #expect(LaunchOptions(arguments: ["-FailLibraryOpen", "once"], isDebugBuild: false).failLibraryOpen == nil)
+    #expect(LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).failLibraryOpen == nil)
+}
+
+@Test func parsesShowWelcome() {
+    #expect(LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: true).showWelcome)
+    #expect(!LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).showWelcome)
+    #expect(!LaunchOptions(arguments: ["-ShowWelcome"], isDebugBuild: false).showWelcome)
+}
+
+@Test func parsesHoldScan() {
+    #expect(LaunchOptions(arguments: ["-HoldScan"], isDebugBuild: true).holdScan)
+    #expect(!LaunchOptions(arguments: ["-UITest"], isDebugBuild: true).holdScan)
+    #expect(!LaunchOptions(arguments: ["-HoldScan"], isDebugBuild: false).holdScan)
+}
+
+@Test func parsesRequest() {
+    func request(_ value: String) -> RequestFlag? {
+        LaunchOptions(arguments: ["-Request", value], isDebugBuild: true).request
+    }
+    #expect(request("scan") == .scan)
+    #expect(request("search:city pharmacy") == .search("city pharmacy"))
+    #expect(request("open:2") == .open(seeded: 2))
+    #expect(request("open:0") == nil)
+    #expect(request("open:x") == nil)
+    #expect(request("search:") == nil)
+    #expect(request("print") == nil)
+    #expect(LaunchOptions(arguments: ["-Request", "scan"], isDebugBuild: false).request == nil)
 }

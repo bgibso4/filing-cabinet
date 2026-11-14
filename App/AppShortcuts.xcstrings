@@ -1,0 +1,9 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Find a scan in ${applicationName}" : {},
+    "Scan a document in ${applicationName}" : {},
+    "Scan with ${applicationName}" : {}
+  },
+  "version" : "1.0"
+}

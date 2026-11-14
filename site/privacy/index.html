@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Filing Cabinet · Privacy</title>
+<style>
+  :root {
+    --bg-grouped: #f2f2f7;
+    --bg-surface: #ffffff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #6e6e73;
+    --separator: #d8d8dc;
+    --tint: #1c1c1e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg-grouped: #000000;
+      --bg-surface: #1c1c1e;
+      --text-primary: #f2f2f7;
+      --text-secondary: #98989f;
+      --separator: #38383a;
+      --tint: #f2f2f7;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg-grouped);
+    color: var(--text-primary);
+    font: 17px/1.5 -apple-system, system-ui, "SF Pro Text", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1rem 3rem; }
+  h1, h2 { font-family: ui-serif, "New York", Georgia, serif; font-weight: 700; line-height: 1.15; }
+  h1 { font-size: 2.1rem; margin: 0 0 .5rem; }
+  h2 { font-size: 1.25rem; margin: 0 0 .5rem; }
+  .updated { color: var(--text-secondary); margin: 0 0 1.5rem; font-size: .9rem; }
+  .lead { font-size: 1.1rem; margin: 0 0 1.5rem; }
+  section {
+    background: var(--bg-surface);
+    border-radius: 14px;
+    padding: 1rem 1.1rem 1.1rem;
+    margin: 0 0 .9rem;
+  }
+  section p { margin: 0; }
+  section p + p { margin-top: .6rem; }
+  a { color: var(--tint); font-weight: 600; text-underline-offset: 2px; }
+  footer { color: var(--text-secondary); font-size: .9rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy</h1>
+  <p class="updated">Filing Cabinet · Last updated November 14, 2026</p>
+  <p class="lead">Filing Cabinet keeps your documents on your iPhone. It does not collect anything about you or your scans. It sends only anonymous counts of how the app is used, never your scans or anything in them. A scan leaves the app only when you share it yourself.</p>
+
+  <section>
+    <h2>Anonymous usage counts</h2>
+    <p>There is no sign-up and no account, no tracking and no advertising.</p>
+    <p>The app sends anonymous counts of what happens in it (for example, that a scan was saved, or that something failed) to <a href="https://telemetrydeck.com/privacy/">TelemetryDeck</a>, an analytics service. They never include your scans, their text or titles, or anything that identifies you, and they aren't linked to you or used to track you.</p>
+  </section>
+
+  <section>
+    <h2>Your scans</h2>
+    <p>Scans, and the text, titles and search words the app works out from them, are stored on your iPhone in the app's own storage. Your recent searches and recently viewed scans are kept there too. Like other app data, all of this may be included in your iPhone's backups (such as iCloud Backup) if you have those turned on.</p>
+  </section>
+
+  <section>
+    <h2>Deleting</h2>
+    <p>A scan you delete, or one that reaches the end of its time in the library, goes to Trash and is permanently deleted 30 days later. You can delete it sooner from Trash. Deleting the app removes everything it stored on your iPhone.</p>
+  </section>
+
+  <section>
+    <h2>Sharing</h2>
+    <p>When you share a scan, copy its text or save it to Photos, it goes where you send it. What happens to it there is up to that app or person.</p>
+  </section>
+
+  <section>
+    <h2>Camera</h2>
+    <p>The camera is used only to scan documents.</p>
+  </section>
+
+  <section>
+    <h2>Photos</h2>
+    <p>The app asks for add-only access to Photos, and only when you choose to save a scan there. It cannot see your photo library.</p>
+  </section>
+
+  <section>
+    <h2>Notifications</h2>
+    <p>Notes about scans that have been cleaned up are scheduled on your iPhone. They do not come from a server.</p>
+  </section>
+
+  <section>
+    <h2>Reading and suggestions</h2>
+    <p>Reading the text on a scan, and suggesting a title and collection with Apple Intelligence, happen on your iPhone. Your scans are not sent anywhere to do this. If Apple Intelligence is turned off in iPhone Settings, the app makes no suggestions.</p>
+  </section>
+
+  <section>
+    <h2>iPhone search</h2>
+    <p>So you can find a scan from iPhone search, the app adds each scan's title, its collection and page count, and a small preview image to your iPhone's search index. The index is stored on your iPhone and can't be read while the phone is locked. The text read from your scans is not added, and scans in Trash are removed.</p>
+  </section>
+
+  <section>
+    <h2>Feedback</h2>
+    <p>Send feedback opens a draft in your mail app. It contains what you write plus the app version and build, the iOS version and your iPhone model. The report from the "library couldn't open" screen also adds the error's details: its domain, code and description. You can read and change it before you send it, and nothing is sent unless you send it. If you do, your email is used only to reply.</p>
+  </section>
+
+  <section>
+    <h2>Crash reports from Apple</h2>
+    <p>If you have chosen to share analytics with app developers in iPhone Settings, Apple may give us crash and usage reports that do not identify you. They do not contain your scans.</p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <p>Filing Cabinet is made by Benjamin Gibson. Questions about this policy: <a href="mailto:filingcabinet.app@gmail.com">filingcabinet.app@gmail.com</a></p>
+  </section>
+
+  <footer>If this policy changes, the date above changes with it.</footer>
+</main>
+</body>
+</html>

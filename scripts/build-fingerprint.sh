@@ -17,7 +17,7 @@ fingerprint() {
 		while IFS= read -r -d '' file; do
 			case "$file" in
 			design/tokens.json | design/prototype/* | scripts/generate-tokens.swift) ;;
-			docs/* | .github/* | .claude/* | design/* | scripts/* | SnapshotTests/__Snapshots__/* | *.md) continue ;;
+			docs/* | site/* | .github/* | .claude/* | design/* | scripts/* | SnapshotTests/__Snapshots__/* | *.md) continue ;;
 			esac
 			[ -f "$file" ] && printf '%s\0' "$file"
 		done | xargs -0 shasum -a 256 | shasum -a 256 | cut -d' ' -f1

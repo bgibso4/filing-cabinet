@@ -1,4 +1,5 @@
 import Core
+import Foundation
 import Library
 import ScreenModels
 import Understanding
@@ -22,6 +23,9 @@ extension AppEnvironment {
         let suggester: any ScanSuggester
         /// Stopped during a scan, and waits behind a words call after Save: review has the model to itself.
         let wordsPass: SearchWordsPass
+        /// Counts the saves the flow reports and says when to ask for a rating.
+        let rating: RatingPrompt
+        private let analytics: any Analytics
 
         init(
             options: LaunchOptions,
@@ -31,6 +35,10 @@ extension AppEnvironment {
             analytics: any Analytics,
             preferences: AppPreferences
         ) {
+            let rating = RatingPrompt(
+                preferences: preferences,
+                version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0",
+                analytics: analytics)
             let suggester = AppEnvironment.makeSuggester(options: options)
             let wordsWriter = SearchWordsWriter(
                 suggester: suggester, library: store, backgroundTime: SystemBackgroundTime())
@@ -63,16 +71,23 @@ extension AppEnvironment {
                     )
                 },
                 scanStarted: wordsPass.scanStarted,
-                scanEnded: wordsPass.scanEnded
+                scanEnded: wordsPass.scanEnded,
+                scanSaved: { rating.recordSave(on: clock.today) }
             )
             self.suggester = suggester
             self.wordsPass = wordsPass
+            self.rating = rating
+            self.analytics = analytics
         }
 
         /// Settings, whose Apple Intelligence switch and reading line follow this model and pass.
         func settings(preferences: AppPreferences, notifications: any CleanupNotifying) -> SettingsModel {
             SettingsModel(
-                preferences: preferences, notifications: notifications, suggester: suggester, wordsPass: wordsPass)
+                preferences: preferences,
+                notifications: notifications,
+                suggester: suggester,
+                wordsPass: wordsPass,
+                analytics: analytics)
         }
     }
 

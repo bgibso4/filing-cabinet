@@ -27,6 +27,31 @@ public final class AppPreferences {
         didSet { defaults.set(appearance.rawValue, forKey: Key.appearance) }
     }
 
+    /// The first-launch welcome has been completed on this install; until then it shows at every launch (Plan 6 §4).
+    public var welcomeDone: Bool {
+        didSet { defaults.set(welcomeDone, forKey: Key.welcomeDone) }
+    }
+
+    /// Scans saved on this install, for the rating prompt (Plan 6 §6b).
+    public var savesCount: Int {
+        didSet { defaults.set(savesCount, forKey: Key.savesCount) }
+    }
+
+    /// The three most recent distinct days a scan was saved (`CalendarDay.storageValue`), oldest first.
+    public var saveDays: [Int] {
+        didSet { defaults.set(saveDays, forKey: Key.saveDays) }
+    }
+
+    /// The app version the rating prompt was last requested in.
+    package var ratingAskedVersion: String? {
+        didSet { defaults.set(ratingAskedVersion, forKey: Key.ratingAskedVersion) }
+    }
+
+    /// The `SpotlightSync.version` the Spotlight index was last built with; 0 before the first.
+    package var spotlightVersion: Int {
+        didSet { defaults.set(spotlightVersion, forKey: Key.spotlightVersion) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// Whether cleanup notes reach the person: they want them and iOS allows them.
@@ -38,6 +63,11 @@ public final class AppPreferences {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
         appleIntelligenceOn = defaults.object(forKey: Key.appleIntelligenceOn) as? Bool ?? true
+        welcomeDone = defaults.bool(forKey: Key.welcomeDone)
+        savesCount = defaults.integer(forKey: Key.savesCount)
+        saveDays = defaults.array(forKey: Key.saveDays) as? [Int] ?? []
+        ratingAskedVersion = defaults.string(forKey: Key.ratingAskedVersion)
+        spotlightVersion = defaults.integer(forKey: Key.spotlightVersion)
         appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
@@ -49,5 +79,10 @@ public final class AppPreferences {
         static let appearance = "appearance"
         static let appleIntelligenceOn = "appleIntelligenceOn"
         static let cleanupSeenThrough = "cleanupSeenThrough"
+        static let welcomeDone = "welcomeDone"
+        static let savesCount = "savesCount"
+        static let saveDays = "saveDays"
+        static let ratingAskedVersion = "ratingAskedVersion"
+        static let spotlightVersion = "spotlightVersion"
     }
 }

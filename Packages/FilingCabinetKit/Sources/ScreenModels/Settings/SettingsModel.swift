@@ -13,6 +13,7 @@ public final class SettingsModel {
     @ObservationIgnored private let notifications: any CleanupNotifying
     @ObservationIgnored private let suggester: any ScanSuggester
     @ObservationIgnored private let wordsPass: SearchWordsPass
+    @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let version: String
 
     public init(
@@ -20,12 +21,14 @@ public final class SettingsModel {
         notifications: any CleanupNotifying,
         suggester: any ScanSuggester,
         wordsPass: SearchWordsPass,
+        analytics: any Analytics,
         version: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     ) {
         self.preferences = preferences
         self.notifications = notifications
         self.suggester = suggester
         self.wordsPass = wordsPass
+        self.analytics = analytics
         self.version = version
     }
 
@@ -68,6 +71,14 @@ public final class SettingsModel {
             wordsPass.pause()
         }
     }
+
+    /// The draft Send feedback opens: the app and iPhone details, nothing from the library.
+    package var feedbackURL: URL { FeedbackMail.feedback(.current()) }
+
+    package var privacyURL: URL { PrivacyPolicy.url }
+
+    /// The Send feedback row was tapped.
+    package func feedbackOpened() { analytics.send(.feedbackOpened(kind: .feedback)) }
 
     package var footer: String {
         String(localized: "Filing Cabinet \(version) · Private by design", bundle: #bundle)

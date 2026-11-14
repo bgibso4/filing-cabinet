@@ -5,6 +5,23 @@ import XCTest
 
 /// The steps of `testScanEditTrashRestore`, one screen each. Kept out of `ScanJourneyTests.swift` for its length.
 extension ScanJourneyTests {
+    /// How long Apple's rating prompt may take to show: twice the 9.7 s it took on CI (run 43554564482).
+    private static let ratingPromptTimeout: TimeInterval = 20
+
+    /// Apple's rating prompt: Not Now, and waits for it to go. A development build always shows the prompt when asked
+    /// (Apple's `requestReview` documentation), so it must come. It is Apple's service that shows it, and on a CI
+    /// simulator that took 9.7 s after Home came back (run 43554564482), against about 1 s on a Mac. The earlier
+    /// 5 s wait read that as "Apple chose not to show it", returned, and the prompt then covered Home.
+    func dismissRatingPrompt(in app: XCUIApplication) {
+        let notNow = app.buttons["Not Now"]
+        XCTAssertTrue(notNow.appears(within: Self.ratingPromptTimeout), "Apple's rating prompt never showed")
+        // The prompt scales down into place and ignores taps until it has; a tap while it still read 1.004× its
+        // resting size was dropped and the prompt stayed (2026-11-13). Tap once its frame holds still.
+        XCTAssertTrue(notNow.holdsStill(within: 5), "the rating prompt never settled")
+        notNow.tap()
+        XCTAssertTrue(notNow.disappears(within: 5))
+    }
+
     /// From Home, the collection's only scan, opens in the viewer. `label` checks the tile's label: its start and its
     /// end, because the middle is the scan's day, which is the real one in this journey.
     func openOnlyTile(

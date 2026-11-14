@@ -402,6 +402,9 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
       <li>Two screens: a welcome with four plain points (scan in one tap, sorted into collections, cleans up after itself, private by design), then "Know when it cleans up", followed by iOS's notification prompt.</li>
       <li>The camera is asked on the first Scan, with our line: "Filing Cabinet uses the camera to scan documents. Scans stay on this iPhone." If denied, every Scan shows "Camera access is off" with Open Settings.</li>
       <li>The Scan button always reads "Scan", including on an empty Home.</li>
+      <li>The welcome shows on any launch where it has not been finished on this install, so someone updating from an earlier build sees it once too. Pressing "Turn on notifications" or "Not now" finishes it; "Not now" always closes it, so a stuck notification service never traps anyone.</li>
+      <li>A request from outside the app (the Scan control, Siri, Search) waits until launch and the welcome are done, then acts.</li>
+      <li>If the library cannot open, a screen replaces the app: "Your library couldn't open", with Send report (an email to the feedback address with the app and iPhone details and the error, never a scan) and Try again (a tap only; the app never retries by itself or falls back to an empty library). It uses the destructive red beyond Delete and Empty Trash.</li>
     </ul>
 
     <h3>Home</h3>
@@ -441,7 +444,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <h3>Collections and settings</h3>
     <ul class="rules">
       <li>Receipts are kept 3 months, shown that way everywhere.</li>
-      <li>Settings: Collections, an Apple Intelligence switch ("Names, files and finds your scans"; when Apple Intelligence isn't available the switch is off and dimmed, and the footer says "Turn it on in iPhone Settings first"; while older scans are being read, a footer line shows the progress), a Notifications switch ("A note when scans move to Trash"), Send feedback, and the footer "Filing Cabinet 1.0 · Private by design".</li>
+      <li>Settings: Collections, an Apple Intelligence switch ("Names, files and finds your scans"; when Apple Intelligence isn't available the switch is off and dimmed, and the footer says "Turn it on in iPhone Settings first"; while older scans are being read, a footer line shows the progress), a Notifications switch ("A note when scans move to Trash"), Send feedback (drafts an email to the app's feedback address with the app version and iPhone details; when no mail app can open it, an alert shows the address), a Privacy policy row (opens the policy page, hosted on GitHub Pages, in Safari), and the footer "Filing Cabinet 1.0 · Private by design".</li>
       <li>Collections opens a list; each collection has "Keep scans for" (1 week, 1 month, 3 months, 1 year, Forever) with the shortening confirmation and count.</li>
     </ul>
 
@@ -471,7 +474,7 @@ footer { margin-top: 48px; text-align: center; color: var(--ink-faint); font-siz
     <p>Drawn by iOS; ours are the words, the Scan symbol and what happens next.</p>
     <ul class="rules">
       <li><b>Scan control</b> for Control Center, the Lock Screen and the Action button. It unlocks if needed and opens straight into the camera; saving or cancelling lands on Home. Before first launch has run it shows the two welcome screens first; with camera access off it shows the usual sheet; with a review already open it brings that back.</li>
-      <li><b>Shortcuts and Siri:</b> "Scan a document" (same flow as the control) and "Find a scan", which takes text and opens Search with those results.</li>
+      <li><b>Shortcuts and Siri:</b> "Scan a document" (same flow as the control; phrases "Scan with Filing Cabinet" and "Scan a document in Filing Cabinet") and "Find a scan" (phrase "Find a scan in Filing Cabinet"). Siri phrases cannot carry free text, so Find a scan asks "What are you looking for?" and opens Search with those results.</li>
       <li><b>Spotlight:</b> scan titles appear in iPhone search; tapping one opens that scan. Titles only.</li>
     </ul>
 

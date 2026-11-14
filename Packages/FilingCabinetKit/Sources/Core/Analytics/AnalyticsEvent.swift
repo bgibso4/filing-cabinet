@@ -33,6 +33,14 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case suggestionOutcome(SuggestionOutcome)
     /// At save, after a suggestion arrived: whether the saved title and collection differ from the suggested ones (M10).
     case suggestionChanged(title: Bool, collection: Bool)
+    /// The person opened a feedback email, from Settings or the failure screen (M14). Never what they write.
+    case feedbackOpened(kind: FeedbackKind)
+    /// The library couldn't open at launch or on Try again, so the failure screen shows (#40). Never the error.
+    case libraryOpenFailed
+    /// The first-launch welcome closed (M14): whether iOS lets the app post cleanup notes by then.
+    case welcomeFinished(notifications: Bool)
+    /// The app asked Apple for the rating prompt, which decides itself whether to show it.
+    case ratingRequested
 
     public var name: String {
         switch self {
@@ -56,12 +64,16 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .searchSaved: "searchSaved"
         case .suggestionOutcome: "suggestionOutcome"
         case .suggestionChanged: "suggestionChanged"
+        case .feedbackOpened: "feedbackOpened"
+        case .libraryOpenFailed: "libraryOpenFailed"
+        case .welcomeFinished: "welcomeFinished"
+        case .ratingRequested: "ratingRequested"
         }
     }
 
     public var payload: [AnalyticsKey: AnalyticsValue] {
         switch self {
-        case .appOpened, .cameraDenied, .cameraFailed: [:]
+        case .appOpened, .cameraDenied, .cameraFailed, .libraryOpenFailed, .ratingRequested: [:]
         case .scanStarted(let source): [.source: .token(.init(source))]
         case .scanCancelled(let stage): [.stage: .token(.init(stage))]
         case .scanSaved(let pageCount, let collection):
@@ -83,6 +95,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .suggestionOutcome(let outcome): [.outcome: .token(.init(outcome))]
         case .suggestionChanged(let title, let collection):
             [.titleChanged: .bool(title), .collectionChanged: .bool(collection)]
+        case .feedbackOpened(let kind): [.kind: .token(.init(kind))]
+        case .welcomeFinished(let notifications): [.notifications: .bool(notifications)]
         }
     }
 }

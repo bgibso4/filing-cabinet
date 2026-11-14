@@ -17,7 +17,8 @@ public final class FakeNotificationCenter: CleanupNotifying {
     private let answers: Bool
 
     /// `grantsRequest` is what the person answers when asked while `.notDetermined`. Unless it `answers`,
-    /// `authorization()` waits until cancelled, like a stuck notification service.
+    /// `authorization()` and `requestAuthorization()` wait until cancelled, like a stuck notification service; a
+    /// request is counted before it waits.
     public init(authorization: NotificationAuthorization, grantsRequest: Bool = true, answers: Bool = true) {
         state = Mutex(State(authorization: authorization))
         self.grantsRequest = grantsRequest
@@ -30,21 +31,25 @@ public final class FakeNotificationCenter: CleanupNotifying {
     package var replacements: [[ScheduledNotice]] { state.withLock { $0.replacements } }
 
     public func authorization() async -> NotificationAuthorization {
-        if !answers {
-            // try?: cancellation is the only way out of the wait, and it answers then.
-            try? await Task.sleep(for: Self.unansweredWait)
-        }
+        await waitIfUnanswered()
         return state.withLock { $0.authorization }
     }
 
     public func requestAuthorization() async -> Bool {
+        state.withLock { $0.requestCount += 1 }
+        await waitIfUnanswered()
         let granted = grantsRequest
         return state.withLock {
-            $0.requestCount += 1
             // iOS asks only once: later requests just report what the person chose.
             if $0.authorization == .notDetermined { $0.authorization = granted ? .authorized : .denied }
             return $0.authorization == .authorized
         }
+    }
+
+    private func waitIfUnanswered() async {
+        guard !answers else { return }
+        // try?: cancellation is the only way out of the wait, and it answers then.
+        try? await Task.sleep(for: Self.unansweredWait)
     }
 
     public func replacePending(with notices: [ScheduledNotice]) async {

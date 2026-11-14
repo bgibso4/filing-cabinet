@@ -96,13 +96,12 @@ public struct CameraOffSheet: View {
     private var message: some View {
         VStack(spacing: 0) {
             // Large title is the mock's 34 pt glyph, and it follows Dynamic Type; the well grows with it.
-            Image(systemName: "video.slash")
-                .font(Tokens.Typography.largeTitle.weight(.regular))
-                .foregroundStyle(Tokens.Color.textSecondary)
-                .padding(Tokens.Spacing.s3)
-                .frame(minWidth: Self.wellSize, minHeight: Self.wellSize)
-                .background(Tokens.Color.bgWell, in: .circle)
-                .accessibilityHidden(true)
+            SymbolWell(
+                systemName: "video.slash",
+                font: Tokens.Typography.largeTitle.weight(.regular),
+                foreground: Tokens.Color.textSecondary,
+                fill: Tokens.Color.bgWell,
+                size: Self.wellSize)
             Text("Camera access is off", bundle: #bundle)
                 .font(Tokens.Typography.title1)
                 .foregroundStyle(Tokens.Color.textPrimary)
@@ -127,21 +126,11 @@ public struct CameraOffSheet: View {
     }
 
     private var openSettingsButton: some View {
-        Button(action: openSettings) {
+        CapsuleButton(
+            identifier: AccessibilityID.CameraOff.openSettings, minHeight: Self.buttonMinHeight, action: openSettings
+        ) {
             Text("Open Settings", bundle: #bundle)
-                .font(Tokens.Typography.headline)
-                .foregroundStyle(Tokens.Color.bgGrouped)
-                .multilineTextAlignment(.center)
-                // Wraps rather than truncates when the text is large.
-                .fixedSize(horizontal: false, vertical: true)
-                // Keeps large text off the capsule's ends; at default sizes the pill is wider than the label anyway.
-                .padding(.horizontal, Tokens.Spacing.s6)
-                .padding(.vertical, Tokens.Spacing.s2)
-                .frame(maxWidth: .infinity, minHeight: Self.buttonMinHeight)
-                .background(Tokens.Color.tint, in: .capsule)
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityID.CameraOff.openSettings)
         .padding(.top, Self.buttonGap)
         .padding([.horizontal, .bottom], Self.sidePadding)
     }

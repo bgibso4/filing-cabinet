@@ -62,8 +62,11 @@ final class ExportJourneyTests: XCTestCase {
         // them to change with an iOS update before the app does; read the new ones from the failure's tree.
         let sheet = app.otherElements["ActivityListView"]
         XCTAssertTrue(sheet.appears(within: 10))
+        // The caption arrives after the sheet. Reading its label before it exists fails the test at once instead of
+        // waiting (CI runs 43120343687 and 43146785138), so wait for it first.
         let caption = app.otherElements["LP.CaptionBar.TopCaption"]
-        XCTAssertTrue(caption.satisfies("label == %@", "Sample scan 2", within: 10))
+        XCTAssertTrue(caption.appears(within: 10))
+        XCTAssertTrue(caption.satisfies("label == %@", "Sample scan 2", within: 5))
         attachScreenshot("Share sheet", of: app)
 
         // The sheet's own Close isn't in the tree; a tap above the half-height sheet closes it.

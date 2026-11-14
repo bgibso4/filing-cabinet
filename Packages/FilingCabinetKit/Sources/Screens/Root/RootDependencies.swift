@@ -13,7 +13,8 @@ public struct RootDependencies {
     let makeSettings: () -> SettingsModel
     let makeCollections: () -> CollectionsModel
     let makeCollectionSettings: (BuiltInCollection) -> CollectionSettingsModel
-    let makeSearch: () -> SearchModel
+    /// Search's model, opened with this text in the field (empty from Home's field).
+    let makeSearch: (String) -> SearchModel
     let thumbnails: any ThumbnailProviding
     let pages: any PageImageProviding
     let cameraMode: CameraMode
@@ -21,6 +22,10 @@ public struct RootDependencies {
     let forcesReduceMotion: Bool
     /// Read at the root for Settings › Appearance.
     let preferences: AppPreferences
+    /// The first-launch welcome, a sheet over Home until it is completed.
+    let welcome: WelcomeModel
+    /// When to ask Apple for a rating, after a save.
+    let rating: RatingPrompt
 
     public init(
         home: HomeModel,
@@ -32,12 +37,14 @@ public struct RootDependencies {
         makeSettings: @escaping () -> SettingsModel,
         makeCollections: @escaping () -> CollectionsModel,
         makeCollectionSettings: @escaping (BuiltInCollection) -> CollectionSettingsModel,
-        makeSearch: @escaping () -> SearchModel,
+        makeSearch: @escaping (String) -> SearchModel,
         thumbnails: any ThumbnailProviding,
         pages: any PageImageProviding,
         cameraMode: CameraMode,
         forcesReduceMotion: Bool,
-        preferences: AppPreferences
+        preferences: AppPreferences,
+        welcome: WelcomeModel,
+        rating: RatingPrompt
     ) {
         self.home = home
         self.flow = flow
@@ -54,5 +61,7 @@ public struct RootDependencies {
         self.cameraMode = cameraMode
         self.forcesReduceMotion = forcesReduceMotion
         self.preferences = preferences
+        self.welcome = welcome
+        self.rating = rating
     }
 }

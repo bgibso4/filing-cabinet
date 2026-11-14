@@ -54,6 +54,7 @@ final class SettingsSnapshotTests: XCTestCase {
             notifications: FakeNotificationCenter(authorization: authorization),
             suggester: suggester,
             wordsPass: pass,
+            analytics: RecordingAnalytics(),
             version: "1.0")
         // What the screen reads as it appears, read here first so the first frame already shows it.
         await model.refreshAuthorization()
@@ -66,6 +67,14 @@ final class SettingsSnapshotTests: XCTestCase {
     @MainActor
     func testSettings() async throws {
         try SnapshotHost.assertScreen(try await settings(.authorized), testName: "settings")
+    }
+
+    /// 12-05: at the largest text the Send feedback and Privacy policy group sits below the fold, so this scrolls to it.
+    @MainActor
+    func testSettingsEndAtLargestText() async throws {
+        let ax5 = try XCTUnwrap(SnapshotConfig.variants.first { $0.name == "ax5" })
+        try SnapshotHost.assertScreen(
+            try await settings(.authorized), testName: "settings_end", variants: [ax5], scrolledToEnd: true)
     }
 
     /// 10-06: no Apple Intelligence on this iPhone, and notifications blocked in iPhone Settings.

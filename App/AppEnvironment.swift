@@ -18,9 +18,9 @@ final class AppEnvironment {
     private static let logger = Logger(subsystem: "com.cadre.filingcabinet", category: "App")
 
     #if DEBUG
-        private static let isDebugBuild = true
+        static let isDebugBuild = true
     #else
-        private static let isDebugBuild = false
+        static let isDebugBuild = false
     #endif
 
     /// Held for the screens that log events.
@@ -38,6 +38,8 @@ final class AppEnvironment {
     @ObservationIgnored private let preferences: AppPreferences
     /// Gives older scans their search words while the app is in the foreground (M9).
     @ObservationIgnored private let wordsPass: SearchWordsPass
+    /// Keeps iPhone search in step with the library; run once launch is ready, after Trash's purge (A10).
+    @ObservationIgnored let spotlight: SpotlightSync
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -49,14 +51,15 @@ final class AppEnvironment {
         private static let uiTestDaysSinceSeen = 14
     #endif
 
-    private init(options: LaunchOptions) {
+    private init(options: LaunchOptions, isRetry: Bool) throws(LibraryOpenFailure) {
         self.options = options
         let analytics = LogAnalytics()
         let clock = options.fixedDate.map { AppClock.fixed($0, calendar: AppClock.system.calendar) } ?? .system
-        let location = Self.libraryLocation(isUITest: options.isUITest)
+        let location = try Self.libraryLocation(isUITest: options.isUITest)
         let fileSystem = LocalFileSystem()
         let files = PageFileStore(location: location, fileSystem: Self.pageFileSystem(fileSystem, options: options))
-        let store = Self.makeStore(location: location, inMemory: options.isUITest, files: files, clock: clock)
+        let store = try Self.makeStore(
+            location: location, options: options, isRetry: isRetry, files: files, clock: clock)
         let export = ScanExport(files: files)
         self.export = export
         self.analytics = analytics
@@ -65,19 +68,17 @@ final class AppEnvironment {
         self.today = today
         self.store = store
         lifecycle = AppLifecycleModel(analytics: analytics)
-        let defaults = Self.preferencesDefaults(isUITest: options.isUITest)
-        let preferences = AppPreferences(defaults: defaults)
-        let history = SearchHistory(defaults: defaults)
+        let (preferences, history) = Self.makeKept(options: options)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
-        let banner = CleanupBanner(
-            library: store, today: today, preferences: preferences, notifications: notifications)
+        let banner = CleanupBanner(library: store, today: today, preferences: preferences, notifications: notifications)
         self.banner = banner
         notifier = CleanupNotifier(
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
         wordsPass = scanning.wordsPass
+        spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
@@ -97,7 +98,9 @@ final class AppEnvironment {
             pages: PageImageLoader(location: location, fileSystem: fileSystem),
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion,
-            preferences: preferences
+            preferences: preferences,
+            welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics),
+            rating: scanning.rating
         )
     }
 
@@ -125,27 +128,21 @@ final class AppEnvironment {
     /// Makes Search's model, keeping what it saves in the app-wide history the viewer records into.
     private static func searchMaker(
         store: ScanStore, today: Today, clock: AppClock, analytics: any Analytics, history: SearchHistory
-    ) -> () -> SearchModel {
-        { SearchModel(library: store, today: today, clock: clock, history: history, analytics: analytics) }
+    ) -> (String) -> SearchModel {
+        { query in
+            SearchModel(
+                library: store, today: today, clock: clock, history: history, analytics: analytics, initialQuery: query)
+        }
     }
 
-    /// Unknown flags are ignored, and a Release build ignores every flag (M9).
-    static func make(arguments: [String]) -> AppEnvironment {
+    /// Unknown flags are ignored, and a Release build ignores every flag (M9). Throws when the library can't open;
+    /// `isRetry` is the failure screen's Try again, which `-FailLibraryOpen once` lets through.
+    static func make(arguments: [String], isRetry: Bool = false) throws(LibraryOpenFailure) -> AppEnvironment {
         let options = LaunchOptions(arguments: arguments, isDebugBuild: isDebugBuild)
         if options.isUITest {
             UIView.setAnimationsEnabled(false)
         }
-        return AppEnvironment(options: options)
-    }
-
-    /// A UI test's next test in the running app (`RelaunchURL`): a new environment built from the URL's flags.
-    /// Nil unless this environment is a UI test's (so never in Release) and the URL relaunches with `-UITest`,
-    /// which keeps the new one off the real library too.
-    func relaunched(by url: URL) -> AppEnvironment? {
-        guard options.isUITest, let arguments = RelaunchURL.arguments(from: url),
-            LaunchOptions(arguments: arguments, isDebugBuild: Self.isDebugBuild).isUITest
-        else { return nil }
-        return Self.make(arguments: arguments)
+        return try AppEnvironment(options: options, isRetry: isRetry)
     }
 
     /// Clears what an interrupted save left behind and any exported PDF a share left (M20), deletes what has had its 30
@@ -159,8 +156,13 @@ final class AppEnvironment {
         #if DEBUG
             if let count = options.seedScans {
                 do {
+                    // Known IDs only in a UI test's library, which starts empty: a dev library may hold earlier seeds.
                     try await LibrarySeed.seed(
-                        store, count: count, favorites: options.seedFavorites ?? 0, clock: clock)
+                        store,
+                        count: count,
+                        favorites: options.seedFavorites ?? 0,
+                        knownIDs: options.isUITest,
+                        clock: clock)
                 } catch {
                     Self.logger.error(
                         "Seeding \(count, privacy: .public) scans failed: \(error.localizedDescription, privacy: .private)"
@@ -183,15 +185,18 @@ final class AppEnvironment {
             }
         #endif
         // Before asking iOS about notifications: Scan doesn't need the answer, and iOS can be slow to give it.
-        isReady = true
+        // `-HoldScan` keeps Scan disabled once seeding is done, so its audit sees a still Home.
+        isReady = !options.holdScan
         wordsPass.resume()
         await banner.refreshAuthorization()
     }
 
     /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
-    /// have come meanwhile. Once launch has finished, Trash is purged again.
+    /// have come meanwhile, and a Spotlight call made while the phone was locked failed. Once launch has finished, Trash
+    /// is purged again.
     func becameActive() async {
         notifier.reschedule()
+        spotlight.syncAgain()
         await banner.refreshAuthorization()
         guard isReady else { return }
         await purgeTrash()
@@ -216,7 +221,7 @@ final class AppEnvironment {
     }
 
     /// The real library, or a fresh temporary one for UI tests so runs never see each other's files.
-    private static func libraryLocation(isUITest: Bool) -> LibraryLocation {
+    private static func libraryLocation(isUITest: Bool) throws(LibraryOpenFailure) -> LibraryLocation {
         if isUITest {
             let base = FileManager.default.temporaryDirectory.appending(path: "UITest-\(UUID().uuidString)")
             return LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
@@ -225,7 +230,7 @@ final class AppEnvironment {
             return try LibraryLocation.standard()
         } catch {
             logger.fault("No Application Support folder: \(error.localizedDescription, privacy: .private)")
-            fatalError("Filing Cabinet cannot find its library folder")
+            throw LibraryOpenFailure(underlying: error)
         }
     }
 
@@ -239,6 +244,21 @@ final class AppEnvironment {
         }
         defaults.removePersistentDomain(forName: suite)
         return defaults
+    }
+
+    /// What is kept in the phone's defaults: the settings and Search's history. UI tests start past the welcome unless
+    /// `-ShowWelcome` asks to see it (M1).
+    private static func makeKept(options: LaunchOptions) -> (AppPreferences, SearchHistory) {
+        let defaults = preferencesDefaults(isUITest: options.isUITest)
+        let preferences = AppPreferences(defaults: defaults)
+        if options.isUITest {
+            preferences.welcomeDone = !options.showWelcome
+            if options.ratingDue {
+                preferences.savesCount = 9
+                preferences.saveDays = [20_270_101, 20_270_102, 20_270_103]
+            }
+        }
+        return (preferences, SearchHistory(defaults: defaults))
     }
 
     /// The system's notifications, or a scripted answer for `-Notifications` (none for `-NotificationsUnanswered`).
@@ -256,15 +276,26 @@ final class AppEnvironment {
 
     /// On disk, or in memory for UI tests.
     private static func makeStore(
-        location: LibraryLocation, inMemory: Bool, files: PageFileStore, clock: AppClock
-    ) -> ScanStore {
+        location: LibraryLocation, options: LaunchOptions, isRetry: Bool, files: PageFileStore, clock: AppClock
+    ) throws(LibraryOpenFailure) -> ScanStore {
         do {
-            let container = try ScanStore.makeContainer(storeURL: inMemory ? nil : location.storeURL)
+            try failIfAsked(options.failLibraryOpen, isRetry: isRetry)
+            let container = try ScanStore.makeContainer(storeURL: options.isUITest ? nil : location.storeURL)
             return ScanStore(container: container, files: files, clock: clock)
         } catch {
-            // Running on without the store would lose every scan saved this session.
+            // Running on without the store would lose every scan saved this session, so the failure screen shows.
             logger.fault("The library store could not be opened: \(error.localizedDescription, privacy: .private)")
-            fatalError("Filing Cabinet cannot open its library")
+            throw LibraryOpenFailure(underlying: error)
+        }
+    }
+
+    /// `-FailLibraryOpen`: opening fails as a damaged store would, on every attempt or (`once`) only the first.
+    /// Always nil in Release, where `LaunchOptions` ignores every flag.
+    private static func failIfAsked(_ failure: FailLibraryOpen?, isRetry: Bool) throws {
+        switch failure {
+        case .always: throw CocoaError(.fileReadCorruptFile)
+        case .once where !isRetry: throw CocoaError(.fileReadCorruptFile)
+        case .once, nil: return
         }
     }
 

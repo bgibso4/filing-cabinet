@@ -99,10 +99,14 @@ final class ScanJourneyTests: XCTestCase {
         saveReceiptFromHome()
     }
 
-    /// Under Reduce Motion the layer fades rather than slides, and the fade's end is what ends it: until then Home is
-    /// out of the tree and the invisible layer takes every touch.
+    /// Under Reduce Motion the layer fades, and the fade's end ends it: until then Home is out of the tree.
     func testSaveReturnsHomeWithReduceMotion() {
         saveReceiptFromHome(flags: ["-ReduceMotion"])
+    }
+
+    /// The save that makes a rating due ends on Home as usual, with Apple's prompt over it; Not Now leaves Home as it was.
+    func testRatingDueDoesNotDisturbTheSave() {
+        saveReceiptFromHome(flags: ["-RatingDue"], dismissingRating: true)
     }
 
     /// Guards that a second scan after a save opens a camera on screen, so the slide-away never carries over to the
@@ -288,28 +292,27 @@ final class ScanJourneyTests: XCTestCase {
         openOnlyTile(of: .receipts, in: app, label: ("Groceries, Receipts, ", ", Kept forever"))
     }
 
-    /// The real Vision reader on the synthetic receipt. 90 s covers Vision's cold start on a CI simulator; if this
-    /// proves flaky, raise it rather than widening the wait.
+    /// The real Vision reader on the synthetic receipt (90 s covers a cold start on CI).
     func testRealVisionReadsTheTitle() {
         // A real launch: Vision's first read in a fresh process is the slow one this checks.
         let app = launchApp(["-FakeCamera", "1"], fresh: true)
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app, timeout: 90)
     }
-
 }
 
 // MARK: Helpers
 
 /// Kept out of the class body so it stays under the type length limit.
 extension ScanJourneyTests {
-    private func saveReceiptFromHome(flags: [String] = []) {
+    private func saveReceiptFromHome(flags: [String] = [], dismissingRating: Bool = false) {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"] + flags)
         scanOnePage(in: app)
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
         XCTAssertTrue(save.disappears(within: 10))
+        if dismissingRating { dismissRatingPrompt(in: app) }
         waitForSaveToReturnHome(in: app)
     }
 
@@ -365,7 +368,7 @@ extension ScanJourneyTests {
         // One predicate for both, so each check is one read of the screen: a read alone can take 4 s on CI.
         let row = app.buttons[AccessibilityID.Home.collectionRow(collection)]
         XCTAssertTrue(row.satisfies("exists == true AND label CONTAINS '1'", within: 5), row.label, line: line)
-        XCTAssertTrue(row.isHittable, line: line)
+        XCTAssertTrue(row.satisfies("isHittable == true", within: 5), line: line)
     }
 
     /// Opens Expiry, then "Choose a date…", and waits for the calendar.

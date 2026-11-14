@@ -90,3 +90,32 @@ import Testing
     #expect(words.values.contains(["ID", "card", "licence"]))
     #expect(store.scansNeedingWords(version: 1_000).isEmpty)
 }
+
+/// `-Request open:<n>` opens the nth seeded scan, so its ID is known before the scans are saved.
+@MainActor
+@Test func seededScansHaveTheirIDsInSeedOrder() async throws {
+    let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
+    let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
+    let store = try makeStore(location: location)
+    let now = Date(timeIntervalSince1970: 1_791_806_400)
+
+    try await LibrarySeed.seed(store, count: 3, knownIDs: true, clock: .fixed(now, calendar: utc))
+
+    #expect(store.scans.map(\.id) == (0..<3).map(LibrarySeed.scanID(at:)))
+    #expect(store.scans.map(\.title) == ["Sample scan 1", "Sample scan 2", "Sample scan 3"])
+}
+
+/// Without known IDs, a second seeding of the same library (a Debug `-SeedScans` run on a dev library) adds new scans.
+@MainActor
+@Test func seedingTwiceKeepsBoth() async throws {
+    let base = FileManager.default.temporaryDirectory.appending(path: "LibrarySeedTests-\(UUID().uuidString)")
+    let location = LibraryLocation(root: base.appending(path: "Root"), caches: base.appending(path: "Caches"))
+    let store = try makeStore(location: location)
+    let clock = AppClock.fixed(Date(timeIntervalSince1970: 1_791_806_400), calendar: utc)
+
+    try await LibrarySeed.seed(store, count: 2, clock: clock)
+    try await LibrarySeed.seed(store, count: 2, clock: clock)
+
+    #expect(Set(store.scans.map(\.id)).count == 4)
+    #expect(!store.scans.map(\.id).contains(LibrarySeed.scanID(at: 0)))
+}

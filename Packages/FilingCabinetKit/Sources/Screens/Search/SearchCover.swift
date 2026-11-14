@@ -13,6 +13,8 @@ struct SearchCover<Viewer: View>: View {
     let viewer: (ScanID) -> Viewer
     /// True with Reduce Motion: Search fades itself in and out over a clear cover.
     let fades: Bool
+    /// A change closes Search as its X does: a request from outside the app needs it out of the way.
+    let closes: Int
     /// Ends the cover: at once when it slides, after the fade when it fades.
     let onClosed: () -> Void
 
@@ -28,6 +30,11 @@ struct SearchCover<Viewer: View>: View {
     @State private var isLeaving = false
 
     var body: some View {
+        content.onChange(of: closes) { close() }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if fades {
             screen
                 .opacity(isShown ? 1 : 0)

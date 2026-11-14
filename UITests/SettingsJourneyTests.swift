@@ -117,6 +117,20 @@ final class SettingsJourneyTests: XCTestCase {
         try audit(app)
     }
 
+    /// Send feedback and the Privacy policy sit under the switches and are reachable. Opening Mail or Safari is not
+    /// driven: the simulator has no Mail, and leaving the app would end the test.
+    func testFeedbackRowsArePresentAndReachable() throws {
+        let app = seededApp()
+        openSettings(in: app)
+        let feedback = app.buttons[AccessibilityID.Settings.feedback]
+        let privacy = app.buttons[AccessibilityID.Settings.privacy]
+        XCTAssertTrue(feedback.isHittable)
+        XCTAssertTrue(privacy.isHittable)
+        XCTAssertEqual(feedback.label, "Send feedback")
+        XCTAssertEqual(privacy.label, "Privacy policy")
+        try audit(app)
+    }
+
     /// Collections rests with its title small; a pull brings out the large title, which stays after the pull ends (B6)
     /// until a scroll up collapses it again.
     func testPullingDownGrowsTheTitleAndItStays() {

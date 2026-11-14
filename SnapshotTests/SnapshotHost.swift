@@ -11,6 +11,7 @@ enum SnapshotHost {
         _ view: some View,
         testName: String,
         variants: [SnapshotConfig.Variant] = SnapshotConfig.variants,
+        scrolledToEnd: Bool = false,
         file: StaticString = #filePath,
         line: UInt = #line
     ) throws {
@@ -31,6 +32,7 @@ enum SnapshotHost {
             window.rootViewController = controller
             window.makeKeyAndVisible()
             settle()
+            if scrolledToEnd { scrollToEnd(of: window) }
             let strategy = SnapshotConfig.strategy
             assertSnapshot(
                 of: controller,
@@ -48,6 +50,19 @@ extension SnapshotHost {
     /// How long a new window runs before it is drawn. Liquid Glass adapts to what is behind it over a few frames; drawn
     /// at once, the glass was caught in one of two states from run to run.
     private static let settleTime: TimeInterval = 1
+
+    /// Scrolls the screen's first scroll view to its end, for what a long screen keeps below the fold.
+    private static func scrollToEnd(of window: UIWindow) {
+        guard let scrollView = firstScrollView(in: window) else { return }
+        let end = scrollView.contentSize.height + scrollView.adjustedContentInset.bottom - scrollView.bounds.height
+        scrollView.setContentOffset(CGPoint(x: 0, y: max(0, end)), animated: false)
+        settle()
+    }
+
+    private static func firstScrollView(in view: UIView) -> UIScrollView? {
+        if let scrollView = view as? UIScrollView { return scrollView }
+        return view.subviews.lazy.compactMap { firstScrollView(in: $0) }.first
+    }
 
     /// Runs the main run loop so layout, the first commits and the glass's adaptation finish before the snapshot.
     private static func settle() {

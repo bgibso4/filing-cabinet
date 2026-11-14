@@ -1,27 +1,40 @@
 import Core
 import ScreenModels
+import StoreKit
 import SwiftUI
 
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
 /// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
-/// over it.
+/// over it. On a first launch the welcome sheet covers Home until it is completed. Requests from outside the app (the
+/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9).
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
+    private let requests: ExternalRequests
     @State private var path: [AppRoute] = []
     /// True while Search covers Home.
     @State private var isSearching = false
+    /// From Search going up until its cover has gone, which is after `isSearching` turns false when it slides away.
+    @State private var searchCoverIsUp = false
+    /// The text Search opens with: a request's, or empty from Home's field.
+    @State private var searchQuery = ""
+    /// Bumped to close Search through its own close (slide or fade), for a request.
+    @State private var searchCloses = 0
     /// Reduce Motion as Search went up: it fades rather than slides, in and out (B17).
     @State private var searchFades = false
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.requestReview) private var requestReview
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
 
-    /// `canScan` is false until launch cleanup has finished, so a scan never races it.
-    public init(dependencies: RootDependencies, canScan: Bool) {
+    /// `canScan` is false until launch cleanup has finished, so a scan never races it, and no request is acted on
+    /// before then.
+    public init(dependencies: RootDependencies, canScan: Bool, requests: ExternalRequests) {
         self.dependencies = dependencies
         self.canScan = canScan
+        self.requests = requests
     }
 
     public var body: some View {
@@ -31,7 +44,7 @@ public struct RootView: View {
                 thumbnails: dependencies.thumbnails,
                 canScan: canScan,
                 onScan: { Task { await flow.scan(from: .home, preselected: nil) } },
-                onSearch: openSearch,
+                onSearch: { openSearch(query: "") },
                 onOpen: { path.append($0) }
             )
             // Clear covers keep Home in the window under them; out of the accessibility tree meanwhile.
@@ -55,25 +68,47 @@ public struct RootView: View {
         .onChange(of: flow.lastSaved) { _, saved in
             if let saved { AccessibilityNotification.Announcement(saved.announcement).post() }
         }
+        // The layer has slid away (the flow ends the scan after it), so the prompt comes after the save, never during
+        // the welcome, a review, the camera-off sheet or a confirmation (Plan 6 §4).
+        .onChange(of: flow.phase) { _, phase in
+            askForRatingIfDue(after: phase)
+        }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
                 // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
                 // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
         }
-        .fullScreenCover(isPresented: $isSearching) {
-            SearchCover(
-                makeModel: dependencies.makeSearch,
-                thumbnails: dependencies.thumbnails,
-                viewer: { viewer($0, .library) },
-                fades: searchFades,
-                onClosed: { isSearching = false }
-            )
-            // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
-            .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
-        }
+        // The request handling waits for `onDismiss`: until then Search's cover is still leaving.
+        .fullScreenCover(
+            isPresented: $isSearching,
+            onDismiss: { searchCoverIsUp = false },
+            content: {
+                SearchCover(
+                    makeModel: { [searchQuery] in dependencies.makeSearch(searchQuery) },
+                    thumbnails: dependencies.thumbnails,
+                    viewer: { viewer($0, .library) },
+                    fades: searchFades,
+                    closes: searchCloses,
+                    onClosed: { isSearching = false }
+                )
+                // Fading, Search draws its own cross-fade over Home; sliding, the cover is opaque.
+                .presentationBackground(searchFades ? AnyShapeStyle(.clear) : AnyShapeStyle(Tokens.Color.bgGrouped))
+            }
+        )
         .sheet(isPresented: isCameraOff) {
             CameraOffSheet(onOpenSettings: flow.dismissCameraOff, onClose: flow.dismissCameraOff)
+        }
+        // Over Home, which can't scan or ask for anything while it is covered (Plan 6 §4).
+        .sheet(isPresented: isWelcoming) {
+            WelcomeSheet(model: dependencies.welcome)
+        }
+        .task { await dependencies.welcome.start() }
+        // A request from outside the app, once nothing it must wait for is in the way.
+        .onChange(of: requestMoment, initial: true) { actOnRequest() }
+        // Back from iOS's notification ask: the welcome closes even if the answer never comes (M11).
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { dependencies.welcome.becameActive() }
         }
         // Outermost, so the capture layer's cover gets it as well as Home.
         .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
@@ -90,6 +125,14 @@ public struct RootView: View {
         }
     }
 
+    private func askForRatingIfDue(after phase: ScanFlowModel.Phase) {
+        guard phase == .idle, dependencies.rating.isDue, dependencies.welcome.isFinished, !isSearching,
+            dependencies.welcome.step == nil
+        else { return }
+        requestReview()
+        dependencies.rating.asked()
+    }
+
     private var flow: ScanFlowModel { dependencies.flow }
 
     /// The capture layer can't be swiped away; the flow decides when it ends.
@@ -103,6 +146,11 @@ public struct RootView: View {
             },
             set: { _ in }
         )
+    }
+
+    /// The welcome can't be swiped away; the model decides when it closes.
+    private var isWelcoming: Binding<Bool> {
+        Binding(get: { dependencies.welcome.step != nil }, set: { _ in })
     }
 
     /// Swiping the sheet down closes it like the close button.
@@ -146,9 +194,62 @@ public struct RootView: View {
         }
     }
 
+    /// Everything that decides what a pending request does; a change asks again.
+    private var requestMoment: RequestMoment {
+        RequestMoment(
+            pending: requests.pending,
+            canScan: canScan,
+            welcomeFinished: welcomeFinished,
+            flowPhase: flow.phase,
+            searchCoverIsUp: searchCoverIsUp,
+            pathDepth: path.count)
+    }
+
+    /// Completed, and its sheet gone. Before the welcome starts, `step` is nil but it isn't completed.
+    private var welcomeFinished: Bool {
+        dependencies.welcome.isFinished && dependencies.welcome.step == nil
+    }
+
+    /// Acts on the pending request (`RequestRouting`): one close step at a time, each leaving it pending, until it is
+    /// taken and carried out or dropped. Nothing is acted on before launch has finished.
+    private func actOnRequest() {
+        guard canScan, let request = requests.pending else { return }
+        let state = RootState(
+            welcomeFinished: welcomeFinished,
+            flowPhase: flow.phase,
+            isSearching: searchCoverIsUp,
+            pathDepth: path.count,
+            isInLibrary: dependencies.home.isInLibrary)
+        switch RequestRouting.action(for: request, state: state) {
+        case .wait:
+            break
+        case .closeSearch:
+            // Asked again while the cover is leaving, so only the first asks Search to close. The request stays pending
+            // and is routed again once the cover has gone (`onDismiss`).
+            if isSearching { searchCloses += 1 }
+        case .popToHome:
+            path = []
+        case .ignore, .showReview:
+            // A review already open is the capture layer, over everything: it is what shows.
+            _ = requests.take()
+        case .startScan:
+            // From Home, so saving or cancelling lands there.
+            _ = requests.take()
+            Task { await flow.scan(from: .outside, preselected: nil) }
+        case .search(let text):
+            _ = requests.take()
+            openSearch(query: text)
+        case .open(let id):
+            _ = requests.take()
+            path = [.scan(id)]
+        }
+    }
+
     /// Slides Search up with the cover's own slide; with Reduce Motion puts the cover up at once and lets Search fade in
     /// (SearchCover). `forcesReduceMotion` is read here because this view sets it for what is under it.
-    private func openSearch() {
+    private func openSearch(query: String) {
+        searchQuery = query
+        searchCoverIsUp = true
         searchFades = systemReducesMotion || dependencies.forcesReduceMotion
         var transaction = Transaction()
         transaction.disablesAnimations = searchFades
@@ -179,4 +280,20 @@ public struct RootView: View {
                 )
             })
     }
+}
+
+/// What RootView's request handling depends on.
+private struct RequestMoment: Equatable {
+    // periphery:ignore - read only by the synthesized Equatable
+    let pending: ExternalRequest?
+    // periphery:ignore - read only by the synthesized Equatable
+    let canScan: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let welcomeFinished: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let flowPhase: ScanFlowModel.Phase
+    // periphery:ignore - read only by the synthesized Equatable
+    let searchCoverIsUp: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let pathDepth: Int
 }

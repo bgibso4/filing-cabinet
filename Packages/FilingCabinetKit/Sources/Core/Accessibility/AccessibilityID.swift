@@ -197,10 +197,38 @@ public enum AccessibilityID {
         public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
         public static let intelligence = "settings.intelligence"
+        public static let feedback = "settings.feedback"
+        public static let privacy = "settings.privacy"
 
         public static var all: [String] {
-            [collections, appearance, intelligence, notifications]
+            [collections, appearance, intelligence, notifications, feedback, privacy]
         }
+    }
+
+    /// The "No mail app" alert, from Send feedback and (Plan 6) the failure screen's Send report.
+    public enum Feedback {
+        public static let noMailAlert = "feedback.noMailAlert"
+        public static let copy = "feedback.copy"
+
+        public static var all: [String] { [noMailAlert, copy] }
+    }
+
+    /// The screen shown when the library can't open (#40).
+    public enum LibraryFailure {
+        public static let title = "libraryFailure.title"
+        public static let sendReport = "libraryFailure.sendReport"
+        public static let tryAgain = "libraryFailure.tryAgain"
+
+        public static var all: [String] { [title, sendReport, tryAgain] }
+    }
+
+    /// The first-launch welcome (01-03, 01-04).
+    public enum Welcome {
+        public static let `continue` = "welcome.continue"
+        public static let turnOn = "welcome.turnOn"
+        public static let notNow = "welcome.notNow"
+
+        public static var all: [String] { [`continue`, turnOn, notNow] }
     }
 
     /// Settings › Collections (10-02): one row per collection.
@@ -275,7 +303,8 @@ public enum AccessibilityID {
             + ExpiryDate.all
             + Viewer.all.filter { $0 != Viewer.back } + Details.all + [
                 Details.clearTitle, Details.titleText, Details.scannedLine,
-            ] + Trash.all + TrashViewer.all + Settings.all + Collections.all + CollectionSettings.all
-            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll]
+            ] + Trash.all + TrashViewer.all + Settings.all + Feedback.all + Collections.all + CollectionSettings.all
+            + Search.all + [Search.clearQuery, Search.clear, Search.searchAll] + LibraryFailure.all
+            + Welcome.all
     }
 }

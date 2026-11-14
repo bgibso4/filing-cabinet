@@ -35,30 +35,49 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var photos: PhotosAuthorization?
     /// `-Suggestions arrives|slow|unavailable`: a scripted suggester for the review (M5).
     public private(set) var suggestions: SuggestionsFlag?
+    /// `-FailLibraryOpen`, optionally followed by `once`: opening the library fails on every attempt, or the first.
+    public private(set) var failLibraryOpen: FailLibraryOpen?
+    /// `-ShowWelcome`: under `-UITest` the welcome shows as on a first launch; otherwise it counts as done (M1).
+    public private(set) var showWelcome = false
+    /// `-RatingDue`: under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating.
+    public private(set) var ratingDue = false
+    /// `-HoldScan`: launch finishes everything but enabling Scan, so a test can check disabled Scan on a still Home.
+    public private(set) var holdScan = false
+    /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
+    public private(set) var request: RequestFlag?
 
     private static let fakeCameraRange = 1...3
 
     public init(arguments: [String], isDebugBuild: Bool) {
         guard isDebugBuild else { return }
-        for (index, flag) in arguments.enumerated() where !setSwitch(flag) {
+        for (index, flag) in arguments.enumerated() {
             // A value is never skipped over: if it is really the next flag, it fails to parse here and is
             // read as a flag on its own turn.
             let value = arguments.indices.contains(index + 1) ? arguments[index + 1] : nil
-            setValue(of: flag, to: value)
+            if !setSwitch(flag, next: value) {
+                setValue(of: flag, to: value)
+            }
         }
     }
 
-    /// Sets the flag if it takes no value; false when it is not one of those.
-    private mutating func setSwitch(_ flag: String) -> Bool {
-        switch flag {
-        case "-UITest": isUITest = true
-        case "-CameraDenied": cameraDenied = true
-        case "-FailSave": failNextSave = true
-        case "-FakeReader": fakeReader = true
-        case "-ReduceMotion": reduceMotion = true
-        case "-NotificationsUnanswered": notificationsUnanswered = true
-        default: return false
+    /// The flags that need no value, each turning on one field.
+    private static var switches: [String: WritableKeyPath<Self, Bool>] {
+        [
+            "-UITest": \.isUITest, "-CameraDenied": \.cameraDenied, "-FailSave": \.failNextSave,
+            "-FakeReader": \.fakeReader, "-ReduceMotion": \.reduceMotion,
+            "-NotificationsUnanswered": \.notificationsUnanswered, "-ShowWelcome": \.showWelcome,
+            "-RatingDue": \.ratingDue, "-HoldScan": \.holdScan,
+        ]
+    }
+
+    /// Sets the flag if it needs no value (`next` may qualify it); false when it is not one of those.
+    private mutating func setSwitch(_ flag: String, next: String?) -> Bool {
+        if flag == "-FailLibraryOpen" {
+            failLibraryOpen = next == "once" ? .once : .always
+            return true
         }
+        guard let field = Self.switches[flag] else { return false }
+        self[keyPath: field] = true
         return true
     }
 
@@ -70,6 +89,7 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-SeedScans": seedScans = Self.count(value)
         case "-SeedTrash": seedTrash = Self.count(value)
         case "-SeedFavorites": seedFavorites = Self.count(value)
+        case "-Request": request = RequestFlag(value)
         default: break
         }
     }
