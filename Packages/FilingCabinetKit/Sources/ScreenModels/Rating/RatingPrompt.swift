@@ -3,6 +3,7 @@ import Observation
 
 /// When to ask for a rating: after ten saves on at least three different days, once per app version, only ever right
 /// after a save (Plan 6 §6b). The root asks Apple's prompt when `isDue` and nothing else is up, then calls `asked()`.
+/// Only `recordSave` can make it due: at launch it is never due, so a cancelled scan after an update doesn't ask.
 @MainActor
 @Observable
 public final class RatingPrompt {
@@ -19,7 +20,6 @@ public final class RatingPrompt {
         self.preferences = preferences
         self.version = version
         self.analytics = analytics
-        refresh()
     }
 
     /// A scan was saved on `day`. Only the three most recent distinct days are kept: three is all the rule needs.
