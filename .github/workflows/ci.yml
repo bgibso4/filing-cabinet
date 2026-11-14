@@ -16,8 +16,8 @@ permissions:
 
 jobs:
   # Which jobs to run. checks always runs. The simulator suite (about 15 min on 3 runners) runs on main, and on a PR
-  # once it is ready for review, unless the PR changes only docs/ and Markdown. While a PR is a draft, run the touched
-  # tests locally: make affected. design/ is code: design/tokens.json generates the tokens.
+  # once it is ready for review, unless the PR changes only docs/, site/ and Markdown. While a PR is a draft, run the
+  # touched tests locally: make affected. design/ is code: design/tokens.json generates the tokens.
   plan:
     runs-on: ubuntu-latest
     outputs:
@@ -37,8 +37,8 @@ jobs:
           if [ "$EVENT" = pull_request ]; then
             if [ "$DRAFT" = true ]; then
               sim=false; echo "Draft PR: checks only."
-            elif ! git diff --name-only "$BASE...$HEAD" | grep -qvE '^docs/|\.md$'; then
-              sim=false; echo "Only docs/ and Markdown changed: checks only."
+            elif ! git diff --name-only "$BASE...$HEAD" | grep -qvE '^docs/|^site/|\.md$'; then
+              sim=false; echo "Only docs/, site/ and Markdown changed: checks only."
             fi
           fi
           jobs='[{"job":"checks","target":"ci-checks"}]'

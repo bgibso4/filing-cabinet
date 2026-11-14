@@ -13,6 +13,7 @@
 # Can't affect the simulator tests (package tests other than ScreensTests run in Fast).
 *.md NONE
 docs/ NONE
+site/ NONE
 .github/ NONE
 .claude/ NONE
 DeviceTests/ NONE
