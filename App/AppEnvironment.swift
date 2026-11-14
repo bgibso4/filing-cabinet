@@ -38,6 +38,8 @@ final class AppEnvironment {
     @ObservationIgnored private let preferences: AppPreferences
     /// Gives older scans their search words while the app is in the foreground (M9).
     @ObservationIgnored private let wordsPass: SearchWordsPass
+    /// Keeps iPhone search in step with the library; run once launch is ready, after Trash's purge (A10).
+    @ObservationIgnored let spotlight: SpotlightSync
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -69,14 +71,14 @@ final class AppEnvironment {
         let (preferences, history) = Self.makeKept(options: options)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
-        let banner = CleanupBanner(
-            library: store, today: today, preferences: preferences, notifications: notifications)
+        let banner = CleanupBanner(library: store, today: today, preferences: preferences, notifications: notifications)
         self.banner = banner
         notifier = CleanupNotifier(
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
         wordsPass = scanning.wordsPass
+        spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),

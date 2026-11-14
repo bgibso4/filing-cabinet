@@ -1,5 +1,6 @@
 import AppIntents
 import Core
+import CoreSpotlight
 import Foundation
 import Screens
 import SwiftUI
@@ -41,6 +42,13 @@ struct FilingCabinetApp: App {
             }
             // Only a UI test's relaunch: anything else from outside the app is dropped while the library has failed.
             .onOpenURL { startup.relaunch(by: $0) }
+            // A Spotlight result: the root opens the scan (or, while the library has failed, drops the request).
+            .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+                    let id = ScanID(spotlightIdentifier: identifier)
+                else { return }
+                requests.send(.open(id))
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             guard let environment = startup.environment else { return }
@@ -68,6 +76,11 @@ struct FilingCabinetApp: App {
         RootView(dependencies: environment.root, canScan: environment.isReady, requests: requests)
             .task { await environment.launch() }
             .task { await environment.notifier.run() }
+            .task(id: environment.isReady) {
+                // Once launch has purged Trash, so a purged scan is never indexed.
+                guard environment.isReady else { return }
+                await environment.spotlight.run()
+            }
             .task {
                 // Midnight or a clock change: the system posts a day change (M5), and notes are planned again.
                 for await _ in NotificationCenter.default.notifications(named: .NSCalendarDayChanged) {

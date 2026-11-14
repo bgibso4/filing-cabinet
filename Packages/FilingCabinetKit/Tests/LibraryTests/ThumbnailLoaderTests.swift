@@ -205,3 +205,26 @@ private final class CountingFileSystem: FileSystem {
         #expect(files.checks(of: location.thumbnails(for: id).appending(path: "page-\(page).jpg")) == 1)
     }
 }
+
+@Test func firstPageJPEGIsTheCachedFileAsStored() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem())
+        .write([SyntheticPages.receipt(), SyntheticPages.receipt()], for: id)
+    let stored = try Data(contentsOf: location.thumbnails(for: id).appending(path: "page-1.jpg"))
+    let loader = ThumbnailLoader(location: location, fileSystem: LocalFileSystem())
+
+    #expect(await loader.firstPageJPEG(for: id) == stored)
+}
+
+@Test func firstPageJPEGIsNilWhenNotCached() async throws {
+    let location = temporaryLocation()
+    let id = ScanID()
+    _ = try await PageFileStore(location: location, fileSystem: LocalFileSystem())
+        .write([SyntheticPages.receipt()], for: id)
+    try FileManager.default.removeItem(at: location.thumbnails(for: id))
+    let loader = ThumbnailLoader(location: location, fileSystem: LocalFileSystem())
+
+    // Never rebuilt from the original: Spotlight only takes what is cached.
+    #expect(await loader.firstPageJPEG(for: id) == nil)
+}

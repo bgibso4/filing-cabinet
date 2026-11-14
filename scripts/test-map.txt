@@ -88,6 +88,8 @@ Packages/FilingCabinetKit/Sources/Screens/Review/ ScanJourneyTests ReviewZoomJou
 Packages/FilingCabinetKit/Sources/ScreenModels/Review/ ScanJourneyTests ReviewZoomJourneyTests ReviewSuggestionJourneyTests BrowseJourneyTests ReviewSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Save/ ScanJourneyTests ReviewSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Cleanup/ CleanupJourneyTests HomeSnapshotTests HomeJourneyTests
+# Spotlight runs in every launch (on a fake index in UI tests); the scan journey saves and edits under it.
+Packages/FilingCabinetKit/Sources/ScreenModels/Spotlight/ ScanJourneyTests
 Packages/FilingCabinetKit/Sources/Understanding/ ScanJourneyTests ReviewSnapshotTests
 
 SELF CPUImageMatchTests

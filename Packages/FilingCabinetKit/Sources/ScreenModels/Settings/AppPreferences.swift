@@ -47,6 +47,11 @@ public final class AppPreferences {
         didSet { defaults.set(ratingAskedVersion, forKey: Key.ratingAskedVersion) }
     }
 
+    /// The `SpotlightSync.version` the Spotlight index was last built with; 0 before the first.
+    package var spotlightVersion: Int {
+        didSet { defaults.set(spotlightVersion, forKey: Key.spotlightVersion) }
+    }
+
     @ObservationIgnored private let defaults: UserDefaults
 
     /// Whether cleanup notes reach the person: they want them and iOS allows them.
@@ -62,6 +67,7 @@ public final class AppPreferences {
         savesCount = defaults.integer(forKey: Key.savesCount)
         saveDays = defaults.array(forKey: Key.saveDays) as? [Int] ?? []
         ratingAskedVersion = defaults.string(forKey: Key.ratingAskedVersion)
+        spotlightVersion = defaults.integer(forKey: Key.spotlightVersion)
         appearance = AppearanceChoice(stored: defaults.string(forKey: Key.appearance))
         cleanupSeenThrough = (defaults.object(forKey: Key.cleanupSeenThrough) as? Int).flatMap {
             CalendarDay(storageValue: $0)
@@ -77,5 +83,6 @@ public final class AppPreferences {
         static let savesCount = "savesCount"
         static let saveDays = "saveDays"
         static let ratingAskedVersion = "ratingAskedVersion"
+        static let spotlightVersion = "spotlightVersion"
     }
 }

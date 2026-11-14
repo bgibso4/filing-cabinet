@@ -38,13 +38,32 @@ public struct ThumbnailLoader: ThumbnailProviding {
         }
     }
 
+    /// Page 1's cached JPEG as stored, for Spotlight (M12): read off the main actor, never rebuilt. Nil when it isn't
+    /// cached.
+    @concurrent
+    public func firstPageJPEG(for id: ScanID) async -> Data? {
+        let url = cachedFile(page: 0, for: id)
+        guard fileSystem.fileExists(at: url) else { return nil }
+        do {
+            return try Data(contentsOf: url)
+        } catch {
+            LibraryLog.logger.error("Reading a thumbnail failed: \(error.localizedDescription, privacy: .private)")
+            return nil
+        }
+    }
+
+    /// `caches/Thumbnails/<uuid>/page-<n>.jpg`, `page` counted from 0.
+    private func cachedFile(page: Int, for id: ScanID) -> URL {
+        location.thumbnails(for: id).appending(path: "page-\(page + 1).jpg")
+    }
+
     /// The cached JPEG, or the thumbnail rebuilt from the original; runs on the decode queue.
     private func load(page: Int, for id: ScanID, key: ImageCache.Key) -> CGImage? {
         let signposter = LibraryLog.signposter
         let state = signposter.beginInterval("Thumbnail decode")
         defer { signposter.endInterval("Thumbnail decode", state) }
         let stem = "page-\(page + 1)"
-        let cached = location.thumbnails(for: id).appending(path: "\(stem).jpg")
+        let cached = cachedFile(page: page, for: id)
         let image = fileSystem.fileExists(at: cached) ? Self.decode(cached) : nil
         guard let loaded = image ?? rebuild(stem: stem, for: id) else { return nil }
         cache.insert(loaded, for: key)
