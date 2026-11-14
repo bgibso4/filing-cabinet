@@ -13,7 +13,7 @@ extension AppEnvironment {
     /// How long Save waits for reading before saving without search text (M2); set from Ben's iPhone numbers (A15).
     private static let readingWaitLimit = Duration.seconds(1)
     /// How long the card waits for the model before growing into the sheet (M6, E1).
-    private static let suggestionWaitLimit = Duration.seconds(5)
+    private static let suggestionWaitLimit = Duration.seconds(10)
     /// How long `-Suggestions arrives` takes to answer each call.
     private static let fakeSuggestionDelay = Duration.milliseconds(300)
 
