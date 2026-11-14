@@ -51,9 +51,8 @@ final class AppEnvironment {
         private static let uiTestDaysSinceSeen = 14
     #endif
 
-    private init(options: LaunchOptions, isRetry: Bool) throws(LibraryOpenFailure) {
+    private init(options: LaunchOptions, isRetry: Bool, analytics: any Analytics) throws(LibraryOpenFailure) {
         self.options = options
-        let analytics = LogAnalytics()
         let clock = options.fixedDate.map { AppClock.fixed($0, calendar: AppClock.system.calendar) } ?? .system
         let location = try Self.libraryLocation(isUITest: options.isUITest)
         let fileSystem = LocalFileSystem()
@@ -136,13 +135,16 @@ final class AppEnvironment {
     }
 
     /// Unknown flags are ignored, and a Release build ignores every flag (M9). Throws when the library can't open;
-    /// `isRetry` is the failure screen's Try again, which `-FailLibraryOpen once` lets through.
-    static func make(arguments: [String], isRetry: Bool = false) throws(LibraryOpenFailure) -> AppEnvironment {
+    /// `isRetry` is the failure screen's Try again, which `-FailLibraryOpen once` lets through. `analytics` is the
+    /// process's one sink (`AppStartup`).
+    static func make(
+        arguments: [String], isRetry: Bool = false, analytics: any Analytics
+    ) throws(LibraryOpenFailure) -> AppEnvironment {
         let options = LaunchOptions(arguments: arguments, isDebugBuild: isDebugBuild)
         if options.isUITest {
             UIView.setAnimationsEnabled(false)
         }
-        return try AppEnvironment(options: options, isRetry: isRetry)
+        return try AppEnvironment(options: options, isRetry: isRetry, analytics: analytics)
     }
 
     /// Clears what an interrupted save left behind and any exported PDF a share left (M20), deletes what has had its 30

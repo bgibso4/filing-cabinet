@@ -22,13 +22,14 @@ final class AppStartup {
 
     /// The flags the library was opened with; Try again opens it with the same ones.
     @ObservationIgnored private var arguments: [String]
-    /// The failure screen's events: with no environment, nothing else can send them.
+    /// The process's one sink: every environment sends through it, and the failure screen's events (with no
+    /// environment, nothing else can send them).
     @ObservationIgnored private let analytics: any Analytics
     /// Requests from outside the app: the root acts on them, the failure screen drops them.
     let requests: ExternalRequests
 
     init(arguments: [String], requests: ExternalRequests) {
-        let analytics = LogAnalytics()
+        let analytics = Self.makeAnalytics()
         self.arguments = arguments
         self.analytics = analytics
         self.requests = requests
@@ -63,7 +64,9 @@ final class AppStartup {
     /// Try again (the failure screen's model calls it): true, with the app ready, when the library opened.
     func retry() -> Bool {
         do throws(LibraryOpenFailure) {
-            state = .ready(try AppEnvironment.make(arguments: arguments, isRetry: true))
+            let environment = try AppEnvironment.make(arguments: arguments, isRetry: true, analytics: analytics)
+            environment.lifecycle.launched()
+            state = .ready(environment)
             return true
         } catch {
             analytics.send(.libraryOpenFailed)
@@ -73,10 +76,22 @@ final class AppStartup {
 
     private static func open(arguments: [String], analytics: any Analytics, retry: @escaping () -> Bool) -> State {
         do throws(LibraryOpenFailure) {
-            return .ready(try AppEnvironment.make(arguments: arguments))
+            let environment = try AppEnvironment.make(arguments: arguments, analytics: analytics)
+            environment.lifecycle.launched()
+            return .ready(environment)
         } catch {
             analytics.send(.libraryOpenFailed)
             return .failed(LibraryFailureModel(error: error.underlying, analytics: analytics, retry: retry))
+        }
+    }
+
+    /// TelemetryDeck in a Release build that has an app ID (#3); the log otherwise, so Debug builds and Ben's own
+    /// installs never reach the dashboard.
+    private static func makeAnalytics() -> any Analytics {
+        let appID = Bundle.main.object(forInfoDictionaryKey: "TelemetryDeckAppID") as? String
+        switch AnalyticsSink.choose(isDebugBuild: AppEnvironment.isDebugBuild, appID: appID) {
+        case .log: return LogAnalytics()
+        case .telemetryDeck(let appID): return TelemetryDeckAnalytics(appID: appID)
         }
     }
 

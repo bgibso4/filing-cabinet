@@ -1,3 +1,5 @@
+import Foundation
+
 /// Where analytics events go: the unified log, or TelemetryDeck.
 public enum AnalyticsSink: Equatable {
     case log

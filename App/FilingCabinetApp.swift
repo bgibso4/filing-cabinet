@@ -60,8 +60,9 @@ struct FilingCabinetApp: App {
                 environment.today.refresh()
                 Task { await environment.becameActive() }
             case .background:
-                // Leaving the app clears Home's cleanup banner (M4).
+                // Leaving the app clears Home's cleanup banner (M4), and the next return counts as an open.
                 environment.banner.clear()
+                environment.lifecycle.sceneLeftForeground()
                 environment.leftForeground()
             case .inactive:
                 environment.leftForeground()
