@@ -19,7 +19,7 @@ settings:
     SWIFT_APPROACHABLE_CONCURRENCY: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     # One version for the app and its extension: an embedded extension must match the app's.
-    MARKETING_VERSION: "0.1"
+    MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: 1
 
 packages:
@@ -54,17 +54,22 @@ targets:
         product: ScreenModels
       - package: FilingCabinetKit
         product: Screens
-      # Test doubles for the launch flags; the app uses them only under `#if DEBUG` (M9).
+      # Test doubles for the launch flags; the app uses them only under `#if DEBUG` (M9). Built, but linked by Debug
+      # alone (OTHER_LDFLAGS below): Xcode links a package product's object whole, so Release would carry the fakes.
       - package: FilingCabinetKit
         product: TestSupport
+        link: false
     settings:
+      configs:
+        Debug:
+          OTHER_LDFLAGS: $(inherited) $(BUILT_PRODUCTS_DIR)/TestSupport.o
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
         PRODUCT_NAME: FilingCabinet
         INFOPLIST_FILE: App/Info.plist
         GENERATE_INFOPLIST_FILE: NO
-        # No app icon yet (the design handoff ships the layers); XcodeGen otherwise defaults to AppIcon.
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        # App/AppIcon.icon, built from design/app-icon/layers: flat (glass, shadow, specular and translucency off).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
         # iPhone only, portrait only (Info.plist lists the single orientation).
         TARGETED_DEVICE_FAMILY: "1"
