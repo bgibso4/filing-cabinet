@@ -29,12 +29,17 @@ final class ReviewZoomJourneyTests: XCTestCase {
         // Zoomed, the first swipe pans the page rather than turning it.
         window.swipeLeft()
         XCTAssertEqual(strip.label, "Page 1 of 3", "the first swipe turned the page, so it wasn't zoomed")
-        var swipes = 0
-        while swipes < 4 {
-            window.swipeLeft()
-            swipes += 1
-            if strip.satisfies("label == %@", "Page 2 of 3", within: 2) { break }
-        }
-        XCTAssertEqual(strip.label, "Page 2 of 3")
+
+        // Back to 1×, then zoomed around the trailing edge, the page rests at that edge, so one swipe turns it. A loop
+        // of swipes until the strip changed overshot to page 3 on CI: a check slower than its wait let one more swipe
+        // through (#64).
+        page.doubleTap()
+        window.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0)).withOffset(
+            CGVector(dx: 0, dy: pill.frame.maxY + 120)
+        )
+        .doubleTap()
+        window.swipeLeft()
+        XCTAssertTrue(
+            strip.satisfies("label == %@", "Page 2 of 3", within: 5), "one swipe at the edge didn't turn the page")
     }
 }
