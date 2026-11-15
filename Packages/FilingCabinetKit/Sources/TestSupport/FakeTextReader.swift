@@ -8,6 +8,8 @@ public final class FakeTextReader: TextReader {
     package enum Step: Sendable {
         /// Return this page, after waiting `delay`.
         case page(PageText, delay: Duration = .zero)
+        /// Return this page once `gate` opens, so the test decides when reading ends. A cancelled read returns it early.
+        case held(PageText, until: TestGate)
         /// Throw this error.
         case failure(UnderstandingError)
     }
@@ -35,6 +37,9 @@ public final class FakeTextReader: TextReader {
                 // A cancelled wait just ends the delay early; the scripted page is still returned.
                 try? await Task.sleep(for: delay)
             }
+            return text
+        case .held(let text, let gate):
+            await gate.wait()
             return text
         case .failure(let error):
             throw error

@@ -13,8 +13,10 @@ public final class FakeLibrary: ScanLibrary {
     package var failNextSave: LibraryError?
     /// Thrown by the next edit (rename to Delete now, Empty Trash, a lifespan), which then changes nothing, as the real store does.
     package var failNextEdit: LibraryError?
-    /// How long each `save` takes before its record exists, so a test can finish reading mid-save.
-    package var saveDelay = Duration.zero
+    /// When set, each `save` waits for it to open before its record exists, so a test can finish reading mid-save.
+    package var saveGate: TestGate?
+    /// How many saves have begun, whether or not they have finished.
+    package private(set) var saveCalls = 0
     /// Every successfully saved draft, in save order.
     package private(set) var saved: [ScanDraft] = []
     /// The latest search text per saved scan.
@@ -41,10 +43,9 @@ public final class FakeLibrary: ScanLibrary {
     public private(set) var searchTextRevision = 0
 
     public func save(_ draft: ScanDraft) async throws(LibraryError) {
-        if saveDelay > .zero {
-            // A cancelled wait just ends the delay early; the save still happens.
-            try? await Task.sleep(for: saveDelay)
-        }
+        saveCalls += 1
+        // A cancelled wait just ends early; the save still happens.
+        await saveGate?.wait()
         if let failure = failNextSave {
             failNextSave = nil
             throw failure
