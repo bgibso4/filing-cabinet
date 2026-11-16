@@ -14,6 +14,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Requests/                requests from outside the app (scan, search, open a scan) and the hand-off that carries them to the root
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
+    Lock/                    the device authentication seam (DeviceAuthenticating): Face ID, with the passcode as the fallback
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
     Suggesting/              Apple Intelligence: the ScanSuggester seam, the on-device model's two calls (title and collection, then search words), prompts, title casing
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
