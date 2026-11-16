@@ -54,6 +54,9 @@ struct FilingCabinetApp: App {
             guard let environment = startup.environment else { return }
             switch phase {
             case .active:
+                // At once, before the first active frame: the time away may lock the library again.
+                environment.lock.arrived()
+                Task { await environment.lock.becameActive() }
                 environment.enteredForeground()
                 environment.lifecycle.sceneBecameActive()
                 // Now, so the first frame after midnight doesn't show yesterday.
@@ -64,6 +67,7 @@ struct FilingCabinetApp: App {
                 environment.banner.clear()
                 environment.lifecycle.sceneLeftForeground()
                 environment.leftForeground()
+                environment.lock.leftForeground()
             case .inactive:
                 environment.leftForeground()
             @unknown default:
@@ -75,6 +79,12 @@ struct FilingCabinetApp: App {
     /// The app once the library is open.
     private func app(_ environment: AppEnvironment) -> some View {
         RootView(dependencies: environment.root, canScan: environment.isReady, requests: requests)
+            // An environment made while the scene is already active (Try again, a UI test's relaunch) gets no scene
+            // change, so Face ID is tried here; made at launch, the scene becomes active after this and tries there.
+            // A second try in the same arrival does nothing.
+            .task {
+                if scenePhase == .active { await environment.lock.becameActive() }
+            }
             .task { await environment.launch() }
             .task { await environment.notifier.run() }
             .task(id: environment.isReady) {

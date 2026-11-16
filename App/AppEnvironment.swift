@@ -40,9 +40,8 @@ final class AppEnvironment {
     @ObservationIgnored private let wordsPass: SearchWordsPass
     /// Keeps iPhone search in step with the library; run once launch is ready, after Trash's purge (A10).
     @ObservationIgnored let spotlight: SpotlightSync
-    // periphery:ignore - Task 7 drives the lock from the scene
-    /// The library lock; Settings switches it, and the scene will drive it once the root covers the library.
-    let lock: LibraryLock
+    /// The library lock: the root covers the library with it, Settings switches it, and the scene drives it.
+    @ObservationIgnored let lock: LibraryLock
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -63,9 +62,7 @@ final class AppEnvironment {
         let store = try Self.makeStore(
             location: location, options: options, isRetry: isRetry, files: files, clock: clock)
         let export = ScanExport(files: files)
-        self.export = export
-        self.analytics = analytics
-        self.clock = clock
+        (self.export, self.analytics, self.clock) = (export, analytics, clock)
         let today = Today(clock: clock)
         self.today = today
         self.store = store
@@ -79,7 +76,9 @@ final class AppEnvironment {
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
-        (wordsPass, lock) = (scanning.wordsPass, scanning.lock)
+        wordsPass = scanning.wordsPass
+        let lock = Self.makeLock(options: options, preferences: preferences)
+        self.lock = lock
         spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
@@ -90,7 +89,7 @@ final class AppEnvironment {
             makeViewer: Self.viewerMaker(
                 store: store, today: today, clock: clock, analytics: analytics, with: viewerShared),
             makeDetails: { DetailsModel(id: $0, library: store, today: today, clock: clock, analytics: analytics) },
-            makeSettings: { scanning.settings(preferences: preferences, notifications: notifications) },
+            makeSettings: { scanning.settings(preferences: preferences, notifications: notifications, lock: lock) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
             makeCollectionSettings: Self.collectionSettingsMaker(
                 store: store, today: today, clock: clock, analytics: analytics),
@@ -103,7 +102,7 @@ final class AppEnvironment {
             preferences: preferences,
             welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics),
             rating: scanning.rating,
-            lock: scanning.lock
+            lock: lock
         )
     }
 

@@ -17,10 +17,12 @@ extension AppEnvironment {
     }
 
     /// What is kept in the phone's defaults: the settings and Search's history. UI tests start past the welcome unless
-    /// `-ShowWelcome` asks to see it (M1).
+    /// `-ShowWelcome` asks to see it (M1), and with the lock off unless `-Lock on` turns it on.
     static func makeKept(options: LaunchOptions) -> (AppPreferences, SearchHistory) {
         let defaults = preferencesDefaults(isUITest: options.isUITest)
         let preferences = AppPreferences(defaults: defaults)
+        // Debug only: `LaunchOptions` reads no flag in Release.
+        if options.lockOn { preferences.lockOn = true }
         if options.isUITest {
             preferences.welcomeDone = !options.showWelcome
             if options.ratingDue {

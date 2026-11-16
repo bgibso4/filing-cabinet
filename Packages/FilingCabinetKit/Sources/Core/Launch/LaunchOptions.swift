@@ -47,7 +47,7 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var request: RequestFlag?
     /// `-Lock on`: the library lock is on at launch; any other value leaves it off.
     public private(set) var lockOn = false
-    /// `-Authenticator succeeds|succeedsOnce|cancels|fails|passcodeOnly|none`: a scripted device authenticator.
+    /// `-Authenticator succeeds|succeedsOnce|cancels|cancelsOnce|fails|passcodeOnly|none`: a scripted device authenticator.
     public private(set) var authenticator: AuthenticatorFlag?
     /// `-LockAfter <n>`: the library locks again after `n` seconds in the background.
     public private(set) var relockSeconds: Int?

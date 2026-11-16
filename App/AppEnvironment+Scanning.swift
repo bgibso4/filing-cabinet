@@ -25,8 +25,6 @@ extension AppEnvironment {
         let wordsPass: SearchWordsPass
         /// Counts the saves the flow reports and says when to ask for a rating.
         let rating: RatingPrompt
-        /// The library lock, which Settings switches.
-        let lock: LibraryLock
         private let analytics: any Analytics
 
         init(
@@ -78,13 +76,15 @@ extension AppEnvironment {
             )
             self.suggester = suggester
             self.wordsPass = wordsPass
-            lock = LibraryLock(preferences: preferences, authenticator: SystemAuthenticator())
             self.rating = rating
             self.analytics = analytics
         }
 
-        /// Settings, whose Apple Intelligence switch and reading line follow this model and pass.
-        func settings(preferences: AppPreferences, notifications: any CleanupNotifying) -> SettingsModel {
+        /// Settings, whose Apple Intelligence switch and reading line follow this model and pass; `lock` is the one its
+        /// Lock with Face ID switch turns on and off.
+        func settings(
+            preferences: AppPreferences, notifications: any CleanupNotifying, lock: LibraryLock
+        ) -> SettingsModel {
             SettingsModel(
                 preferences: preferences,
                 notifications: notifications,
