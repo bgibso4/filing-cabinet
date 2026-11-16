@@ -45,6 +45,12 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var holdScan = false
     /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
     public private(set) var request: RequestFlag?
+    /// `-Lock on`: the library lock is on at launch; any other value leaves it off.
+    public private(set) var lockOn = false
+    /// `-Authenticator succeeds|succeedsOnce|cancels|fails|passcodeOnly|none`: a scripted device authenticator.
+    public private(set) var authenticator: AuthenticatorFlag?
+    /// `-LockAfter <n>`: the library locks again after `n` seconds in the background.
+    public private(set) var relockSeconds: Int?
 
     private static let fakeCameraRange = 1...3
 
@@ -90,6 +96,8 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-SeedTrash": seedTrash = Self.count(value)
         case "-SeedFavorites": seedFavorites = Self.count(value)
         case "-Request": request = RequestFlag(value)
+        case "-Lock": lockOn = value == "on"
+        case "-LockAfter": relockSeconds = Self.count(value)
         default: break
         }
     }
@@ -101,12 +109,13 @@ public struct LaunchOptions: Sendable, Equatable {
         case "-Notifications": notifications = NotificationAuthorization(rawValue: value)
         case "-Photos": photos = PhotosAuthorization(rawValue: value)
         case "-Suggestions": suggestions = SuggestionsFlag(rawValue: value)
+        case "-Authenticator": authenticator = AuthenticatorFlag(rawValue: value)
         default: return false
         }
         return true
     }
 
-    /// A seed count: zero or more.
+    /// A count of seeds or seconds: zero or more.
     private static func count(_ text: String) -> Int? {
         Int(text).flatMap { $0 >= 0 ? $0 : nil }
     }
