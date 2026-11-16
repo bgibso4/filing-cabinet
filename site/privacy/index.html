@@ -64,13 +64,14 @@
 
   <section>
     <h2>Your scans</h2>
-    <p>Scans, and the text, titles and search words the app works out from them, are stored on your iPhone in the app's own storage. Your recent searches and recently viewed scans are kept there too. iOS encrypts this storage, and that encryption is tied to your iPhone's passcode.</p>
+    <p>Scans, and the text, titles and search words the app works out from them, are stored on your iPhone in the app's own storage. Your recent searches and recently viewed scans are kept there too. If your iPhone has a passcode, iOS encrypts this storage with a key tied to it.</p>
     <p>All of this is included in your iCloud Backup if you use it. Apple can read an iCloud Backup unless you turn on Advanced Data Protection, which makes it end-to-end encrypted. We suggest turning it on.</p>
   </section>
 
   <section>
     <h2>Face ID lock</h2>
-    <p>Settings has a "Lock with Face ID" switch. It is off by default. When it is on, the library is covered until Face ID unlocks it, or your iPhone's passcode when Face ID isn't working. It locks again after the app has been away for 5 minutes.</p>
+    <p>Settings has a "Lock with Face ID" switch. It is off by default. When it is on, the library is covered until Face ID unlocks it, or your iPhone's passcode when Face ID isn't working. It locks each time the app starts, and again after the app has been away for 5 minutes. The lock needs a passcode on your iPhone; without one it is paused.</p>
+    <p>The lock hides the library in the app. It does not add encryption of its own, and does not protect a backup.</p>
     <p>While the lock is on, your scans are removed from iPhone search, and notes about cleaned-up scans stop naming them. Scanning from Control Center, the Action button or Siri still works without unlocking.</p>
     <p>Face ID is handled by iOS. The app only learns whether it worked, yes or no. It never sees your face data.</p>
   </section>
