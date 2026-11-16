@@ -100,9 +100,9 @@ migrate.
   is still there after Save or Discard. A scan does not reset or extend the relock clock.
 - **Review while locked** shows what it shows today: the new scan, its suggested title and the built-in collection
   names. Nothing else from the library. Save ends at the cover, not at Home or the new tile.
-- **Sheets over the app.** When the library locks (5 minutes away), any sheet or system screen the app presented
-  (Share, Mail, Save to Photos, Details) is closed first, and the cover sits above everything the app shows,
-  including the app switcher snapshot. The camera, opened by a Scan request, is the one exception.
+- **Sheets over the app.** The cover sits above everything the app shows, including a sheet or system screen it
+  presented (Share, Mail, Save to Photos, Search) and the app switcher snapshot. They are covered, not closed:
+  unlocking shows the app as it was left. The camera, opened by a Scan request, is the one thing above the cover.
 - **A waiting `.search` or `.open`** is dropped if Face ID is cancelled or fails. A later unlock never acts on a
   stale request.
 - **Face ID not set up but a passcode is:** locked, unlocking with the passcode. "Paused" is only for no passcode.
