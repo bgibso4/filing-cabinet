@@ -4,9 +4,11 @@ import SwiftUI
 import UIKit
 
 /// Settings from Home's gear (10-01): Collections, Appearance, then Apple Intelligence and Notifications with the line
-/// about Apple Intelligence under them (Plan 5's demo), then Send feedback and the Privacy policy (Plan 6), then the footer.
+/// about Apple Intelligence under them (Plan 5's demo), then Lock with Face ID and its line (library-lock mocks, Mock 2),
+/// then Send feedback and the Privacy policy (Plan 6), then the footer.
 public struct SettingsView: View {
-    // `model`, `openURL`, `feedbackDraft`, `group` and `row` are not private: SettingsView+Feedback.swift uses them.
+    // `model`, `openURL`, `feedbackDraft`, `group`, `row` and `footnote` are not private: the SettingsView+Feedback.swift
+    // and SettingsView+Lock.swift extensions use them.
     let model: SettingsModel
     private let onOpenCollections: () -> Void
 
@@ -56,6 +58,8 @@ public struct SettingsView: View {
                         .padding(.top, Tokens.Spacing.s2)
                         .padding(.horizontal, Tokens.Spacing.s4)
                 }
+                lockSection
+                    .padding(.top, Self.groupGap)
                 feedbackGroup
                     .padding(.top, Self.groupGap)
                 Text(model.footer)
@@ -173,13 +177,18 @@ public struct SettingsView: View {
         }
     }
 
+    /// A line under a group.
+    func footnote(_ text: String) -> some View {
+        Text(text)
+            .font(Tokens.Typography.footnote)
+            .foregroundStyle(Tokens.Color.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     /// While older scans are read, how far it has got, with a thin bar; otherwise the privacy line.
     private func intelligenceFooter(_ footer: String, progress: Double?) -> some View {
         VStack(alignment: .leading, spacing: Tokens.Spacing.s2) {
-            Text(footer)
-                .font(Tokens.Typography.footnote)
-                .foregroundStyle(Tokens.Color.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            footnote(footer)
             if let progress {
                 progressBar(progress)
                     // The line above already says how far it has got.

@@ -26,6 +26,8 @@ public struct RootDependencies {
     let welcome: WelcomeModel
     /// When to ask Apple for a rating, after a save.
     let rating: RatingPrompt
+    /// The library lock: the cover over the library and the shield above every window.
+    let lock: LibraryLock
 
     public init(
         home: HomeModel,
@@ -44,7 +46,8 @@ public struct RootDependencies {
         forcesReduceMotion: Bool,
         preferences: AppPreferences,
         welcome: WelcomeModel,
-        rating: RatingPrompt
+        rating: RatingPrompt,
+        lock: LibraryLock
     ) {
         self.home = home
         self.flow = flow
@@ -63,5 +66,6 @@ public struct RootDependencies {
         self.preferences = preferences
         self.welcome = welcome
         self.rating = rating
+        self.lock = lock
     }
 }

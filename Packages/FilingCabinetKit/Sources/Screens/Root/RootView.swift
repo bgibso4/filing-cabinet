@@ -6,7 +6,8 @@ import SwiftUI
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
 /// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
 /// over it. On a first launch the welcome sheet covers Home until it is completed. Requests from outside the app (the
-/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9).
+/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9). While the
+/// library is locked, its cover hides the stack and the shield (LockShield) hides everything above it.
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
@@ -49,8 +50,29 @@ public struct RootView: View {
             )
             // Clear covers keep Home in the window under them; out of the accessibility tree meanwhile.
             .accessibilityHidden(isCapturing.wrappedValue || isSearching)
-            .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching))
+            .background(
+                BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching || lock.isLocked)
+            )
             .navigationDestination(for: AppRoute.self, destination: destination)
+        }
+        // Locked, the cover hides the library; directly over the stack, so it is what shows under a Scan request's
+        // clear capture layer, and as that layer slides away. The shield covers everything else.
+        .accessibilityHidden(lock.isLocked)
+        .overlay {
+            if lock.isLocked { LockCover(showsUnlock: false, onUnlock: {}) }
+        }
+        .background(
+            LockShield(
+                isUp: lock.shieldIsUp(
+                    captureLayerIsUp: isCapturing.wrappedValue, sceneIsActive: scenePhase == .active),
+                showsUnlock: lock.showsUnlock,
+                colorScheme: colorScheme,
+                onUnlock: { Task { await lock.unlock() } })
+        )
+        // A cancelled or failed Face ID drops a waiting search or open: a later unlock never acts on it. A Scan request
+        // never waits for the lock, so it is left alone.
+        .onChange(of: lock.refusals) {
+            if let pending = requests.pending, pending != .scan { _ = requests.take() }
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
@@ -127,13 +149,15 @@ public struct RootView: View {
 
     private func askForRatingIfDue(after phase: ScanFlowModel.Phase) {
         guard phase == .idle, dependencies.rating.isDue, dependencies.welcome.isFinished, !isSearching,
-            dependencies.welcome.step == nil
+            dependencies.welcome.step == nil, !lock.isLocked
         else { return }
         requestReview()
         dependencies.rating.asked()
     }
 
     private var flow: ScanFlowModel { dependencies.flow }
+
+    private var lock: LibraryLock { dependencies.lock }
 
     /// The capture layer can't be swiped away; the flow decides when it ends.
     private var isCapturing: Binding<Bool> {
@@ -200,6 +224,7 @@ public struct RootView: View {
             pending: requests.pending,
             canScan: canScan,
             welcomeFinished: welcomeFinished,
+            isLocked: lock.isLocked,
             flowPhase: flow.phase,
             searchCoverIsUp: searchCoverIsUp,
             pathDepth: path.count)
@@ -216,7 +241,7 @@ public struct RootView: View {
         guard canScan, let request = requests.pending else { return }
         let state = RootState(
             welcomeFinished: welcomeFinished,
-            isLocked: false,
+            isLocked: lock.isLocked,
             flowPhase: flow.phase,
             isSearching: searchCoverIsUp,
             pathDepth: path.count,
@@ -291,6 +316,8 @@ private struct RequestMoment: Equatable {
     let canScan: Bool
     // periphery:ignore - read only by the synthesized Equatable
     let welcomeFinished: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let isLocked: Bool
     // periphery:ignore - read only by the synthesized Equatable
     let flowPhase: ScanFlowModel.Phase
     // periphery:ignore - read only by the synthesized Equatable

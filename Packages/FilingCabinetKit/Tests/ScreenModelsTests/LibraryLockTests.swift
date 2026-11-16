@@ -294,3 +294,39 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     #expect(lock.isLocked)
     #expect(lock.showsUnlock)  // the button is the way in
 }
+
+// The shield over every window: up while locked unless a Scan request's capture layer is up, and whenever the lock is
+// on and the scene isn't active, so the app switcher never shows the library.
+
+@MainActor @Test func shieldIsUpWhileLockedUnlessTheCaptureLayerIs() async throws {
+    let rig = try LockRig(results: [.cancelled])
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: false))
+}
+
+@MainActor @Test func shieldCoversTheSwitcherWhileOnEvenWhenUnlocked() async throws {
+    let rig = try LockRig()
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    #expect(!rig.lock.isLocked)
+    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: false))
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: false))
+}
+
+@MainActor @Test(arguments: [(lockOn: false, availability: AuthenticationAvailability.biometrics), (true, .none)])
+func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationAvailability) async throws {
+    let rig = try LockRig(lockOn: lockOn, availability: availability)
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    for sceneIsActive in [true, false] {
+        for captureLayerIsUp in [true, false] {
+            #expect(!rig.lock.shieldIsUp(captureLayerIsUp: captureLayerIsUp, sceneIsActive: sceneIsActive))
+        }
+    }
+}

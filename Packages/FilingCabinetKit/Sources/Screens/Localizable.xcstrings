@@ -93,7 +93,10 @@
     "Cleaned up 3 receipts" : {},
     "They’re in Trash for 30 days if you need them." : {},
     "At most one a day" : {},
-    "Turn on notifications" : {}
+    "Turn on notifications" : {},
+    "Locked" : {},
+    "Unlock" : {},
+    "Lock with Face ID" : {}
   },
   "version" : "1.0"
 }

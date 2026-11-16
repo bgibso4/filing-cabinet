@@ -79,8 +79,7 @@ final class AppEnvironment {
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
-        wordsPass = scanning.wordsPass
-        lock = scanning.lock
+        (wordsPass, lock) = (scanning.wordsPass, scanning.lock)
         spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
@@ -103,7 +102,8 @@ final class AppEnvironment {
             forcesReduceMotion: options.reduceMotion,
             preferences: preferences,
             welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics),
-            rating: scanning.rating
+            rating: scanning.rating,
+            lock: scanning.lock
         )
     }
 

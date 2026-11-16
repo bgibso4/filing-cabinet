@@ -5,6 +5,5 @@ package struct LockRow: Equatable {
     /// The person's wish, so a paused lock still shows on.
     package let isOn: Bool
     package let subtitle: String
-    // periphery:ignore - Task 6 shows the footer under the row
     package let footer: String
 }

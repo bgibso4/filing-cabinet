@@ -23,6 +23,14 @@ public final class LibraryLock {
     /// What the phone can check now, for Settings.
     public var availability: AuthenticationAvailability { authenticator.availability() }
 
+    /// The shield above every window the app shows is up: while locked, unless the capture layer a Scan request opened
+    /// is up in an active scene; and whenever the lock is on and the scene isn't active, so the app switcher's snapshot
+    /// never shows the library, even inside the relock time.
+    package func shieldIsUp(captureLayerIsUp: Bool, sceneIsActive: Bool) -> Bool {
+        if isOn, !sceneIsActive { return true }
+        return isLocked && !captureLayerIsUp
+    }
+
     @ObservationIgnored private let preferences: AppPreferences
     @ObservationIgnored private let authenticator: any DeviceAuthenticating
     @ObservationIgnored private let now: @MainActor () -> ContinuousClock.Instant
