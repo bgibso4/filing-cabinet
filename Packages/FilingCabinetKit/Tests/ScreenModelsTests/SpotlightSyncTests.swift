@@ -322,3 +322,59 @@ private func eventually(_ condition: () -> Bool) async throws -> Bool {
     #expect(SpotlightSync.detail(scan("City Pharmacy", pages: 3)) == "Receipts · 3 pages")
     #expect(SpotlightSync.detail(scan("Lecture", in: .notes)) == "Notes · 1 page")
 }
+
+@MainActor
+@Test func lockOnTakesEveryScanOutOfSpotlightAndOffBringsThemBack() async throws {
+    let harness = try SyncHarness([scan("City Pharmacy"), scan("Lecture"), scan("Passport")])
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.index.items.count == 3 })
+
+    harness.preferences.lockOn = true
+    #expect(try await eventually { harness.index.items.isEmpty })
+
+    harness.preferences.lockOn = false
+    #expect(try await eventually { harness.titles == ["City Pharmacy", "Lecture", "Passport"] })
+    #expect(harness.index.items.values.allSatisfy { $0.thumbnail == jpeg })
+}
+
+@MainActor
+@Test func aFailedRemovalWhileLockedIsRetried() async throws {
+    let harness = try SyncHarness([scan("City Pharmacy"), scan("Lecture"), scan("Passport")])
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.index.items.count == 3 })
+
+    harness.index.failNextCall()
+    harness.preferences.lockOn = true
+    // Two calls made the first pass; the failed removal is the third.
+    #expect(try await eventually { harness.index.calls.count == 3 })
+    #expect(harness.index.items.count == 3)
+
+    harness.sync.syncAgain()
+
+    #expect(try await eventually { harness.index.items.isEmpty })
+}
+
+@MainActor
+@Test func aScanSavedWhileLockedIsNotIndexed() async throws {
+    let harness = try SyncHarness([])
+    defer { harness.cleanUp() }
+    harness.preferences.lockOn = true
+    let draft = ScanDraft(
+        id: ScanID(),
+        title: "City Pharmacy",
+        collection: .receipts,
+        scannedAt: noon,
+        expiryOverride: nil,
+        pages: [SyntheticPages.receipt()],
+        searchText: "",
+        searchWords: [],
+        searchWordsVersion: 1)
+
+    try await harness.library.save(draft)
+    harness.sync.syncAgain()
+    try await Task.sleep(for: .milliseconds(200))
+
+    #expect(harness.index.items.isEmpty)
+    harness.preferences.lockOn = false
+    #expect(try await eventually { harness.titles == ["City Pharmacy"] })
+}

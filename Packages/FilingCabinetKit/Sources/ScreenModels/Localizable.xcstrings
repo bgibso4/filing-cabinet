@@ -259,6 +259,8 @@
     "Cleaned up" : {},
     "Cleaned up %lld %@" : {},
     "Cleaned up %lld scans" : {},
+    "Cleaned up 1 scan" : {},
+    "An expired scan moved to Trash. It’s there for %lld days if you need it." : {},
     "Moved the %@ %@ to Trash. It’s there for %lld days if you need it." : {},
     "%@ moved to Trash. They’re there for %lld days if you need them." : {},
     "Expired scans moved to Trash. They’re there for %lld days if you need one back." : {},
