@@ -132,6 +132,14 @@ public struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { dependencies.welcome.becameActive() }
         }
+        // Face ID, once per arrival, and never for a scan: with a Scan request waiting or the capture layer up, no try is
+        // made and the cover shows Unlock. `initial`, so a root built while the scene is already active (Try again, a UI
+        // test's relaunch) tries too.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            guard phase == .active else { return }
+            let scanIsPending = requests.pending == .scan || isCapturing.wrappedValue
+            Task { await lock.becameActive(scanIsPending: scanIsPending) }
+        }
         // Outermost, so the capture layer's cover gets it as well as Home.
         .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
         // Settings › Appearance; nil follows the phone. Here so the cover and sheets, which present from this view,
@@ -259,8 +267,9 @@ public struct RootView: View {
             // A review already open is the capture layer, over everything: it is what shows.
             _ = requests.take()
         case .startScan:
-            // From Home, so saving or cancelling lands there.
+            // From Home, so saving or cancelling lands there. Locked, it ends at the cover: a scan never unlocks.
             _ = requests.take()
+            lock.outsideScanStarted()
             Task { await flow.scan(from: .outside, preselected: nil) }
         case .search(let text):
             _ = requests.take()

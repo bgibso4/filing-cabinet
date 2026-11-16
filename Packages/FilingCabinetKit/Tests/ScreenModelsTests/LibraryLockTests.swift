@@ -5,8 +5,8 @@ import Testing
 
 @testable import ScreenModels
 
-/// A phone whose check stays open until the test answers it.
-private final class GatedAuthenticator: DeviceAuthenticating {
+/// A phone whose check stays open until the test answers it. Shared with LibraryLockScanTests.
+final class GatedAuthenticator: DeviceAuthenticating {
     private let state = Mutex<(calls: Int, waiting: [CheckedContinuation<AuthenticationResult, Never>])>((0, []))
     var calls: Int { state.withLock { $0.calls } }
     func availability() -> AuthenticationAvailability { .biometrics }
@@ -26,7 +26,7 @@ private final class GatedAuthenticator: DeviceAuthenticating {
 }
 
 @MainActor
-private final class LockRig {
+final class LockRig {
     let fresh: FreshDefaults
     let preferences: AppPreferences
     let authenticator: FakeAuthenticator
@@ -54,7 +54,7 @@ private final class LockRig {
     let rig = try LockRig(lockOn: false)
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(rig.authenticator.reasons.isEmpty)
 }
@@ -65,7 +65,7 @@ private final class LockRig {
     rig.lock.launched()
     #expect(rig.lock.isLocked)
     #expect(!rig.lock.showsUnlock)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(rig.authenticator.reasons == ["Unlock your library"])
 }
@@ -75,11 +75,11 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig(results: [result, .success])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.isLocked)
     #expect(rig.lock.showsUnlock)
     #expect(rig.lock.refusals == 1)
-    await rig.lock.becameActive()  // the prompt's own return
+    await rig.lock.becameActive(scanIsPending: false)  // the prompt's own return
     #expect(rig.authenticator.reasons.count == 1)
     await rig.lock.unlock()
     #expect(!rig.lock.isLocked)
@@ -95,9 +95,9 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let gate = GatedAuthenticator()
     let lock = LibraryLock(preferences: preferences, authenticator: gate)
     lock.launched()
-    let first = Task { await lock.becameActive() }
+    let first = Task { await lock.becameActive(scanIsPending: false) }
     while gate.calls == 0 { await Task.yield() }
-    await lock.becameActive()
+    await lock.becameActive(scanIsPending: false)
     #expect(gate.calls == 1)
     gate.answer(.success)
     await first.value
@@ -108,15 +108,15 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig()
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(299)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(rig.authenticator.reasons.count == 1)
     rig.lock.leftForeground()
     rig.advance(300)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)  // the fake succeeds, so it opened again
     #expect(rig.authenticator.reasons.count == 2)
 }
@@ -125,10 +125,10 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig(results: [.success, .cancelled])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(300)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.isLocked)
 }
 
@@ -136,10 +136,10 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig(results: [.cancelled, .success])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.showsUnlock)
     rig.lock.leftForeground()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.authenticator.reasons.count == 2)
     #expect(!rig.lock.isLocked)
 }
@@ -148,10 +148,10 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig()
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.advance(3_600)
-    await rig.lock.becameActive()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(rig.authenticator.reasons.count == 1)
 }
@@ -166,7 +166,7 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     rig.authenticator.currentAvailability = .passcodeOnly
     rig.lock.leftForeground()
     rig.advance(300)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isPaused)
     #expect(rig.authenticator.reasons.count == 1)  // it locked, asked, and the fake let it in
 }
@@ -175,11 +175,11 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig(results: [.cancelled])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.isLocked)
     rig.authenticator.currentAvailability = .none
     rig.lock.leftForeground()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(!rig.lock.showsUnlock)
 }
@@ -189,7 +189,7 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
     #expect(rig.lock.isLocked)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
 }
 
@@ -246,7 +246,7 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     #expect(rig.authenticator.reasons.isEmpty)
 }
 
-@MainActor private func gatedLock(
+@MainActor func gatedLock(
     _ fresh: FreshDefaults, _ gate: GatedAuthenticator, _ box: LockRig.ClockBox
 ) -> LibraryLock {
     let preferences = AppPreferences(defaults: fresh.defaults)
@@ -261,14 +261,14 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let box = LockRig.ClockBox()
     let lock = gatedLock(fresh, gate, box)
     lock.launched()
-    let first = Task { await lock.becameActive() }
+    let first = Task { await lock.becameActive(scanIsPending: false) }
     while gate.calls == 0 { await Task.yield() }
     lock.leftForeground()
     gate.answer(.success)
     await first.value
     #expect(lock.isLocked)
     box.instant = box.instant.advanced(by: .seconds(300))
-    let second = Task { await lock.becameActive() }
+    let second = Task { await lock.becameActive(scanIsPending: false) }
     for _ in 0..<50 { await Task.yield() }  // bounded: a missing second call must fail, not hang
     #expect(lock.isLocked)
     gate.answer(.success)
@@ -283,11 +283,11 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let box = LockRig.ClockBox()
     let lock = gatedLock(fresh, gate, box)
     lock.launched()
-    let first = Task { await lock.becameActive() }
+    let first = Task { await lock.becameActive(scanIsPending: false) }
     while gate.calls == 0 { await Task.yield() }
     lock.leftForeground()
     box.instant = box.instant.advanced(by: .seconds(300))
-    await lock.becameActive()  // a check is still running: raises the lock, asks nothing
+    await lock.becameActive(scanIsPending: false)  // a check is still running: raises the lock, asks nothing
     #expect(gate.calls == 1)
     gate.answer(.success)
     await first.value
@@ -302,7 +302,7 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig(results: [.cancelled])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
     #expect(!rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: true))
     #expect(rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: false))
@@ -312,7 +312,7 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     let rig = try LockRig()
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(!rig.lock.isLocked)
     #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
     #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: false))
@@ -338,7 +338,7 @@ func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationA
     let rig = try LockRig(results: [.success, .cancelled])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(300)
     #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
@@ -351,7 +351,7 @@ func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationA
     let rig = try LockRig()
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(299)
     #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
@@ -364,13 +364,13 @@ func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationA
     let rig = try LockRig(results: [.success, .cancelled])
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(300)
     rig.lock.arrived()
     rig.lock.arrived()
     #expect(rig.lock.isLocked)
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.authenticator.reasons.count == 2)
     #expect(rig.lock.showsUnlock)
 }
@@ -382,7 +382,7 @@ func backFromTheBackgroundOffOrPausedNeverRaisesTheShield(
     let rig = try LockRig(lockOn: lockOn, availability: availability)
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
-    await rig.lock.becameActive()
+    await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(300)
     #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))

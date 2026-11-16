@@ -46,9 +46,10 @@ final class LockJourneyTests: XCTestCase {
             app.buttons[AccessibilityID.Home.collectionRow(.wallet)].satisfies("isHittable == true", within: 5))
     }
 
-    /// A Scan request never waits for Face ID; once the scan is saved the library is still covered, the new scan with it.
+    /// A Scan request never waits for, triggers or counts as an unlock: with Face ID ready to say yes, none is asked,
+    /// the saved scan stays behind the cover with Unlock, and only Unlock opens the library.
     func testScanRequestWhileLockedSavesBehindTheCover() {
-        let app = lockedApp(authenticator: "cancels", ["-Request", "scan", "-FakeCamera", "1", "-FakeReader"])
+        let app = lockedApp(authenticator: "succeeds", ["-Request", "scan", "-FakeCamera", "1", "-FakeReader"])
         reviewTheRequestedScan(in: app)
         app.descendants(matching: .any)[AccessibilityID.Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
@@ -57,12 +58,18 @@ final class LockJourneyTests: XCTestCase {
         app.buttons[AccessibilityID.Review.save].tap()
 
         XCTAssertTrue(app.buttons[AccessibilityID.Review.save].disappears(within: 10))
-        XCTAssertTrue(app.buttons[AccessibilityID.Lock.unlock].appears(within: 5))
+        let unlock = app.buttons[AccessibilityID.Lock.unlock]
+        XCTAssertTrue(unlock.appears(within: 5))
         assertLibraryUnreachable(in: app)
+
+        unlock.tap()
+        XCTAssertTrue(cover(in: app).disappears(within: 5))
+        let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
+        XCTAssertTrue(row.satisfies("isHittable == true AND label CONTAINS '2'", within: 5), row.label)
     }
 
     func testScanRequestWhileLockedDiscardsBehindTheCover() {
-        let app = lockedApp(authenticator: "cancels", ["-Request", "scan", "-FakeCamera", "1", "-FakeReader"])
+        let app = lockedApp(authenticator: "succeeds", ["-Request", "scan", "-FakeCamera", "1", "-FakeReader"])
         reviewTheRequestedScan(in: app)
         app.buttons[AccessibilityID.Review.close].tap()
         let alert = app.alerts["Discard this scan?"]
@@ -70,8 +77,14 @@ final class LockJourneyTests: XCTestCase {
         alert.buttons["Discard"].tap()
 
         XCTAssertTrue(app.buttons[AccessibilityID.Review.save].disappears(within: 10))
-        XCTAssertTrue(app.buttons[AccessibilityID.Lock.unlock].appears(within: 5))
+        let unlock = app.buttons[AccessibilityID.Lock.unlock]
+        XCTAssertTrue(unlock.appears(within: 5))
         assertLibraryUnreachable(in: app)
+
+        unlock.tap()
+        XCTAssertTrue(cover(in: app).disappears(within: 5))
+        XCTAssertTrue(
+            app.buttons[AccessibilityID.Home.collectionRow(.wallet)].satisfies("isHittable == true", within: 5))
     }
 
     /// A cancelled Face ID drops a waiting search: Search never opens.

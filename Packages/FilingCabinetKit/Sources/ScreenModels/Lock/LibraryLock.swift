@@ -41,8 +41,9 @@ public final class LibraryLock {
     @ObservationIgnored private let relockAfter: Duration
     /// When the scene went to the background; nil while it has not been away since it last became active.
     @ObservationIgnored private var leftAt: ContinuousClock.Instant?
-    /// How many times the scene has left the foreground; a check that ends after a departure doesn't unlock.
-    @ObservationIgnored private var departures = 0
+    /// How many times the scene has left the foreground, or a scan from outside started while locked; a check that ends
+    /// after either doesn't unlock.
+    @ObservationIgnored private var interruptions = 0
     /// A check is running (a try, the Unlock button or the Settings switch).
     @ObservationIgnored private var isChecking = false
     /// Face ID has been tried since the library was last launched or came back from the background.
@@ -68,7 +69,7 @@ public final class LibraryLock {
     /// The scene went to `.background`.
     public func leftForeground() {
         leftAt = now()
-        departures += 1
+        interruptions += 1
         triedThisArrival = false
         arrivalIsPending = isOn
     }
@@ -89,12 +90,28 @@ public final class LibraryLock {
     }
 
     /// The scene became `.active`: `arrived()`, then tries Face ID once per arrival (launch, or back from the
-    /// background). A try already running or already made is not repeated.
-    public func becameActive() async {
+    /// background). A try already running or already made is not repeated. `scanIsPending`: a Scan request from outside
+    /// is waiting or the capture layer is up; a scan never triggers an unlock, so no try is made and the cover it ends
+    /// at shows Unlock.
+    public func becameActive(scanIsPending: Bool) async {
         arrived()
         guard isLocked, !isChecking, !triedThisArrival else { return }
         triedThisArrival = true
+        if scanIsPending {
+            showsUnlock = true
+            return
+        }
         await tryUnlock()
+    }
+
+    /// The root started a scan for a request from outside (the Scan control, the Action button, Siri). Locked, the scan
+    /// ends at the cover with Unlock: no try is made for the rest of this arrival, and a try already running can't
+    /// unlock. An open library stays open.
+    public func outsideScanStarted() {
+        guard isLocked else { return }
+        triedThisArrival = true
+        showsUnlock = true
+        interruptions += 1
     }
 
     /// The Unlock button.
@@ -123,11 +140,12 @@ public final class LibraryLock {
     }
 
     private func tryUnlock() async {
-        let departuresBefore = departures
+        let interruptionsBefore = interruptions
         let result = await check()
-        // A success that arrives after the app left says nothing about who holds the phone now: the button decides.
+        // A success that arrives after the app left, or after a scan from outside started, says nothing about who holds
+        // the phone now and must not open the library behind the scan: the button decides.
         switch result {
-        case .success where departures == departuresBefore:
+        case .success where interruptions == interruptionsBefore:
             isLocked = false
             showsUnlock = false
         case .success:
