@@ -128,6 +128,16 @@ private let onFooter =
 }
 
 @MainActor
+@Test func turningOffAfterACheckSendsOneEvent() async throws {
+    let harness = try LockHarness(results: [.success], lockOn: true)
+    defer { harness.cleanUp() }
+    await harness.model.setLock(false)
+    #expect(!harness.model.lockRow.isOn)
+    #expect(harness.authenticator.reasons.count == 1)
+    #expect(harness.analytics.events == [.lockChanged(isOn: false)])
+}
+
+@MainActor
 @Test func turningOffWhilePausedNeedsNoCheckAndSendsTheEvent() async throws {
     let harness = try LockHarness(availability: .none, results: [.failed], lockOn: true)
     defer { harness.cleanUp() }

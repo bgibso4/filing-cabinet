@@ -11,13 +11,15 @@ nonisolated struct SystemAuthenticator: DeviceAuthenticating {
     func availability() -> AuthenticationAvailability {
         let context = LAContext()
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) { return .biometrics }
-        if LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) { return .passcodeOnly }
+        if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: nil) { return .passcodeOnly }
         return .none
     }
 
     func authenticate(reason: String) async -> AuthenticationResult {
+        // Held until the answer is in: a context let go mid-check is invalidated, which cancels the prompt.
+        let context = LAContext()
         do {
-            _ = try await LAContext().evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
+            _ = try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
             return .success
         } catch let error as LAError where [.userCancel, .systemCancel, .appCancel].contains(error.code) {
             return .cancelled

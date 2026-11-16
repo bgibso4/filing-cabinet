@@ -52,9 +52,9 @@ package enum RootAction: Equatable {
     case open(ScanID)
 }
 
-/// What a request from outside the app does, given what is showing (M9): it waits for the welcome (and, for Search and open, for the library lock to open; Scan never waits for it), closes Search and
-/// then Details and the viewer, one step at a time, and then acts. An open review is brought back instead, and an open
-/// camera stays.
+/// What a request from outside the app does, given what is showing (M9): it waits for the welcome (and, for Search and
+/// open, for the library lock to open; Scan never waits for it), closes Search and then Details and the viewer, one step
+/// at a time, and then acts. An open review is brought back instead, and an open camera stays.
 package enum RequestRouting {
     package static func action(for request: ExternalRequest, state: RootState) -> RootAction {
         guard state.welcomeFinished else { return .wait }

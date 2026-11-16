@@ -356,9 +356,11 @@ private func eventually(_ condition: () -> Bool) async throws -> Bool {
 
 @MainActor
 @Test func aScanSavedWhileLockedIsNotIndexed() async throws {
-    let harness = try SyncHarness([])
+    let harness = try SyncHarness([], storedVersion: SpotlightSync.version - 1)
     defer { harness.cleanUp() }
     harness.preferences.lockOn = true
+    // The first pass is over once it has recorded the version.
+    #expect(try await eventually { harness.preferences.spotlightVersion == SpotlightSync.version })
     let draft = ScanDraft(
         id: ScanID(),
         title: "City Pharmacy",
@@ -371,8 +373,11 @@ private func eventually(_ condition: () -> Bool) async throws -> Bool {
         searchWordsVersion: 1)
 
     try await harness.library.save(draft)
+    // A pass that starts after the save and can be seen to end: an old version makes it a rebuild, which records the
+    // version when it is over.
+    harness.preferences.spotlightVersion = SpotlightSync.version - 1
     harness.sync.syncAgain()
-    try await Task.sleep(for: .milliseconds(200))
+    #expect(try await eventually { harness.preferences.spotlightVersion == SpotlightSync.version })
 
     #expect(harness.index.items.isEmpty)
     harness.preferences.lockOn = false

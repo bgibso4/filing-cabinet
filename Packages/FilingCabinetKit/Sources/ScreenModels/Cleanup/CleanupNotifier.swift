@@ -4,8 +4,8 @@ import Library
 import Observation
 
 /// Keeps the pending cleanup notes in step with the library (M9): while `run()` runs, every change to the scans,
-/// the lifespans, the day, the lock or the Notifications switch plans the notes again and replaces the pending ones. With
-/// notes off or not allowed by iOS, nothing stays pending. The app runs one from launch.
+/// the lifespans, the day, the lock or the Notifications switch plans the notes again and replaces the pending ones.
+/// With notes off or not allowed by iOS, nothing stays pending. The app runs one from launch.
 @Observable
 public final class CleanupNotifier {
     /// Bumped by `reschedule()`: a change the notifier can't observe.
