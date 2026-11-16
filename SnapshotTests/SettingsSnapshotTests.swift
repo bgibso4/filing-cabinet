@@ -37,11 +37,14 @@ final class SettingsSnapshotTests: XCTestCase {
     private func settings(
         _ authorization: NotificationAuthorization,
         suggester: FakeScanSuggester = FakeScanSuggester(filing: .fails),
-        library: FakeLibrary = FakeLibrary()
+        library: FakeLibrary = FakeLibrary(),
+        lockOn: Bool = false,
+        passcode: AuthenticationAvailability = .biometrics
     ) async throws -> some View {
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
         let preferences = AppPreferences(defaults: defaults)
+        preferences.lockOn = lockOn
         let pass = SearchWordsPass(
             library: library,
             today: Today(clock: Fixtures.clock),
@@ -54,7 +57,7 @@ final class SettingsSnapshotTests: XCTestCase {
             notifications: FakeNotificationCenter(authorization: authorization),
             suggester: suggester,
             wordsPass: pass,
-            lock: LibraryLock(preferences: preferences, authenticator: FakeAuthenticator(availability: .biometrics)),
+            lock: LibraryLock(preferences: preferences, authenticator: FakeAuthenticator(availability: passcode)),
             analytics: RecordingAnalytics(),
             version: "1.0")
         // What the screen reads as it appears, read here first so the first frame already shows it.
@@ -103,6 +106,26 @@ final class SettingsSnapshotTests: XCTestCase {
         let suggester = FakeScanSuggester(filing: .fails, words: .never)
         try SnapshotHost.assertScreen(
             try await settings(.authorized, suggester: suggester, library: library), testName: "settings_reading")
+    }
+
+    /// Library-lock mocks, Mock 2: the lock on, with the backup advice under it.
+    @MainActor
+    func testSettingsWithTheLockOn() async throws {
+        try SnapshotHost.assertScreen(try await settings(.authorized, lockOn: true), testName: "settings_lock_on")
+    }
+
+    /// Mock 2: the lock on, then the passcode removed, so it is paused.
+    @MainActor
+    func testSettingsWithTheLockPaused() async throws {
+        try SnapshotHost.assertScreen(
+            try await settings(.authorized, lockOn: true, passcode: .none), testName: "settings_lock_paused")
+    }
+
+    /// Mock 2: no passcode on the phone, so the switch is disabled and the row's name greyed.
+    @MainActor
+    func testSettingsWithTheLockDisabled() async throws {
+        try SnapshotHost.assertScreen(
+            try await settings(.authorized, passcode: .none), testName: "settings_lock_disabled")
     }
 
     @MainActor

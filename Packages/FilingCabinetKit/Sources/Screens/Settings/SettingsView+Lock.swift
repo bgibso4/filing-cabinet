@@ -14,8 +14,9 @@ extension SettingsView {
         }
     }
 
-    /// Like Apple Intelligence: the switch carries the name and note, and is off and dimmed when the phone has no
-    /// passcode (Mock 2). Turning it either way asks Face ID first; the switch shows what the model then says.
+    /// Like Apple Intelligence: the switch carries the name and note. With no passcode on the phone it is off and
+    /// dimmed, and the name is greyed (Mock 2, `.row.disabled`). Turning it either way asks Face ID first; the switch
+    /// shows what the model then says.
     private var lockRow: some View {
         let row = model.lockRow
         return self.row(icon: "faceid") {
@@ -33,7 +34,7 @@ extension SettingsView {
         VStack(alignment: .leading, spacing: 0) {
             Text("Lock with Face ID", bundle: #bundle)
                 .font(Tokens.Typography.body)
-                .foregroundStyle(Tokens.Color.textPrimary)
+                .foregroundStyle(row.isEnabled ? Tokens.Color.textPrimary : Tokens.Color.textTertiary)
             Text(row.subtitle)
                 .font(Tokens.Typography.footnote)
                 .foregroundStyle(Tokens.Color.textSecondary)
