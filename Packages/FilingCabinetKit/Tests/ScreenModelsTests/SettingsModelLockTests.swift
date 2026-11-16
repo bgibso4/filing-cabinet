@@ -89,11 +89,13 @@ private let onFooter =
 }
 
 @MainActor
-@Test func rowIsReadFreshWhenThePhoneGainsAPasscode() throws {
+@Test func rowFollowsThePasscodeOnlyOnceSettingsRefreshes() async throws {
     let harness = try LockHarness(availability: .none)
     defer { harness.cleanUp() }
     #expect(!harness.model.lockRow.isEnabled)
     harness.authenticator.currentAvailability = .biometrics
+    #expect(!harness.model.lockRow.isEnabled)
+    await harness.model.refreshAuthorization()
     #expect(harness.model.lockRow.isEnabled)
     #expect(harness.model.lockRow.subtitle == normalSubtitle)
 }

@@ -8,6 +8,9 @@ import Understanding
 @Observable
 public final class SettingsModel {
     package private(set) var authorization = NotificationAuthorization.notDetermined
+    /// What the phone can check the owner with, as of the last look. Stored, so a view reading `lockRow` redraws when
+    /// it changes.
+    package private(set) var passcode: AuthenticationAvailability
 
     @ObservationIgnored private let preferences: AppPreferences
     @ObservationIgnored private let notifications: any CleanupNotifying
@@ -31,6 +34,7 @@ public final class SettingsModel {
         self.suggester = suggester
         self.wordsPass = wordsPass
         self.lock = lock
+        passcode = lock.availability
         self.analytics = analytics
         self.version = version
     }
@@ -75,13 +79,13 @@ public final class SettingsModel {
         }
     }
 
-    /// Read fresh on every render: what the phone can check isn't observed, and the screen re-renders when the app
-    /// becomes active (`refreshAuthorization` sets `authorization`), which is when someone returns from iPhone
-    /// Settings after adding or removing a passcode.
+    /// Derived from the wish and `passcode`, both observed. The phone's answer is looked at when the screen appears and
+    /// when the app comes back (`refreshAuthorization`), which is when someone returns from iPhone Settings after
+    /// adding or removing a passcode, and after each switch.
     package var lockRow: LockRow {
-        let isPaused = lock.isPaused
-        let hasNoPasscode = lock.availability == .none
         let isOn = preferences.lockOn
+        let hasNoPasscode = passcode == .none
+        let isPaused = isOn && hasNoPasscode
         let offFooter = String(
             localized: "Scanning from Control Center and the Action button still works while locked.", bundle: #bundle)
         let subtitle =
@@ -105,7 +109,9 @@ public final class SettingsModel {
 
     /// The switch was flipped. The lock checks the owner first; an event goes out only when the setting changed.
     package func setLock(_ isOn: Bool) async {
-        if await lock.setOn(isOn) { analytics.send(.lockChanged(isOn: isOn)) }
+        let changed = await lock.setOn(isOn)
+        passcode = lock.availability
+        if changed { analytics.send(.lockChanged(isOn: isOn)) }
     }
 
     /// The draft Send feedback opens: the app and iPhone details, nothing from the library.
@@ -123,6 +129,7 @@ public final class SettingsModel {
     /// Reads what iOS currently allows; the screen calls it as it appears and when the app comes back.
     public func refreshAuthorization() async {
         authorization = await notifications.authorization()
+        passcode = lock.availability
     }
 
     /// The switch was flipped. Turning on asks iOS the first time (M3). When iOS had already blocked notes before

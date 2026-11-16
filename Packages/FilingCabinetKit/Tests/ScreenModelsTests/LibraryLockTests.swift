@@ -31,8 +31,6 @@ private final class LockRig {
     let preferences: AppPreferences
     let authenticator: FakeAuthenticator
     let lock: LibraryLock
-    var instant = ContinuousClock.now
-
     init(
         lockOn: Bool = true,
         availability: AuthenticationAvailability = .biometrics,
