@@ -47,6 +47,12 @@ public final class AppPreferences {
         didSet { defaults.set(ratingAskedVersion, forKey: Key.ratingAskedVersion) }
     }
 
+    /// The person's wish to lock the library with Face ID or the passcode. Whether the phone can check is separate
+    /// (`LibraryLock.isPaused`).
+    public var lockOn: Bool {
+        didSet { defaults.set(lockOn, forKey: Key.lockOn) }
+    }
+
     /// The `SpotlightSync.version` the Spotlight index was last built with; 0 before the first.
     package var spotlightVersion: Int {
         didSet { defaults.set(spotlightVersion, forKey: Key.spotlightVersion) }
@@ -63,6 +69,7 @@ public final class AppPreferences {
         self.defaults = defaults
         notificationsOn = defaults.object(forKey: Key.notificationsOn) as? Bool ?? true
         appleIntelligenceOn = defaults.object(forKey: Key.appleIntelligenceOn) as? Bool ?? true
+        lockOn = defaults.bool(forKey: Key.lockOn)
         welcomeDone = defaults.bool(forKey: Key.welcomeDone)
         savesCount = defaults.integer(forKey: Key.savesCount)
         saveDays = defaults.array(forKey: Key.saveDays) as? [Int] ?? []
@@ -79,6 +86,7 @@ public final class AppPreferences {
         static let appearance = "appearance"
         static let appleIntelligenceOn = "appleIntelligenceOn"
         static let cleanupSeenThrough = "cleanupSeenThrough"
+        static let lockOn = "lockOn"
         static let welcomeDone = "welcomeDone"
         static let savesCount = "savesCount"
         static let saveDays = "saveDays"
