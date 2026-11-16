@@ -92,7 +92,7 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
       <li><b>Spotlight</b><span>No scans in Spotlight while the lock is on; they come back when it's turned off.<span class="who">Ben</span></span></li>
       <li><b>“Find a scan”, Spotlight results</b><span>Wait for Face ID, then open. Dropped if Face ID is cancelled.<span class="who">my call</span></span></li>
       <li><b>Notifications</b><span>While locked on, cleanup notes give a count, not scan titles: they show on the Lock Screen.<span class="who">my call</span></span></li>
-      <li><b>Sheets</b><span>When the library locks, Share, Mail and Details close first; the app switcher always shows the cover.<span class="who">my call</span></span></li>
+      <li><b>Sheets</b><span>The cover sits above everything, including an open Share or Mail sheet and the app switcher. Unlocking shows the app as you left it.<span class="who">my call</span></span></li>
       <li><b>Turning it off</b><span>Asks for Face ID, so someone holding an open library can't switch it off.<span class="who">my call</span></span></li>
       <li><b>No passcode</b><span>The switch is disabled. If the passcode is removed later, the lock pauses; nothing is lost.<span class="who">Ben</span></span></li>
       <li><b>Storage (#93)</b><span>File protection stays the iOS default. Scans stay in iCloud Backup, the only way back after a lost phone until sync. The privacy policy says so and suggests Advanced Data Protection.<span class="who">Ben</span></span></li>
@@ -189,8 +189,19 @@ code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; 
   </section>
 
   <section class="col">
-    <h2>What I'd like from you</h2>
-    <p class="note">React to the two mocks: the cover's look and words, where the switch sits, and the row's subtitle and footnote. Then say whether the decisions above read right. Once you approve, I write the plan.</p>
-    <p style="color:var(--muted);font-size:13px">The full design is in <code>docs/superpowers/specs/2026-11-16-library-lock-design.md</code>.</p>
+    <h2>The plan</h2>
+    <p>Eight tasks, each with its tests written first. The first five are logic that runs in the fast Mac tests; the screens come after.</p>
+    <ul class="facts">
+      <li><b>1 · The Face ID seam</b><span>A small interface for “is this the owner?”, a fake for tests, and three launch flags so UI tests can script Face ID.</span></li>
+      <li><b>2 · The lock itself</b><span>When it locks, when it asks, the 5 minutes on a clock that can't be wound back, the paused state. No Face ID loop after a cancel.</span></li>
+      <li><b>3 · Requests</b><span>While locked, “Find a scan” and Spotlight results wait; Scan goes straight through.</span></li>
+      <li><b>4 · Spotlight and notes</b><span>No scans in Spotlight and no titles in cleanup notes while the lock is on.</span></li>
+      <li><b>5 · The Settings row's logic</b><span>Its four states and exact words, Face ID before turning on or off, one anonymous count of the switch.</span></li>
+      <li><b>6 · The screens</b><span>The cover, a shield above sheets and the app switcher, the cover under the camera, the Settings row. Snapshots compared with these mocks.</span></li>
+      <li><b>7 · Wiring and journeys</b><span>Real Face ID through iOS, the app's lifecycle hooks, and UI tests for every flow above.</span></li>
+      <li><b>8 · Privacy policy and PR</b><span>The policy says how scans are stored and backed up. Full test run, then a PR that closes #26 and #93 and lists your phone check.</span></li>
+    </ul>
+    <p class="note" style="margin-top:16px">Face ID can't be tested in the simulator, so your phone check at the end is the real test: Face ID at launch and after 5 minutes, the Control Center scan while locked, the app switcher, and Spotlight.</p>
+    <p style="color:var(--muted);font-size:13px">Design: <code>docs/superpowers/specs/2026-11-16-library-lock-design.md</code> · Plan: <code>docs/superpowers/plans/2026-11-16-08-library-lock.md</code></p>
   </section>
 </div>
