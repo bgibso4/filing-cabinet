@@ -15,6 +15,9 @@ public final class LibraryLock {
     public private(set) var showsUnlock = false
     /// Bumped each time a try ends cancelled or failed (the root drops a waiting request).
     public private(set) var refusals = 0
+    /// The lock was on as the scene went to the background, and `arrived()` hasn't yet decided whether the time away
+    /// relocks it. The shield stays up meanwhile, so the first active frame never shows the library.
+    private var arrivalIsPending = false
 
     /// The person's wish is on and the phone can check (Face ID or a passcode).
     public var isOn: Bool { preferences.lockOn && authenticator.availability() != .none }
@@ -26,8 +29,9 @@ public final class LibraryLock {
     /// The shield above every window the app shows is up: while locked, unless the capture layer a Scan request opened
     /// is up in an active scene; and whenever the lock is on and the scene isn't active, so the app switcher's snapshot
     /// never shows the library, even inside the relock time.
+    /// Back from the background, it stays up until `arrived()` has run.
     package func shieldIsUp(captureLayerIsUp: Bool, sceneIsActive: Bool) -> Bool {
-        if isOn, !sceneIsActive { return true }
+        if isOn, !sceneIsActive || arrivalIsPending { return true }
         return isLocked && !captureLayerIsUp
     }
 
@@ -66,11 +70,14 @@ public final class LibraryLock {
         leftAt = now()
         departures += 1
         triedThisArrival = false
+        arrivalIsPending = isOn
     }
 
-    /// The scene became `.active`: locks when it was away `relockAfter` or longer, then tries Face ID once per
-    /// arrival (launch, or back from the background). A try already running or already made is not repeated.
-    public func becameActive() async {
+    /// The scene became `.active`: at once, with no wait, locks when it was away `relockAfter` or longer. Called
+    /// before the Face ID try starts, so the shield decides on the first active frame. A second call with nothing new
+    /// changes nothing.
+    public func arrived() {
+        arrivalIsPending = false
         let away = leftAt
         leftAt = nil
         guard isOn else {
@@ -79,6 +86,12 @@ public final class LibraryLock {
             return
         }
         if let away, now() - away >= relockAfter { isLocked = true }
+    }
+
+    /// The scene became `.active`: `arrived()`, then tries Face ID once per arrival (launch, or back from the
+    /// background). A try already running or already made is not repeated.
+    public func becameActive() async {
+        arrived()
         guard isLocked, !isChecking, !triedThisArrival else { return }
         triedThisArrival = true
         await tryUnlock()

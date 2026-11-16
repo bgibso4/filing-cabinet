@@ -330,3 +330,63 @@ func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationA
         }
     }
 }
+
+// Back from the background: the shield stays up from the first active render until `arrived()` has decided, at once
+// and without waiting for Face ID, whether the relock time has passed. No frame of the library shows in between.
+
+@MainActor @Test func backAfterTheRelockTimeTheShieldNeverDrops() async throws {
+    let rig = try LockRig(results: [.success, .cancelled])
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    rig.lock.leftForeground()
+    rig.advance(300)
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+    rig.lock.arrived()
+    #expect(rig.lock.isLocked)
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+}
+
+@MainActor @Test func backInsideTheRelockTimeTheShieldDropsOnceArrived() async throws {
+    let rig = try LockRig()
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    rig.lock.leftForeground()
+    rig.advance(299)
+    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+    rig.lock.arrived()
+    #expect(!rig.lock.isLocked)
+    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+}
+
+@MainActor @Test func arrivingTwiceLocksOnceAndAsksOnce() async throws {
+    let rig = try LockRig(results: [.success, .cancelled])
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    rig.lock.leftForeground()
+    rig.advance(300)
+    rig.lock.arrived()
+    rig.lock.arrived()
+    #expect(rig.lock.isLocked)
+    await rig.lock.becameActive()
+    #expect(rig.authenticator.reasons.count == 2)
+    #expect(rig.lock.showsUnlock)
+}
+
+@MainActor @Test(arguments: [(lockOn: false, availability: AuthenticationAvailability.biometrics), (true, .none)])
+func backFromTheBackgroundOffOrPausedNeverRaisesTheShield(
+    lockOn: Bool, availability: AuthenticationAvailability
+) async throws {
+    let rig = try LockRig(lockOn: lockOn, availability: availability)
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive()
+    rig.lock.leftForeground()
+    rig.advance(300)
+    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+    rig.lock.arrived()
+    #expect(!rig.lock.isLocked)
+    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
+}
