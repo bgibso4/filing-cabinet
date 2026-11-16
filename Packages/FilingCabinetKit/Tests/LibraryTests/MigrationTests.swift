@@ -13,7 +13,8 @@ private func temporaryFolder() throws -> URL {
 }
 
 /// A copy of a fixture store (three synthetic scans), so migrating it never touches the fixture. `LibraryV1` is the
-/// store plan 1 wrote; `LibraryV2` the one plan 3 wrote, `LibraryV3` plan 4's (one scan favourite, one in Trash).
+/// store plan 1 wrote; `LibraryV2` the one plan 3 wrote, `LibraryV3` plan 4's (one scan favourite, one in Trash),
+/// `LibraryV4` the current schema's (V3's scans, one with search words, and Wallet kept a year).
 private func storeCopy(_ name: String) throws -> URL {
     let fixture = try #require(
         Bundle.module.url(forResource: name, withExtension: "store", subdirectory: "Fixtures"))
@@ -110,6 +111,28 @@ private func storeCopy(_ name: String) throws -> URL {
         #expect(store.scans.map(\.title) == ["Bluebird Café", "Library Card", "City Pharmacy"])
         #expect(store.searchWords().values.allSatisfy { $0.isEmpty })
     }
+}
+
+/// The current schema's own store. Changing a stored property of the V4 records without a new schema version makes
+/// this store fail to open, as an existing library would (#92): add a `SchemaV5` and a stage instead.
+@MainActor
+@Test func v4StoreStillOpens() throws {
+    let container = try ScanStore.makeContainer(storeURL: try storeCopy("LibraryV4"))
+
+    let store = ScanStore(
+        container: container,
+        files: PageFileStore(
+            location: LibraryLocation(root: try temporaryFolder(), caches: try temporaryFolder()),
+            fileSystem: LocalFileSystem()),
+        clock: octoberTwelfth)
+    let scans = store.scans
+
+    #expect(scans.map(\.title) == ["Bluebird Café", "Library Card", "City Pharmacy"])
+    #expect(scans.map(\.trashedDay) == [nil, nil, day(10, 12)])
+    #expect(scans.map(\.isFavorite) == [false, true, false])
+    #expect(store.searchWords()[scans[0].id] == ["coffee", "receipt"])
+    #expect(store.scansNeedingWords(version: 1) == [scans[1].id])
+    #expect(store.lifespans == CollectionLifespans.defaults.setting(.year, for: .wallet))
 }
 
 @MainActor
