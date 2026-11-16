@@ -40,8 +40,11 @@ struct FilingCabinetApp: App {
                         }
                 }
             }
-            // Only a UI test's relaunch: anything else from outside the app is dropped while the library has failed.
-            .onOpenURL { startup.relaunch(by: $0) }
+            // Only a UI test's relaunch or request (`RelaunchURL`, `RequestURL`); any other URL does nothing.
+            .onOpenURL { url in
+                startup.relaunch(by: url)
+                startup.request(by: url)
+            }
             // A Spotlight result: the root opens the scan (or, while the library has failed, drops the request).
             .onContinueUserActivity(CSSearchableItemActionType) { activity in
                 guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,

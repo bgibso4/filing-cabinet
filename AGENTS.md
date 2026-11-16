@@ -132,11 +132,11 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-RatingDue` | under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating |
 | `-Request scan\|search:<text>\|open:<n>` | a request from outside the app is sent at launch; `open:<n>` is the nth scan `-SeedScans` saves, from 1 |
 | `-Lock on` | the library lock is on (sets the preference, so outside `-UITest` it stays on); under `-UITest` it is otherwise off |
-| `-Authenticator succeeds\|succeedsOnce\|cancels\|cancelsOnce\|fails\|passcodeOnly\|none` | a fake authenticator answers Face ID: `succeedsOnce` succeeds then cancels, `cancelsOnce` cancels then succeeds; `passcodeOnly` has no Face ID, `none` no passcode |
+| `-Authenticator succeeds\|succeedsOnce\|cancels\|cancelsOnce\|cancelsSecond\|fails\|passcodeOnly\|none` | a fake authenticator answers Face ID: `succeedsOnce` succeeds then cancels, `cancelsOnce` cancels then succeeds, `cancelsSecond` cancels only the second check; `passcodeOnly` has no Face ID, `none` no passcode |
 | `-LockAfter <seconds>` | the library locks again after this long in the background (300 otherwise) |
 | `-ReduceMotion` | the capture layer, Search and the welcome's second screen fade rather than move, and Home's count doesn't pop |
 
-UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.
+UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build. A `RequestURL` (`Core/Launch/RequestURL.swift`) sends a request from outside the app to the running app the same way, for a journey that needs one after launch (`scan`, `search:<text>`, `open:<n>`).
 
 ## Import line
 

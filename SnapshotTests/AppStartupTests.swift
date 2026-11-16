@@ -82,4 +82,22 @@ struct AppStartupTests {
         startup.relaunch(by: url)
         #expect(requests.pending == nil)
     }
+
+    /// A UI test's request to the running app is sent as an intent would send it.
+    @Test func aRequestURLSendsItsRequest() throws {
+        let requests = ExternalRequests()
+        let startup = startup([], requests: requests)
+        startup.request(by: try #require(RequestURL.make("scan")))
+        #expect(requests.pending == .scan)
+    }
+
+    /// Outside a UI test's launch, a request URL does nothing.
+    @Test func aRequestURLDoesNothingOutsideAUITest() throws {
+        let requests = ExternalRequests()
+        let animations = UIView.areAnimationsEnabled
+        defer { UIView.setAnimationsEnabled(animations) }
+        let startup = AppStartup(arguments: ["-FailLibraryOpen"], requests: requests)
+        startup.request(by: try #require(RequestURL.make("scan")))
+        #expect(requests.pending == nil)
+    }
 }

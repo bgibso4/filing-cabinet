@@ -203,7 +203,8 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
 
 @Test(arguments: [
     ("succeeds", AuthenticatorFlag.succeeds), ("succeedsOnce", .succeedsOnce), ("cancels", .cancels),
-    ("cancelsOnce", .cancelsOnce), ("fails", .fails), ("passcodeOnly", .passcodeOnly), ("none", AuthenticatorFlag.none),
+    ("cancelsOnce", .cancelsOnce), ("cancelsSecond", .cancelsSecond), ("fails", .fails),
+    ("passcodeOnly", .passcodeOnly), ("none", AuthenticatorFlag.none),
 ])
 func authenticatorFlagScriptsTheFake(_ value: String, _ expected: AuthenticatorFlag) {
     #expect(LaunchOptions(arguments: ["-Authenticator", value], isDebugBuild: true).authenticator == expected)

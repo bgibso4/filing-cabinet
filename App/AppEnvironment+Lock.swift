@@ -34,6 +34,8 @@ extension AppEnvironment {
             case .succeedsOnce: FakeAuthenticator(availability: .biometrics, results: [.success, .cancelled])
             case .cancels: FakeAuthenticator(availability: .biometrics, results: [.cancelled])
             case .cancelsOnce: FakeAuthenticator(availability: .biometrics, results: [.cancelled, .success])
+            case .cancelsSecond:
+                FakeAuthenticator(availability: .biometrics, results: [.success, .cancelled, .success])
             case .fails: FakeAuthenticator(availability: .biometrics, results: [.failed])
             case .passcodeOnly: FakeAuthenticator(availability: .passcodeOnly, results: [.success])
             case AuthenticatorFlag.none: FakeAuthenticator(availability: .none)

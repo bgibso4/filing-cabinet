@@ -61,6 +61,13 @@ final class AppStartup {
         sendLaunchRequest(newArguments)
     }
 
+    /// A UI test's request from outside the app, sent to the running app (`RequestURL`) as the Scan control or Siri
+    /// would send it after launch. Does nothing unless this launch is a UI test's, so never in Release.
+    func request(by url: URL) {
+        guard Self.isUITest(arguments) else { return }
+        send(RequestURL.request(from: url))
+    }
+
     /// Try again (the failure screen's model calls it): true, with the app ready, when the library opened.
     func retry() -> Bool {
         do throws(LibraryOpenFailure) {
@@ -100,8 +107,13 @@ final class AppStartup {
     /// it; without `-UITest` seeded IDs are random, so it names no scan and is ignored. Try again
     /// sends nothing: the failure screen dropped the request.
     private func sendLaunchRequest(_ arguments: [String]) {
+        send(LaunchOptions(arguments: arguments, isDebugBuild: AppEnvironment.isDebugBuild).request)
+    }
+
+    /// Sends what a `-Request` value names; `open:<n>` is the nth seeded scan.
+    private func send(_ request: RequestFlag?) {
         #if DEBUG
-            switch LaunchOptions(arguments: arguments, isDebugBuild: AppEnvironment.isDebugBuild).request {
+            switch request {
             case .scan: requests.send(.scan)
             case .search(let text): requests.send(.search(text))
             case .open(let seeded): requests.send(.open(LibrarySeed.scanID(at: seeded - 1)))
