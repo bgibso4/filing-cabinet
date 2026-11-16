@@ -26,6 +26,9 @@ public struct RootView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.requestReview) private var requestReview
+    /// The capture layer's cover has finished appearing, with nothing else presented under it (`CoverPresence`). A scan
+    /// let through the lock shows only from then: until then the shield stays over whatever the app had presented.
+    @State private var captureCoverIsOnScreen = false
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -56,7 +59,8 @@ public struct RootView: View {
             .navigationDestination(for: AppRoute.self, destination: destination)
         }
         // Locked, the cover hides the library; directly over the stack, so it is what shows under a Scan request's
-        // clear capture layer, and as that layer slides away. The shield covers everything else.
+        // clear capture layer, and as that layer slides away. The shield covers everything else, and comes down only
+        // for a scan started from outside while locked, once its cover is on screen.
         .accessibilityHidden(lock.isLocked)
         .overlay {
             if lock.isLocked { LockCover(showsUnlock: false, onUnlock: {}) }
@@ -64,7 +68,8 @@ public struct RootView: View {
         .background(
             LockShield(
                 isUp: lock.shieldIsUp(
-                    captureLayerIsUp: isCapturing.wrappedValue, sceneIsActive: scenePhase == .active),
+                    captureCoverIsUp: isCapturing.wrappedValue && captureCoverIsOnScreen,
+                    sceneIsActive: scenePhase == .active),
                 showsUnlock: lock.showsUnlock,
                 colorScheme: colorScheme,
                 onUnlock: { Task { await lock.unlock() } })
@@ -82,6 +87,7 @@ public struct RootView: View {
             if isUp {
                 dependencies.home.hold()
             } else {
+                lock.captureLayerClosed()
                 withAnimation { dependencies.home.release() }
             }
         }
@@ -97,6 +103,7 @@ public struct RootView: View {
         }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
+                .background(CoverPresence { captureCoverIsOnScreen = $0 })
                 // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
                 // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
@@ -132,12 +139,17 @@ public struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { dependencies.welcome.becameActive() }
         }
-        // Face ID, once per arrival, and never for a scan: with a Scan request waiting or the capture layer up, no try is
-        // made and the cover shows Unlock. `initial`, so a root built while the scene is already active (Try again, a UI
-        // test's relaunch) tries too.
+        // The lock hears of a Scan request at once, not when the scan can start: launch may not have finished, and a Face
+        // ID try that ends meanwhile must not open the library behind the scan.
+        .onChange(of: requests.pending, initial: true) { _, pending in
+            if pending == .scan { lock.outsideScanRequested() }
+        }
+        // Face ID, once per arrival, and never for a scan: with a Scan request waiting, no try is made and the cover
+        // shows Unlock (the lock itself knows of a scan it let through). `initial`, so a root built while the scene is
+        // already active (Try again, a UI test's relaunch) tries too.
         .onChange(of: scenePhase, initial: true) { _, phase in
             guard phase == .active else { return }
-            let scanIsPending = requests.pending == .scan || isCapturing.wrappedValue
+            let scanIsPending = requests.pending == .scan
             Task { await lock.becameActive(scanIsPending: scanIsPending) }
         }
         // Outermost, so the capture layer's cover gets it as well as Home.
@@ -264,10 +276,12 @@ public struct RootView: View {
         case .popToHome:
             path = []
         case .ignore, .showReview:
-            // A review already open is the capture layer, over everything: it is what shows.
+            // A review already open is the capture layer, over everything: it is what shows, unless the library locked
+            // again over it (only a scan started from outside while locked shows through the lock).
             _ = requests.take()
         case .startScan:
-            // From Home, so saving or cancelling lands there. Locked, it ends at the cover: a scan never unlocks.
+            // From Home, so saving or cancelling lands there. Locked, it ends at the cover: a scan never unlocks. Search
+            // and every pushed screen have been closed by now, and what they presented with them.
             _ = requests.take()
             lock.outsideScanStarted()
             Task { await flow.scan(from: .outside, preselected: nil) }

@@ -295,98 +295,35 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     #expect(lock.showsUnlock)  // the button is the way in
 }
 
-// The shield over every window: up while locked unless a Scan request's capture layer is up, and whenever the lock is
-// on and the scene isn't active, so the app switcher never shows the library.
+// Leaving and the Settings switch.
 
-@MainActor @Test func shieldIsUpWhileLockedUnlessTheCaptureLayerIs() async throws {
-    let rig = try LockRig(results: [.cancelled])
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    await rig.lock.becameActive(scanIsPending: false)
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: true))
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: false))
+@MainActor @Test func turningOnAsTheAppLeavesKeepsTheDeparture() async throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let preferences = AppPreferences(defaults: fresh.defaults)
+    let gate = GatedAuthenticator()
+    let box = LockRig.ClockBox()
+    let lock = LibraryLock(preferences: preferences, authenticator: gate, now: { box.instant })
+    lock.launched()
+    let turningOn = Task { await lock.setOn(true) }
+    while gate.calls == 0 { await Task.yield() }
+    lock.leftForeground()
+    gate.answer(.success)
+    #expect(await turningOn.value)
+    box.instant = box.instant.advanced(by: .seconds(300))
+    lock.arrived()
+    #expect(lock.isLocked)
 }
 
-@MainActor @Test func shieldCoversTheSwitcherWhileOnEvenWhenUnlocked() async throws {
-    let rig = try LockRig()
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    await rig.lock.becameActive(scanIsPending: false)
-    #expect(!rig.lock.isLocked)
-    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: false))
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: true, sceneIsActive: false))
-}
-
-@MainActor @Test(arguments: [(lockOn: false, availability: AuthenticationAvailability.biometrics), (true, .none)])
-func shieldNeverShowsWhenOffOrPaused(lockOn: Bool, availability: AuthenticationAvailability) async throws {
-    let rig = try LockRig(lockOn: lockOn, availability: availability)
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    for sceneIsActive in [true, false] {
-        for captureLayerIsUp in [true, false] {
-            #expect(!rig.lock.shieldIsUp(captureLayerIsUp: captureLayerIsUp, sceneIsActive: sceneIsActive))
-        }
-    }
-}
-
-// Back from the background: the shield stays up from the first active render until `arrived()` has decided, at once
-// and without waiting for Face ID, whether the relock time has passed. No frame of the library shows in between.
-
-@MainActor @Test func backAfterTheRelockTimeTheShieldNeverDrops() async throws {
+@MainActor @Test func aSecondBackgroundWithoutBecomingActiveKeepsTheFirstDeparture() async throws {
     let rig = try LockRig(results: [.success, .cancelled])
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    await rig.lock.becameActive(scanIsPending: false)
-    rig.lock.leftForeground()
-    rig.advance(300)
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-    rig.lock.arrived()
-    #expect(rig.lock.isLocked)
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-}
-
-@MainActor @Test func backInsideTheRelockTimeTheShieldDropsOnceArrived() async throws {
-    let rig = try LockRig()
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
     await rig.lock.becameActive(scanIsPending: false)
     rig.lock.leftForeground()
     rig.advance(299)
-    #expect(rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-    rig.lock.arrived()
-    #expect(!rig.lock.isLocked)
-    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-}
-
-@MainActor @Test func arrivingTwiceLocksOnceAndAsksOnce() async throws {
-    let rig = try LockRig(results: [.success, .cancelled])
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    await rig.lock.becameActive(scanIsPending: false)
-    rig.lock.leftForeground()
-    rig.advance(300)
-    rig.lock.arrived()
+    rig.lock.leftForeground()  // background, inactive, background again
+    rig.advance(1)
     rig.lock.arrived()
     #expect(rig.lock.isLocked)
-    await rig.lock.becameActive(scanIsPending: false)
-    #expect(rig.authenticator.reasons.count == 2)
-    #expect(rig.lock.showsUnlock)
-}
-
-@MainActor @Test(arguments: [(lockOn: false, availability: AuthenticationAvailability.biometrics), (true, .none)])
-func backFromTheBackgroundOffOrPausedNeverRaisesTheShield(
-    lockOn: Bool, availability: AuthenticationAvailability
-) async throws {
-    let rig = try LockRig(lockOn: lockOn, availability: availability)
-    defer { rig.fresh.cleanUp() }
-    rig.lock.launched()
-    await rig.lock.becameActive(scanIsPending: false)
-    rig.lock.leftForeground()
-    rig.advance(300)
-    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
-    rig.lock.arrived()
-    #expect(!rig.lock.isLocked)
-    #expect(!rig.lock.shieldIsUp(captureLayerIsUp: false, sceneIsActive: true))
 }

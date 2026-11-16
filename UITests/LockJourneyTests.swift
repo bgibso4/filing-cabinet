@@ -7,6 +7,7 @@ import XCTest
 /// The cover has the identifier `lock.cover` twice: over the navigation stack and in the shield, the window above the
 /// app's own. While the shield is up the app's window is out of the accessibility tree, so XCUITest sees one cover, the
 /// shield's (with Unlock once Face ID was cancelled or failed); under a Scan request's capture layer it sees none.
+/// The journeys of scans and the lock are in `LockJourneyTests+Scan.swift`.
 @MainActor
 final class LockJourneyTests: XCTestCase {
     override func setUp() {
@@ -184,7 +185,7 @@ final class LockJourneyTests: XCTestCase {
     // MARK: Steps
 
     /// The app with the lock on, three seeded scans and Face ID answering as `authenticator` says.
-    private func lockedApp(
+    func lockedApp(
         authenticator: String, _ flags: [String] = [], largestText: Bool = false
     ) -> XCUIApplication {
         launchApp(
@@ -192,12 +193,12 @@ final class LockJourneyTests: XCTestCase {
     }
 
     /// The cover XCUITest can see: the shield's while it is up, the stack's otherwise (see the type's note).
-    private func cover(in app: XCUIApplication) -> XCUIElement {
+    func cover(in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(identifier: AccessibilityID.Lock.cover).firstMatch
     }
 
     /// The camera opens with no tap on Scan and no Face ID, and the page reaches review.
-    private func reviewTheRequestedScan(in app: XCUIApplication) {
+    func reviewTheRequestedScan(in app: XCUIApplication) {
         let finish = app.buttons[AccessibilityID.Camera.fakeFinish]
         XCTAssertTrue(finish.appears(within: 10), "the camera opens though the library is locked")
         finish.tap()
@@ -205,7 +206,7 @@ final class LockJourneyTests: XCTestCase {
     }
 
     /// To the Home Screen and back.
-    private func leaveAndReturn(_ app: XCUIApplication) {
+    func leaveAndReturn(_ app: XCUIApplication) {
         XCUIDevice.shared.press(.home)
         let left = app.satisfies(within: 10) { ($0 as? XCUIApplication)?.state != .runningForeground }
         XCTAssertTrue(left, "the app left the foreground")
@@ -215,10 +216,17 @@ final class LockJourneyTests: XCTestCase {
 
     /// Nothing of the library is in the accessibility tree: no Home, grid, viewer or Search element, so neither
     /// VoiceOver nor a tap reaches it. One read of the tree, so it costs one query, not one per identifier.
-    private func assertLibraryUnreachable(
+    func assertLibraryUnreachable(
         in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
     ) {
         XCTAssertTrue(cover(in: app).exists, "the cover is up", file: file, line: line)
+        assertNothingOfTheLibrary(in: app, file: file, line: line)
+    }
+
+    /// The same, where the cover itself may be out of the tree: under a Scan request's camera or review.
+    func assertNothingOfTheLibrary(
+        in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+    ) {
         let libraryPrefixes = ["home.", "grid.", "viewer.", "search.", "settings."]
         do {
             let elements = flattened(try app.snapshot())

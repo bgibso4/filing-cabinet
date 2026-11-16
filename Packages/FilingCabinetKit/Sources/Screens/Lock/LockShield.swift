@@ -7,7 +7,8 @@ import UIKit
 ///
 /// It sits as an empty background in the app's window, to find the scene. The window is made the first time the shield
 /// goes up, so with the lock off the app has no extra window. While it is up, the app's window is out of the
-/// accessibility tree and its keyboard is put away, so neither VoiceOver nor typing reaches the library.
+/// accessibility tree and its keyboard is put away, so neither VoiceOver nor typing reaches the library; when it goes,
+/// VoiceOver is sent back to the app's window.
 struct LockShield: UIViewRepresentable {
     let isUp: Bool
     let showsUnlock: Bool
@@ -91,6 +92,9 @@ struct LockShield: UIViewRepresentable {
             if isShown {
                 covered?.endEditing(true)
                 UIAccessibility.post(notification: .screenChanged, argument: shield)
+            } else {
+                // VoiceOver's focus was on the cover, which has gone: it moves to what the app shows now.
+                UIAccessibility.post(notification: .screenChanged, argument: covered)
             }
         }
     }
