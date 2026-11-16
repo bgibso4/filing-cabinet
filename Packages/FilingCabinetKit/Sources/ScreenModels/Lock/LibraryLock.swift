@@ -29,6 +29,8 @@ public final class LibraryLock {
     @ObservationIgnored private let relockAfter: Duration
     /// When the scene went to the background; nil while it has not been away since it last became active.
     @ObservationIgnored private var leftAt: ContinuousClock.Instant?
+    /// How many times the scene has left the foreground; a check that ends after a departure doesn't unlock.
+    @ObservationIgnored private var departures = 0
     /// A check is running (a try, the Unlock button or the Settings switch).
     @ObservationIgnored private var isChecking = false
     /// Face ID has been tried since the library was last launched or came back from the background.
@@ -54,19 +56,21 @@ public final class LibraryLock {
     /// The scene went to `.background`.
     public func leftForeground() {
         leftAt = now()
+        departures += 1
         triedThisArrival = false
     }
 
     /// The scene became `.active`: locks when it was away `relockAfter` or longer, then tries Face ID once per
     /// arrival (launch, or back from the background). A try already running or already made is not repeated.
     public func becameActive() async {
-        defer { leftAt = nil }
+        let away = leftAt
+        leftAt = nil
         guard isOn else {
             isLocked = false
             showsUnlock = false
             return
         }
-        if let leftAt, now() - leftAt >= relockAfter { isLocked = true }
+        if let away, now() - away >= relockAfter { isLocked = true }
         guard isLocked, !isChecking, !triedThisArrival else { return }
         triedThisArrival = true
         await tryUnlock()
@@ -98,10 +102,16 @@ public final class LibraryLock {
     }
 
     private func tryUnlock() async {
-        if await check() == .success {
+        let departuresBefore = departures
+        let result = await check()
+        // A success that arrives after the app left says nothing about who holds the phone now: the button decides.
+        switch result {
+        case .success where departures == departuresBefore:
             isLocked = false
             showsUnlock = false
-        } else {
+        case .success:
+            showsUnlock = true
+        case .cancelled, .failed:
             showsUnlock = true
             refusals += 1
         }

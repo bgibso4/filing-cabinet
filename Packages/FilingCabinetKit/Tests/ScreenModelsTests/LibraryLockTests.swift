@@ -7,21 +7,20 @@ import Testing
 
 /// A phone whose check stays open until the test answers it.
 private final class GatedAuthenticator: DeviceAuthenticating {
-    private let state = Mutex<(calls: Int, waiting: CheckedContinuation<AuthenticationResult, Never>?)>((0, nil))
+    private let state = Mutex<(calls: Int, waiting: [CheckedContinuation<AuthenticationResult, Never>])>((0, []))
     var calls: Int { state.withLock { $0.calls } }
     func availability() -> AuthenticationAvailability { .biometrics }
     func authenticate(reason: String) async -> AuthenticationResult {
         await withCheckedContinuation { continuation in
             state.withLock {
                 $0.calls += 1
-                $0.waiting = continuation
+                $0.waiting.append(continuation)
             }
         }
     }
     func answer(_ result: AuthenticationResult) {
         state.withLock {
-            $0.waiting?.resume(returning: result)
-            $0.waiting = nil
+            if !$0.waiting.isEmpty { $0.waiting.removeFirst().resume(returning: result) }
         }
     }
 }
@@ -247,4 +246,53 @@ func refusalShowsUnlockAndIsNotRepeated(result: AuthenticationResult) async thro
     #expect(changed)
     #expect(!rig.preferences.lockOn)
     #expect(rig.authenticator.reasons.isEmpty)
+}
+
+@MainActor private func gatedLock(
+    _ fresh: FreshDefaults, _ gate: GatedAuthenticator, _ box: LockRig.ClockBox
+) -> LibraryLock {
+    let preferences = AppPreferences(defaults: fresh.defaults)
+    preferences.lockOn = true
+    return LibraryLock(preferences: preferences, authenticator: gate, now: { box.instant })
+}
+
+@MainActor @Test func aSuccessThatEndsAfterTheAppLeftNeverUnlocks() async throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let gate = GatedAuthenticator()
+    let box = LockRig.ClockBox()
+    let lock = gatedLock(fresh, gate, box)
+    lock.launched()
+    let first = Task { await lock.becameActive() }
+    while gate.calls == 0 { await Task.yield() }
+    lock.leftForeground()
+    gate.answer(.success)
+    await first.value
+    #expect(lock.isLocked)
+    box.instant = box.instant.advanced(by: .seconds(300))
+    let second = Task { await lock.becameActive() }
+    for _ in 0..<50 { await Task.yield() }  // bounded: a missing second call must fail, not hang
+    #expect(lock.isLocked)
+    gate.answer(.success)
+    await second.value
+    #expect(!lock.isLocked)
+}
+
+@MainActor @Test func aLateSuccessDoesNotClearTheLockTheNextArrivalRaised() async throws {
+    let fresh = try FreshDefaults()
+    defer { fresh.cleanUp() }
+    let gate = GatedAuthenticator()
+    let box = LockRig.ClockBox()
+    let lock = gatedLock(fresh, gate, box)
+    lock.launched()
+    let first = Task { await lock.becameActive() }
+    while gate.calls == 0 { await Task.yield() }
+    lock.leftForeground()
+    box.instant = box.instant.advanced(by: .seconds(300))
+    await lock.becameActive()  // a check is still running: raises the lock, asks nothing
+    #expect(gate.calls == 1)
+    gate.answer(.success)
+    await first.value
+    #expect(lock.isLocked)
+    #expect(lock.showsUnlock)  // the button is the way in
 }
