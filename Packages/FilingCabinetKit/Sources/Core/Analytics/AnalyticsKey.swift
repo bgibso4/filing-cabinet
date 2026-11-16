@@ -16,4 +16,5 @@ public enum AnalyticsKey: String, Sendable {
     case titleChanged
     case collectionChanged
     case notifications
+    case isOn
 }

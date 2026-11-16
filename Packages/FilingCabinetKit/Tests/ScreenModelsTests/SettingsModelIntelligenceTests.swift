@@ -44,6 +44,7 @@ private struct IntelligenceHarness {
             notifications: FakeNotificationCenter(authorization: .authorized),
             suggester: suggester,
             wordsPass: pass,
+            lock: LibraryLock(preferences: preferences, authenticator: FakeAuthenticator(availability: .biometrics)),
             analytics: RecordingAnalytics(),
             version: "1.0")
     }

@@ -25,6 +25,8 @@ extension AppEnvironment {
         let wordsPass: SearchWordsPass
         /// Counts the saves the flow reports and says when to ask for a rating.
         let rating: RatingPrompt
+        /// The library lock, which Settings switches.
+        let lock: LibraryLock
         private let analytics: any Analytics
 
         init(
@@ -76,6 +78,7 @@ extension AppEnvironment {
             )
             self.suggester = suggester
             self.wordsPass = wordsPass
+            lock = LibraryLock(preferences: preferences, authenticator: SystemAuthenticator())
             self.rating = rating
             self.analytics = analytics
         }
@@ -87,6 +90,7 @@ extension AppEnvironment {
                 notifications: notifications,
                 suggester: suggester,
                 wordsPass: wordsPass,
+                lock: lock,
                 analytics: analytics)
         }
     }

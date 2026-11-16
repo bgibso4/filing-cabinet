@@ -2,6 +2,11 @@
   "sourceLanguage" : "en",
   "strings" : {
     "Names, files and finds your scans" : {},
+    "Asks when you open the app" : {},
+    "Set a passcode in iPhone Settings to use this" : {},
+    "Paused · Set a passcode to lock again" : {},
+    "Scanning from Control Center and the Action button still works while locked." : {},
+    "Scans are in your iCloud Backup: turn on Advanced Data Protection to encrypt it end to end, and Stolen Device Protection to guard your phone if it’s stolen." : {},
     "Turn it on in iPhone Settings first" : {},
     "Runs on this iPhone. Your scans never leave it." : {},
     "Reading your older scans so search can find them ·\u00A0%lld\u00A0of\u00A0%lld" : {},

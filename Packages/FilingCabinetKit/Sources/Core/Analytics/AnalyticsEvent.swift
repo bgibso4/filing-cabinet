@@ -41,6 +41,8 @@ public enum AnalyticsEvent: Sendable, Equatable {
     case welcomeFinished(notifications: Bool)
     /// The app asked Apple for the rating prompt, which decides itself whether to show it.
     case ratingRequested
+    /// Lock with Face ID was switched on or off in Settings, after the owner was checked.
+    case lockChanged(isOn: Bool)
 
     public var name: String {
         switch self {
@@ -68,6 +70,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
         case .libraryOpenFailed: "libraryOpenFailed"
         case .welcomeFinished: "welcomeFinished"
         case .ratingRequested: "ratingRequested"
+        case .lockChanged: "lockChanged"
         }
     }
 
@@ -97,6 +100,7 @@ public enum AnalyticsEvent: Sendable, Equatable {
             [.titleChanged: .bool(title), .collectionChanged: .bool(collection)]
         case .feedbackOpened(let kind): [.kind: .token(.init(kind))]
         case .welcomeFinished(let notifications): [.notifications: .bool(notifications)]
+        case .lockChanged(let isOn): [.isOn: .bool(isOn)]
         }
     }
 }

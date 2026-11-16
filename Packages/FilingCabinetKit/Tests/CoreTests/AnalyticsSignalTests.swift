@@ -27,7 +27,7 @@ import Testing
         .favoritesChanged(isFavorite: true, count: 1), .scansExported(kind: .share, count: 1),
         .searchSaved(resultCount: 1), .suggestionOutcome(.arrived),
         .suggestionChanged(title: false, collection: true), .feedbackOpened(kind: .feedback),
-        .libraryOpenFailed, .welcomeFinished(notifications: true), .ratingRequested,
+        .libraryOpenFailed, .welcomeFinished(notifications: true), .ratingRequested, .lockChanged(isOn: true),
     ]
     for event in events {
         #expect(Set(event.signalParameters.keys) == Set(event.payload.keys.map(\.rawValue)), "\(event.name)")

@@ -15,7 +15,7 @@ import os
 @MainActor
 @Observable
 final class AppEnvironment {
-    private static let logger = Logger(subsystem: "com.cadre.filingcabinet", category: "App")
+    static let logger = Logger(subsystem: "com.cadre.filingcabinet", category: "App")
 
     #if DEBUG
         static let isDebugBuild = true
@@ -40,6 +40,9 @@ final class AppEnvironment {
     @ObservationIgnored private let wordsPass: SearchWordsPass
     /// Keeps iPhone search in step with the library; run once launch is ready, after Trash's purge (A10).
     @ObservationIgnored let spotlight: SpotlightSync
+    // periphery:ignore - Task 7 drives the lock from the scene
+    /// The library lock; Settings switches it, and the scene will drive it once the root covers the library.
+    let lock: LibraryLock
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -77,6 +80,7 @@ final class AppEnvironment {
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
         wordsPass = scanning.wordsPass
+        lock = scanning.lock
         spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
@@ -234,33 +238,6 @@ final class AppEnvironment {
             logger.fault("No Application Support folder: \(error.localizedDescription, privacy: .private)")
             throw LibraryOpenFailure(underlying: error)
         }
-    }
-
-    /// The phone's preferences, or for UI tests a suite emptied at each launch, so no run reads or leaves real ones.
-    private static func preferencesDefaults(isUITest: Bool) -> UserDefaults {
-        guard isUITest else { return .standard }
-        let suite = "com.cadre.filingcabinet.UITest"
-        guard let defaults = UserDefaults(suiteName: suite) else {
-            logger.fault("The UI-test preferences suite could not be made")
-            fatalError("Filing Cabinet cannot keep UI-test preferences apart")
-        }
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
-    /// What is kept in the phone's defaults: the settings and Search's history. UI tests start past the welcome unless
-    /// `-ShowWelcome` asks to see it (M1).
-    private static func makeKept(options: LaunchOptions) -> (AppPreferences, SearchHistory) {
-        let defaults = preferencesDefaults(isUITest: options.isUITest)
-        let preferences = AppPreferences(defaults: defaults)
-        if options.isUITest {
-            preferences.welcomeDone = !options.showWelcome
-            if options.ratingDue {
-                preferences.savesCount = 9
-                preferences.saveDays = [20_270_101, 20_270_102, 20_270_103]
-            }
-        }
-        return (preferences, SearchHistory(defaults: defaults))
     }
 
     /// The system's notifications, or a scripted answer for `-Notifications` (none for `-NotificationsUnanswered`).
