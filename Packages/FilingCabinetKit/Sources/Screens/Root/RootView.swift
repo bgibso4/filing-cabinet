@@ -216,6 +216,7 @@ public struct RootView: View {
         guard canScan, let request = requests.pending else { return }
         let state = RootState(
             welcomeFinished: welcomeFinished,
+            isLocked: false,
             flowPhase: flow.phase,
             isSearching: searchCoverIsUp,
             pathDepth: path.count,

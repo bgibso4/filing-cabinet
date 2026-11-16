@@ -4,6 +4,8 @@ import Core
 package struct RootState {
     /// The welcome is completed and closed; until then every request waits (Plan 6 §4).
     package let welcomeFinished: Bool
+    /// The library lock is closed: the library is covered until the person unlocks it.
+    package let isLocked: Bool
     package let flowPhase: ScanFlowModel.Phase
     /// Search's cover is up, or still leaving.
     package let isSearching: Bool
@@ -14,12 +16,14 @@ package struct RootState {
 
     package init(
         welcomeFinished: Bool,
+        isLocked: Bool,
         flowPhase: ScanFlowModel.Phase,
         isSearching: Bool,
         pathDepth: Int,
         isInLibrary: @escaping (ScanID) -> Bool
     ) {
         self.welcomeFinished = welcomeFinished
+        self.isLocked = isLocked
         self.flowPhase = flowPhase
         self.isSearching = isSearching
         self.pathDepth = pathDepth
@@ -48,12 +52,14 @@ package enum RootAction: Equatable {
     case open(ScanID)
 }
 
-/// What a request from outside the app does, given what is showing (M9): it waits for the welcome, closes Search and
+/// What a request from outside the app does, given what is showing (M9): it waits for the welcome (and, for Search and open, for the library lock to open; Scan never waits for it), closes Search and
 /// then Details and the viewer, one step at a time, and then acts. An open review is brought back instead, and an open
 /// camera stays.
 package enum RequestRouting {
     package static func action(for request: ExternalRequest, state: RootState) -> RootAction {
         guard state.welcomeFinished else { return .wait }
+        // Search and open show the library, so they wait for the unlock. Scan only adds to it, and never unlocks.
+        if state.isLocked, request != .scan { return .wait }
         if let capturing = action(for: request, during: state.flowPhase) { return capturing }
         // Checked before closing anything, so a scan that has gone closes nothing.
         if case .open(let id) = request, !state.isInLibrary(id) { return .ignore }

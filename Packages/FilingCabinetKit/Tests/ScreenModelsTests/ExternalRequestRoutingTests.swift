@@ -6,6 +6,7 @@ import Testing
 /// Home at rest, the welcome finished, unless a test says otherwise; `missing` is not in the library.
 private func state(
     welcomeFinished: Bool = true,
+    isLocked: Bool = false,
     phase: ScanFlowModel.Phase = .idle,
     isSearching: Bool = false,
     pathDepth: Int = 0,
@@ -13,6 +14,7 @@ private func state(
 ) -> RootState {
     RootState(
         welcomeFinished: welcomeFinished,
+        isLocked: isLocked,
         flowPhase: phase,
         isSearching: isSearching,
         pathDepth: pathDepth,
@@ -86,4 +88,25 @@ func cameraOffSheetHoldsSearchAndOpenUntilItCloses(_ request: ExternalRequest) {
 @Test func openIgnoresAScanNoLongerInTheLibrary() {
     // Nothing is closed for it.
     #expect(RequestRouting.action(for: .open(scan), state: state(isSearching: true, missing: scan)) == .ignore)
+}
+
+@Test func searchWaitsWhileLocked() {
+    #expect(RequestRouting.action(for: .search("x"), state: state(isLocked: true)) == .wait)
+}
+
+@Test func openWaitsWhileLockedEvenForAScanThatHasGone() {
+    #expect(RequestRouting.action(for: .open(scan), state: state(isLocked: true)) == .wait)
+    #expect(RequestRouting.action(for: .open(scan), state: state(isLocked: true, missing: scan)) == .wait)
+}
+
+@Test func scanFromHomeStartsTheCameraWhileLocked() {
+    #expect(RequestRouting.action(for: .scan, state: state(isLocked: true)) == .startScan)
+}
+
+@Test func scanWhileLockedPopsAPushedScreen() {
+    #expect(RequestRouting.action(for: .scan, state: state(isLocked: true, pathDepth: 1)) == .popToHome)
+}
+
+@Test func scanWhileLockedBringsTheReviewBack() {
+    #expect(RequestRouting.action(for: .scan, state: state(isLocked: true, phase: .review)) == .showReview)
 }
