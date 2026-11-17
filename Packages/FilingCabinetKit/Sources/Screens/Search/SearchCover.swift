@@ -23,8 +23,6 @@ struct SearchCover<Viewer: View>: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var path: [ScanID] = []
-    /// Where a scan's thumbnail and its viewer match up in Search's own stack (#98).
-    @Namespace private var scanTransition
     /// While fading: false before Search has faded in and once its X is tapped.
     @State private var isShown = false
     /// While fading: true from the X until Search has gone; it closes once, by the fade's completion or, if
@@ -57,9 +55,9 @@ struct SearchCover<Viewer: View>: View {
             GridRoute(makeModel: makeModel) { model in
                 SearchView(model: model, thumbnails: thumbnails, onOpen: { path.append($0) }, onClose: close)
             }
-            .navigationDestination(for: ScanID.self) { viewer($0).scanTransition($0, in: scanTransition) }
+            .navigationDestination(for: ScanID.self) { viewer($0).scanTransition($0) }
         }
-        .environment(\.scanTransition, scanTransition)
+        .scanTransitionScope()
         // Opaque under every screen of the stack, so nothing of Home shows through.
         .background(Tokens.Color.bgGrouped)
     }

@@ -16,8 +16,34 @@ extension View {
 
     /// The viewer, zooming out of its scan's thumbnail and back into it (#98). A scan opened from outside the app has no
     /// thumbnail on screen: the system zooms from the middle.
-    func scanTransition(_ id: ScanID, in namespace: Namespace.ID) -> some View {
-        navigationTransition(.zoom(sourceID: id, in: namespace))
+    func scanTransition(_ id: ScanID) -> some View {
+        modifier(ScanTransitionDestination(id: id))
+    }
+
+    /// Gives a navigation stack, set on it, the namespace its thumbnails and viewers match up in (#98).
+    func scanTransitionScope() -> some View {
+        modifier(ScanTransitionScope())
+    }
+}
+
+private struct ScanTransitionScope: ViewModifier {
+    @Namespace private var namespace
+
+    func body(content: Content) -> some View {
+        content.environment(\.scanTransition, namespace)
+    }
+}
+
+private struct ScanTransitionDestination: ViewModifier {
+    let id: ScanID
+    @Environment(\.scanTransition) private var namespace
+
+    func body(content: Content) -> some View {
+        if let namespace {
+            content.navigationTransition(.zoom(sourceID: id, in: namespace))
+        } else {
+            content
+        }
     }
 }
 
