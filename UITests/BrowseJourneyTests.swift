@@ -231,26 +231,20 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
-    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() throws {
-        // Flaky on CI's slow runners; Ben chose to skip it until a dedicated fix (2026-11-08, #64).
-        try XCTSkipIf(true, "Flaky zoom-then-swipe timing on CI (#64)")
+    func testSwipingAtAZoomedPagesEdgeGoesToTheNextPage() {
         let app = seededApp()
         openThreePageScan(in: app)
-        zoomTheFirstPage(in: app)
-        // The first swipes pan the zoomed page to its edge; the one after that pages, as in Photos.
-        let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
-        var swipes = 0
-        while swipes < 4 {
-            app.windows.firstMatch.swipeLeft()
-            swipes += 1
-            if strip.satisfies("label == %@", "Page 2 of 3", within: 2) { break }
-        }
+        // Zoomed around its trailing edge, the page already rests there, so one swipe pages, as in Photos. A loop of
+        // swipes until the strip changes overshot on CI: a check slower than its wait let one more swipe through (#64).
+        zoomTheFirstPage(in: app, at: CGVector(dx: 0.95, dy: 0.5))
+        app.windows.firstMatch.swipeLeft()
         assertPageLabel("Page 2 of 3", in: app)
     }
 
-    private func zoomTheFirstPage(in app: XCUIApplication) {
+    /// Double taps the page at `point` (normalized within the page; its centre by default), which zooms around it.
+    private func zoomTheFirstPage(in app: XCUIApplication, at point: CGVector = CGVector(dx: 0.5, dy: 0.5)) {
         let page = app.descendants(matching: .any)[AccessibilityID.Viewer.page].firstMatch
-        page.doubleTap()
+        page.coordinate(withNormalizedOffset: point).doubleTap()
         XCTAssertTrue(page.satisfies("value == %@", "Zoomed", within: 5), "The page never reported being zoomed")
     }
 
