@@ -43,6 +43,9 @@ public struct LaunchOptions: Sendable, Equatable {
     public private(set) var ratingDue = false
     /// `-HoldScan`: launch finishes everything but enabling Scan, so a test can check disabled Scan on a still Home.
     public private(set) var holdScan = false
+    /// `-Animations`: under `-UITest` animations stay on. The system's interactive transitions, such as the swipe down
+    /// that closes a scan (#98), never finish without them.
+    public private(set) var animations = false
     /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
     public private(set) var request: RequestFlag?
     /// `-Lock on`: the library lock is on at launch; any other value leaves it off.
@@ -72,9 +75,12 @@ public struct LaunchOptions: Sendable, Equatable {
             "-UITest": \.isUITest, "-CameraDenied": \.cameraDenied, "-FailSave": \.failNextSave,
             "-FakeReader": \.fakeReader, "-ReduceMotion": \.reduceMotion,
             "-NotificationsUnanswered": \.notificationsUnanswered, "-ShowWelcome": \.showWelcome,
-            "-RatingDue": \.ratingDue, "-HoldScan": \.holdScan,
+            "-RatingDue": \.ratingDue, "-HoldScan": \.holdScan, "-Animations": \.animations,
         ]
     }
+
+    /// UI tests run without animations, so nothing waits on one, unless `-Animations` keeps them.
+    public var disablesAnimations: Bool { isUITest && !animations }
 
     /// Sets the flag if it needs no value (`next` may qualify it); false when it is not one of those.
     private mutating func setSwitch(_ flag: String, next: String?) -> Bool {

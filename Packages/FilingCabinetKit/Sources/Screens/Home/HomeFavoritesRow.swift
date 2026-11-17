@@ -85,6 +85,7 @@ struct HomeFavoritesRow: View {
                 ThumbnailView(id: favorite.id, page: 0, provider: thumbnails)
                     .frame(width: size.width, height: size.height)
                     .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                    .scanTransitionSource(favorite.id)
                 Text(favorite.title)
                     .font(Tokens.Typography.subheadline.weight(.semibold))
                     .foregroundStyle(Tokens.Color.textPrimary)

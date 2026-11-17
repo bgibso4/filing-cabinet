@@ -32,6 +32,8 @@ public struct RootView: View {
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
+    /// Where a scan's thumbnail and its viewer match up (#98).
+    @Namespace private var scanTransition
 
     /// `canScan` is false until launch cleanup has finished, so a scan never races it, and no request is acted on
     /// before then.
@@ -79,6 +81,7 @@ public struct RootView: View {
             if let pending = requests.pending, pending != .scan { _ = requests.take() }
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
+        .environment(\.scanTransition, scanTransition)
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
         // `hold()` runs just after the render in which the layer appears; that is fine, because nothing can be saved
         // until the camera has finished.
@@ -313,6 +316,7 @@ public struct RootView: View {
             thumbnails: dependencies.thumbnails,
             onRestored: { restores += 1 }
         )
+        .scanTransition(id, in: scanTransition)
     }
 
     private func grid(_ kind: GridKind) -> some View {
