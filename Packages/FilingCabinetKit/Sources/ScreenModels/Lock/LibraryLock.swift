@@ -16,8 +16,9 @@ public final class LibraryLock {
     public private(set) var showsUnlock = false
     /// Bumped each time a try ends cancelled or failed (the root drops a waiting request).
     public private(set) var refusals = 0
-    /// The lock was on as the scene went to the background, and `arrived()` hasn't yet decided whether the time away
-    /// relocks it. The shield stays up meanwhile, so the first active frame never shows the library.
+    /// The lock was on as the scene went to the background, and neither `comingBack()` nor `arrived()` has yet decided
+    /// whether the time away relocks it. The shield stays up meanwhile, so no frame of the return shows a library that
+    /// should be locked.
     private var arrivalIsPending = false
     /// A scan from outside started while the library was locked, and its capture layer hasn't closed: the one thing
     /// that shows through the shield. A scan started while unlocked never sets it, so left open it is covered.
@@ -31,13 +32,14 @@ public final class LibraryLock {
     public var availability: AuthenticationAvailability { authenticator.availability() }
 
     /// The shield above every window the app shows is up: while locked, unless a scan let through the lock
-    /// (`outsideScanStarted()`) has its cover on screen in an active scene; and whenever the lock is on and the scene
-    /// isn't active, so the app switcher's snapshot never shows the library, even inside the relock time.
-    /// Back from the background, it stays up until `arrived()` has run.
+    /// (`outsideScanStarted()`) has its cover on screen; and, with the lock on, from the moment the scene is in the
+    /// background until it is on its way back (`comingBack()`, or `arrived()`), so the app switcher's snapshot never
+    /// shows the library, even inside the relock time. A scene that is only inactive isn't covered: the cover would
+    /// flash on every trip out of the app and back.
     /// `captureCoverIsUp`: the capture layer's cover has finished appearing and nothing else the app presented is left
     /// under it. Until then the shield stays, so whatever was showing when the scan was asked for is never seen.
-    package func shieldIsUp(captureCoverIsUp: Bool, sceneIsActive: Bool) -> Bool {
-        if isOn, !sceneIsActive || arrivalIsPending { return true }
+    package func shieldIsUp(captureCoverIsUp: Bool) -> Bool {
+        if isOn, arrivalIsPending { return true }
         return isLocked && !(scanIsLetThrough && captureCoverIsUp)
     }
 
@@ -81,6 +83,15 @@ public final class LibraryLock {
         interruptions += 1
         triedThisArrival = false
         arrivalIsPending = preferences.lockOn
+    }
+
+    /// The scene left `.background` for the foreground, before it is active: at once, locks when it was away
+    /// `relockAfter` or longer, and otherwise lets the shield drop, so a quick trip out and back never shows the cover.
+    /// The departure time is kept: the system may wake the app and send it back without it ever becoming active.
+    public func comingBack() {
+        guard arrivalIsPending else { return }
+        arrivalIsPending = false
+        if isOn, let leftAt, now() - leftAt >= relockAfter { isLocked = true }
     }
 
     /// The scene became `.active`: at once, with no wait, locks when it was away `relockAfter` or longer. Called

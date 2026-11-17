@@ -67,9 +67,8 @@ public struct RootView: View {
         }
         .background(
             LockShield(
-                isUp: lock.shieldIsUp(
-                    captureCoverIsUp: isCapturing.wrappedValue && captureCoverIsOnScreen,
-                    sceneIsActive: scenePhase == .active),
+                isUp: lock.shieldIsUp(captureCoverIsUp: isCapturing.wrappedValue && captureCoverIsOnScreen),
+                coversInBackground: lock.isOn,
                 showsUnlock: lock.showsUnlock,
                 colorScheme: colorScheme,
                 onUnlock: { Task { await lock.unlock() } })

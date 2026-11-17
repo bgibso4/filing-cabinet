@@ -50,7 +50,7 @@ import Testing
     #expect(!rig.lock.isLocked)
     #expect(!rig.lock.showsUnlock)
     #expect(rig.authenticator.reasons.count == 1)
-    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: false, sceneIsActive: true))
+    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: false))
 }
 
 @MainActor @Test func aScanFromOutsideWithTheLockOffChangesNothing() async throws {
@@ -115,14 +115,13 @@ import Testing
     defer { rig.fresh.cleanUp() }
     rig.lock.launched()
     await rig.lock.becameActive(scanIsPending: true)
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false))
     rig.lock.outsideScanStarted()
     // The scan has started, but its cover isn't up yet: whatever the app had presented is still what shows.
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false, sceneIsActive: true))
-    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: false))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false))
+    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true))
     rig.lock.captureLayerClosed()
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: false))
     #expect(rig.lock.isLocked)
 }
 
@@ -137,7 +136,7 @@ import Testing
     #expect(rig.authenticator.reasons.isEmpty)
     #expect(rig.lock.isLocked)
     #expect(rig.lock.showsUnlock)
-    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true))
 }
 
 @MainActor @Test func aCaptureLayerLeftOpenIsCoveredAfterARelockAndFaceIDRuns() async throws {
@@ -149,17 +148,17 @@ import Testing
     rig.lock.outsideScanStarted()
     rig.lock.leftForeground()
     rig.advance(300)
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true))
     await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.authenticator.reasons.count == 2)
     #expect(rig.lock.isLocked)
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true))
     // A Scan request now finds the review open: the root starts nothing, and the review stays covered.
     rig.lock.outsideScanRequested()
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true))
     await rig.lock.unlock()
     #expect(!rig.lock.isLocked)
-    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(!rig.lock.shieldIsUp(captureCoverIsUp: true))
 }
 
 @MainActor @Test func unlockingEndsWhatALockedScanLetThrough() async throws {
@@ -176,5 +175,5 @@ import Testing
     rig.advance(300)
     await rig.lock.becameActive(scanIsPending: false)
     #expect(rig.lock.isLocked)
-    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true, sceneIsActive: true))
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true))
 }

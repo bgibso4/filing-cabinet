@@ -53,7 +53,7 @@ struct FilingCabinetApp: App {
                 requests.send(.open(id))
             }
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { old, phase in
             guard let environment = startup.environment else { return }
             switch phase {
             case .active:
@@ -73,6 +73,8 @@ struct FilingCabinetApp: App {
                 environment.lock.leftForeground()
             case .inactive:
                 environment.leftForeground()
+                // On the way back in: inside the relock time the cover goes now, not once the scene is active.
+                if old == .background { environment.lock.comingBack() }
             @unknown default:
                 break
             }
