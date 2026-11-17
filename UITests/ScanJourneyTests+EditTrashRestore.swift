@@ -12,6 +12,8 @@ extension ScanJourneyTests {
     /// (Apple's `requestReview` documentation), so it must come. It is Apple's service that shows it, and on a CI
     /// simulator that took 9.7 s after Home came back (run 43554564482), against about 1 s on a Mac. The earlier
     /// 5 s wait read that as "Apple chose not to show it", returned, and the prompt then covered Home.
+    /// Call it before checking what the save left: while the prompt loads, a read of the app can still show the review
+    /// long after it has gone (run 44012672488: Home on screen within 2 s, the review's Save in every read for 10 s).
     func dismissRatingPrompt(in app: XCUIApplication) {
         let notNow = app.buttons["Not Now"]
         XCTAssertTrue(notNow.appears(within: Self.ratingPromptTimeout), "Apple's rating prompt never showed")

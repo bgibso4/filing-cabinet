@@ -74,7 +74,7 @@ final class DetailsJourneyTests: XCTestCase {
         let field = app.textFields[AccessibilityID.Details.titleField]
 
         title.tap()
-        XCTAssertTrue(app.keyboards.firstMatch.appears(within: 5))
+        XCTAssertTrue(app.keyboards.firstMatch.appears(within: keyboardTimeout))
         field.tap()
         XCTAssertTrue(app.keyboards.firstMatch.exists, "A tap on the field ended renaming")
         app.buttons[AccessibilityID.Details.clearTitle].tap()
