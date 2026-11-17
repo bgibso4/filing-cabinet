@@ -48,7 +48,7 @@ public final class SpotlightSync {
     public func run() async {
         // Read for their changes only: each pass reads the library and the day as they are then.
         let changes = Observations {
-            _ = (self.library.scans, self.library.lifespans, self.today.day)
+            _ = (self.library.scans, self.library.lifespans, self.today.day, self.preferences.lockOn)
             return self.nudges
         }
         for await _ in changes {
@@ -118,8 +118,10 @@ public final class SpotlightSync {
         return true
     }
 
-    /// Every scan in the library today, not Trash, without its thumbnail.
+    /// Every scan in the library today, not Trash, without its thumbnail; none while the library lock is on.
     private func wantedItems() -> [ScanID: SpotlightItem] {
+        // The library lock keeps scans out of iPhone search; the pass removes them like any scan that left.
+        if preferences.lockOn { return [:] }
         let calendar = today.calendar
         let shelf = LibraryShelf(
             scans: library.scans, lifespans: library.lifespans, today: today.day, calendar: calendar)

@@ -39,7 +39,10 @@ let package = Package(
         .target(
             name: "Screens",
             dependencies: ["Core", "ScreenModels", "Library"],
-            resources: [.process("Localizable.xcstrings"), .process("Resources/Tokens.xcassets")],
+            resources: [
+                .process("Localizable.xcstrings"), .process("Resources/Tokens.xcassets"),
+                .process("Resources/Images.xcassets"),
+            ],
             swiftSettings: moduleSettings + [.defaultIsolation(MainActor.self)]
         ),
         .testTarget(name: "CoreTests", dependencies: ["Core", "TestSupport"], swiftSettings: moduleSettings),

@@ -189,3 +189,39 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(request("print") == nil)
     #expect(LaunchOptions(arguments: ["-Request", "scan"], isDebugBuild: false).request == nil)
 }
+
+@Test func parsesLock() {
+    func lockOn(_ arguments: [String], debug: Bool = true) -> Bool {
+        LaunchOptions(arguments: arguments, isDebugBuild: debug).lockOn
+    }
+    #expect(lockOn(["-Lock", "on"]))
+    #expect(!lockOn(["-Lock", "off"]))
+    #expect(!lockOn(["-Lock"]))
+    #expect(!lockOn([]))
+    #expect(!lockOn(["-Lock", "on"], debug: false))
+}
+
+@Test(arguments: [
+    ("succeeds", AuthenticatorFlag.succeeds), ("succeedsOnce", .succeedsOnce), ("cancels", .cancels),
+    ("cancelsOnce", .cancelsOnce), ("cancelsSecond", .cancelsSecond), ("fails", .fails),
+    ("passcodeOnly", .passcodeOnly), ("none", AuthenticatorFlag.none),
+])
+func authenticatorFlagScriptsTheFake(_ value: String, _ expected: AuthenticatorFlag) {
+    #expect(LaunchOptions(arguments: ["-Authenticator", value], isDebugBuild: true).authenticator == expected)
+    #expect(LaunchOptions(arguments: ["-Authenticator", value], isDebugBuild: false).authenticator == nil)
+}
+
+@Test func unknownAuthenticatorValueIsIgnored() {
+    #expect(LaunchOptions(arguments: ["-Authenticator", "maybe"], isDebugBuild: true).authenticator == nil)
+}
+
+@Test func parsesLockAfter() {
+    func seconds(_ value: String, debug: Bool = true) -> Int? {
+        LaunchOptions(arguments: ["-LockAfter", value], isDebugBuild: debug).relockSeconds
+    }
+    #expect(seconds("2") == 2)
+    #expect(seconds("0") == 0)
+    #expect(seconds("-1") == nil)
+    #expect(seconds("x") == nil)
+    #expect(seconds("2", debug: false) == nil)
+}

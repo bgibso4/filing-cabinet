@@ -49,6 +49,7 @@ private struct SettingsHarness {
             notifications: center,
             suggester: suggester,
             wordsPass: pass,
+            lock: LibraryLock(preferences: preferences, authenticator: FakeAuthenticator(availability: .biometrics)),
             analytics: analytics,
             version: "1.0")
     }

@@ -15,7 +15,7 @@ import os
 @MainActor
 @Observable
 final class AppEnvironment {
-    private static let logger = Logger(subsystem: "com.cadre.filingcabinet", category: "App")
+    static let logger = Logger(subsystem: "com.cadre.filingcabinet", category: "App")
 
     #if DEBUG
         static let isDebugBuild = true
@@ -40,6 +40,8 @@ final class AppEnvironment {
     @ObservationIgnored private let wordsPass: SearchWordsPass
     /// Keeps iPhone search in step with the library; run once launch is ready, after Trash's purge (A10).
     @ObservationIgnored let spotlight: SpotlightSync
+    /// The library lock: the root covers the library with it, Settings switches it, and the scene drives it.
+    @ObservationIgnored let lock: LibraryLock
 
     /// False until launch cleanup (and any seeding) has finished; Scan stays disabled until then.
     private(set) var isReady = false
@@ -54,12 +56,8 @@ final class AppEnvironment {
     private init(options: LaunchOptions, isRetry: Bool, analytics: any Analytics) throws(LibraryOpenFailure) {
         self.options = options
         let clock = options.fixedDate.map { AppClock.fixed($0, calendar: AppClock.system.calendar) } ?? .system
-        let location = try Self.libraryLocation(isUITest: options.isUITest)
-        let fileSystem = LocalFileSystem()
-        let files = PageFileStore(location: location, fileSystem: Self.pageFileSystem(fileSystem, options: options))
-        let store = try Self.makeStore(
-            location: location, options: options, isRetry: isRetry, files: files, clock: clock)
-        let export = ScanExport(files: files)
+        let storage = try Self.openStorage(options: options, isRetry: isRetry, clock: clock)
+        let (store, export) = (storage.store, storage.export)
         self.export = export
         self.analytics = analytics
         self.clock = clock
@@ -77,7 +75,10 @@ final class AppEnvironment {
         let scanning = Scanning(
             options: options, store: store, today: today, clock: clock, analytics: analytics, preferences: preferences)
         wordsPass = scanning.wordsPass
-        spotlight = Self.spotlightSync(store: store, today: today, preferences: preferences, at: location, options)
+        let lock = Self.makeLock(options: options, preferences: preferences)
+        self.lock = lock
+        spotlight = Self.spotlightSync(
+            store: store, today: today, preferences: preferences, at: storage.location, options)
         let viewerShared = ViewerShared(history: history, export: export, photos: Self.photoSaving(options: options))
         root = RootDependencies(
             home: HomeModel(library: store, today: today, calendar: clock.calendar, banner: banner),
@@ -87,19 +88,20 @@ final class AppEnvironment {
             makeViewer: Self.viewerMaker(
                 store: store, today: today, clock: clock, analytics: analytics, with: viewerShared),
             makeDetails: { DetailsModel(id: $0, library: store, today: today, clock: clock, analytics: analytics) },
-            makeSettings: { scanning.settings(preferences: preferences, notifications: notifications) },
+            makeSettings: { scanning.settings(preferences: preferences, notifications: notifications, lock: lock) },
             makeCollections: { CollectionsModel(library: store, today: today, calendar: clock.calendar) },
             makeCollectionSettings: Self.collectionSettingsMaker(
                 store: store, today: today, clock: clock, analytics: analytics),
             makeSearch: Self.searchMaker(
                 store: store, today: today, clock: clock, analytics: analytics, history: history),
-            thumbnails: ThumbnailLoader(location: location, fileSystem: fileSystem),
-            pages: PageImageLoader(location: location, fileSystem: fileSystem),
+            thumbnails: ThumbnailLoader(location: storage.location, fileSystem: storage.fileSystem),
+            pages: PageImageLoader(location: storage.location, fileSystem: storage.fileSystem),
             cameraMode: Self.cameraMode(options: options),
             forcesReduceMotion: options.reduceMotion,
             preferences: preferences,
             welcome: WelcomeModel(preferences: preferences, notifications: notifications, analytics: analytics),
-            rating: scanning.rating
+            rating: scanning.rating,
+            lock: lock
         )
     }
 
@@ -236,33 +238,6 @@ final class AppEnvironment {
         }
     }
 
-    /// The phone's preferences, or for UI tests a suite emptied at each launch, so no run reads or leaves real ones.
-    private static func preferencesDefaults(isUITest: Bool) -> UserDefaults {
-        guard isUITest else { return .standard }
-        let suite = "com.cadre.filingcabinet.UITest"
-        guard let defaults = UserDefaults(suiteName: suite) else {
-            logger.fault("The UI-test preferences suite could not be made")
-            fatalError("Filing Cabinet cannot keep UI-test preferences apart")
-        }
-        defaults.removePersistentDomain(forName: suite)
-        return defaults
-    }
-
-    /// What is kept in the phone's defaults: the settings and Search's history. UI tests start past the welcome unless
-    /// `-ShowWelcome` asks to see it (M1).
-    private static func makeKept(options: LaunchOptions) -> (AppPreferences, SearchHistory) {
-        let defaults = preferencesDefaults(isUITest: options.isUITest)
-        let preferences = AppPreferences(defaults: defaults)
-        if options.isUITest {
-            preferences.welcomeDone = !options.showWelcome
-            if options.ratingDue {
-                preferences.savesCount = 9
-                preferences.saveDays = [20_270_101, 20_270_102, 20_270_103]
-            }
-        }
-        return (preferences, SearchHistory(defaults: defaults))
-    }
-
     /// The system's notifications, or a scripted answer for `-Notifications` (none for `-NotificationsUnanswered`).
     private static func notificationCenter(options: LaunchOptions) -> any CleanupNotifying {
         #if DEBUG
@@ -324,6 +299,28 @@ final class AppEnvironment {
             }
         #endif
         return .vision
+    }
+}
+
+/// Where the library is kept.
+extension AppEnvironment {
+    /// The library's folders, files and store, opened for this launch.
+    private struct Storage {
+        let location: LibraryLocation
+        let fileSystem: LocalFileSystem
+        let store: ScanStore
+        let export: ScanExport
+    }
+
+    /// Opens the library; throws when its folder or store can't be opened.
+    private static func openStorage(
+        options: LaunchOptions, isRetry: Bool, clock: AppClock
+    ) throws(LibraryOpenFailure) -> Storage {
+        let location = try libraryLocation(isUITest: options.isUITest)
+        let fileSystem = LocalFileSystem()
+        let files = PageFileStore(location: location, fileSystem: pageFileSystem(fileSystem, options: options))
+        let store = try makeStore(location: location, options: options, isRetry: isRetry, files: files, clock: clock)
+        return Storage(location: location, fileSystem: fileSystem, store: store, export: ScanExport(files: files))
     }
 }
 

@@ -70,7 +70,7 @@ Packages/FilingCabinetKit/Sources/Screens/Search/ SearchJourneyTests SearchSnaps
 Packages/FilingCabinetKit/Sources/ScreenModels/Search/ SearchJourneyTests SearchSnapshotTests BrowseJourneyTests DetailsJourneyTests TrashJourneyTests ViewerSnapshotTests ViewerBehaviourTests DetailsSnapshotTests FavoritesJourneyTests OutsideJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Details/ DetailsJourneyTests ScanJourneyTests DetailsSnapshotTests ViewerBehaviourTests
-Packages/FilingCabinetKit/Sources/Screens/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests
+Packages/FilingCabinetKit/Sources/Screens/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests LockJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Feedback/ SettingsJourneyTests SettingsSnapshotTests LibraryFailureJourneyTests LibraryFailureSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Feedback/ SettingsJourneyTests SettingsSnapshotTests LibraryFailureJourneyTests LibraryFailureSnapshotTests
 # The screen shown when the library can't open (#40).
@@ -79,7 +79,10 @@ Packages/FilingCabinetKit/Sources/ScreenModels/Startup/ LibraryFailureJourneyTes
 Packages/FilingCabinetKit/Sources/Screens/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Welcome/ WelcomeJourneyTests WelcomeSnapshotTests OutsideJourneyTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Rating/ ScanJourneyTests
-Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests WelcomeJourneyTests WelcomeSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Settings/ SettingsJourneyTests HomeJourneyTests SettingsSnapshotTests WelcomeJourneyTests WelcomeSnapshotTests LockJourneyTests
+# The library lock: its cover and shield, and the model Settings' switch asks.
+Packages/FilingCabinetKit/Sources/Screens/Lock/ LockJourneyTests LockCoverSnapshotTests
+Packages/FilingCabinetKit/Sources/ScreenModels/Lock/ LockJourneyTests LockCoverSnapshotTests SettingsJourneyTests SettingsSnapshotTests
 # Older scans' search words: the pass's progress shows in Settings.
 Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests
 Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests

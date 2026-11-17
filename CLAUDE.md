@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plans 1–5 are merged (Plan 5, Apple Intelligence: PR #91, 2026-11-13). Plan 6 (first launch and system) is built on `plan-6`; the PR is pending, so it is not merged. Once it merges, every green merge to `main` uploads to TestFlight.** Next on the roadmap: the document lock (#26) before the App Store. Follow-ups: #90 (suggestion quality), #92, #95, #83 (fade behind Scan), #85 (header text size), a glass Scan button.
+**Phase: Plans 1–6 and the AI follow-up are merged (Plan 6: PR #96, 2026-11-14; AI follow-up: PR #99, 2026-11-14), so every green merge to `main` uploads to TestFlight. The library lock (#26, with the storage decisions of #93) is built on `library-lock`; the PR is pending, so it is not merged.** Follow-ups: #90 (suggestion quality), #92, #95, #83 (fade behind Scan), #85 (header text size), a glass Scan button.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.

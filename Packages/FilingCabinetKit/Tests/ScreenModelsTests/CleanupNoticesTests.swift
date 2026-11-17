@@ -169,3 +169,33 @@ private func plan(
     let month = plan([scan], lifespans: CollectionLifespans.defaults.setting(.month, for: .receipts))
     #expect(month.map(\.id) == ["\(ScheduledNotice.idPrefix)\(day(30).storageValue)"])
 }
+
+@Test func notNamingScansNeverShowsATitle() {
+    let titles = ["City Pharmacy", "Corner Market", "Passport", "Lecture"]
+    for count in [1, 2, 4] {
+        let scans = titles.prefix(count).map { expiring($0, entering: day(3)) }
+        let notices = CleanupNotices.plan(
+            scans: scans, lifespans: .defaults, today: today, clock: clock, namesScans: false)
+        #expect(notices.count == 1)
+        for title in titles {
+            #expect(!notices[0].title.contains(title))
+            #expect(!notices[0].body.contains(title))
+        }
+        if count == 1 {
+            #expect(notices[0].title == "Cleaned up 1 scan")
+            #expect(notices[0].body == "An expired scan moved to Trash. It’s there for 30 days if you need it.")
+        } else {
+            #expect(notices[0].title == "Cleaned up \(count) scans")
+            #expect(
+                notices[0].body == "Expired scans moved to Trash. They’re there for 30 days if you need one back.")
+        }
+    }
+}
+
+@Test func namingScansIsTodaysText() {
+    let scans = [expiring("City Pharmacy", entering: day(3))]
+    let notices = CleanupNotices.plan(
+        scans: scans, lifespans: .defaults, today: today, clock: clock, namesScans: true)
+    #expect(notices == plan(scans))
+    #expect(notices[0].title == "Cleaned up")
+}

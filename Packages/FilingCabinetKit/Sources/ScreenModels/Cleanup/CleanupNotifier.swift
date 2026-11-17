@@ -4,8 +4,8 @@ import Library
 import Observation
 
 /// Keeps the pending cleanup notes in step with the library (M9): while `run()` runs, every change to the scans,
-/// the lifespans, the day or the Notifications switch plans the notes again and replaces the pending ones. With
-/// notes off or not allowed by iOS, nothing stays pending. The app runs one from launch.
+/// the lifespans, the day, the lock or the Notifications switch plans the notes again and replaces the pending ones.
+/// With notes off or not allowed by iOS, nothing stays pending. The app runs one from launch.
 @Observable
 public final class CleanupNotifier {
     /// Bumped by `reschedule()`: a change the notifier can't observe.
@@ -35,7 +35,10 @@ public final class CleanupNotifier {
     public func run() async {
         let changes = Observations {
             // Read for their changes only: each pass plans from the library and the clock as they are then.
-            _ = (self.library.scans, self.library.lifespans, self.today.day, self.preferences.notificationsOn)
+            _ = (
+                self.library.scans, self.library.lifespans, self.today.day, self.preferences.notificationsOn,
+                self.preferences.lockOn
+            )
             return self.nudges
         }
         for await _ in changes {
@@ -57,7 +60,11 @@ public final class CleanupNotifier {
         }
         // `today` from the same clock as the calendar, so the two can't disagree (Task 13 review).
         let notices = CleanupNotices.plan(
-            scans: library.scans, lifespans: library.lifespans, today: clock.today, clock: clock)
+            scans: library.scans,
+            lifespans: library.lifespans,
+            today: clock.today,
+            clock: clock,
+            namesScans: !preferences.lockOn)
         ScreenModelsLog.logger.info("Scheduled \(notices.count, privacy: .public) cleanup notes")
         await center.replacePending(with: notices)
     }

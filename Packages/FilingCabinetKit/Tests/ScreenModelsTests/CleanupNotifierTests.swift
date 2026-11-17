@@ -154,3 +154,19 @@ private let cityPharmacy = "Moved the City Pharmacy receipt to Trash. It’s the
 
     #expect(try await eventually { harness.pendingBodies == [] })
 }
+
+@MainActor
+@Test func lockOnPlansCountNotesAndOffNamesAgain() async throws {
+    let harness = try NotifierHarness([expiring("City Pharmacy", daysAhead: 3)])
+    defer { harness.cleanUp() }
+    #expect(try await eventually { harness.pendingBodies == [cityPharmacy] })
+
+    harness.preferences.lockOn = true
+    #expect(
+        try await eventually {
+            harness.pendingBodies == ["An expired scan moved to Trash. It’s there for 30 days if you need it."]
+        })
+
+    harness.preferences.lockOn = false
+    #expect(try await eventually { harness.pendingBodies == [cityPharmacy] })
+}

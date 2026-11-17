@@ -8,11 +8,15 @@ import Understanding
 @Observable
 public final class SettingsModel {
     package private(set) var authorization = NotificationAuthorization.notDetermined
+    /// What the phone can check the owner with, as of the last look. Stored, so a view reading `lockRow` redraws when
+    /// it changes.
+    package private(set) var passcode: AuthenticationAvailability
 
     @ObservationIgnored private let preferences: AppPreferences
     @ObservationIgnored private let notifications: any CleanupNotifying
     @ObservationIgnored private let suggester: any ScanSuggester
     @ObservationIgnored private let wordsPass: SearchWordsPass
+    @ObservationIgnored private let lock: LibraryLock
     @ObservationIgnored private let analytics: any Analytics
     @ObservationIgnored private let version: String
 
@@ -21,6 +25,7 @@ public final class SettingsModel {
         notifications: any CleanupNotifying,
         suggester: any ScanSuggester,
         wordsPass: SearchWordsPass,
+        lock: LibraryLock,
         analytics: any Analytics,
         version: String = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     ) {
@@ -28,6 +33,8 @@ public final class SettingsModel {
         self.notifications = notifications
         self.suggester = suggester
         self.wordsPass = wordsPass
+        self.lock = lock
+        passcode = lock.availability
         self.analytics = analytics
         self.version = version
     }
@@ -72,6 +79,41 @@ public final class SettingsModel {
         }
     }
 
+    /// Derived from the wish and `passcode`, both observed. The phone's answer is looked at when the screen appears and
+    /// when the app comes back (`refreshAuthorization`), which is when someone returns from iPhone Settings after
+    /// adding or removing a passcode, and after each switch.
+    package var lockRow: LockRow {
+        let isOn = preferences.lockOn
+        let hasNoPasscode = passcode == .none
+        let isPaused = isOn && hasNoPasscode
+        let offFooter = String(
+            localized: "Scanning from Control Center and the Action button still works while locked.", bundle: #bundle)
+        let subtitle =
+            if isPaused {
+                String(localized: "Paused · Set a passcode to lock again", bundle: #bundle)
+            } else if hasNoPasscode {
+                String(localized: "Set a passcode in iPhone Settings to use this", bundle: #bundle)
+            } else {
+                String(localized: "Asks when you open the app", bundle: #bundle)
+            }
+        let advice = String(
+            localized:
+                "Scans are in your iCloud Backup: turn on Advanced Data Protection to encrypt it end to end, and Stolen Device Protection to guard your phone if it’s stolen.",
+            bundle: #bundle)
+        return LockRow(
+            isEnabled: isOn || !hasNoPasscode,
+            isOn: isOn,
+            subtitle: subtitle,
+            footer: isOn ? "\(offFooter) \(advice)" : offFooter)
+    }
+
+    /// The switch was flipped. The lock checks the owner first; an event goes out only when the setting changed.
+    package func setLock(_ isOn: Bool) async {
+        let changed = await lock.setOn(isOn)
+        passcode = lock.availability
+        if changed { analytics.send(.lockChanged(isOn: isOn)) }
+    }
+
     /// The draft Send feedback opens: the app and iPhone details, nothing from the library.
     package var feedbackURL: URL { FeedbackMail.feedback(.current()) }
 
@@ -87,6 +129,7 @@ public final class SettingsModel {
     /// Reads what iOS currently allows; the screen calls it as it appears and when the app comes back.
     public func refreshAuthorization() async {
         authorization = await notifications.authorization()
+        passcode = lock.availability
     }
 
     /// The switch was flipped. Turning on asks iOS the first time (M3). When iOS had already blocked notes before

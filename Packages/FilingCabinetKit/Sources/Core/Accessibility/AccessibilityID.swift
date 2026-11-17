@@ -197,11 +197,13 @@ public enum AccessibilityID {
         public static let appearance = "settings.appearance"
         public static let notifications = "settings.notifications"
         public static let intelligence = "settings.intelligence"
+        /// Lock with Face ID's switch.
+        public static let lockSwitch = "settings.lockSwitch"
         public static let feedback = "settings.feedback"
         public static let privacy = "settings.privacy"
 
         public static var all: [String] {
-            [collections, appearance, intelligence, notifications, feedback, privacy]
+            [collections, appearance, intelligence, notifications, lockSwitch, feedback, privacy]
         }
     }
 
@@ -220,6 +222,15 @@ public enum AccessibilityID {
         public static let tryAgain = "libraryFailure.tryAgain"
 
         public static var all: [String] { [title, sendReport, tryAgain] }
+    }
+
+    /// The library lock's cover (library-lock mocks, Mock 1), above everything while the library is locked.
+    public enum Lock {
+        public static let cover = "lock.cover"
+        /// Only after Face ID was cancelled or failed.
+        public static let unlock = "lock.unlock"
+
+        public static var all: [String] { [cover, unlock] }
     }
 
     /// The first-launch welcome (01-03, 01-04).
@@ -305,6 +316,6 @@ public enum AccessibilityID {
                 Details.clearTitle, Details.titleText, Details.scannedLine,
             ] + Trash.all + TrashViewer.all + Settings.all + Feedback.all + Collections.all + CollectionSettings.all
             + Search.all + [Search.clearQuery, Search.clear, Search.searchAll] + LibraryFailure.all
-            + Welcome.all
+            + Welcome.all + Lock.all
     }
 }

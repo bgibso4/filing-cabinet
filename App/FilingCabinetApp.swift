@@ -40,8 +40,11 @@ struct FilingCabinetApp: App {
                         }
                 }
             }
-            // Only a UI test's relaunch: anything else from outside the app is dropped while the library has failed.
-            .onOpenURL { startup.relaunch(by: $0) }
+            // Only a UI test's relaunch or request (`RelaunchURL`, `RequestURL`); any other URL does nothing.
+            .onOpenURL { url in
+                startup.relaunch(by: url)
+                startup.request(by: url)
+            }
             // A Spotlight result: the root opens the scan (or, while the library has failed, drops the request).
             .onContinueUserActivity(CSSearchableItemActionType) { activity in
                 guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
@@ -50,10 +53,13 @@ struct FilingCabinetApp: App {
                 requests.send(.open(id))
             }
         }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { old, phase in
             guard let environment = startup.environment else { return }
             switch phase {
             case .active:
+                // At once, before the first active frame: the time away may lock the library again. The root tries Face
+                // ID, since it knows whether a scan is under way.
+                environment.lock.arrived()
                 environment.enteredForeground()
                 environment.lifecycle.sceneBecameActive()
                 // Now, so the first frame after midnight doesn't show yesterday.
@@ -64,8 +70,11 @@ struct FilingCabinetApp: App {
                 environment.banner.clear()
                 environment.lifecycle.sceneLeftForeground()
                 environment.leftForeground()
+                environment.lock.leftForeground()
             case .inactive:
                 environment.leftForeground()
+                // On the way back in: inside the relock time the cover goes now, not once the scene is active.
+                if old == .background { environment.lock.comingBack() }
             @unknown default:
                 break
             }

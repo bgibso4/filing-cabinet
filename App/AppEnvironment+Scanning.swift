@@ -80,13 +80,17 @@ extension AppEnvironment {
             self.analytics = analytics
         }
 
-        /// Settings, whose Apple Intelligence switch and reading line follow this model and pass.
-        func settings(preferences: AppPreferences, notifications: any CleanupNotifying) -> SettingsModel {
+        /// Settings, whose Apple Intelligence switch and reading line follow this model and pass; `lock` is the one its
+        /// Lock with Face ID switch turns on and off.
+        func settings(
+            preferences: AppPreferences, notifications: any CleanupNotifying, lock: LibraryLock
+        ) -> SettingsModel {
             SettingsModel(
                 preferences: preferences,
                 notifications: notifications,
                 suggester: suggester,
                 wordsPass: wordsPass,
+                lock: lock,
                 analytics: analytics)
         }
     }

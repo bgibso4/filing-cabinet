@@ -14,6 +14,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Requests/                requests from outside the app (scan, search, open a scan) and the hand-off that carries them to the root
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
+    Lock/                    the device authentication seam (DeviceAuthenticating): Face ID, with the passcode as the fallback
   Sources/Understanding/     reads pages on-device with Vision, turns text into a title. Mac-buildable
     Suggesting/              Apple Intelligence: the ScanSuggester seam, the on-device model's two calls (title and collection, then search words), prompts, title casing
   Sources/Library/           persistence, files, thumbnails, the Trash purge. Mac-buildable
@@ -31,6 +32,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Startup/                 the "library couldn't open" screen's model
     Feedback/                the feedback and report emails, device details, the privacy policy address
     Rating/                  the rating prompt's rule (10 saves on 3 different days)
+    Lock/                    LibraryLock: when the library is covered, when Face ID is tried, when it locks again
     Spotlight/               keeps Spotlight in step with the library
     App/                     routing a request from outside the app to the camera, Search or a scan
   Sources/Screens/           SwiftUI views and design system. iOS-only
@@ -41,6 +43,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Viewer/                  the viewer's views; DetailsSwipe opens Details with a swipe up
     Search/                  the Search screen: our own field, filter chips, result rows
     Welcome/, Startup/       the welcome screens and the "library couldn't open" screen
+    Lock/                    the lock cover, and the shield: a window above the app's own that shows it
     Feedback/                the mail composer behind Send feedback and Send report
   Sources/TestSupport/       test doubles (RecordingAnalytics, fake camera and reader, synthetic pages)
   Tests/                     CoreTests, UnderstandingTests, LibraryTests, ScreenModelsTests, ScreensTests,
@@ -128,9 +131,12 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-HoldScan` | launch finishes (seeding included) but Scan stays disabled, for auditing that state on a still Home |
 | `-RatingDue` | under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating |
 | `-Request scan\|search:<text>\|open:<n>` | a request from outside the app is sent at launch; `open:<n>` is the nth scan `-SeedScans` saves, from 1 |
+| `-Lock on` | the library lock is on (sets the preference, so outside `-UITest` it stays on); under `-UITest` it is otherwise off |
+| `-Authenticator succeeds\|succeedsOnce\|cancels\|cancelsOnce\|cancelsSecond\|fails\|passcodeOnly\|none` | a fake authenticator answers Face ID: `succeedsOnce` succeeds then cancels, `cancelsOnce` cancels then succeeds, `cancelsSecond` cancels only the second check; `passcodeOnly` has no Face ID, `none` no passcode |
+| `-LockAfter <seconds>` | the library locks again after this long in the background (300 otherwise) |
 | `-ReduceMotion` | the capture layer, Search and the welcome's second screen fade rather than move, and Home's count doesn't pop |
 
-UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build.
+UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build. A `RequestURL` (`Core/Launch/RequestURL.swift`) sends a request from outside the app to the running app the same way, for a journey that needs one after launch (`scan`, `search:<text>`, `open:<n>`).
 
 ## Import line
 

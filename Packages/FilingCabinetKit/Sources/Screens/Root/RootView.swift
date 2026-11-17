@@ -6,7 +6,8 @@ import SwiftUI
 /// The app's one navigation stack: Home at the root, collections, views and scans pushed on top. The capture layer
 /// covers it while a scan is in the camera or in review; Search rises over Home (B17); the camera-off sheet slides
 /// over it. On a first launch the welcome sheet covers Home until it is completed. Requests from outside the app (the
-/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9).
+/// Scan control, Shortcuts, Siri, Spotlight) are acted on here once launch and the welcome have finished (M9). While the
+/// library is locked, its cover hides the stack and the shield (LockShield) hides everything above it.
 public struct RootView: View {
     private let dependencies: RootDependencies
     private let canScan: Bool
@@ -25,6 +26,9 @@ public struct RootView: View {
     @Environment(\.accessibilityReduceMotion) private var systemReducesMotion
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.requestReview) private var requestReview
+    /// The capture layer's cover has finished appearing, with nothing else presented under it (`CoverPresence`). A scan
+    /// let through the lock shows only from then: until then the shield stays over whatever the app had presented.
+    @State private var captureCoverIsOnScreen = false
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -49,8 +53,30 @@ public struct RootView: View {
             )
             // Clear covers keep Home in the window under them; out of the accessibility tree meanwhile.
             .accessibilityHidden(isCapturing.wrappedValue || isSearching)
-            .background(BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching))
+            .background(
+                BarHiddenFromAccessibility(isHidden: isCapturing.wrappedValue || isSearching || lock.isLocked)
+            )
             .navigationDestination(for: AppRoute.self, destination: destination)
+        }
+        // Locked, the cover hides the library; directly over the stack, so it is what shows under a Scan request's
+        // clear capture layer, and as that layer slides away. The shield covers everything else, and comes down only
+        // for a scan started from outside while locked, once its cover is on screen.
+        .accessibilityHidden(lock.isLocked)
+        .overlay {
+            if lock.isLocked { LockCover(showsUnlock: false, onUnlock: {}) }
+        }
+        .background(
+            LockShield(
+                isUp: lock.shieldIsUp(captureCoverIsUp: isCapturing.wrappedValue && captureCoverIsOnScreen),
+                coversInBackground: lock.isOn,
+                showsUnlock: lock.showsUnlock,
+                colorScheme: colorScheme,
+                onUnlock: { Task { await lock.unlock() } })
+        )
+        // A cancelled or failed Face ID drops a waiting search or open: a later unlock never acts on it. A Scan request
+        // never waits for the lock, so it is left alone.
+        .onChange(of: lock.refusals) {
+            if let pending = requests.pending, pending != .scan { _ = requests.take() }
         }
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
@@ -60,6 +86,7 @@ public struct RootView: View {
             if isUp {
                 dependencies.home.hold()
             } else {
+                lock.captureLayerClosed()
                 withAnimation { dependencies.home.release() }
             }
         }
@@ -75,6 +102,7 @@ public struct RootView: View {
         }
         .fullScreenCover(isPresented: isCapturing) {
             CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
+                .background(CoverPresence { captureCoverIsOnScreen = $0 })
                 // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
                 // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
                 .presentationBackground(.clear)
@@ -110,6 +138,19 @@ public struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { dependencies.welcome.becameActive() }
         }
+        // The lock hears of a Scan request at once, not when the scan can start: launch may not have finished, and a Face
+        // ID try that ends meanwhile must not open the library behind the scan.
+        .onChange(of: requests.pending, initial: true) { _, pending in
+            if pending == .scan { lock.outsideScanRequested() }
+        }
+        // Face ID, once per arrival, and never for a scan: with a Scan request waiting, no try is made and the cover
+        // shows Unlock (the lock itself knows of a scan it let through). `initial`, so a root built while the scene is
+        // already active (Try again, a UI test's relaunch) tries too.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            guard phase == .active else { return }
+            let scanIsPending = requests.pending == .scan
+            Task { await lock.becameActive(scanIsPending: scanIsPending) }
+        }
         // Outermost, so the capture layer's cover gets it as well as Home.
         .environment(\.forcesReduceMotion, dependencies.forcesReduceMotion)
         // Settings › Appearance; nil follows the phone. Here so the cover and sheets, which present from this view,
@@ -127,13 +168,15 @@ public struct RootView: View {
 
     private func askForRatingIfDue(after phase: ScanFlowModel.Phase) {
         guard phase == .idle, dependencies.rating.isDue, dependencies.welcome.isFinished, !isSearching,
-            dependencies.welcome.step == nil
+            dependencies.welcome.step == nil, !lock.isLocked
         else { return }
         requestReview()
         dependencies.rating.asked()
     }
 
     private var flow: ScanFlowModel { dependencies.flow }
+
+    private var lock: LibraryLock { dependencies.lock }
 
     /// The capture layer can't be swiped away; the flow decides when it ends.
     private var isCapturing: Binding<Bool> {
@@ -200,6 +243,7 @@ public struct RootView: View {
             pending: requests.pending,
             canScan: canScan,
             welcomeFinished: welcomeFinished,
+            isLocked: lock.isLocked,
             flowPhase: flow.phase,
             searchCoverIsUp: searchCoverIsUp,
             pathDepth: path.count)
@@ -216,6 +260,7 @@ public struct RootView: View {
         guard canScan, let request = requests.pending else { return }
         let state = RootState(
             welcomeFinished: welcomeFinished,
+            isLocked: lock.isLocked,
             flowPhase: flow.phase,
             isSearching: searchCoverIsUp,
             pathDepth: path.count,
@@ -230,11 +275,14 @@ public struct RootView: View {
         case .popToHome:
             path = []
         case .ignore, .showReview:
-            // A review already open is the capture layer, over everything: it is what shows.
+            // A review already open is the capture layer, over everything: it is what shows, unless the library locked
+            // again over it (only a scan started from outside while locked shows through the lock).
             _ = requests.take()
         case .startScan:
-            // From Home, so saving or cancelling lands there.
+            // From Home, so saving or cancelling lands there. Locked, it ends at the cover: a scan never unlocks. Search
+            // and every pushed screen have been closed by now, and what they presented with them.
             _ = requests.take()
+            lock.outsideScanStarted()
             Task { await flow.scan(from: .outside, preselected: nil) }
         case .search(let text):
             _ = requests.take()
@@ -290,6 +338,8 @@ private struct RequestMoment: Equatable {
     let canScan: Bool
     // periphery:ignore - read only by the synthesized Equatable
     let welcomeFinished: Bool
+    // periphery:ignore - read only by the synthesized Equatable
+    let isLocked: Bool
     // periphery:ignore - read only by the synthesized Equatable
     let flowPhase: ScanFlowModel.Phase
     // periphery:ignore - read only by the synthesized Equatable

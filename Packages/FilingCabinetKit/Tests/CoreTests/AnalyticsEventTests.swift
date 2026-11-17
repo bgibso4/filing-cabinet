@@ -92,6 +92,12 @@ private struct Expected {
     }
 }
 
+@Test func lockEventCarriesOnlyItsFlag() {
+    #expect(AnalyticsEvent.lockChanged(isOn: true).name == "lockChanged")
+    #expect(AnalyticsEvent.lockChanged(isOn: true).payload == [.isOn: .bool(true)])
+    #expect(AnalyticsEvent.lockChanged(isOn: false).payload == [.isOn: .bool(false)])
+}
+
 @Test func libraryOpenFailedCarriesNothing() {
     #expect(AnalyticsEvent.libraryOpenFailed.name == "libraryOpenFailed")
     #expect(AnalyticsEvent.libraryOpenFailed.payload.isEmpty)

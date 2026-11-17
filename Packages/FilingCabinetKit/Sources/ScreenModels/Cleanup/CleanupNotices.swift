@@ -8,13 +8,15 @@ package enum CleanupNotices {
     package static let defaultLimit = 64
 
     /// A note for each of the next `limit` days on which scans enter Trash on their own (M9). A scan counts
-    /// only while it is in the library, has a last day and has no stored `trashedDay`.
+    /// only while it is in the library, has a last day and has no stored `trashedDay`. With `namesScans` false (the
+    /// library lock is on) no note holds a title or a kind of scan.
     package static func plan(
         scans: [ScanSummary],
         lifespans: CollectionLifespans,
         today: CalendarDay,
         clock: AppClock,
-        limit: Int = defaultLimit
+        limit: Int = defaultLimit,
+        namesScans: Bool = true
     ) -> [ScheduledNotice] {
         let calendar = clock.calendar
         // The day's year, month and day are Gregorian (as `CalendarDay` is), whatever the device calendar;
@@ -31,18 +33,39 @@ package enum CleanupNotices {
         }
         return byEntryDay.keys.sorted().prefix(limit).map { entry in
             let scans = (byEntryDay[entry] ?? []).sorted { ($0.scannedAt, $0.title) < ($1.scannedAt, $1.title) }
-            return notice(for: scans, on: entry, calendar: gregorian)
+            return notice(for: scans, on: entry, calendar: gregorian, namesScans: namesScans)
         }
     }
 
-    private static func notice(for scans: [ScanSummary], on entry: CalendarDay, calendar: Calendar) -> ScheduledNotice {
-        let (title, body) = text(for: scans)
+    private static func notice(
+        for scans: [ScanSummary], on entry: CalendarDay, calendar: Calendar, namesScans: Bool
+    ) -> ScheduledNotice {
+        let (title, body) = namesScans ? text(for: scans) : unnamedText(count: scans.count)
         return ScheduledNotice(
             id: "\(ScheduledNotice.idPrefix)\(entry.storageValue)",
             fireDate: DateComponents(
                 calendar: calendar, year: entry.year, month: entry.month, day: entry.day, hour: 9, minute: 0),
             title: title,
             body: body)
+    }
+
+    /// The notes while the library is locked: counts only.
+    private static func unnamedText(count: Int) -> (title: String, body: String) {
+        let days = Lifecycle.trashDays
+        guard count > 1 else {
+            return (
+                String(localized: "Cleaned up 1 scan", bundle: #bundle),
+                String(
+                    localized: "An expired scan moved to Trash. It’s there for \(days) days if you need it.",
+                    bundle: #bundle)
+            )
+        }
+        return (
+            String(localized: "Cleaned up \(count) scans", bundle: #bundle),
+            String(
+                localized: "Expired scans moved to Trash. They’re there for \(days) days if you need one back.",
+                bundle: #bundle)
+        )
     }
 
     private static func text(for scans: [ScanSummary]) -> (title: String, body: String) {
