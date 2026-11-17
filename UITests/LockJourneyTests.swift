@@ -252,8 +252,17 @@ final class LockJourneyTests: XCTestCase {
         gear.tap()
         assertIdentifiers(AccessibilityID.Settings.all + [AccessibilityID.Grid.back], in: app)
         let lock = app.switches[AccessibilityID.Settings.lockSwitch]
-        if !lock.isHittable { app.swipeUp() }
+        if !lock.isHittable { dragUp(app) }
         XCTAssertTrue(lock.satisfies("isHittable == true", within: 5))
         return lock
+    }
+
+    /// Scrolls up by a set distance: a slow drag held at its end, so no momentum carries on. A swipe stops wherever its
+    /// momentum ends, and on CI that left Settings' first row half under the header bar, where the audit reads the
+    /// bar's blur as low contrast ("Collections" at y 73, runs on 5555b3f and 04024c3).
+    private func dragUp(_ app: XCUIApplication) {
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+        start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
     }
 }
