@@ -14,7 +14,7 @@ final class SearchJourneyTests: XCTestCase {
     func testSearchFindsAScanByItsText() throws {
         let app = seededApp()
         let field = openSearch(in: app)
-        XCTAssertTrue(app.keyboards.firstMatch.appears(within: keyboardTimeout), "the field is focused on arrival")
+        XCTAssertTrue(app.keyboards.firstMatch.appears(within: systemUITimeout), "the field is focused on arrival")
         let scan = app.buttons[AccessibilityID.Home.scan]
         XCTAssertTrue(scan.satisfies(within: 5) { !($0.exists && $0.isHittable) }, "Search has no Scan")
 

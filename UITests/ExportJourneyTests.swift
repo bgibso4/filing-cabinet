@@ -65,7 +65,7 @@ final class ExportJourneyTests: XCTestCase {
         // The caption arrives after the sheet. Reading its label before it exists fails the test at once instead of
         // waiting (CI runs 43120343687 and 43146785138), so wait for it first.
         let caption = app.otherElements["LP.CaptionBar.TopCaption"]
-        XCTAssertTrue(caption.appears(within: 10))
+        XCTAssertTrue(caption.appears(within: systemUITimeout))
         XCTAssertTrue(caption.satisfies("label == %@", "Sample scan 2", within: 5))
         attachScreenshot("Share sheet", of: app)
 
