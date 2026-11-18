@@ -74,6 +74,7 @@ struct SearchBeforeTyping: View {
                     .aspectRatio(Self.viewedAspect, contentMode: .fit)
                     .overlay { ThumbnailView(id: scan.id, page: 0, provider: thumbnails) }
                     .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+                    .scanTransitionSource(scan.id)
                 // At large text the title wraps, and the dot stays with its first line (as the viewer's header).
                 HStack(
                     alignment: typeSize.isAccessibilitySize ? .firstTextBaseline : .center, spacing: Tokens.Spacing.s1

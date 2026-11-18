@@ -176,6 +176,16 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(!LaunchOptions(arguments: ["-HoldScan"], isDebugBuild: false).holdScan)
 }
 
+@Test func uiTestsTurnAnimationsOffUnlessAnimationsIsGiven() {
+    func disables(_ arguments: [String], isDebugBuild: Bool = true) -> Bool {
+        LaunchOptions(arguments: arguments, isDebugBuild: isDebugBuild).disablesAnimations
+    }
+    #expect(disables(["-UITest"]))
+    #expect(!disables(["-UITest", "-Animations"]))
+    #expect(!disables([]))
+    #expect(!disables(["-UITest"], isDebugBuild: false))
+}
+
 @Test func parsesRequest() {
     func request(_ value: String) -> RequestFlag? {
         LaunchOptions(arguments: ["-Request", value], isDebugBuild: true).request

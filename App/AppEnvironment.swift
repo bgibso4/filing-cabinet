@@ -143,9 +143,8 @@ final class AppEnvironment {
         arguments: [String], isRetry: Bool = false, analytics: any Analytics
     ) throws(LibraryOpenFailure) -> AppEnvironment {
         let options = LaunchOptions(arguments: arguments, isDebugBuild: isDebugBuild)
-        if options.isUITest {
-            UIView.setAnimationsEnabled(false)
-        }
+        // Set on every launch, a UI test's relaunch included: the class before may have turned them off.
+        UIView.setAnimationsEnabled(!options.disablesAnimations)
         return try AppEnvironment(options: options, isRetry: isRetry, analytics: analytics)
     }
 

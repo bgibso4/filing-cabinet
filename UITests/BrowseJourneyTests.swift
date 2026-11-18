@@ -207,14 +207,16 @@ final class BrowseJourneyTests: XCTestCase {
     }
 
     func testEdgeSwipeGoesBackFromTheViewer() {
-        let app = seededApp()
+        // The swipe back zooms the scan into its tile (#98), and never finishes with animations off.
+        let app = seededApp(flags: ["-Animations"])
         openThreePageScan(in: app)
         edgeSwipeBack(in: app)
         XCTAssertTrue(app.header(.documents).appears(within: 5))
     }
 
     func testEdgeSwipeGoesBackFromALaterPage() {
-        let app = seededApp()
+        // The swipe back zooms the scan into its tile (#98), and never finishes with animations off.
+        let app = seededApp(flags: ["-Animations"])
         openThreePageScan(in: app)
         app.windows.firstMatch.swipeLeft()
         assertPageLabel("Page 2 of 3", in: app)
@@ -223,7 +225,8 @@ final class BrowseJourneyTests: XCTestCase {
     }
 
     func testEdgeSwipeGoesBackFromAZoomedPage() {
-        let app = seededApp()
+        // The swipe back zooms the scan into its tile (#98), and never finishes with animations off.
+        let app = seededApp(flags: ["-Animations"])
         openThreePageScan(in: app)
         // The page says it is zoomed once the zoom has finished; only then is the swipe a test of a zoomed page.
         zoomTheFirstPage(in: app)

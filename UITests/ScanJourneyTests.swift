@@ -311,8 +311,8 @@ extension ScanJourneyTests {
         chooseReceipts(in: app)
         let save = app.buttons[Review.save]
         save.tap()
-        XCTAssertTrue(save.disappears(within: 10))
         if dismissingRating { dismissRatingPrompt(in: app) }
+        XCTAssertTrue(save.disappears(within: 10))
         waitForSaveToReturnHome(in: app)
     }
 

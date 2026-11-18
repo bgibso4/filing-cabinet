@@ -75,6 +75,7 @@ struct SearchResultRow: View {
         ThumbnailView(id: result.id, page: 0, provider: thumbnails, showsWideImagesWhole: true)
             .frame(width: Self.thumbnailSize.width, height: Self.thumbnailSize.height)
             .clipShape(.rect(cornerRadius: Tokens.Radius.nested))
+            .scanTransitionSource(result.id)
             .overlay {
                 RoundedRectangle(cornerRadius: Tokens.Radius.nested)
                     .strokeBorder(Tokens.Color.separator, lineWidth: Self.thumbnailEdge)

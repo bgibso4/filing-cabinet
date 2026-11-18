@@ -43,7 +43,9 @@ final class CameraAccessJourneyTests: XCTestCase {
 
         assertIdentifiers(AccessibilityID.Camera.all, in: app)
         app.buttons[AccessibilityID.Camera.fakeCancel].tap()
-        XCTAssertTrue(scan.appears(within: 5))
+        // As long as every other wait for the layer to go: Home is out of the tree until it has, and on a slow CI
+        // runner that was still so after 5 s, with Home already on screen (run 43907743963).
+        XCTAssertTrue(scan.appears(within: 10))
         XCTAssertTrue(scan.isHittable)
         XCTAssertFalse(app.buttons[AccessibilityID.Camera.fakeCancel].exists)
     }

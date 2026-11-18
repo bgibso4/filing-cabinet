@@ -55,8 +55,9 @@ struct SearchCover<Viewer: View>: View {
             GridRoute(makeModel: makeModel) { model in
                 SearchView(model: model, thumbnails: thumbnails, onOpen: { path.append($0) }, onClose: close)
             }
-            .navigationDestination(for: ScanID.self) { viewer($0) }
+            .navigationDestination(for: ScanID.self) { viewer($0).scanTransition($0) }
         }
+        .scanTransitionScope()
         // Opaque under every screen of the stack, so nothing of Home shows through.
         .background(Tokens.Color.bgGrouped)
     }

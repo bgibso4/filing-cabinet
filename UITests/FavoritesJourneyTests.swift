@@ -5,6 +5,10 @@ import XCTest
 /// scans are "Sample scan 1" (newest) to "Sample scan 6"; `-SeedFavorites n` makes the first n favourites, in order.
 @MainActor
 final class FavoritesJourneyTests: XCTestCase {
+    /// How long a drag presses before it moves. The tile lifts after about 0.3 s on a Mac; on a busy CI runner it once
+    /// hadn't lifted after 1 s, the finger moved first and nothing reordered (run 43997920889). Longer than any lift.
+    private let liftPress: TimeInterval = 3
+
     override func setUp() {
         continueAfterFailure = false
     }
@@ -196,7 +200,7 @@ final class FavoritesJourneyTests: XCTestCase {
     private func drag(_ title: String, before target: String, in app: XCUIApplication) {
         let drop = tile(target, in: app).coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.4))
         tile(title, in: app).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)).press(
-            forDuration: 1.0, thenDragTo: drop, withVelocity: .slow, thenHoldForDuration: 0.5)
+            forDuration: liftPress, thenDragTo: drop, withVelocity: .slow, thenHoldForDuration: 0.5)
     }
 
     private func goBack(in app: XCUIApplication) {
