@@ -1,8 +1,8 @@
 import SwiftUI
 
 extension EnvironmentValues {
-    /// True while the camera or review covers the screens. The cover is clear, so they stay in the window and in the
-    /// accessibility tree unless they hide themselves.
+    /// True while the camera or review covers the screens: from when the layer has finished sliding up until it starts
+    /// to go. The cover is clear, so they stay in the window and in the accessibility tree unless they hide themselves.
     @Entry var captureLayerIsUp = false
 }
 

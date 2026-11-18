@@ -8,6 +8,8 @@ import SwiftUI
 struct CaptureContainer: View {
     let flow: ScanFlowModel
     let cameraMode: CameraMode
+    /// Called as the layer starts to slide away, so the root can have Scan back in place before Home shows (#80).
+    let onLeaving: () -> Void
 
     // Task 20 Part C (Ben): "about 0.3 s, the standard iOS feel". No motion tokens exist in design/tokens.json.
     private static let slide = Animation.smooth(duration: 0.3)
@@ -82,6 +84,7 @@ struct CaptureContainer: View {
     private func leave(then end: @escaping () -> Void) {
         guard !isLeaving else { return }
         pendingEnd = end
+        onLeaving()
         withAnimation(reduceMotion ? Self.fade : Self.slide) {
             isLeaving = true
         } completion: {
