@@ -6,7 +6,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 ## Where we are
 
-**Phase: Plans 1–6 and the AI follow-up are merged (Plan 6: PR #96, 2026-11-14; AI follow-up: PR #99, 2026-11-14), so every green merge to `main` uploads to TestFlight. The library lock (#26, with the storage decisions of #93) is built on `library-lock`; the PR is pending, so it is not merged.** Follow-ups: #90 (suggestion quality), #92, #95, #83 (fade behind Scan), #85 (header text size), a glass Scan button.
+**Phase: Plans 1–6, the AI follow-up and the library lock are merged (Plan 6: PR #96, 2026-11-14; AI follow-up: PR #99, 2026-11-14; library lock, #26 with the storage decisions of #93: PR #101, 2026-11-16), so every green merge to `main` uploads to TestFlight.** Follow-ups: #90 (suggestion quality), #95, #85 (header text size), #104 (tests that failed only in CI), a glass Scan button.
 
 - Requirements win over the design spec and this file (for example, iOS 27 minimum). `docs/superpowers/specs/2026-07-12-filing-cabinet-design.md` is superseded: history only.
 - We work mock-driven: build what `design/` shows; raise anything it doesn't cover rather than guessing in code.
