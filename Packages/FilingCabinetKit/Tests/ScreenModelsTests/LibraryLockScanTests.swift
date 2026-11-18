@@ -22,6 +22,47 @@ import Testing
     #expect(rig.lock.refusals == 0)
 }
 
+// Camera access is off: the scan a locked request asked for never opens. There is no scan to keep Face ID away from,
+// so it is an ordinary arrival: one try by itself, and the next arrivals try as usual.
+
+@MainActor @Test func aLockedScanThatCannotStartTriesFaceIDAndOpens() async throws {
+    let rig = try LockRig()
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive(scanIsPending: true)
+    rig.lock.outsideScanStarted()
+    await rig.lock.outsideScanCouldNotStart()
+    #expect(rig.authenticator.reasons.count == 1)
+    #expect(!rig.lock.isLocked)
+}
+
+@MainActor @Test func aLockedScanThatCannotStartAndIsRefusedShowsUnlockAndLaterArrivalsTry() async throws {
+    let rig = try LockRig(results: [.cancelled, .success])
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive(scanIsPending: true)
+    rig.lock.outsideScanStarted()
+    await rig.lock.outsideScanCouldNotStart()
+    #expect(rig.lock.isLocked)
+    #expect(rig.lock.showsUnlock)
+    #expect(rig.lock.shieldIsUp(captureCoverIsUp: true))
+    rig.lock.leftForeground()
+    await rig.lock.becameActive(scanIsPending: false)
+    #expect(rig.authenticator.reasons.count == 2)
+    #expect(!rig.lock.isLocked)
+}
+
+@MainActor @Test func aScanThatCannotStartWhileUnlockedAsksNothing() async throws {
+    let rig = try LockRig()
+    defer { rig.fresh.cleanUp() }
+    rig.lock.launched()
+    await rig.lock.becameActive(scanIsPending: false)
+    rig.lock.outsideScanStarted()
+    await rig.lock.outsideScanCouldNotStart()
+    #expect(rig.authenticator.reasons.count == 1)
+    #expect(!rig.lock.isLocked)
+}
+
 @MainActor @Test func aTryInFlightWhenAScanStartsNeverUnlocks() async throws {
     let fresh = try FreshDefaults()
     defer { fresh.cleanUp() }

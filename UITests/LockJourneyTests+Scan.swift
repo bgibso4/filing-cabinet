@@ -48,6 +48,14 @@ extension LockJourneyTests {
         XCTAssertFalse(sheet.exists, "the share sheet closed with the viewer")
     }
 
+    /// Camera access is off, so a Scan request from outside has no scan to open. Locked, it is an ordinary arrival: Face
+    /// ID runs by itself, with no tap on Unlock, and the camera-off message is there when the library opens.
+    func testScanRequestWithTheCameraOffUnlocksWithFaceID() {
+        let app = lockedApp(authenticator: "succeeds", ["-CameraDenied", "-Request", "scan"])
+        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].satisfies("isHittable == true", within: 10))
+        XCTAssertFalse(cover(in: app).exists)
+    }
+
     /// A scan started while unlocked and left in review is covered like the rest once the library locks again; Unlock
     /// returns to the review as it was (ruling R10).
     func testAReviewLeftOpenIsCoveredAfterARelock() {

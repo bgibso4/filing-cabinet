@@ -143,6 +143,16 @@ public final class LibraryLock {
         scanIsLetThrough = false
     }
 
+    /// The scan the root started for a request from outside never opened its capture layer: camera access is off.
+    /// Locked, there is no scan to keep clear of Face ID, so this is an ordinary arrival: one try, and unlocked the
+    /// person finds the camera-off message. An open library, and a scan started from inside the app, change nothing.
+    public func outsideScanCouldNotStart() async {
+        guard scanIsLetThrough else { return }
+        scanIsLetThrough = false
+        guard isLocked, !isChecking else { return }
+        await tryUnlock()
+    }
+
     /// The Unlock button.
     public func unlock() async {
         guard isLocked, !isChecking else { return }
