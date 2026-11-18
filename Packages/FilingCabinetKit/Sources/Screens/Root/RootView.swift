@@ -74,11 +74,7 @@ public struct RootView: View {
                 colorScheme: colorScheme,
                 onUnlock: { Task { await lock.unlock() } })
         )
-        // A cancelled or failed Face ID drops a waiting search or open: a later unlock never acts on it. A Scan request
-        // never waits for the lock, so it is left alone.
-        .onChange(of: lock.refusals) {
-            if let pending = requests.pending, pending != .scan { _ = requests.take() }
-        }
+        .modifier(LockRequestHooks(lock: lock, requests: requests, flow: flow))
         .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
         .scanTransitionScope()
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
@@ -139,11 +135,6 @@ public struct RootView: View {
         // Back from iOS's notification ask: the welcome closes even if the answer never comes (M11).
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { dependencies.welcome.becameActive() }
-        }
-        // The lock hears of a Scan request at once, not when the scan can start: launch may not have finished, and a Face
-        // ID try that ends meanwhile must not open the library behind the scan.
-        .onChange(of: requests.pending, initial: true) { _, pending in
-            if pending == .scan { lock.outsideScanRequested() }
         }
         // Face ID, once per arrival, and never for a scan: with a Scan request waiting, no try is made and the cover
         // shows Unlock (the lock itself knows of a scan it let through). `initial`, so a root built while the scene is
