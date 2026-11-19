@@ -79,7 +79,7 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make audit-report` | every accessibility audit issue and exemption use in the newest test results (`RESULT=<.xcresult>` for another) |
 | `make ci` | everything CI runs: `ci-checks`, then `ci-sim` |
 | `make ci-checks` | generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, Periphery, changed snapshots, `check-resolved` |
-| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` and `SHARD=browse` (the two longest UI classes; scan also runs the Trash and Settings journeys, browse the snapshot tests) and `SHARD=main` (everything else) |
+| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` (the Scan, Trash, Settings, Details, Favorites and Search journeys), `SHARD=browse` (the Browse journey and the snapshot tests) and `SHARD=main` (everything else), split so the three take similar time |
 | `make lint` / `make format` | SwiftLint + swift-format strict lint / apply swift-format |
 | `make unused` | Periphery dead-code scan |
 | `make snapshots-record` | re-record the snapshot references that fail or are missing, on the pinned simulator (`ONLY=` for some classes; `SNAPSHOT_RECORD=all` rewrites every one) |

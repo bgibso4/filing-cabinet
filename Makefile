@@ -231,16 +231,19 @@ ci-checks: generate
 	scripts/changed-snapshots.sh $(BASE_REF)
 	$(MAKE) --no-print-directory check-resolved
 
-# The simulator suite: whole (SHARD=all, the default) or one CI shard. The scan and browse shards take the two
-# longest UI classes; browse also takes the snapshot tests, and scan the Trash and Settings journeys, so the three
-# shards' tests take similar time (CI runs 42508098398 and 42519316014). main skips what the others run rather than
-# listing the rest, so a new test class lands in main.
+# The simulator suite: whole (SHARD=all, the default) or one CI shard. The wait is the slowest shard, so the three are
+# kept at similar test time. browse takes the snapshot tests and the Browse journey. scan takes the Scan, Trash and
+# Settings journeys and, since main ran 22 min of tests against scan's 9 and browse's 15 (CI runs 44318604388,
+# 44299675245 and 44011074324), the Details, Favorites and Search journeys (about 410 s). The scan runner's speed
+# varies most (its first three classes took 350 to 600 s in those runs). main skips what the others run rather than
+# listing the rest, so a new test class lands in main: move a class out of main when it grows past the others.
 # CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
 # The scan shard first flaked (4 of 10 CI runs): each read of the screen took 1 to 4 s there, and waits of 2 to 5 s
 # ran out. One launch per class (Launch.swift) and one read per check in the tight waits address that (#43).
 SHARD             ?= all
 SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests FilingCabinetUITests/TrashJourneyTests \
-	FilingCabinetUITests/SettingsJourneyTests
+	FilingCabinetUITests/SettingsJourneyTests FilingCabinetUITests/DetailsJourneyTests \
+	FilingCabinetUITests/FavoritesJourneyTests FilingCabinetUITests/SearchJourneyTests
 SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests FilingCabinetSnapshotTests
 SHARD_ONLY_scan   := $(SHARD_SCAN)
 SHARD_ONLY_browse := $(SHARD_BROWSE)
