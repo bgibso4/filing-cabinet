@@ -41,9 +41,8 @@ private struct BannerHarness {
     init(
         _ scans: [ScanSummary],
         seenThrough: CalendarDay?,
-        authorization: NotificationAuthorization = .denied,
         notesOn: Bool = true
-    ) async throws {
+    ) throws {
         fresh = try FreshDefaults()
         preferences = AppPreferences(defaults: fresh.defaults)
         preferences.cleanupSeenThrough = seenThrough
@@ -52,9 +51,7 @@ private struct BannerHarness {
         banner = CleanupBanner(
             library: library,
             today: Today(clock: clock),
-            preferences: preferences,
-            notifications: FakeNotificationCenter(authorization: authorization))
-        await banner.refreshAuthorization()
+            preferences: preferences)
     }
 
     func cleanUp() { fresh.cleanUp() }
@@ -62,7 +59,7 @@ private struct BannerHarness {
 
 @MainActor
 @Test func countsNaturalEntriesSinceLastSeen() async throws {
-    let harness = try await BannerHarness(
+    let harness = try BannerHarness(
         [
             expired(entering: day(-6)), expired(entering: day(-5)), expired(entering: day(-4)),
             expired(entering: day(0)),
@@ -75,52 +72,29 @@ private struct BannerHarness {
 
 @MainActor
 @Test func oneScanIsSingular() async throws {
-    let harness = try await BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
+    let harness = try BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
     defer { harness.cleanUp() }
     #expect(harness.banner.text == "1 scan moved to Trash")
 }
 
 @MainActor
-@Test func hiddenWhenNotesAreOn() async throws {
-    let harness = try await BannerHarness(
-        [expired(entering: day(-1))], seenThrough: day(-2), authorization: .authorized)
+/// A note may not have arrived (it came due with the app open, or iOS held it back), so Home says it too.
+@Test func shownWhenNotesAreOn() async throws {
+    let harness = try BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
     defer { harness.cleanUp() }
-    #expect(harness.banner.text == nil)
+    #expect(harness.banner.text == "1 scan moved to Trash")
 }
 
 @MainActor
 @Test func shownWhenNotesAreTurnedOff() async throws {
-    let harness = try await BannerHarness(
-        [expired(entering: day(-1))], seenThrough: day(-2), authorization: .authorized, notesOn: false)
+    let harness = try BannerHarness([expired(entering: day(-1))], seenThrough: day(-2), notesOn: false)
     defer { harness.cleanUp() }
     #expect(harness.banner.text == "1 scan moved to Trash")
-}
-
-@MainActor
-@Test func shownWhenNotesWereNeverAllowed() async throws {
-    let harness = try await BannerHarness(
-        [expired(entering: day(-1))], seenThrough: day(-2), authorization: .notDetermined)
-    defer { harness.cleanUp() }
-    #expect(harness.banner.text == "1 scan moved to Trash")
-}
-
-@MainActor
-@Test func hiddenUntilAuthorizationIsKnown() throws {
-    let fresh = try FreshDefaults()
-    defer { fresh.cleanUp() }
-    let preferences = AppPreferences(defaults: fresh.defaults)
-    preferences.cleanupSeenThrough = day(-2)
-    let banner = CleanupBanner(
-        library: FakeLibrary(scans: [expired(entering: day(-1))], clock: clock),
-        today: Today(clock: clock),
-        preferences: preferences,
-        notifications: FakeNotificationCenter(authorization: .denied))
-    #expect(banner.text == nil)
 }
 
 @MainActor
 @Test func firstRunStartsAtToday() async throws {
-    let harness = try await BannerHarness([expired(entering: day(0))], seenThrough: nil)
+    let harness = try BannerHarness([expired(entering: day(0))], seenThrough: nil)
     defer { harness.cleanUp() }
     #expect(harness.preferences.cleanupSeenThrough == oct12)
     #expect(harness.banner.text == nil)
@@ -128,7 +102,7 @@ private struct BannerHarness {
 
 @MainActor
 @Test func clearHidesIt() async throws {
-    let harness = try await BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
+    let harness = try BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
     defer { harness.cleanUp() }
     #expect(harness.banner.text != nil)
 
@@ -141,7 +115,7 @@ private struct BannerHarness {
 @MainActor
 @Test func manualTrashDoesNotCount() async throws {
     // Moved to Trash by hand yesterday, though its own last day would have sent it there anyway.
-    let harness = try await BannerHarness(
+    let harness = try BannerHarness(
         [expired(entering: day(-1), trashedDay: day(-1))], seenThrough: day(-2))
     defer { harness.cleanUp() }
     #expect(harness.banner.text == nil)
@@ -150,7 +124,7 @@ private struct BannerHarness {
 @MainActor
 @Test func deletedScansNoLongerCount() async throws {
     // Entered on its own 31 days ago, so it is gone from Trash.
-    let harness = try await BannerHarness([expired(entering: day(-30))], seenThrough: day(-40))
+    let harness = try BannerHarness([expired(entering: day(-30))], seenThrough: day(-40))
     defer { harness.cleanUp() }
     #expect(harness.banner.text == nil)
 }
@@ -158,7 +132,7 @@ private struct BannerHarness {
 @MainActor
 @Test func lifespanChangeThatLeavesTheEntryDayStillCounts() async throws {
     // Its own last day sent it to Trash, so no lifespan moves its entry day: it is still news.
-    let harness = try await BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
+    let harness = try BannerHarness([expired(entering: day(-1))], seenThrough: day(-2))
     defer { harness.cleanUp() }
 
     try harness.library.setLifespan(.year, for: .throwaways)

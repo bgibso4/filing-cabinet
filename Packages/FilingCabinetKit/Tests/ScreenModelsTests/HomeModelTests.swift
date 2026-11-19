@@ -215,9 +215,7 @@ private func allScansCount(_ home: HomeModel) -> Int? {
     let banner = CleanupBanner(
         library: library,
         today: today,
-        preferences: preferences,
-        notifications: FakeNotificationCenter(authorization: .denied))
-    await banner.refreshAuthorization()
+        preferences: preferences)
     let home = HomeModel(library: library, today: today, calendar: utc, banner: banner)
     #expect(home.banner == "1 scan moved to Trash")
 
