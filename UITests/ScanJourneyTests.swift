@@ -236,9 +236,8 @@ final class ScanJourneyTests: XCTestCase {
         XCTAssertTrue(alert.appears(within: 5))
         alert.buttons["Discard"].tap()
         XCTAssertTrue(app.buttons[Review.save].disappears(within: 5))
-        let scan = app.buttons[AccessibilityID.Home.scan]
-        XCTAssertTrue(scan.appears(within: 5))
-        XCTAssertTrue(scan.isHittable)
+        // Scan is back in the tree as the layer starts to slide away (#80), and can be tapped once it has gone.
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isHittable == true", within: 5))
     }
 
     func testRescanCancelKeepsTitle() {

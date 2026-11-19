@@ -29,6 +29,8 @@ public struct RootView: View {
     /// The capture layer's cover has finished appearing, with nothing else presented under it (`CoverPresence`). A scan
     /// let through the lock shows only from then: until then the shield stays over whatever the app had presented.
     @State private var captureCoverIsOnScreen = false
+    /// True from when the capture layer starts to slide away until it has gone.
+    @State private var captureLayerIsLeaving = false
     /// Counts restores from the Trash viewer. Their success haptic plays here, because the viewer pops in the same
     /// update.
     @State private var restores = 0
@@ -75,7 +77,11 @@ public struct RootView: View {
                 onUnlock: { Task { await lock.unlock() } })
         )
         .modifier(LockRequestHooks(lock: lock, requests: requests, flow: flow))
-        .environment(\.captureLayerIsUp, isCapturing.wrappedValue)
+        // Scan hides only while the layer really covers it: it stays in view while the layer slides up over it, and is
+        // back as the layer starts to slide away (#80).
+        .environment(
+            \.captureLayerIsUp, isCapturing.wrappedValue && captureCoverIsOnScreen && !captureLayerIsLeaving
+        )
         .scanTransitionScope()
         // Home holds still under the layer and catches up once it has slid away, so the count ticks and pops in view.
         // `hold()` runs just after the render in which the layer appears; that is fine, because nothing can be saved
@@ -84,6 +90,7 @@ public struct RootView: View {
             if isUp {
                 dependencies.home.hold()
             } else {
+                captureLayerIsLeaving = false
                 lock.captureLayerClosed()
                 withAnimation { dependencies.home.release() }
             }
@@ -99,11 +106,13 @@ public struct RootView: View {
             askForRatingIfDue(after: phase)
         }
         .fullScreenCover(isPresented: isCapturing) {
-            CaptureContainer(flow: flow, cameraMode: dependencies.cameraMode)
-                .background(CoverPresence { captureCoverIsOnScreen = $0 })
-                // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
-                // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
-                .presentationBackground(.clear)
+            CaptureContainer(
+                flow: flow, cameraMode: dependencies.cameraMode, onLeaving: { captureLayerIsLeaving = true }
+            )
+            .background(CoverPresence { captureCoverIsOnScreen = $0 })
+            // Both of its screens are opaque. A clear presentation keeps the root in the window underneath, so Home
+            // shows as the layer slides away; otherwise the screen is blank for two frames when the cover goes.
+            .presentationBackground(.clear)
         }
         // The request handling waits for `onDismiss`: until then Search's cover is still leaving.
         .fullScreenCover(
