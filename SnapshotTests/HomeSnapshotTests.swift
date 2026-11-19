@@ -64,9 +64,7 @@ final class HomeSnapshotTests: XCTestCase {
         let banner = CleanupBanner(
             library: library,
             today: today,
-            preferences: preferences,
-            notifications: FakeNotificationCenter(authorization: .denied))
-        await banner.refreshAuthorization()
+            preferences: preferences)
         let model = HomeModel(library: library, today: today, calendar: Fixtures.clock.calendar, banner: banner)
         try SnapshotHost.assertScreen(
             rooted(

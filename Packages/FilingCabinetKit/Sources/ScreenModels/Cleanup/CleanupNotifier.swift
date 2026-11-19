@@ -58,11 +58,9 @@ public final class CleanupNotifier {
             await center.replacePending(with: [])
             return
         }
-        // `today` from the same clock as the calendar, so the two can't disagree (Task 13 review).
         let notices = CleanupNotices.plan(
             scans: library.scans,
             lifespans: library.lifespans,
-            today: clock.today,
             clock: clock,
             namesScans: !preferences.lockOn)
         ScreenModelsLog.logger.info("Scheduled \(notices.count, privacy: .public) cleanup notes")

@@ -68,7 +68,7 @@ final class AppEnvironment {
         let (preferences, history) = Self.makeKept(options: options)
         self.preferences = preferences
         let notifications = Self.notificationCenter(options: options)
-        let banner = CleanupBanner(library: store, today: today, preferences: preferences, notifications: notifications)
+        let banner = CleanupBanner(library: store, today: today, preferences: preferences)
         self.banner = banner
         notifier = CleanupNotifier(
             library: store, today: today, preferences: preferences, center: notifications, clock: clock)
@@ -187,11 +187,9 @@ final class AppEnvironment {
                 }
             }
         #endif
-        // Before asking iOS about notifications: Scan doesn't need the answer, and iOS can be slow to give it.
         // `-HoldScan` keeps Scan disabled once seeding is done, so its audit sees a still Home.
         isReady = !options.holdScan
         wordsPass.resume()
-        await banner.refreshAuthorization()
     }
 
     /// Back in the app (the app has already refreshed today): a new time zone or a new answer in iPhone Settings may
@@ -200,7 +198,6 @@ final class AppEnvironment {
     func becameActive() async {
         notifier.reschedule()
         spotlight.syncAgain()
-        await banner.refreshAuthorization()
         guard isReady else { return }
         await purgeTrash()
         wordsPass.resume()

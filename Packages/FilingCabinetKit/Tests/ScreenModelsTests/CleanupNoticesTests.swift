@@ -39,7 +39,7 @@ private func expiring(
 private func plan(
     _ scans: [ScanSummary], lifespans: CollectionLifespans = .defaults, clock: AppClock = clock
 ) -> [ScheduledNotice] {
-    CleanupNotices.plan(scans: scans, lifespans: lifespans, today: today, clock: clock)
+    CleanupNotices.plan(scans: scans, lifespans: lifespans, clock: clock)
 }
 
 @Test func oneScanNamesItWithItsNoun() {
@@ -130,8 +130,23 @@ private func plan(
     #expect(plan([trashed, restored]).isEmpty)
 }
 
-@Test func aScanThatEntersTrashTodayIsNotAnnounced() {
+@Test func aScanThatEntersTrashTodayIsNotAnnouncedAfterNine() {
     #expect(plan([expiring("Already out", entering: today)]).isEmpty)
+}
+
+/// Opening the app early on the day must not take back that morning's note: planning replaces every pending one.
+@Test func aScanThatEntersTrashTodayIsStillAnnouncedBeforeNine() {
+    let eight = today.date(in: utc).addingTimeInterval(8 * 3600)
+    let notices = plan(
+        [expiring("Out this morning", entering: today), expiring("Later", entering: day(2))],
+        clock: .fixed(eight, calendar: utc))
+    #expect(notices.map(\.id) == [today, day(2)].map { "\(ScheduledNotice.idPrefix)\($0.storageValue)" })
+    #expect(notices[0].body.hasPrefix("Moved the Out this morning receipt to Trash."))
+}
+
+@Test func atNineTodaysNoteIsNoLongerPlanned() {
+    let nine = today.date(in: utc).addingTimeInterval(9 * 3600)
+    #expect(plan([expiring("Out this morning", entering: today)], clock: .fixed(nine, calendar: utc)).isEmpty)
 }
 
 @Test func fireDateIsGregorianAtLocalNineWhateverTheDeviceCalendar() {
@@ -175,7 +190,7 @@ private func plan(
     for count in [1, 2, 4] {
         let scans = titles.prefix(count).map { expiring($0, entering: day(3)) }
         let notices = CleanupNotices.plan(
-            scans: scans, lifespans: .defaults, today: today, clock: clock, namesScans: false)
+            scans: scans, lifespans: .defaults, clock: clock, namesScans: false)
         #expect(notices.count == 1)
         for title in titles {
             #expect(!notices[0].title.contains(title))
@@ -195,7 +210,7 @@ private func plan(
 @Test func namingScansIsTodaysText() {
     let scans = [expiring("City Pharmacy", entering: day(3))]
     let notices = CleanupNotices.plan(
-        scans: scans, lifespans: .defaults, today: today, clock: clock, namesScans: true)
+        scans: scans, lifespans: .defaults, clock: clock, namesScans: true)
     #expect(notices == plan(scans))
     #expect(notices[0].title == "Cleaned up")
 }
