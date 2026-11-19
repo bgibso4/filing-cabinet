@@ -46,7 +46,8 @@ public struct HomeView: View {
     }
 
     public var body: some View {
-        ScanBarLayout(canScan: canScan, scanIdentifier: AccessibilityID.Home.scan, onScan: onScan) {
+        // SPIKE (#45, A3): Search and Scan share the bottom bar; Home's own field is gone.
+        BottomBarLayout {
             HeaderScrollView(
                 title: Text("Filing Cabinet", bundle: #bundle),
                 subtitle: nil,
@@ -56,6 +57,8 @@ public struct HomeView: View {
             }
             // It fits the screen: a bounce shows no scroll bar (phone check F4).
             .scrollIndicators(.hidden)
+        } bar: {
+            HomeBottomBar(canScan: canScan, onScan: onScan, onSearch: onSearch)
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -79,7 +82,6 @@ public struct HomeView: View {
             if let banner = model.banner {
                 cleanupBanner(banner)
             }
-            HomeSearchField(onOpen: onSearch)
             let favorites = model.favorites
             if !favorites.isEmpty {
                 HomeFavoritesRow(
