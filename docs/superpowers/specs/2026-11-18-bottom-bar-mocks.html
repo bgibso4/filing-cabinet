@@ -1,0 +1,278 @@
+<title>Bottom Bar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a reading column of questions, then mock phones in a wrapping row; phones use the app's own tokens. */
+:root {
+  --page: #eceae6; --ink: #1f1f22; --muted: #5f5f66; --rule: #d3d0ca; --accent: #2f5d50; --chip: #dfe9e4; --frame: #c9c6c0;
+  --bg-grouped: #f2f2f7; --bg-surface: #ffffff; --bg-fill: #e3e3e8; --text-primary: #1c1c1e; --text-secondary: #6e6e73;
+  --text-tertiary: #8a8a8e; --separator: #d8d8dc; --chevron: #c4c4c9; --btn: #1c1c1e; --btn-text: #ffffff;
+  --glass: rgba(255,255,255,.72); --glass-edge: rgba(0,0,0,.08); --paper: #f7f5ef; --paper-line: #d9d5ca; --key: #ffffff; --kb: #d3d5db;
+  --wallet: #3f6fa3; --receipts: #c0533a; --notes: #7a5aa8; --documents: #4b8160; --throwaways: #b98a1f; --view: #8a8a8e;
+  --serif: "New York", ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #151517; --ink: #ececef; --muted: #a2a2aa; --rule: #34343a; --accent: #8cc4b2; --chip: #1f2e29; --frame: #3a3a40; color-scheme: dark } }
+:root[data-theme="dark"] { --page: #151517; --ink: #ececef; --muted: #a2a2aa; --rule: #34343a; --accent: #8cc4b2; --chip: #1f2e29; --frame: #3a3a40; color-scheme: dark }
+body { background: var(--page); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 44px; }
+.col { max-width: 680px; }
+h1 { font-family: var(--serif); font-size: 40px; line-height: 1.1; margin: 0 0 8px; text-wrap: balance; }
+h2 { font-family: var(--serif); font-size: 26px; margin: 0 0 12px; text-wrap: balance; }
+p { margin: 0 0 10px; }
+.lede { color: var(--muted); font-size: 17px; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.who { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--chip); color: var(--accent); margin-left: 6px; vertical-align: 1px; }
+.note { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--muted); }
+ul.facts { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule); }
+ul.facts li { display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+@media (max-width: 560px) { ul.facts li { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Switches for every phone on the page */
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--page); padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.seg { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.seg div { display: inline-flex; border: 1px solid var(--rule); border-radius: 99px; padding: 2px; }
+.seg button { font: inherit; color: var(--ink); background: none; border: 0; border-radius: 99px; padding: 4px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--page); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.phones { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+figure { margin: 0; display: grid; gap: 10px; width: 280px; max-width: 100%; }
+figcaption { font-size: 13px; color: var(--muted); }
+figcaption b { color: var(--ink); display: block; font-size: 15px; }
+figure.pick .phone { border-color: var(--accent); }
+
+/* The phone: 280 wide stands for 393 pt, so 1 pt is about 0.71 px. Sizes in em follow the text-size switch. */
+.phone { width: 280px; max-width: 100%; aspect-ratio: 280/590; border-radius: 40px; border: 6px solid var(--frame); overflow: hidden;
+  background: var(--bg-grouped); color: var(--text-primary); position: relative; font-family: var(--sans); font-size: 12px; line-height: 1.3; }
+.phone.dark { --bg-grouped: #000000; --bg-surface: #1c1c1e; --bg-fill: #1c1c1e; --text-primary: #f2f2f7; --text-secondary: #98989f; --text-tertiary: #8e8e93;
+  --separator: #38383a; --chevron: #5a5a5f; --btn: #f2f2f7; --btn-text: #1c1c1e; --glass: rgba(44,44,46,.78); --glass-edge: rgba(255,255,255,.12);
+  --key: #6b6b70; --kb: #2b2b2d; --wallet: #6f9bd0; --receipts: #e07a60; --notes: #a88ad6; --documents: #79b08f; --throwaways: #d9ad4a; }
+.phone.big { font-size: 17px; }
+.status { height: 34px; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; font-size: 12px; font-weight: 600; }
+.island { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 84px; height: 22px; border-radius: 12px; background: #000; }
+.body { padding: 0 12px; display: grid; gap: .7em; }
+.nav { display: flex; justify-content: space-between; align-items: center; height: 34px; }
+.circle { width: 30px; height: 30px; border-radius: 50%; background: var(--glass); border: 1px solid var(--glass-edge); display: grid; place-items: center; flex: none; }
+.circle svg, .bar svg, .field svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.title { font-family: var(--serif); font-weight: 700; font-size: 2em; line-height: 1.1; }
+.field { display: flex; align-items: center; gap: 6px; height: 2.7em; min-height: 32px; border-radius: 99px; background: var(--bg-surface); color: var(--text-secondary); padding: 0 12px; font-size: 1.05em; }
+.h { font-family: var(--serif); font-weight: 700; font-size: 1.35em; }
+.h small { font-family: var(--sans); color: var(--chevron); font-size: .8em; }
+.favs { display: flex; gap: 8px; margin-right: -12px; overflow: hidden; }
+.fav { flex: none; width: 104px; display: grid; gap: 4px; font-weight: 600; white-space: nowrap; }
+.paper { border-radius: 5px; background: var(--paper) repeating-linear-gradient(var(--paper) 0 7px, var(--paper-line) 7px 8px); background-clip: padding-box; }
+.fav .paper { height: 66px; }
+.card { background: var(--bg-surface); border-radius: 10px; }
+.row { display: flex; align-items: center; gap: 10px; padding: .75em 12px; }
+.row + .row { box-shadow: inset 0 1px 0 var(--separator); }
+.dot { width: 1.9em; height: 1.9em; border-radius: 50%; flex: none; }
+.row .n { flex: 1; font-size: 1.1em; }
+.row .c { color: var(--text-secondary); }
+.row .c::after { content: " ›"; color: var(--chevron); }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tile { display: grid; gap: 3px; font-size: .85em; color: var(--text-secondary); }
+.tile .paper { aspect-ratio: 3/4; }
+.tile b { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub { color: var(--text-secondary); margin-top: -.5em; }
+
+/* The bottom bar: floats over the content, which fades out under it (as today). */
+.bar { position: absolute; inset: auto 0 0; padding: 44px 12px 20px; display: flex; gap: 8px; align-items: center; justify-content: center;
+  background: linear-gradient(transparent, var(--bg-grouped) 55%); }
+.scan { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 2.6em; min-height: 40px; padding: 0 1.2em; border-radius: 99px;
+  background: var(--btn); color: var(--btn-text); font-weight: 600; font-size: 1.25em; flex: none; }
+.glass { display: flex; align-items: center; gap: 6px; height: 3.25em; min-height: 40px; border-radius: 99px; background: var(--glass); border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--text-secondary); padding: 0 13px; font-size: 1.05em; }
+.glass.grow { flex: 1; min-width: 0; }
+.glass.round { width: 3.25em; min-width: 40px; padding: 0; justify-content: center; color: var(--text-primary); flex: none; }
+.scan.gl { background: var(--glass); border: 1px solid var(--glass-edge); color: var(--text-primary); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.scan.icon { width: 2.6em; min-width: 40px; padding: 0; }
+.scan.icon svg { width: 19px; height: 19px; }
+.bar.c { flex-direction: column; }
+.bar.c .glass { align-self: stretch; }
+.bar.b { display: grid; grid-template-columns: 1fr auto 1fr; }
+.bar.b .scan { grid-column: 2; }
+.bar.b .glass { justify-self: end; }
+/* Largest text, A: Scan keeps its word and Search folds to its glyph. */
+.phone.big .bar.a .glass { flex: none; width: 3.25em; padding: 0; justify-content: center; color: var(--text-primary); }
+.phone.big .bar.a .glass span { display: none; }
+.phone.big .bar.a .scan { flex: 1; }
+
+/* Search screens */
+.chips { display: flex; gap: 6px; overflow: hidden; margin-right: -12px; }
+.chipb { flex: none; border-radius: 99px; padding: .45em .9em; background: var(--bg-surface); display: inline-flex; align-items: center; gap: 5px; }
+.chipb.on { background: var(--btn); color: var(--btn-text); font-weight: 600; }
+.chipb i { width: 6px; height: 6px; border-radius: 50%; }
+.caret { width: 1.5px; height: 1.2em; background: var(--text-primary); }
+.kb { position: absolute; inset: auto 0 0; height: 196px; background: var(--kb); padding: 8px 4px; display: grid; gap: 7px; align-content: start; }
+.kb div { display: flex; gap: 4px; justify-content: center; }
+.kb span { flex: 1; max-width: 23px; height: 30px; border-radius: 5px; background: var(--key); display: grid; place-items: center; font-size: 13px; }
+.kb .wide { max-width: none; flex: 4; } .kb .go { max-width: none; flex: 2; background: #0a7aff; color: #fff; font-size: 11px; } .kb .fn { max-width: none; flex: 1.6; font-size: 10px; }
+.above-kb { position: absolute; inset: auto 0 196px; padding: 30px 12px 8px; display: flex; gap: 8px; align-items: center; background: linear-gradient(transparent, var(--bg-grouped) 60%); }
+</style>
+
+<div class="wrap">
+  <header class="col">
+    <div class="eyebrow">Filing Cabinet · #45</div>
+    <h1>Bottom Bar</h1>
+    <p class="lede">Search moves down beside Scan, always there and under the thumb, as in Apple's Passwords. Scan stays the bigger of the two and keeps its word.</p>
+  </header>
+
+  <section class="col">
+    <h2>What you've said, and what I've assumed</h2>
+    <ul class="facts">
+      <li><b>Search at the bottom</b><span>Easy to reach and always there, like Passwords.<span class="who">Ben</span></span></li>
+      <li><b>Scan stays important</b><span>It matters more here than “+” does in Passwords, so it can't shrink to a small button.<span class="who">Ben</span></span></li>
+      <li><b>Scan keeps its word</b><span>The project rule: the button always says “Scan”. So none of the options turn it into a bare icon.<span class="who">existing rule</span></span></li>
+      <li><b>Home's top field goes</b><span>With Search at the bottom, the field under the title would say the same thing twice. Favorites move up under the title.<span class="who">my call</span></span></li>
+    </ul>
+  </section>
+
+  <div class="controls" role="group" aria-label="Switches for every phone">
+    <div class="seg">Screen <div data-group="screen"><button id="sw-home" data-v="home" aria-pressed="true">Home</button><button id="sw-grid" data-v="grid" aria-pressed="false">A collection</button></div></div>
+    <div class="seg">Appearance <div data-group="theme"><button id="sw-light" data-v="light" aria-pressed="true">Light</button><button id="sw-dark" data-v="dark" aria-pressed="false">Dark</button></div></div>
+    <div class="seg">Text <div data-group="size"><button id="sw-std" data-v="std" aria-pressed="true">Default</button><button id="sw-big" data-v="big" aria-pressed="false">Largest</button></div></div>
+  </div>
+
+  <section>
+    <div class="col">
+      <h2>Question 1 · How the bar is laid out</h2>
+      <p>Three ways to put Search down there, beside today's Home for comparison. Use the switches above to see each on a collection (which has no search today), in dark, and at the largest text size.</p>
+    </div>
+    <div class="phones" id="layouts"></div>
+    <p class="note col" style="margin-top:20px">I'd pick <b>A</b>. It is the Passwords shape you pointed at, the field is wide enough to read as a search bar, and Scan is still the only dark, filled thing on the screen. B keeps Scan exactly where your thumb knows it but Search stops being a bar. C gives both full size and costs a second row of the screen on every page.</p>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2>Question 1, continued · How Scan is drawn</h2>
+      <p>Added at your request: A again, with Scan as glass and with Scan as its symbol alone. A1 is A from above, repeated for comparison.</p>
+    </div>
+    <div class="phones" id="scans"></div>
+    <div class="note col" style="margin-top:20px">
+      <p>Two things these would undo, both yours to undo:</p>
+      <p><b>Symbol only</b> (A3, A4) drops the rule that the button always says “Scan”. VoiceOver would still read “Scan”. The search field gets about 60 pt wider.</p>
+      <p><b>Glass Scan</b> (A2, A4): plain glass was tried for Scan and turned down on 2026-11-11, when Scan stood alone. Beside a glass search field it may read differently, which is a fair reason to look again. With both in glass, nothing on Home is filled any more, so Scan stands out by its place and shape only.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="col">
+      <h2>Question 2 · What tapping Search does</h2>
+      <p>This one decides how big the job is. Today the Search screen slides up with its own field at the top. If the bar is at the bottom, the field can stay there while you type, as Passwords does.</p>
+    </div>
+    <div class="phones" id="taps"></div>
+    <p class="note col" style="margin-top:20px">I'd pick <b>2</b>. With 1 your thumb taps at the bottom and the field jumps to the top, which undoes most of the point. 2 is more work: the Search screen's field, close button and filter chips all change place, and its design in <code>design/</code> gets redrawn.</p>
+  </section>
+
+  <section class="col">
+    <h2>Question 3 · Where the bar shows</h2>
+    <ul class="facts">
+      <li><b>Home</b><span>Yes, in every option.</span></li>
+      <li><b>Collections and views</b><span>They have Scan but no way into Search today. The same bar would give them one. I'd include them, searching all scans as Home does; starting the search inside the collection you are in is a possible later step.<span class="who">your call</span></span></li>
+      <li><b>While selecting</b><span>The select bar (Share, Move to Trash, heart) replaces the whole bar, as it replaces Scan today.<span class="who">my call</span></span></li>
+      <li><b>Trash, Settings, the viewer</b><span>Unchanged: no Scan there today, no Search either.<span class="who">my call</span></span></li>
+      <li><b>Largest text</b><span>In A, Search folds to its magnifying glass so “Scan” still fits on one line. Flip the Text switch to see it.<span class="who">my call</span></span></li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const I = {
+  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+  scan: '<svg viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M8 9h8M8 12h8M8 15h5"/></svg>',
+  gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="3 3.3"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><path d="M6 12h.01M12 12h.01M18 12h.01"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>'
+};
+const status = '<div class="island"></div><div class="status"><span>9:41</span><span>●●● ▮</span></div>';
+const scanBtn = `<div class="scan">${I.scan}Scan</div>`;
+const rows = [['wallet','Wallet',6],['receipts','Receipts',23],['notes','Notes',41],['documents','Documents',18],['throwaways','Throwaways',3]];
+const views = [['Recent',''],['All Scans',91],['Trash',4]];
+const row = (color, name, count) => `<div class="row"><i class="dot" style="background:var(--${color})"></i><span class="n">${name}</span><span class="c">${count}</span></div>`;
+
+function home(topField) {
+  return `<div class="body" data-screen="home">
+    <div class="nav"><span></span><div class="circle">${I.gear}</div></div>
+    <div class="title">Filing Cabinet</div>
+    ${topField ? `<div class="field">${I.search}Search</div>` : ''}
+    <div class="h">Favorites <small>›</small></div>
+    <div class="favs">${['Driver’s license','Lease 2026','Insurance card'].map(t => `<div class="fav"><div class="paper"></div>${t}</div>`).join('')}</div>
+    <div class="h">Collections</div>
+    <div class="card">${rows.map(r => row(...r)).join('')}</div>
+    <div class="card">${views.map(v => row('view', ...v)).join('')}</div>
+  </div>`;
+}
+function grid() {
+  const names = ['City Pharmacy','Hardware store','Laptop','Bike repair','Bookshop','Train ticket','Paint','Lunch','Garden centre','Taxi','Key cutting','Print shop'];
+  return `<div class="body" data-screen="grid" hidden>
+    <div class="nav"><div class="circle">${I.back}</div><div class="circle">${I.more}</div></div>
+    <div class="title">Receipts</div><div class="sub">23 scans · kept for 1 year</div>
+    <div class="tiles">${names.map(n => `<div class="tile"><div class="paper"></div><b>${n}</b>312 days left</div>`).join('')}</div>
+  </div>`;
+}
+const bars = {
+  today: `<div class="bar">${scanBtn}</div>`,
+  a: `<div class="bar a"><div class="glass grow">${I.search}<span>Search</span></div>${scanBtn}</div>`,
+  b: `<div class="bar b">${scanBtn}<div class="glass round">${I.search}</div></div>`,
+  c: `<div class="bar c">${scanBtn}<div class="glass">${I.search}<span>Search</span></div></div>`
+};
+const layouts = [
+  ['today', 'Today', 'Search under the title, scrolling away with the page. Scan alone at the bottom. Collections have no search.'],
+  ['a', 'A · Search beside Scan', 'The Passwords shape. A glass search field fills the left; Scan sits at the right at today’s size, with its word.', true],
+  ['b', 'B · Scan in the middle, Search a button', 'Scan doesn’t move. Search is a round glass button at the right: always there, but not a bar.'],
+  ['c', 'C · Search under Scan', 'Both at full size on two rows. Takes the most screen: about one list row more than today.']
+];
+const field = `<div class="glass grow">${I.search}<span>Search</span></div>`;
+bars.a2 = `<div class="bar a">${field}<div class="scan gl">${I.scan}Scan</div></div>`;
+bars.a3 = `<div class="bar">${field}<div class="scan icon">${I.scan}</div></div>`;
+bars.a4 = `<div class="bar">${field}<div class="scan gl icon">${I.scan}</div></div>`;
+const scans = [
+  ['a', 'A1 · Filled, with its word', 'As A above: today’s Scan button, moved to the right.'],
+  ['a2', 'A2 · Glass, with its word', 'Scan in the same glass as the field, ink text. The two read as one bar.'],
+  ['a3', 'A3 · Filled, symbol only', 'A dark round button with the scan symbol. The field gets the room the word took.'],
+  ['a4', 'A4 · Glass, symbol only', 'Passwords exactly: a glass field and a glass round button.']
+];
+const phones = list => list.map(([k, name, text, pick]) =>
+  `<figure${pick ? ' class="pick"' : ''}><div class="phone">${status}${home(k === 'today')}${grid()}${bars[k]}</div><figcaption><b>${name}</b>${text}</figcaption></figure>`).join('');
+document.getElementById('layouts').innerHTML = phones(layouts);
+document.getElementById('scans').innerHTML = phones(scans);
+
+const keys = ['qwertyuiop','asdfghjkl','zxcvbnm'].map(r => `<div>${[...r].map(c => `<span>${c}</span>`).join('')}</div>`).join('')
+  + '<div><span class="fn">123</span><span class="wide">space</span><span class="go">search</span></div>';
+const chips = `<div class="chips"><span class="chipb on">All</span>${rows.slice(0,4).map(r => `<span class="chipb"><i style="background:var(--${r[0]})"></i>${r[1]}</span>`).join('')}</div>`;
+const before = `<div class="h">Recently viewed</div>
+  <div class="tiles" style="grid-template-columns:repeat(4,1fr)">${['Driver’s license','City Pharmacy','Wifi password','Lease 2026'].map(n => `<div class="tile"><div class="paper"></div><b>${n}</b></div>`).join('')}</div>
+  <div class="h">Recent searches</div>
+  <div class="card">${['laptop','wifi','insurance'].map(t => `<div class="row"><span class="n">${t}</span></div>`).join('')}</div>`;
+const typing = `${I.search}<i class="caret"></i>Search all scans`;
+document.getElementById('taps').innerHTML = `
+  <figure><div class="phone">${status}<div class="body">
+      <div class="nav" style="gap:8px"><div class="field" style="flex:1">${typing}</div><div class="circle">${I.x}</div></div>
+      ${chips}${before}</div><div class="kb">${keys}</div></div>
+    <figcaption><b>1 · Opens today’s Search</b>The bar is a shortcut. The Search screen slides up exactly as it is now, field and X at the top. Smallest change.</figcaption></figure>
+  <figure class="pick"><div class="phone">${status}<div class="body">
+      <div style="height:6px"></div>${chips}${before}</div>
+      <div class="above-kb"><div class="glass grow" style="color:var(--text-tertiary)">${typing}</div><div class="glass round">${I.x}</div></div>
+      <div class="kb">${keys}</div></div>
+    <figcaption><b>2 · The field stays at the bottom</b>The bar’s field becomes the real one and rides up on the keyboard. Scan gives way to the X while you search. Filter chips at the top, results in between.</figcaption></figure>`;
+
+// The switches: one handler, each group sets a class or shows a screen on every phone.
+const state = { screen: 'home', theme: 'light', size: 'std' };
+function apply() {
+  document.querySelectorAll('.phone').forEach(p => {
+    p.classList.toggle('dark', state.theme === 'dark');
+    p.classList.toggle('big', state.size === 'big');
+  });
+  document.querySelectorAll('[data-screen]').forEach(s => { s.hidden = s.dataset.screen !== state.screen; });
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(state[b.parentElement.dataset.group] === b.dataset.v)));
+}
+document.querySelector('.controls').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  state[b.parentElement.dataset.group] = b.dataset.v; apply();
+});
+apply();
+</script>
