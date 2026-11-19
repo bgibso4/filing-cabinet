@@ -8,12 +8,13 @@ package enum CleanupNotices {
     package static let defaultLimit = 64
 
     /// A note for each of the next `limit` days on which scans enter Trash on their own (M9). A scan counts
-    /// only while it is in the library, has a last day and has no stored `trashedDay`. With `namesScans` false (the
-    /// library lock is on) no note holds a title or a kind of scan.
+    /// while its day's 9:00 is still to come, it has a last day and it has no stored `trashedDay`. That includes a
+    /// scan that entered Trash this morning: planning replaces every pending note, so leaving it out would take the
+    /// note back when the app is opened before 9:00. With `namesScans` false (the library lock is on) no note holds
+    /// a title or a kind of scan.
     package static func plan(
         scans: [ScanSummary],
         lifespans: CollectionLifespans,
-        today: CalendarDay,
         clock: AppClock,
         limit: Int = defaultLimit,
         namesScans: Bool = true
@@ -23,11 +24,12 @@ package enum CleanupNotices {
         // the zone follows the device so 9:00 is local.
         var gregorian = Calendar(identifier: .gregorian)
         gregorian.timeZone = calendar.timeZone
+        let now = clock.now()
         var byEntryDay: [CalendarDay: [ScanSummary]] = [:]
         for scan in scans where scan.trashedDay == nil {
             let lastDay = scan.lastDay(lifespans: lifespans, in: calendar)
-            guard case .library = scan.place(lifespans: lifespans, today: today, in: calendar),
-                let entry = Lifecycle.entryDay(lastDay: lastDay, trashedDay: nil, in: calendar)
+            guard let entry = Lifecycle.entryDay(lastDay: lastDay, trashedDay: nil, in: calendar),
+                let fires = gregorian.date(from: fireDate(on: entry, calendar: gregorian)), fires > now
             else { continue }
             byEntryDay[entry, default: []].append(scan)
         }
@@ -43,10 +45,14 @@ package enum CleanupNotices {
         let (title, body) = namesScans ? text(for: scans) : unnamedText(count: scans.count)
         return ScheduledNotice(
             id: "\(ScheduledNotice.idPrefix)\(entry.storageValue)",
-            fireDate: DateComponents(
-                calendar: calendar, year: entry.year, month: entry.month, day: entry.day, hour: 9, minute: 0),
+            fireDate: fireDate(on: entry, calendar: calendar),
             title: title,
             body: body)
+    }
+
+    /// 9:00 on `entry`, in `calendar`'s zone.
+    private static func fireDate(on entry: CalendarDay, calendar: Calendar) -> DateComponents {
+        DateComponents(calendar: calendar, year: entry.year, month: entry.month, day: entry.day, hour: 9, minute: 0)
     }
 
     /// The notes while the library is locked: counts only.
