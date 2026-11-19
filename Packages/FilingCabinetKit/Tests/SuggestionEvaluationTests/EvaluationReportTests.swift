@@ -255,4 +255,23 @@ struct EvaluationReportTests {
         #expect(Self.report([], includesImage: true).markdown.contains("with page 1's image (the default)"))
         #expect(Self.report([]).markdown.contains("on the text alone (`IMAGE=0`)"))
     }
+
+    @Test func everyCaseShowsTheRulesTitle() {
+        var result = Self.result(Self.item("a"), collection: "receipts")
+        result.ruleTitle = "City | Pharmacy"
+        let markdown = Self.report([result]).markdown
+
+        #expect(markdown.contains("| Case | Expected | Got | Title | Rule title | Words | Filing | Words call |"))
+        #expect(markdown.contains("| City \\| Pharmacy |"))
+    }
+
+    @Test func everyCaseLeavesTheRulesTitleEmptyWhenThereIsNone() {
+        let markdown = Self.report([Self.result(Self.item("a"), collection: "receipts")]).markdown
+        // The case's last row is its "Every case" one: eight cells, so ten pieces around nine bars; the fifth is empty.
+        let cells = markdown.split(separator: "\n").last { $0.hasPrefix("| a |") }?
+            .split(separator: "|", omittingEmptySubsequences: false)
+
+        #expect(cells?.count == 10)
+        #expect(cells?[5].allSatisfy(\.isWhitespace) == true)
+    }
 }

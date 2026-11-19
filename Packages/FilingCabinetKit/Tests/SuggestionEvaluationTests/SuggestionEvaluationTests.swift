@@ -126,8 +126,11 @@ struct SuggestionEvaluationTests {
                 .appending(path: "scans")
             let images = try item.files.map { try loadImage($0, in: scans) }
             var texts: [String] = []
-            for image in images {
-                texts.append(await reader.read([image]).searchText)
+            var ruleTitle: String?
+            for (index, image) in images.enumerated() {
+                let reading = await reader.read([image])
+                texts.append(reading.searchText)
+                if index == 0 { ruleTitle = reading.title }
             }
             let input = SuggestionInput(
                 pageTexts: texts, firstPage: images.first, collections: try collections(for: item.collections))
@@ -146,7 +149,8 @@ struct SuggestionEvaluationTests {
                     pageText: texts.joined(separator: "\n"),
                     filing: filing,
                     words: words,
-                    isPrivate: isPrivate
+                    isPrivate: isPrivate,
+                    ruleTitle: ruleTitle
                 ))
         }
         var probes: [EvaluationRun.Probe] = []
