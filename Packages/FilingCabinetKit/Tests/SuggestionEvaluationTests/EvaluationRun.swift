@@ -11,6 +11,8 @@ struct EvaluationRun {
         let words: TimedCall<[String]>
         /// From the private set (`PRIVATE=`), not the made-up one: counted in its own column, never in Tune or Holdout.
         var isPrivate = false
+        /// What the title rule picked from page 1, to compare the rule across runs; nil when it picked none.
+        var ruleTitle: String?
 
         /// Nil when the model gave none (any failure or a timeout).
         var suggestion: ScanSuggestion? { filing.answer }

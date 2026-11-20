@@ -75,3 +75,35 @@ private func page(_ lines: TextLine...) -> PageText { PageText(lines: lines) }
 @Test func whitespaceIsCollapsed() {
     #expect(TitleRule.title(from: [page(line("  City \t  Pharmacy \n", top: 0.1, height: 0.05))]) == "City Pharmacy")
 }
+
+@Test func aRowOfTimesLosesToASmallerHeading() {
+    let chart = page(
+        line("A 120AM 0:0AM 0200", top: 0.05, height: 0.08),
+        line("Sleep Report", top: 0.20, height: 0.03))
+
+    #expect(TitleRule.title(from: [chart]) == "Sleep Report")
+}
+
+@Test func aPageTopOfOnlyNumberRowsHasNoTitle() {
+    let rows = page(
+        line("12:00 AM 2:00 AM 4:00 AM", top: 0.05, height: 0.05),
+        line("0 50 100 150 kWh", top: 0.12, height: 0.05),
+        line("100 mg 200 mg", top: 0.20, height: 0.05),
+        line("Order 1234567890", top: 0.28, height: 0.05),
+        line("12 kg 30 kg 45 kg", top: 0.31, height: 0.05),
+        line("— — —", top: 0.34, height: 0.05))
+
+    #expect(TitleRule.title(from: [rows]) == nil)
+}
+
+@Test(arguments: ["Form 1040", "Receipt #4471", "Bio 210 · Oct 10", "Lease Renewal Unit 4B", "Café Résumé"])
+func linesThatAreMostlyWordsCanStillBeTitles(text: String) {
+    #expect(TitleRule.title(from: [page(line(text, top: 0.1, height: 0.05))]) != nil)
+}
+
+/// Headings the stricter test must not cost: no digits at all (a letter-spaced heading reads as single letters), or a
+/// code or name with a digit in it.
+@Test(arguments: ["To Do", "M E N U", "A to Z", "Form 1099-INT", "COVID-19 Test", "7-Eleven", "Invoice#4471"])
+func shortHeadingsAreStillTitles(text: String) {
+    #expect(TitleRule.title(from: [page(line(text, top: 0.1, height: 0.05))]) == text)
+}

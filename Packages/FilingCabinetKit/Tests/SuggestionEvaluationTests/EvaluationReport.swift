@@ -232,13 +232,13 @@ struct EvaluationReport {
 
     private func everyCase(_ run: EvaluationRun) -> [String] {
         [
-            "## Every case", "", "| Case | Expected | Got | Title | Words | Filing | Words call |",
-            "|---|---|---|---|---|---|---|",
+            "## Every case", "", "| Case | Expected | Got | Title | Rule title | Words | Filing | Words call |",
+            "|---|---|---|---|---|---|---|---|",
         ]
             + run.results.map { result in
                 "| \(result.item.id) | \(result.item.isJudged ? result.item.collection : "unjudged") | "
                     + "\(Self.collection(result.filing)) | "
-                    + "\(Self.cell(result.suggestion?.title ?? "")) | "
+                    + "\(Self.cell(result.suggestion?.title ?? "")) | \(Self.cell(result.ruleTitle ?? "")) | "
                     + "\(Self.cell(result.searchWords.joined(separator: ", "))) | "
                     + "\(Self.milliseconds(result.filing.milliseconds)) | \(Self.milliseconds(result.words.milliseconds)) |"
             }
