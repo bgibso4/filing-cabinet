@@ -120,9 +120,14 @@ func notificationsFlagScriptsAuthorization(_ value: String, _ expected: Notifica
     #expect(followed.seedScans == 4)
 }
 
-@Test(arguments: ["0", "4", "-1", "two"])
-func fakeCameraOutsideOneToThreeIsIgnored(_ value: String) {
+@Test(arguments: ["0", "21", "-1", "two"])
+func fakeCameraOutsideOneToTwentyIsIgnored(_ value: String) {
     #expect(LaunchOptions(arguments: ["-FakeCamera", value], isDebugBuild: true).fakeCameraPages == nil)
+}
+
+@Test(arguments: [1, 20])
+func fakeCameraTakesTheEndsOfItsRange(_ count: Int) {
+    #expect(LaunchOptions(arguments: ["-FakeCamera", "\(count)"], isDebugBuild: true).fakeCameraPages == count)
 }
 
 @Test(arguments: ["-3", "many"])
