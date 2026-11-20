@@ -6,7 +6,7 @@ import Foundation
 public struct LaunchOptions: Sendable, Equatable {
     /// `-UITest`: in-memory store, a temporary library folder, no animations.
     public private(set) var isUITest = false
-    /// `-FakeCamera <1…3>`: the fake camera returns this many synthetic pages.
+    /// `-FakeCamera <1…20>`: the fake camera returns this many synthetic pages.
     public private(set) var fakeCameraPages: Int?
     /// `-CameraDenied`: camera access reports denied.
     public private(set) var cameraDenied = false
@@ -55,7 +55,7 @@ public struct LaunchOptions: Sendable, Equatable {
     /// `-LockAfter <n>`: the library locks again after `n` seconds in the background.
     public private(set) var relockSeconds: Int?
 
-    private static let fakeCameraRange = 1...3
+    private static let fakeCameraRange = 1...20
 
     public init(arguments: [String], isDebugBuild: Bool) {
         guard isDebugBuild else { return }

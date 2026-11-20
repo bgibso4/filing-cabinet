@@ -13,13 +13,10 @@ struct PageStrip: View {
     private static let gap: CGFloat = 4
 
     var body: some View {
-        HStack(spacing: Self.gap) {
-            ForEach(pages.indices, id: \.self) { index in
-                Image(decorative: pages[index], scale: 1)
-                    .resizable()
-                    .scaledToFill()
-                    .pageStripTile(isCurrent: index == currentPage)
-            }
+        PageStripRow(pageCount: pages.count, currentPage: currentPage, gap: Self.gap) { index in
+            Image(decorative: pages[index], scale: 1)
+                .resizable()
+                .scaledToFill()
         }
         .pageStripBar()
         .accessibilityElement(children: .ignore)

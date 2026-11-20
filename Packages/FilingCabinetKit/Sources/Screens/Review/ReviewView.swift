@@ -72,6 +72,8 @@ public struct ReviewView: View {
                         pages: model.pages, currentPage: $model.currentPage, label: model.pageAccessibilityLabel
                     )
                     .padding(.vertical, Tokens.Spacing.s3 - PageStripTile.barPadding)
+                    // Many pages stop at the screen's margins, as in the viewer.
+                    .padding(.horizontal, Tokens.Spacing.s4)
                     .environment(\.colorScheme, controlsScheme ?? colorScheme)
                 }
             }

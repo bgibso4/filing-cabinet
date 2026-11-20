@@ -116,7 +116,7 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | Flag | Does |
 |---|---|
 | `-UITest` | in-memory store, temporary library folder, no animations |
-| `-FakeCamera <1…3>` | the fake camera returns that many synthetic pages |
+| `-FakeCamera <1…20>` | the fake camera returns that many synthetic pages |
 | `-CameraDenied` | camera access reports denied |
 | `-FakeReader` | every page reads as the synthetic City Pharmacy receipt |
 | `-TextReader text\|documents` | which Vision reader understands pages |
