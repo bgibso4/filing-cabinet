@@ -117,6 +117,7 @@ final class AppStartup {
             case .scan: requests.send(.scan)
             case .search(let text): requests.send(.search(text))
             case .open(let seeded): requests.send(.open(LibrarySeed.scanID(at: seeded - 1)))
+            case .trash: requests.send(.trash)
             case nil: break
             }
         #endif

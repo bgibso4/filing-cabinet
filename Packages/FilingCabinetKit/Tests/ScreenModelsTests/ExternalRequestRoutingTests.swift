@@ -23,7 +23,7 @@ private func state(
 
 nonisolated private let scan = ScanID()
 
-@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
+@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan), .trash])
 func waitsForTheWelcome(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: request, state: state(welcomeFinished: false)) == .wait)
 }
@@ -38,18 +38,18 @@ func waitsForTheWelcome(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: .scan, state: state()) == .startScan)
 }
 
-@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
+@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan), .trash])
 func searchClosesBeforeTheScreensUnderIt(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: request, state: state(isSearching: true, pathDepth: 2)) == .closeSearch)
     #expect(RequestRouting.action(for: request, state: state(pathDepth: 2)) == .popToHome)
 }
 
-@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
+@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan), .trash])
 func reviewOpenBringsItBack(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: request, state: state(phase: .review)) == .showReview)
 }
 
-@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan)])
+@Test(arguments: [ExternalRequest.scan, .search("lease"), .open(scan), .trash])
 func cameraOpenIgnoresScan(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: request, state: state(phase: .camera(isRescan: false))) == .ignore)
     #expect(RequestRouting.action(for: request, state: state(phase: .camera(isRescan: true))) == .ignore)
@@ -59,7 +59,7 @@ func cameraOpenIgnoresScan(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: .scan, state: state(phase: .cameraOff)) == .ignore)
 }
 
-@Test(arguments: [ExternalRequest.search("lease"), .open(scan)])
+@Test(arguments: [ExternalRequest.search("lease"), .open(scan), .trash])
 func cameraOffSheetHoldsSearchAndOpenUntilItCloses(_ request: ExternalRequest) {
     #expect(RequestRouting.action(for: request, state: state(phase: .cameraOff)) == .wait)
 }
@@ -75,14 +75,14 @@ func cameraOffSheetHoldsSearchAndOpenUntilItCloses(_ request: ExternalRequest) {
 }
 
 @Test func openFromHomePushesTheViewer() {
-    #expect(RequestRouting.action(for: .open(scan), state: state()) == .open(scan))
+    #expect(RequestRouting.action(for: .open(scan), state: state()) == .show(.scan(scan)))
 }
 
 @Test func openClosesDetailsAndSearch() {
     #expect(RequestRouting.action(for: .open(scan), state: state(isSearching: true)) == .closeSearch)
     // Details is a panel in the viewer: popping the viewer closes it, even when it is this scan's viewer.
     #expect(RequestRouting.action(for: .open(scan), state: state(pathDepth: 1)) == .popToHome)
-    #expect(RequestRouting.action(for: .open(scan), state: state()) == .open(scan))
+    #expect(RequestRouting.action(for: .open(scan), state: state()) == .show(.scan(scan)))
 }
 
 @Test func openIgnoresAScanNoLongerInTheLibrary() {
@@ -109,4 +109,17 @@ func cameraOffSheetHoldsSearchAndOpenUntilItCloses(_ request: ExternalRequest) {
 
 @Test func scanWhileLockedBringsTheReviewBack() {
     #expect(RequestRouting.action(for: .scan, state: state(isLocked: true, phase: .review)) == .showReview)
+}
+
+@Test func trashFromHomeOpensTrash() {
+    #expect(RequestRouting.action(for: .trash, state: state()) == .show(.trash))
+}
+
+@Test func trashPopsWhatIsPushedFirst() {
+    // Trash itself too: it opens again from Home, at its top.
+    #expect(RequestRouting.action(for: .trash, state: state(pathDepth: 1)) == .popToHome)
+}
+
+@Test func trashWaitsWhileLocked() {
+    #expect(RequestRouting.action(for: .trash, state: state(isLocked: true)) == .wait)
 }

@@ -12,6 +12,8 @@ struct FilingCabinetApp: App {
     /// Requests from outside the app. One per process, made here so it exists before any intent runs; it outlives a UI
     /// test's relaunch and Try again.
     private let requests: ExternalRequests
+    /// Kept for the life of the process: the notification center holds it weakly.
+    private let noteTaps: CleanupNoteTaps
 
     init() {
         MemoryLog.record(.appOpened)
@@ -20,6 +22,9 @@ struct FilingCabinetApp: App {
         self.requests = requests
         // Here, before any intent runs: the system launches the app cold to run one, and an unregistered dependency traps.
         AppDependencyManager.shared.add(dependency: requests)
+        // Here, before launch finishes: a tap on a cleanup note may be what opens the app.
+        noteTaps = CleanupNoteTaps(requests: requests)
+        noteTaps.listen()
         startup = AppStartup(arguments: CommandLine.arguments, requests: requests)
     }
 

@@ -46,7 +46,7 @@ public struct LaunchOptions: Sendable, Equatable {
     /// `-Animations`: under `-UITest` animations stay on. The system's interactive transitions, such as the swipe down
     /// that closes a scan (#98), never finish without them.
     public private(set) var animations = false
-    /// `-Request scan|search:<text>|open:<n>`: a request from outside the app, sent at launch (M15).
+    /// `-Request scan|search:<text>|open:<n>|trash`: a request from outside the app, sent at launch (M15).
     public private(set) var request: RequestFlag?
     /// `-Lock on`: the library lock is on at launch; any other value leaves it off.
     public private(set) var lockOn = false

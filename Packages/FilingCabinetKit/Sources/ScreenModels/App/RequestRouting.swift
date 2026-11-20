@@ -48,8 +48,8 @@ package enum RootAction: Equatable {
     case ignore
     /// Open Search with the text, over Home.
     case search(String)
-    /// Open the scan's viewer, over Home.
-    case open(ScanID)
+    /// Open this screen over Home: a scan's viewer, or Trash.
+    case show(AppRoute)
 }
 
 /// What a request from outside the app does, given what is showing (M9): it waits for the welcome (and, for Search and
@@ -69,7 +69,8 @@ package enum RequestRouting {
         switch request {
         case .scan: return .startScan
         case .search(let text): return .search(text)
-        case .open(let id): return .open(id)
+        case .open(let id): return .show(.scan(id))
+        case .trash: return .show(.trash)
         }
     }
 

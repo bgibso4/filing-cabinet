@@ -198,6 +198,7 @@ func parsesSuggestions(_ value: String, _ expected: SuggestionsFlag) {
     #expect(request("scan") == .scan)
     #expect(request("search:city pharmacy") == .search("city pharmacy"))
     #expect(request("open:2") == .open(seeded: 2))
+    #expect(request("trash") == .trash)
     #expect(request("open:0") == nil)
     #expect(request("open:x") == nil)
     #expect(request("search:") == nil)
