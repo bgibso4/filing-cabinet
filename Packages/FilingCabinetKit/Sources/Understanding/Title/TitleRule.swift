@@ -4,8 +4,8 @@ import Foundation
 /// times, numbers or units is never the title (#48).
 package enum TitleRule {
     private static let topFraction = 0.4
-    private static let minimumWordLetters = 3
-    private static let minimumWordShare = 0.5
+    private static let minimumLetters = 3
+    private static let minimumLetterShare = 0.5
     private static let maximumLength = 60
 
     /// The title, or nil when page 1 has no usable line. Only the first page counts.
@@ -28,21 +28,16 @@ package enum TitleRule {
         return String(collapsed.prefix(maximumLength)).trimmingCharacters(in: .whitespaces)
     }
 
-    /// Whether a line reads as words: it has a word of at least three letters with no digit in it, and at least half of
-    /// its letters and digits are letters in words without digits. "Form 1040" is; "12:00 AM 2:00 AM" is not.
+    /// Whether a line reads as words, not as a row of times, numbers or units: it has at least three letters, at
+    /// least half of its letters and digits are letters, and, when it has a digit, three of its letters are in a row.
+    /// "Form 1040" and "To Do" are; "12:00 AM 2:00 AM" and "12 kg 30 kg" are not.
     private static func isWords(_ text: String) -> Bool {
-        var counted = 0
-        var inWords = 0
-        var hasWord = false
-        for word in text.split(whereSeparator: \.isWhitespace) {
-            let letters = word.count(where: \.isLetter)
-            let digits = word.count(where: \.isNumber)
-            counted += letters + digits
-            guard digits == 0 else { continue }
-            inWords += letters
-            hasWord = hasWord || letters >= minimumWordLetters
+        let letters = text.count(where: \.isLetter)
+        let digits = text.count(where: \.isNumber)
+        guard letters >= minimumLetters, Double(letters) >= minimumLetterShare * Double(letters + digits) else {
+            return false
         }
-        return hasWord && Double(inWords) >= minimumWordShare * Double(counted)
+        return digits == 0 || text.split(whereSeparator: { !$0.isLetter }).contains { $0.count >= minimumLetters }
     }
 
     /// "PHARMACY" becomes "Pharmacy"; a word with a digit ("4B") stays as printed.

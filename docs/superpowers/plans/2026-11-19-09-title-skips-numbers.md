@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- A line can be a title when (1) it has a word of at least three letters with no digit in it, and (2) at least half of its letters and digits are letters in words without digits.
+- A line can be a title when (1) it has at least three letters, (2) at least half of its letters and digits are letters, and (3) if it has a digit, three of its letters are in a row. (Revised after the branch review; the spec says why. Task 2's `isWords` constants are now `minimumLetters` and `minimumLetterShare`.)
 - Unchanged: page 1 only, top 40%, tallest line wins, higher line on a tie, all-caps title-cased, 60 characters at most, nil when no line qualifies.
 - `Understanding` stays Mac-buildable. Thresholds are named private constants beside the existing ones.
 - Tests and fixtures use made-up text only. Private titles appear only in files under `~/FilingCabinetPrivate/eval/`: never in the repo, a commit message, the PR, an issue or an artifact.

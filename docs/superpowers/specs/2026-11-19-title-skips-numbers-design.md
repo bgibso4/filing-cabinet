@@ -26,28 +26,36 @@ A is the smallest change that fixes the cause. Ben approved this scope on 2026-1
 
 ## The rule
 
-A line can be a title when both hold:
+A line can be a title when all three hold:
 
-1. it has a word of at least three letters with no digit in it, and
-2. at least half of its letters and digits are letters in words without digits.
+1. it has at least three letters (today's rule),
+2. at least half of its letters and digits are letters, and
+3. if it has a digit, three of its letters are in a row.
+
+Revised 2026-11-19 after the branch review. The first version counted only letters in words without a digit and asked
+every line for a three-letter word, which cost real headings: "To Do", a letter-spaced "M E N U", "Form 1099-INT",
+"COVID-19 Test", "7-Eleven". The rows in the table below come out the same under both versions.
 
 Everything else is unchanged: page 1 only, the top 40%, tallest line wins, the higher line on a tie, all-caps is
 title-cased, 60 characters at most, and no title when no line qualifies.
 
 | Line | Title? | Why |
 |---|---|---|
-| A 120AM 0:0AM 0200 | No | no word of three letters without a digit |
+| A 120AM 0:0AM 0200 | No | no three letters in a row |
 | 12:00 AM 2:00 AM 4:00 AM | No | "AM" is two letters |
-| 0 50 100 150 kWh | No | 3 of 12 characters are in words |
-| 100 mg 200 mg | No | no three-letter word |
+| 12 kg 30 kg 45 kg | No | no three letters in a row |
+| 0 50 100 150 kWh | No | 3 of 12 characters are letters |
+| 100 mg 200 mg | No | no three letters in a row |
 | City Pharmacy | Yes | |
-| Form 1040 | Yes | half is words |
+| Form 1040 | Yes | half is letters |
+| Form 1099-INT | Yes | |
+| To Do | Yes | no digits, so as today |
 | Bio 210 · Oct 10 | Yes | as today's test expects |
 | Lease Renewal Unit 4B | Yes | |
 | Order 1234567890 | No | mostly a number; the next tallest line wins, or no title |
 
-**Known limit:** a row of word labels ("Mon Tue Wed Thu") still passes. Only its height decides, as today. Text alone
-can't tell it from a heading.
+**Known limits:** a row of word labels ("Mon Tue Wed Thu") still passes. Only its height decides, as today. Text alone
+can't tell it from a heading. And a short heading that is mostly a number loses: "2025 Q4 Tax", "2025–2026 Budget".
 
 ## Checking it
 
@@ -66,7 +74,8 @@ can't tell it from a heading.
 
 ## Rulings (mine, for Ben to check)
 
-1. **"Half" and "three letters" are my numbers.** If the baseline shows good titles lost, they change before merge and
+1. **"Half" and "three letters" are my numbers, and the revised rule above is my call too** (it follows the review,
+   not a decision of Ben's). If the baseline shows good titles lost, they change before merge and
    this doc is updated. Cost if wrong: one constant.
 2. **No fallback below the top 40%.** A page whose top has only numbers gets no title, as a page with no text does.
    Cost if wrong: one more pass over the rest of the page.
