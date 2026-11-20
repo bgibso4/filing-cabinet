@@ -12,6 +12,8 @@ import SwiftUI
 /// the finger and releases it with the finger's speed.
 public struct ViewerRoute: View {
     private static let closed = DetailsSpring(position: 0, velocity: 0, target: 0)
+    /// How long after the viewer disappears its memory is read (#50). My call: long enough for its views to go.
+    private static let memorySettle = Duration.seconds(1)
 
     private let makeDetails: () -> DetailsModel
     private let pages: any PageImageProviding
@@ -53,7 +55,15 @@ public struct ViewerRoute: View {
             onDetailsDrag: drag,
             onRestored: onRestored
         )
-        .onDisappear { MemoryLog.record(.viewerClosed) }
+        .onDisappear {
+            // A moment later, not now: the viewer's pages are still alive as it disappears, and #50 asks what is
+            // held once they are gone.
+            Task {
+                // An ended wait only makes the reading early.
+                try? await Task.sleep(for: Self.memorySettle)
+                MemoryLog.record(.viewerClosed)
+            }
+        }
         .overlay(alignment: .bottom) {
             if let details {
                 DetailsPanel(
