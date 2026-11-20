@@ -206,6 +206,7 @@ public final class ReviewModel: ExpiryEditing {
             analytics.send(.saveFailed(reason: error == .diskFull ? .diskFull : .writeFailed))
             return nil
         }
+        MemoryLog.record(.saved, pages: pages.count)
         analytics.send(.scanSaved(pageCount: pages.count, collection: collection))
         suggestion.reportChanges(savedTitle: title, savedCollection: collection)
         let firstPage = pages.first
@@ -328,6 +329,7 @@ public final class ReviewModel: ExpiryEditing {
 
     private func readingFinished(_ found: ScanReading) {
         finishedReading = found
+        MemoryLog.record(.reviewReady, pages: pages.count)
         if !isTitleEdited { title = found.title ?? fallbackTitle }
         if found.failedPages > 0 { analytics.send(.textReadingFailed(failedPages: found.failedPages)) }
     }

@@ -11,6 +11,9 @@ Controls/                    the Scan control: a widget extension for Control Ce
 site/                        the privacy policy page, published to GitHub Pages by .github/workflows/pages.yml
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
+    Diagnostics/             memory readings: a debug build on iOS writes the app's memory at six points of a scan to
+                             `Library/Caches/memory-readings.txt` (numbers only), copied off a phone with
+                             `xcrun devicectl device copy from --domain-type appDataContainer`
     Requests/                requests from outside the app (scan, search, open a scan) and the hand-off that carries them to the root
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors

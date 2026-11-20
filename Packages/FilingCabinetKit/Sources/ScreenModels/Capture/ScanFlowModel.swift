@@ -96,6 +96,7 @@ public final class ScanFlowModel {
     package func cameraFinished(_ pages: [CGImage]) {
         // Review needs a page to show. A camera that returns none (every page unreadable) has failed.
         guard !pages.isEmpty else { return cameraFailed() }
+        MemoryLog.record(.cameraFinished, pages: pages.count)
         if let reviewInput, let review {
             self.reviewInput = reviewInput.replacingPages(pages)
             review.replacePages(pages)

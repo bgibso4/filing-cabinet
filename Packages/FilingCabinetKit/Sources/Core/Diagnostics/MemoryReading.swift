@@ -8,7 +8,8 @@ package struct MemoryReading: Equatable, Sendable {
     /// The highest `now` has been since the process started. The system keeps it, so nothing between two readings is
     /// missed.
     package let peak: UInt64
-    /// How much more the app may take before the system stops it. Nil on the Mac, which has no such limit.
+    /// How much more the app may take before the system stops it. Nil on the Mac and the simulator, which have no
+    /// such limit.
     package let left: UInt64?
 
     /// Nil when the system doesn't answer.
@@ -25,11 +26,13 @@ package struct MemoryReading: Equatable, Sendable {
             now: info.phys_footprint, peak: UInt64(max(info.ledger_phys_footprint_peak, 0)), left: availableMemory())
     }
 
+    /// The simulator has no limit and answers zero, which is "not known" here, not "nothing left".
     private static func availableMemory() -> UInt64? {
         #if os(iOS)
-            UInt64(os_proc_available_memory())
+            let left = os_proc_available_memory()
+            return left > 0 ? UInt64(left) : nil
         #else
-            nil
+            return nil
         #endif
     }
 }

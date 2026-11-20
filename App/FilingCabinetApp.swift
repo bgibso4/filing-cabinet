@@ -14,6 +14,7 @@ struct FilingCabinetApp: App {
     private let requests: ExternalRequests
 
     init() {
+        MemoryLog.record(.appOpened)
         HeaderAppearance.install()
         let requests = ExternalRequests()
         self.requests = requests
@@ -54,6 +55,7 @@ struct FilingCabinetApp: App {
             }
         }
         .onChange(of: scenePhase) { old, phase in
+            if phase == .background { MemoryLog.record(.background) }
             guard let environment = startup.environment else { return }
             switch phase {
             case .active:

@@ -1,3 +1,4 @@
+import Core
 import Library
 import ScreenModels
 import SwiftUI
@@ -52,6 +53,7 @@ public struct ViewerRoute: View {
             onDetailsDrag: drag,
             onRestored: onRestored
         )
+        .onDisappear { MemoryLog.record(.viewerClosed) }
         .overlay(alignment: .bottom) {
             if let details {
                 DetailsPanel(
