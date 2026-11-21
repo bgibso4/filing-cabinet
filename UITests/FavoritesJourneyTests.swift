@@ -5,8 +5,8 @@ import XCTest
 /// scans are "Sample scan 1" (newest) to "Sample scan 6"; `-SeedFavorites n` makes the first n favourites, in order.
 @MainActor
 final class FavoritesJourneyTests: XCTestCase {
-    /// How long a drag presses before it moves. The tile lifts after about 0.3 s on a Mac and 0.5 s in CI's recordings.
-    /// The length was never what failed in CI (see `startDragService`); 3 s is kept from that wrong reading.
+    /// How long a drag presses before it moves. The tile lifts after about 0.3 s on a Mac; on a busy CI runner it once
+    /// hadn't lifted after 1 s, the finger moved first and nothing reordered (run 43997920889). Longer than any lift.
     private let liftPress: TimeInterval = 3
 
     override func setUp() {
@@ -109,7 +109,6 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertTrue(app.header("Favorites").appears(within: 5))
         XCTAssertTrue(tile("Sample scan 3", in: app).appears(within: 5))
 
-        startDragService(with: "Sample scan 4", in: app)
         drag("Sample scan 3", before: "Sample scan 1", in: app)
 
         let moved = ["Sample scan 3", "Sample scan 1", "Sample scan 2", "Sample scan 4"]
@@ -187,15 +186,6 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertTrue(tile.appears(within: 5))
         tile.tap()
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
-    }
-
-    /// A press that lifts the tile titled `title` and lets go, moving nothing. iOS hands a drag to a process of its own
-    /// (`druid`), which a simulator starts the first time a tile lifts. On a busy CI runner that start took over 2 s
-    /// and overlapped the drag: the tile lifted, the drag began as the service came up, and nothing reordered (runs
-    /// 43997920889, 44748993039, 44756089080; in the last the service crashed). Lifting a tile first starts the
-    /// service before the drag that counts. XCTest can't see the service, so there is nothing to wait on.
-    private func startDragService(with title: String, in app: XCUIApplication) {
-        tile(title, in: app).press(forDuration: 1)
     }
 
     /// A long press lifts the tile titled `title`; a slow drag drops it on the left of `target`'s, before it.
