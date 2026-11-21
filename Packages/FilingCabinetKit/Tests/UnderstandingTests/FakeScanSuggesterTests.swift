@@ -54,6 +54,13 @@ private let input = SuggestionInput(
     #expect(FakeScanSuggester.cityPharmacyWords == ["receipt", "pharmacy", "purchase"])
 }
 
+@Test func aReceiptSuggestionIsNamedForItsStoreAndFiledInReceipts() {
+    let suggestion = FakeScanSuggester.receipt(from: "Trattoria Luna")
+
+    #expect(suggestion.title == "Trattoria Luna · Receipt")
+    #expect(suggestion.collectionID == "receipts")
+}
+
 @Test func prewarmIsRecorded() {
     let fake = FakeScanSuggester(filing: .never)
 

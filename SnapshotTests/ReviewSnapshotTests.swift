@@ -31,10 +31,12 @@ final class ReviewSnapshotTests: XCTestCase {
         return ReviewView(model: model, onClose: {}, onRescan: {}, onSaved: { _ in })
     }
 
-    /// The card once City Pharmacy's suggestion has filled it.
+    /// The card once the suggestion (City Pharmacy's, unless another is given) has filled it.
     @MainActor
-    private func suggestedCard(_ pages: [CGImage]) async throws -> ReviewView {
-        let suggester = FakeScanSuggester(filing: .arrives(FakeScanSuggester.cityPharmacy(), after: .zero))
+    private func suggestedCard(
+        _ pages: [CGImage], suggestion: ScanSuggestion = FakeScanSuggester.cityPharmacy()
+    ) async throws -> ReviewView {
+        let suggester = FakeScanSuggester(filing: .arrives(suggestion, after: .zero))
         let model = reviewModel(pages, suggester: suggester, suggestionsOn: true)
         await model.startReading()
         let deadline = ContinuousClock.now + Self.suggestionWait
@@ -137,6 +139,15 @@ final class ReviewSnapshotTests: XCTestCase {
     func testCardSuggested() async throws {
         let card = try await suggestedCard(Fixtures.scans("scan-r-pharmacy"))
         try SnapshotHost.assertScreen(card, testName: "review_card_suggested", variants: [Self.variant("light")])
+    }
+
+    /// The App Store's first screenshot (`scripts/app-store-screenshots.swift`): a made-up restaurant receipt with real
+    /// prices, titled the way the model titles a receipt.
+    @MainActor
+    func testCardSuggestedForTheAppStore() async throws {
+        let card = try await suggestedCard(
+            Fixtures.scans("receipt-trattoria-luna"), suggestion: FakeScanSuggester.receipt(from: "Trattoria Luna"))
+        try SnapshotHost.assertScreen(card, testName: "review_card_app_store", variants: [Self.variant("light")])
     }
 
     /// 03-03: the page strip above the card.

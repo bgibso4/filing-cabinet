@@ -80,6 +80,11 @@ public final class FakeScanSuggester: ScanSuggester {
         ScanSuggestion(title: "City Pharmacy Receipt", collectionID: "receipts")
     }
 
+    /// What the model would file a receipt from `store` as: a "Name · Kind" title, in Receipts.
+    public static func receipt(from store: String) -> ScanSuggestion {
+        ScanSuggestion(title: "\(store) · Receipt", collectionID: "receipts")
+    }
+
     /// The words the model would give the synthetic City Pharmacy receipt.
     public static let cityPharmacyWords = ["receipt", "pharmacy", "purchase"]
 

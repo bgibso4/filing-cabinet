@@ -51,6 +51,7 @@ SnapshotTests/SnapshotHost.swift ALL
 SnapshotTests/Fixtures.swift ALL
 SnapshotTests/WindowPixels.swift ALL
 SnapshotTests/CPUImageMatch.swift ALL
+SnapshotTests/AppStore/ ReviewSnapshotTests
 
 # ScreensTests runs only on the simulator (the Fast scheme can't build Screens); every Screens change runs it.
 Packages/FilingCabinetKit/Sources/Screens/ ScreensTests
