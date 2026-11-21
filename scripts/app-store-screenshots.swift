@@ -1,8 +1,8 @@
 // The App Store screenshots (#115), from the snapshot tests' own reference images. Everything shown is made up.
 //
-//   swift scripts/app-store-screenshots.swift frame <output folder>   six captioned 6.9-inch screenshots and a contact sheet
+//   swift scripts/app-store-screenshots.swift frame <output folder>   six captioned screenshots and a contact sheet
 //   swift scripts/app-store-screenshots.swift receipt <file.jpg>      the made-up restaurant receipt shot 1 reviews
-//   swift scripts/app-store-screenshots.swift header <file.png>       the product page header: made-up scans, fanned out
+//   swift scripts/app-store-screenshots.swift header <output folder>  the product page header, light and dark: the mark and the subtitle
 //
 // `frame` reads SnapshotTests/__Snapshots__, so re-record the snapshots first when a screen has changed.
 
@@ -17,7 +17,7 @@ let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingL
 let arguments = CommandLine.arguments
 guard arguments.count == 3, ["frame", "receipt", "header"].contains(arguments[1]) else {
     FileHandle.standardError.write(
-        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg> | header <file.png>\n".utf8))
+        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg> | header <folder>\n".utf8))
     exit(2)
 }
 let target = URL(fileURLWithPath: arguments[2])
@@ -195,8 +195,11 @@ let shots = [
         caption: "Keep what\nmatters forever.", background: 0x4b8160, fits: true),
 ]
 
-/// The 6.9-inch size.
+/// The size the layout below is measured in.
 let canvas = CGSize(width: 1320, height: 2868)
+/// The size written: the one App Store Connect asks for first (iPhone 6.1" or 6.3" displays). It refused the layout's
+/// own 6.9-inch size in that slot.
+let screenshotSize = CGSize(width: 1206, height: 2622)
 /// The empty status bar band at the top of a snapshot, in its own pixels.
 let statusBand: CGFloat = 110
 let screenTop: CGFloat = 760
@@ -215,7 +218,8 @@ func framed(_ shot: Shot) -> CGImage {
         ? (canvas.height - screenTop - bottomMargin) / CGFloat(screen.height) : screenWidth / CGFloat(screen.width)
     let width = CGFloat(screen.width) * scale
     let height = CGFloat(screen.height) * scale
-    return bitmap(canvas) { context in
+    return bitmap(screenshotSize) { context in
+        context.scaleBy(x: screenshotSize.width / canvas.width, y: screenshotSize.height / canvas.height)
         colour(shot.background).setFill()
         CGRect(origin: .zero, size: canvas).fill()
 
@@ -249,62 +253,51 @@ func framed(_ shot: Shot) -> CGImage {
 
 // MARK: The product page header
 
-/// A scan in the header's fan: where its centre sits across the canvas, how tall it is drawn and its tilt.
-struct FannedScan {
-    /// Under design/prototype/scans, or nil for the receipt this script draws.
-    let sample: String?
-    let centre: CGFloat
-    let height: CGFloat
-    let degrees: CGFloat
-}
-
-/// Apple's size for the header (21:9), and the middle band every device shows: keep the point of the picture in it.
+/// Apple's size for the header (21:9), and the middle band every device shows: the mark and the words stay inside it.
 let headerSize = CGSize(width: 3840, height: 1646)
 let headerSafeArea = CGRect(x: 1097, y: 493, width: 1646, height: 661)
+let headerMarkSize: CGFloat = 600
+let headerTextSize: CGFloat = 176
 
-/// Back to front. The five in the middle sit inside the safe area; the outer ones only fill wider crops.
-let headerFan = [
-    FannedScan(sample: "scan-registration", centre: 330, height: 330, degrees: -9),
-    FannedScan(sample: "scan-note-bio", centre: 3440, height: 520, degrees: 9),
-    FannedScan(sample: "scan-library", centre: 880, height: 330, degrees: 7),
-    FannedScan(sample: "scan-throw-valet", centre: 2940, height: 500, degrees: -7),
-    FannedScan(sample: "scan-license", centre: 1400, height: 350, degrees: -8),
-    FannedScan(sample: "scan-throw-coat", centre: 2440, height: 540, degrees: 8),
-    FannedScan(sample: "scan-lease", centre: 1760, height: 600, degrees: -4),
-    FannedScan(sample: "scan-insurance", centre: 2250, height: 350, degrees: 5),
-    FannedScan(sample: nil, centre: 1960, height: 620, degrees: 2),
-]
-
-func header() -> CGImage {
+/// The brand, as the app's lock screen shows it: the icon's mark beside the subtitle in New York.
+func header(dark: Bool) -> CGImage {
     bitmap(headerSize) { context in
-        colour(0xc0533a).setFill()
+        colour(dark ? 0x1c1c1e : 0xf2f2f7).setFill()
         context.fill(CGRect(origin: .zero, size: headerSize))
-        context.interpolationQuality = .high
         // The safe area's middle, with the origin at the bottom left.
         let middle = headerSize.height - headerSafeArea.midY
-        for scan in headerFan {
-            let image =
-                scan.sample.map { load(root.appending(path: "design/prototype/scans/\($0).jpg")) } ?? receipt()
-            let width = scan.height * CGFloat(image.width) / CGFloat(image.height)
-            let page = CGRect(x: -width / 2, y: -scan.height / 2, width: width, height: scan.height)
-            context.saveGState()
-            context.translateBy(x: scan.centre, y: middle)
-            context.rotate(by: scan.degrees * .pi / 180)
-            context.setShadow(offset: CGSize(width: 0, height: -14), blur: 44, color: NSColor.black.withAlphaComponent(0.35).cgColor)
-            context.fill(page)
-            context.setShadow(offset: .zero, blur: 0, color: nil)
-            context.addPath(CGPath(roundedRect: page, cornerWidth: 14, cornerHeight: 14, transform: nil))
-            context.clip()
-            context.draw(image, in: page)
-            context.restoreGState()
+        let serif = NSFont.systemFont(ofSize: headerTextSize, weight: .bold).fontDescriptor.withDesign(.serif)!
+        let style = NSMutableParagraphStyle()
+        style.lineHeightMultiple = 0.95
+        let words = NSAttributedString(
+            string: "Files itself.\nCleans itself.",
+            attributes: [
+                .font: NSFont(descriptor: serif, size: headerTextSize)!,
+                .foregroundColor: colour(dark ? 0xf2f2f7 : 0x1c1c1e), .paragraphStyle: style, .kern: -2,
+            ])
+        let wordsSize = words.boundingRect(
+            with: CGSize(width: 2000, height: 1000), options: [.usesLineFragmentOrigin]
+        ).size
+        // The icon's layers carry their own margin, so the mark's ink starts a sixth of the way in.
+        let gap: CGFloat = -20
+        let left = headerSafeArea.midX - (headerMarkSize + gap + wordsSize.width) / 2
+        let mark = CGRect(x: left, y: middle - headerMarkSize / 2, width: headerMarkSize, height: headerMarkSize)
+        for layer in [dark ? "corners-dark" : "corners-light", "folder"] {
+            NSImage(contentsOf: root.appending(path: "App/AppIcon.icon/Assets/\(layer).svg"))!.draw(in: mark)
         }
+        words.draw(
+            with: CGRect(
+                x: mark.maxX + gap, y: middle - wordsSize.height / 2, width: wordsSize.width, height: wordsSize.height),
+            options: [.usesLineFragmentOrigin])
     }
 }
 
 if arguments[1] == "receipt" {
     write(receipt(), to: target, as: "public.jpeg", quality: 0.9)
 } else if arguments[1] == "header" {
-    write(header(), to: target, as: "public.png")
+    try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+    write(header(dark: false), to: target.appending(path: "header-light.png"), as: "public.png")
+    write(header(dark: true), to: target.appending(path: "header-dark.png"), as: "public.png")
 } else {
     try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
     let images = shots.map { shot in
