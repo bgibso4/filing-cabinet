@@ -8,7 +8,7 @@ A private, Photos-style library for personal documents (IDs, receipts, notes, ca
 App/                         app target: entry point, environment wiring, Info.plist, privacy manifest, the app icon (AppIcon.icon), the Siri phrases
 Intents/                     App Intents (Scan a document, Find a scan), compiled into the app and the controls extension
 Controls/                    the Scan control: a widget extension for Control Center, the Lock Screen and the Action button
-site/                        the privacy policy page, published to GitHub Pages by .github/workflows/pages.yml
+site/                        the privacy policy and support pages, published to GitHub Pages by .github/workflows/pages.yml
 Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
   Sources/Core/              shared vocabulary: collections, analytics types, AccessibilityID. Mac-buildable
     Diagnostics/             memory readings: a debug build on iOS writes the app's memory at six points of a scan to
