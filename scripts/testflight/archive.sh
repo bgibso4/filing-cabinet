@@ -67,9 +67,15 @@ run_xcodebuild archive archive ${XCB_FLAGS:-} -project "$PROJECT" -scheme Filing
 # Proof the archive used no certificate: every bundle in it is ad-hoc signed.
 app="$archive/Products/Applications/FilingCabinet.app"
 [ -d "$app" ] || { echo "error: the archive has no FilingCabinet.app" >&2; exit 1; }
+# codesign's answer is read whole before it is searched: grep leaving at the signature line closed the pipe on
+# codesign's later lines, which killed it and failed an ad-hoc archive.
 while IFS= read -r bundle; do
-	"$codesign" -dv "$bundle" 2>&1 | grep -qx 'Signature=adhoc' ||
-		{ echo "error: ${bundle#"$archive/"} is not ad-hoc signed: the archive must not use a certificate" >&2; exit 1; }
+	signature="$("$codesign" -dv "$bundle" 2>&1)" || true
+	grep -qx 'Signature=adhoc' <<<"$signature" || {
+		echo "error: ${bundle#"$archive/"} is not ad-hoc signed: the archive must not use a certificate" >&2
+		echo "$signature" >&2
+		exit 1
+	}
 done < <(find "$app" \( -name '*.app' -o -name '*.appex' \) -type d)
 
 run_xcodebuild export -exportArchive -archivePath "$archive" -exportPath "$out/export" -exportOptionsPlist "$options" \

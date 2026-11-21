@@ -30,11 +30,14 @@ for i in "${!args[@]}"; do
 done
 exit "${STUB_STATUS:-0}"
 STUB
-  # Stub codesign: ad-hoc unless STUB_SIGNATURE says otherwise.
+  # Stub codesign: ad-hoc unless STUB_SIGNATURE says otherwise. Like the real one it prints more lines after the
+  # signature, which a reader that leaves at the signature line kills it on.
   cat >"$FIX/bin/codesign" <<'STUB'
 #!/usr/bin/env bash
 echo "Executable=${*: -1}" >&2
 echo "Signature=${STUB_SIGNATURE:-adhoc}" >&2
+echo "Info.plist entries=30" >&2
+echo "TeamIdentifier=not set" >&2
 STUB
   chmod +x "$FIX/bin/xcodebuild" "$FIX/bin/codesign"
   export FC_XCODEBUILD="$FIX/bin/xcodebuild" FC_CODESIGN="$FIX/bin/codesign" FC_BEAUTIFY=cat
