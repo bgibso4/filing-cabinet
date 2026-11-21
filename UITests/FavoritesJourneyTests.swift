@@ -5,8 +5,10 @@ import XCTest
 /// scans are "Sample scan 1" (newest) to "Sample scan 6"; `-SeedFavorites n` makes the first n favourites, in order.
 @MainActor
 final class FavoritesJourneyTests: XCTestCase {
-    /// How long a drag presses before it moves. The tile lifts after about 0.3 s on a Mac; on a busy CI runner it once
-    /// hadn't lifted after 1 s, the finger moved first and nothing reordered (run 43997920889). Longer than any lift.
+    /// How long a drag presses before it moves. The tile lifts after about 0.3 s on a Mac and 0.5 s in CI's recordings.
+    /// The length is not why this drag sometimes moves nothing in CI. In the two failures whose log could be read,
+    /// iOS's drag service (`druid`) cancelled the drag about a quarter of a second after the finger lifted, because
+    /// the app had not answered by then (#104). Not fixed.
     private let liftPress: TimeInterval = 3
 
     override func setUp() {
