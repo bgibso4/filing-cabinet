@@ -1,7 +1,8 @@
 // The App Store screenshots (#115), from the snapshot tests' own reference images. Everything shown is made up.
 //
-//   swift scripts/app-store-screenshots.swift frame <output folder>   six captioned 6.9-inch screenshots and a contact sheet
+//   swift scripts/app-store-screenshots.swift frame <output folder>   six captioned screenshots and a contact sheet
 //   swift scripts/app-store-screenshots.swift receipt <file.jpg>      the made-up restaurant receipt shot 1 reviews
+//   swift scripts/app-store-screenshots.swift header <output folder>  the product page header, light and dark: the mark and the subtitle
 //
 // `frame` reads SnapshotTests/__Snapshots__, so re-record the snapshots first when a screen has changed.
 
@@ -14,9 +15,9 @@ import CoreImage
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 let arguments = CommandLine.arguments
-guard arguments.count == 3, ["frame", "receipt"].contains(arguments[1]) else {
+guard arguments.count == 3, ["frame", "receipt", "header"].contains(arguments[1]) else {
     FileHandle.standardError.write(
-        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg>\n".utf8))
+        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg> | header <folder>\n".utf8))
     exit(2)
 }
 let target = URL(fileURLWithPath: arguments[2])
@@ -182,7 +183,7 @@ let shots = [
         caption: "Clutter clears\nitself out.", background: 0xb98a1f),
     Shot(
         name: "3-private", reference: "SettingsSnapshotTests/settings_lock_on.light.png",
-        caption: "Private. Free.\nNo account.", background: 0x1c1c1e),
+        caption: "Private by design.\nNo account.", background: 0x1c1c1e),
     Shot(
         name: "4-home", reference: "HomeSnapshotTests/home_favorites.light.png",
         caption: "Everything\nin its place.", background: 0x3f6fa3),
@@ -194,8 +195,11 @@ let shots = [
         caption: "Keep what\nmatters forever.", background: 0x4b8160, fits: true),
 ]
 
-/// The 6.9-inch size.
+/// The size the layout below is measured in.
 let canvas = CGSize(width: 1320, height: 2868)
+/// The size written: the one App Store Connect asks for first (iPhone 6.1" or 6.3" displays). It refused the layout's
+/// own 6.9-inch size in that slot.
+let screenshotSize = CGSize(width: 1206, height: 2622)
 /// The empty status bar band at the top of a snapshot, in its own pixels.
 let statusBand: CGFloat = 110
 let screenTop: CGFloat = 760
@@ -214,7 +218,8 @@ func framed(_ shot: Shot) -> CGImage {
         ? (canvas.height - screenTop - bottomMargin) / CGFloat(screen.height) : screenWidth / CGFloat(screen.width)
     let width = CGFloat(screen.width) * scale
     let height = CGFloat(screen.height) * scale
-    return bitmap(canvas) { context in
+    return bitmap(screenshotSize) { context in
+        context.scaleBy(x: screenshotSize.width / canvas.width, y: screenshotSize.height / canvas.height)
         colour(shot.background).setFill()
         CGRect(origin: .zero, size: canvas).fill()
 
@@ -246,8 +251,53 @@ func framed(_ shot: Shot) -> CGImage {
     }
 }
 
+// MARK: The product page header
+
+/// Apple's size for the header (21:9), and the middle band every device shows: the mark and the words stay inside it.
+let headerSize = CGSize(width: 3840, height: 1646)
+let headerSafeArea = CGRect(x: 1097, y: 493, width: 1646, height: 661)
+let headerMarkSize: CGFloat = 600
+let headerTextSize: CGFloat = 176
+
+/// The brand, as the app's lock screen shows it: the icon's mark beside the subtitle in New York.
+func header(dark: Bool) -> CGImage {
+    bitmap(headerSize) { context in
+        colour(dark ? 0x1c1c1e : 0xf2f2f7).setFill()
+        context.fill(CGRect(origin: .zero, size: headerSize))
+        // The safe area's middle, with the origin at the bottom left.
+        let middle = headerSize.height - headerSafeArea.midY
+        let serif = NSFont.systemFont(ofSize: headerTextSize, weight: .bold).fontDescriptor.withDesign(.serif)!
+        let style = NSMutableParagraphStyle()
+        style.lineHeightMultiple = 0.95
+        let words = NSAttributedString(
+            string: "Files itself.\nCleans itself.",
+            attributes: [
+                .font: NSFont(descriptor: serif, size: headerTextSize)!,
+                .foregroundColor: colour(dark ? 0xf2f2f7 : 0x1c1c1e), .paragraphStyle: style, .kern: -2,
+            ])
+        let wordsSize = words.boundingRect(
+            with: CGSize(width: 2000, height: 1000), options: [.usesLineFragmentOrigin]
+        ).size
+        // The icon's layers carry their own margin, so the mark's ink starts a sixth of the way in.
+        let gap: CGFloat = -20
+        let left = headerSafeArea.midX - (headerMarkSize + gap + wordsSize.width) / 2
+        let mark = CGRect(x: left, y: middle - headerMarkSize / 2, width: headerMarkSize, height: headerMarkSize)
+        for layer in [dark ? "corners-dark" : "corners-light", "folder"] {
+            NSImage(contentsOf: root.appending(path: "App/AppIcon.icon/Assets/\(layer).svg"))!.draw(in: mark)
+        }
+        words.draw(
+            with: CGRect(
+                x: mark.maxX + gap, y: middle - wordsSize.height / 2, width: wordsSize.width, height: wordsSize.height),
+            options: [.usesLineFragmentOrigin])
+    }
+}
+
 if arguments[1] == "receipt" {
     write(receipt(), to: target, as: "public.jpeg", quality: 0.9)
+} else if arguments[1] == "header" {
+    try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
+    write(header(dark: false), to: target.appending(path: "header-light.png"), as: "public.png")
+    write(header(dark: true), to: target.appending(path: "header-dark.png"), as: "public.png")
 } else {
     try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
     let images = shots.map { shot in
