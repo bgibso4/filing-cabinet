@@ -285,9 +285,9 @@ public struct RootView: View {
         case .search(let text):
             _ = requests.take()
             openSearch(query: text)
-        case .open(let id):
+        case .show(let route):
             _ = requests.take()
-            path = [.scan(id)]
+            path = [route]
         }
     }
 

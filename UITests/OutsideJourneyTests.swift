@@ -69,4 +69,18 @@ final class OutsideJourneyTests: XCTestCase {
         app.buttons[AccessibilityID.Viewer.back].tap()
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isHittable == true", within: 5))
     }
+
+    /// What a tapped cleanup note sends (#123): Trash opens over Home, also from another screen.
+    func testTrashRequestOpensTrash() throws {
+        let app = launchApp(["-SeedScans", "1", "-SeedTrash", "2", "-FixedDate", "2026-10-12"])
+        app.buttons[AccessibilityID.Home.settings].tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("exists == false", within: 5))
+
+        XCUIDevice.shared.system.open(try XCTUnwrap(RequestURL.make("trash")))
+
+        XCTAssertTrue(app.buttons[AccessibilityID.Trash.emptyTrash].appears(within: 10))
+        // Pushed over Home, not over Settings: back returns there.
+        app.buttons[AccessibilityID.Grid.back].tap()
+        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isHittable == true", within: 5))
+    }
 }

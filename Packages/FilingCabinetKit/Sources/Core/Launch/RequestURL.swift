@@ -2,7 +2,7 @@ import Foundation
 
 /// How a UI test sends a request from outside the app to the running app, as the Scan control, Siri or Spotlight do
 /// when the app is already open or in the background: the app opens this URL and sends the request it carries. The
-/// value is `-Request`'s (`scan`, `search:<text>`, `open:<n>`). Like `RelaunchURL`, the app acts on it only in a Debug
+/// value is `-Request`'s (`scan`, `search:<text>`, `open:<n>`, `trash`). Like `RelaunchURL`, the app acts on it only in a Debug
 /// build that was itself launched with `-UITest`.
 public enum RequestURL {
     private static let host = "request"

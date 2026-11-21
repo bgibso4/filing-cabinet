@@ -14,7 +14,7 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
     Diagnostics/             memory readings: a debug build on iOS writes the app's memory at six points of a scan to
                              `Library/Caches/memory-readings.txt` (numbers only), copied off a phone with
                              `xcrun devicectl device copy from --domain-type appDataContainer`
-    Requests/                requests from outside the app (scan, search, open a scan) and the hand-off that carries them to the root
+    Requests/                requests from outside the app (scan, search, open a scan, open Trash) and the hand-off that carries them to the root
     Lifecycle/               the one rule for where a scan is (library, Trash or gone), from its dates
     Photos/                  the Save to Photos seam (PhotoSaving) and its errors
     Lock/                    the device authentication seam (DeviceAuthenticating): Face ID, with the passcode as the fallback
@@ -133,14 +133,14 @@ Debug builds only; a Release build ignores them. Parsed in `Core/Launch/LaunchOp
 | `-ShowWelcome` | the first-launch welcome shows; under `-UITest` it otherwise counts as done |
 | `-HoldScan` | launch finishes (seeding included) but Scan stays disabled, for auditing that state on a still Home |
 | `-RatingDue` | under `-UITest` the counts start at nine saves on three days, so the next save asks for a rating |
-| `-Request scan\|search:<text>\|open:<n>` | a request from outside the app is sent at launch; `open:<n>` is the nth scan `-SeedScans` saves, from 1 |
+| `-Request scan\|search:<text>\|open:<n>\|trash` | a request from outside the app is sent at launch; `open:<n>` is the nth scan `-SeedScans` saves, from 1; `trash` is what a tapped cleanup note sends |
 | `-Lock on` | the library lock is on (sets the preference, so outside `-UITest` it stays on); under `-UITest` it is otherwise off |
 | `-Authenticator succeeds\|succeedsOnce\|cancels\|cancelsOnce\|cancelsSecond\|fails\|passcodeOnly\|none` | a fake authenticator answers Face ID: `succeedsOnce` succeeds then cancels, `cancelsOnce` cancels then succeeds, `cancelsSecond` cancels only the second check; `passcodeOnly` has no Face ID, `none` no passcode |
 | `-LockAfter <seconds>` | the library locks again after this long in the background (300 otherwise) |
 | `-Animations` | under `-UITest` animations stay on; the system's interactive transitions (swiping a scan down or back into its thumbnail) never finish without them |
 | `-ReduceMotion` | the capture layer, Search and the welcome's second screen fade rather than move, and Home's count doesn't pop |
 
-UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build. A `RequestURL` (`Core/Launch/RequestURL.swift`) sends a request from outside the app to the running app the same way, for a journey that needs one after launch (`scan`, `search:<text>`, `open:<n>`).
+UI tests launch the app once per test class. Later tests of the class open a `RelaunchURL` (`Core/Launch/RelaunchURL.swift`) instead: the running app builds a new environment from the flags in it and every view again, in about 1 s instead of a launch. A test that needs a cold process passes `fresh: true` to `launchApp`; a change of text size launches again by itself. The app acts on the URL only when it was launched with `-UITest` in a Debug build. A `RequestURL` (`Core/Launch/RequestURL.swift`) sends a request from outside the app to the running app the same way, for a journey that needs one after launch (`scan`, `search:<text>`, `open:<n>`, `trash`).
 
 ## Import line
 
