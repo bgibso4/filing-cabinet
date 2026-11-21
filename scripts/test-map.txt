@@ -86,7 +86,7 @@ Packages/FilingCabinetKit/Sources/Screens/Lock/ LockJourneyTests LockCoverSnapsh
 Packages/FilingCabinetKit/Sources/ScreenModels/Lock/ LockJourneyTests LockCoverSnapshotTests SettingsJourneyTests SettingsSnapshotTests
 # Older scans' search words: the pass's progress shows in Settings.
 Packages/FilingCabinetKit/Sources/ScreenModels/Suggestions/ SettingsJourneyTests SettingsSnapshotTests
-Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests
+Packages/FilingCabinetKit/Sources/Screens/Notifications/ SettingsJourneyTests SettingsSnapshotTests ScanJourneyTests AppLaunchTests
 Packages/FilingCabinetKit/Sources/Screens/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests OutsideJourneyTests
 Packages/FilingCabinetKit/Sources/ScreenModels/Capture/ ScanJourneyTests CameraAccessJourneyTests BrowseJourneyTests CameraOffSnapshotTests OutsideJourneyTests
 Packages/FilingCabinetKit/Sources/Screens/Review/ ScanJourneyTests ReviewZoomJourneyTests ReviewSuggestionJourneyTests BrowseJourneyTests ReviewSnapshotTests
