@@ -2,6 +2,7 @@
 //
 //   swift scripts/app-store-screenshots.swift frame <output folder>   six captioned 6.9-inch screenshots and a contact sheet
 //   swift scripts/app-store-screenshots.swift receipt <file.jpg>      the made-up restaurant receipt shot 1 reviews
+//   swift scripts/app-store-screenshots.swift header <file.png>       the product page header: made-up scans, fanned out
 //
 // `frame` reads SnapshotTests/__Snapshots__, so re-record the snapshots first when a screen has changed.
 
@@ -14,9 +15,9 @@ import CoreImage
 
 let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
 let arguments = CommandLine.arguments
-guard arguments.count == 3, ["frame", "receipt"].contains(arguments[1]) else {
+guard arguments.count == 3, ["frame", "receipt", "header"].contains(arguments[1]) else {
     FileHandle.standardError.write(
-        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg>\n".utf8))
+        Data("usage: app-store-screenshots.swift frame <folder> | receipt <file.jpg> | header <file.png>\n".utf8))
     exit(2)
 }
 let target = URL(fileURLWithPath: arguments[2])
@@ -182,7 +183,7 @@ let shots = [
         caption: "Clutter clears\nitself out.", background: 0xb98a1f),
     Shot(
         name: "3-private", reference: "SettingsSnapshotTests/settings_lock_on.light.png",
-        caption: "Private. Free.\nNo account.", background: 0x1c1c1e),
+        caption: "Private by design.\nNo account.", background: 0x1c1c1e),
     Shot(
         name: "4-home", reference: "HomeSnapshotTests/home_favorites.light.png",
         caption: "Everything\nin its place.", background: 0x3f6fa3),
@@ -246,8 +247,64 @@ func framed(_ shot: Shot) -> CGImage {
     }
 }
 
+// MARK: The product page header
+
+/// A scan in the header's fan: where its centre sits across the canvas, how tall it is drawn and its tilt.
+struct FannedScan {
+    /// Under design/prototype/scans, or nil for the receipt this script draws.
+    let sample: String?
+    let centre: CGFloat
+    let height: CGFloat
+    let degrees: CGFloat
+}
+
+/// Apple's size for the header (21:9), and the middle band every device shows: keep the point of the picture in it.
+let headerSize = CGSize(width: 3840, height: 1646)
+let headerSafeArea = CGRect(x: 1097, y: 493, width: 1646, height: 661)
+
+/// Back to front. The five in the middle sit inside the safe area; the outer ones only fill wider crops.
+let headerFan = [
+    FannedScan(sample: "scan-registration", centre: 330, height: 330, degrees: -9),
+    FannedScan(sample: "scan-note-bio", centre: 3440, height: 520, degrees: 9),
+    FannedScan(sample: "scan-library", centre: 880, height: 330, degrees: 7),
+    FannedScan(sample: "scan-throw-valet", centre: 2940, height: 500, degrees: -7),
+    FannedScan(sample: "scan-license", centre: 1400, height: 350, degrees: -8),
+    FannedScan(sample: "scan-throw-coat", centre: 2440, height: 540, degrees: 8),
+    FannedScan(sample: "scan-lease", centre: 1760, height: 600, degrees: -4),
+    FannedScan(sample: "scan-insurance", centre: 2250, height: 350, degrees: 5),
+    FannedScan(sample: nil, centre: 1960, height: 620, degrees: 2),
+]
+
+func header() -> CGImage {
+    bitmap(headerSize) { context in
+        colour(0xc0533a).setFill()
+        context.fill(CGRect(origin: .zero, size: headerSize))
+        context.interpolationQuality = .high
+        // The safe area's middle, with the origin at the bottom left.
+        let middle = headerSize.height - headerSafeArea.midY
+        for scan in headerFan {
+            let image =
+                scan.sample.map { load(root.appending(path: "design/prototype/scans/\($0).jpg")) } ?? receipt()
+            let width = scan.height * CGFloat(image.width) / CGFloat(image.height)
+            let page = CGRect(x: -width / 2, y: -scan.height / 2, width: width, height: scan.height)
+            context.saveGState()
+            context.translateBy(x: scan.centre, y: middle)
+            context.rotate(by: scan.degrees * .pi / 180)
+            context.setShadow(offset: CGSize(width: 0, height: -14), blur: 44, color: NSColor.black.withAlphaComponent(0.35).cgColor)
+            context.fill(page)
+            context.setShadow(offset: .zero, blur: 0, color: nil)
+            context.addPath(CGPath(roundedRect: page, cornerWidth: 14, cornerHeight: 14, transform: nil))
+            context.clip()
+            context.draw(image, in: page)
+            context.restoreGState()
+        }
+    }
+}
+
 if arguments[1] == "receipt" {
     write(receipt(), to: target, as: "public.jpeg", quality: 0.9)
+} else if arguments[1] == "header" {
+    write(header(), to: target, as: "public.png")
 } else {
     try FileManager.default.createDirectory(at: target, withIntermediateDirectories: true)
     let images = shots.map { shot in
