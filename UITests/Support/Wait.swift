@@ -42,18 +42,24 @@ extension XCUIElementQuery {
     }
 }
 
-/// True once `predicate` holds for `object`, within `timeout` seconds of the call.
+/// How long a wait rests between two checks: XCTest's own waits check about once a second, and the journeys were
+/// written against that. At 0.1 s a wait returned in the middle of a transition and the next step ran into it: a hit
+/// test while the camera slid away, an audit while the review card faded in.
+private let checkPause: TimeInterval = 1
+
+/// True once `predicate` holds for `object`, in a check that started within `timeout` seconds of the call.
 ///
 /// XCTest's own waits (`waitForExistence`, `XCTNSPredicateExpectation`) first check about 1 s after they start,
-/// even when the element is already there, and a check still running at the deadline counts as a timeout. One
-/// read of the screen can take 4 s on CI, so a 5 s wait could fail on an element that was there all along. This
-/// reads once right away, then leaves what is left of the same deadline to XCTest's wait: never more time than
-/// `timeout`, and no idle second when the element is ready.
+/// even when the element is already there, and a check still running at the deadline counts as a timeout, whatever
+/// it read. One read of the screen takes 1.4 to 7 s on a slow CI runner, so a wait could fail on a screen that was
+/// right in time (run 44756089080: a check with 2.8 s left took 3.3 s). This checks right away and then again and
+/// again; the deadline decides whether another check starts, not whether a started one counts. A wait can so run
+/// over `timeout` by one check.
 private func holds(_ predicate: NSPredicate, for object: Any, within timeout: TimeInterval) -> Bool {
     let deadline = Date.now.addingTimeInterval(timeout)
-    if predicate.evaluate(with: object) { return true }
-    let remaining = deadline.timeIntervalSinceNow
-    guard remaining > 0 else { return false }
-    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: object)
-    return XCTWaiter.wait(for: [expectation], timeout: remaining) == .completed
+    repeat {
+        if predicate.evaluate(with: object) { return true }
+        RunLoop.current.run(until: Date.now.addingTimeInterval(checkPause))
+    } while Date.now < deadline
+    return false
 }
