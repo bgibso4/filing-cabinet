@@ -42,8 +42,10 @@ extension XCUIElementQuery {
     }
 }
 
-/// How long a wait rests between two checks.
-private let checkPause: TimeInterval = 0.1
+/// How long a wait rests between two checks: XCTest's own waits check about once a second, and the journeys were
+/// written against that. At 0.1 s a wait returned in the middle of a transition and the next step ran into it: a hit
+/// test while the camera slid away, an audit while the review card faded in.
+private let checkPause: TimeInterval = 1
 
 /// True once `predicate` holds for `object`, in a check that started within `timeout` seconds of the call.
 ///
