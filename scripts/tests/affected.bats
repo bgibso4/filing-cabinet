@@ -8,9 +8,11 @@ AFFECTED="$REPO/scripts/affected-tests.sh"
 setup() {
   export TMPDIR="$BATS_TEST_TMPDIR"
   FIX="$BATS_TEST_TMPDIR/repo"
-  mkdir -p "$FIX/scripts" "$FIX/UITests" "$FIX/SnapshotTests" "$FIX/Packages/FilingCabinetKit/Tests/ScreensTests"
+  mkdir -p "$FIX/scripts" "$FIX/UITests" "$FIX/SnapshotTests" "$FIX/AuditTests" "$FIX/Packages/FilingCabinetKit/Tests/ScreensTests"
   printf 'struct TokensTests {}\n' >"$FIX/Packages/FilingCabinetKit/Tests/ScreensTests/TokensTests.swift"
   cp "$REPO/scripts/test-map.txt" "$FIX/scripts/"
+  printf '# The smoke set.\n' >"$FIX/scripts/smoke-tests.txt"
+  printf 'schemes:\n  FilingCabinet:\n    test:\n      targets:\n        - package: FilingCabinetKit/CoreTests\n        - package: FilingCabinetKit/ScreensTests\n        - name: FilingCabinetSnapshotTests\n        - name: FilingCabinetUITests\n  Fast:\n    test:\n      targets:\n        - package: FilingCabinetKit/LibraryTests\n' >"$FIX/project.yml"
   printf 'final class CleanupJourneyTests: XCTestCase {}\n' >"$FIX/UITests/CleanupJourneyTests.swift"
   printf 'final class FavoritesJourneyTests: XCTestCase {}\n' >"$FIX/UITests/FavoritesJourneyTests.swift"
   printf 'final class ScanJourneyTests: XCTestCase {}\n' >"$FIX/UITests/ScanJourneyTests.swift"
@@ -35,6 +37,22 @@ setup() {
   git -C "$FIX" commit -qm base
   git -C "$FIX" switch -qc work
   cd "$FIX"
+}
+
+# What a shared change runs, with the fixture's empty smoke list: the FilingCabinet scheme's package tests and the
+# snapshot tests.
+SHARED="$(printf 'CoreTests\nFilingCabinetSnapshotTests\nScreensTests')"
+SMOKE_A="FilingCabinetUITests/ScanJourneyTests/testScanA"
+SMOKE_B="FilingCabinetUITests/FavoritesJourneyTests/testFavoriteB"
+
+# Lists the two smoke ids, with the tests they name.
+smoke() {
+  printf '# The smoke set.\n%s\n%s\n' "$SMOKE_A" "$SMOKE_B" >scripts/smoke-tests.txt
+  printf 'final class ScanJourneyTests: XCTestCase { func testScanA() {} }\n' >UITests/ScanJourneyTests.swift
+  printf 'final class FavoritesJourneyTests: XCTestCase { func testFavoriteB() {} }\n' >UITests/FavoritesJourneyTests.swift
+  git add -A && git commit -qm smoke
+  # Part of the base, so the branch's own changes are only what each test changes.
+  git branch -qf main HEAD
 }
 
 TRASH="$(printf 'FilingCabinetSnapshotTests/TrashSnapshotTests\nFilingCabinetUITests/CleanupJourneyTests\nFilingCabinetUITests/FavoritesJourneyTests\nFilingCabinetUITests/TrashJourneyTests\nScreensTests')"
@@ -69,6 +87,13 @@ change() {
   [ "$output" = "FilingCabinetUITests/ScanJourneyTests" ]
 }
 
+@test "an audit test file change picks its audit class" {
+  printf 'final class HomeAuditTests: XCTestCase {}\n' >AuditTests/HomeAuditTests.swift
+  change AuditTests/HomeAuditTests.swift
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "FilingCabinetAuditTests/HomeAuditTests" ]
+}
+
 @test "a Swift Testing suite is found by its struct" {
   change SnapshotTests/ViewerBehaviourTests.swift
   run --separate-stderr "$AFFECTED" main
@@ -81,16 +106,16 @@ change() {
   [ "$output" = "FilingCabinetSnapshotTests/TrashSnapshotTests" ]
 }
 
-@test "a shared change runs everything" {
+@test "a shared change runs snapshots and package tests" {
   change Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Tokens.swift
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
 }
 
-@test "unmapped path runs everything" {
+@test "an unmapped path runs the shared set" {
   change NewFolder/X.swift
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
   [[ "$stderr" == *"no rule for NewFolder/X.swift"* ]]
 }
 
@@ -148,11 +173,11 @@ change() {
   [ "$output" = "$TRASH" ]
 }
 
-@test "a changed string no code names runs everything" {
+@test "a changed string no code names runs the shared set" {
   catalog "$(keys a a a b)" >"$STRINGS"
   git commit -qam copy
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
   [[ "$stderr" == *"%@ default"* ]]
 }
 
@@ -179,37 +204,96 @@ change() {
   [ -z "$output" ]
 }
 
-@test "an identifier change outside a screen's enum runs everything" {
+@test "an identifier change outside a screen's enum runs the shared set" {
   sed -i '' 's/-> String { id }/-> String { id + ".pill" }/' "$IDS"
   git commit -qam ids
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
 }
 
-@test "an identifier added between screen enums runs everything" {
+@test "an identifier added between screen enums runs the shared set" {
   sed -i '' 's/^    }$/    }\
 \
     public static func extra() -> String { "x" }/' "$IDS"
   git commit -qam ids
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
 }
 
-@test "a catalog the script can't read runs everything" {
+@test "a catalog the script can't read runs the shared set" {
   printf '{ not json\n' >"$STRINGS"
   git commit -qam broken
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
 }
 
-@test "a change to the scans the snapshot tests bundle runs everything" {
+@test "a change to the scans the snapshot tests bundle runs the shared set" {
   change design/prototype/scans/scan-lease.jpg
   run --separate-stderr "$AFFECTED" main
-  [ "$output" = "ALL" ]
+  [ "$output" = "$SHARED" ]
 }
 
 @test "a ScreensTests change runs ScreensTests" {
   change Packages/FilingCabinetKit/Tests/ScreensTests/TokensTests.swift
   run --separate-stderr "$AFFECTED" main
   [ "$output" = "ScreensTests" ]
+}
+
+@test "a shared change adds the smoke set to snapshots and package tests" {
+  smoke
+  change Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Tokens.swift
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "$(printf '%s\n%s\n%s\n%s\n%s' CoreTests FilingCabinetSnapshotTests "$SMOKE_B" "$SMOKE_A" ScreensTests)" ]
+}
+
+@test "a screen change adds the smoke set" {
+  smoke
+  change Packages/FilingCabinetKit/Sources/Screens/Trash/TrashView.swift
+  run --separate-stderr "$AFFECTED" main
+  # Trash's classes include FavoritesJourneyTests, so only SMOKE_A is added.
+  [ "$output" = "$(printf '%s\n%s' "$TRASH" "$SMOKE_A" | sort)" ]
+}
+
+@test "a smoke id whose class is already picked is left out" {
+  smoke
+  change "UITests/ScanJourneyTests+EditTrashRestore.swift"
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "$(printf '%s\n%s' "$SMOKE_B" FilingCabinetUITests/ScanJourneyTests)" ]
+}
+
+@test "a docs-only diff runs no smoke set" {
+  smoke
+  change docs/x.md
+  run --separate-stderr "$AFFECTED" main
+  [ -z "$output" ]
+}
+
+@test "a missing smoke list is an error" {
+  rm scripts/smoke-tests.txt
+  change Packages/FilingCabinetKit/Sources/Screens/Trash/TrashView.swift
+  run --separate-stderr "$AFFECTED" main
+  [ "$status" -ne 0 ]
+  [[ "$stderr" == *"scripts/smoke-tests.txt"* ]]
+}
+
+@test "the map check flags a smoke id whose test doesn't exist" {
+  smoke
+  printf 'FilingCabinetUITests/ScanJourneyTests/testGone\n' >>scripts/smoke-tests.txt
+  run "$AFFECTED" --check-map
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"FilingCabinetUITests/ScanJourneyTests/testGone"* ]]
+}
+
+@test "the map check flags a smoke id whose class doesn't exist" {
+  smoke
+  printf 'FilingCabinetUITests/GhostJourneyTests/testA\n' >>scripts/smoke-tests.txt
+  run "$AFFECTED" --check-map
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"FilingCabinetUITests/GhostJourneyTests/testA"* ]]
+}
+
+@test "--shared-set prints the shared set whatever changed" {
+  smoke
+  run -0 --separate-stderr "$AFFECTED" --shared-set
+  [ "$output" = "$(printf '%s\n%s\n%s\n%s\n%s' CoreTests ScreensTests FilingCabinetSnapshotTests "$SMOKE_A" "$SMOKE_B")" ]
 }

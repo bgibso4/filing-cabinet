@@ -1,0 +1,14 @@
+# The smoke set: the only journeys in CI's gate and in `make affected` (read by scripts/affected-tests.sh and the
+# Makefile's smoke shard). Every other journey and every audit runs nightly. Ben approved this list on 2026-11-22; a
+# change to it names its reason in the commit. One Target/Class/test per line.
+FilingCabinetUITests/HomeJourneyTests/testHomeShowsCollectionsAndScan
+FilingCabinetUITests/WelcomeJourneyTests/testContinueThenNotNowLandsOnEmptyHome
+FilingCabinetUITests/ScanJourneyTests/testScanReviewSaveShowsOnHome
+FilingCabinetUITests/ScanJourneyTests/testScanToViewer
+FilingCabinetUITests/BrowseJourneyTests/testOpenAScanFromAGridAndSwipePages
+FilingCabinetUITests/DetailsJourneyTests/testRenameMoveUndoAndExpiry
+FilingCabinetUITests/TrashJourneyTests/testOpenATrashedScanAndRestoreIt
+FilingCabinetUITests/SearchJourneyTests/testSearchFindsAScanByItsText
+FilingCabinetUITests/LockJourneyTests/testCancelledFaceIDKeepsTheCoverAndUnlockAsksAgain
+FilingCabinetUITests/CleanupJourneyTests/testExpiredScansReachTrashAndTheBannerShows
+FilingCabinetUITests/OutsideJourneyTests/testTrashRequestOpensTrash

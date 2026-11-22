@@ -12,22 +12,21 @@ final class CleanupJourneyTests: XCTestCase {
     /// Twelve seeded scans on Oct 25, 2026, notes blocked. Under `-UITest` Home was last seen 14 days before, so
     /// "Sample scan 10" (a Throwaway scanned Oct 16, kept a week) went to Trash on its own since then, on Oct 23.
     /// The banner shows only once seeding has finished, so waiting for it also waits for every count.
-    private func cleanedUpApp(largestText: Bool = false) -> XCUIApplication {
+    private func cleanedUpApp() -> XCUIApplication {
         let app = launchApp(
-            ["-SeedScans", "12", "-FixedDate", "2026-10-25", "-Notifications", "denied"], largestText: largestText)
+            ["-SeedScans", "12", "-FixedDate", "2026-10-25", "-Notifications", "denied"])
         XCTAssertTrue(
             app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout),
             "Home never showed the cleanup banner")
         return app
     }
 
-    func testExpiredScansReachTrashAndTheBannerShows() throws {
+    func testExpiredScansReachTrashAndTheBannerShows() {
         let app = cleanedUpApp()
         let banner = app.buttons[AccessibilityID.Home.cleanupBanner]
         XCTAssertEqual(banner.label, "1 scan moved to Trash · View")
         XCTAssertEqual(app.buttons[AccessibilityID.Home.trashRow].label, "Trash, 1")
         assertIdentifiers([AccessibilityID.Home.cleanupBanner, AccessibilityID.Home.trashRow], in: app)
-        try audit(app)
 
         banner.tap()
         XCTAssertTrue(app.header("Trash").appears(within: 5))
@@ -44,8 +43,4 @@ final class CleanupJourneyTests: XCTestCase {
         XCTAssertFalse(app.buttons[AccessibilityID.Home.cleanupBanner].exists)
     }
 
-    func testAuditAtLargestTextHomeWithTheBanner() throws {
-        let app = cleanedUpApp(largestText: true)
-        try audit(app)
-    }
 }

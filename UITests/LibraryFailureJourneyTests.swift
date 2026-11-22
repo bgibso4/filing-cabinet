@@ -9,7 +9,7 @@ final class LibraryFailureJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testShowsTheScreenNotHome() throws {
+    func testShowsTheScreenNotHome() {
         let app = launchApp(["-FailLibraryOpen"], fresh: true)
 
         XCTAssertTrue(app.staticTexts[AccessibilityID.LibraryFailure.title].appears(within: 5))
@@ -19,7 +19,6 @@ final class LibraryFailureJourneyTests: XCTestCase {
         assertIdentifiers(AccessibilityID.LibraryFailure.all, in: app)
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].exists)
         attach(app, named: "library-failure")
-        try audit(app)
     }
 
     func testTryAgainStaysWhenStillFailing() {
@@ -60,14 +59,6 @@ final class LibraryFailureJourneyTests: XCTestCase {
 
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isEnabled == true", within: 5))
         XCTAssertFalse(finish.appears(within: 2), "the dropped request doesn't open the camera later")
-    }
-
-    func testAuditAtLargestTextOfTheFailureScreen() throws {
-        let app = launchApp(["-FailLibraryOpen"], largestText: true, fresh: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.LibraryFailure.tryAgain].appears(within: 5))
-        XCTAssertTrue(app.buttons[AccessibilityID.LibraryFailure.tryAgain].isHittable)
-        attach(app, named: "library-failure-ax")
-        try audit(app)
     }
 
     private func attach(_ app: XCUIApplication, named name: String) {

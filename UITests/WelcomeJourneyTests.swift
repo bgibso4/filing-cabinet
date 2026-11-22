@@ -21,14 +21,13 @@ final class WelcomeJourneyTests: XCTestCase {
         XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].satisfies("isHittable == true", within: 5))
     }
 
-    func testContinueThenNotNowLandsOnEmptyHome() throws {
+    func testContinueThenNotNowLandsOnEmptyHome() {
         let app = launchApp(["-ShowWelcome", "-Notifications", "notDetermined"])
         let continueButton = app.buttons[AccessibilityID.Welcome.continue]
         XCTAssertTrue(continueButton.appears(within: 5))
         XCTAssertEqual(continueButton.label, "Continue")
         XCTAssertTrue(app.staticTexts["Welcome to\nFiling Cabinet"].exists)
         attach(app, named: "welcome")
-        try audit(app)
 
         continueButton.tap()
 
@@ -37,7 +36,6 @@ final class WelcomeJourneyTests: XCTestCase {
         XCTAssertEqual(app.buttons[AccessibilityID.Welcome.turnOn].label, "Turn on notifications")
         XCTAssertEqual(notNow.label, "Not now")
         attach(app, named: "notifications-ask")
-        try audit(app)
 
         notNow.tap()
 
@@ -87,24 +85,6 @@ final class WelcomeJourneyTests: XCTestCase {
 
         XCTAssertTrue(continueButton.satisfies("isHittable == true", within: 5))
         XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isHittable)
-    }
-
-    func testAuditAtLargestTextOfBothScreens() throws {
-        let app = launchApp(["-ShowWelcome", "-Notifications", "notDetermined"], largestText: true)
-        let continueButton = app.buttons[AccessibilityID.Welcome.continue]
-        XCTAssertTrue(continueButton.appears(within: 5))
-        XCTAssertTrue(continueButton.isHittable)
-        attach(app, named: "welcome-ax")
-        try audit(app)
-
-        continueButton.tap()
-
-        let notNow = app.buttons[AccessibilityID.Welcome.notNow]
-        XCTAssertTrue(notNow.appears(within: 5))
-        XCTAssertTrue(notNow.isHittable)
-        XCTAssertTrue(app.buttons[AccessibilityID.Welcome.turnOn].isHittable)
-        attach(app, named: "notifications-ask-ax")
-        try audit(app)
     }
 
     private func attach(_ app: XCUIApplication, named name: String) {

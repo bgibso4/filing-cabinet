@@ -15,14 +15,14 @@ final class SettingsJourneyTests: XCTestCase {
     ///
     /// Receipts, not Throwaways: a seeded throwaway older than a week is already in Trash at launch, and a scan in
     /// Trash stays there whatever the lifespan (M1), so no Throwaways change could ask.
-    private func seededApp(largestText: Bool = false) -> XCUIApplication {
+    private func seededApp() -> XCUIApplication {
         let app = launchApp(
-            ["-SeedScans", "12", "-FixedDate", "2026-10-12", "-Notifications", "denied"], largestText: largestText)
+            ["-SeedScans", "12", "-FixedDate", "2026-10-12", "-Notifications", "denied"])
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
         return app
     }
 
-    func testShorteningAsksThenSendsToTrash() throws {
+    func testShorteningAsksThenSendsToTrash() {
         let app = seededApp()
         openSettings(in: app)
         let notifications = app.switches[AccessibilityID.Settings.notifications]
@@ -30,19 +30,16 @@ final class SettingsJourneyTests: XCTestCase {
         // The switch carries the note: the drawn text beside it is hidden from VoiceOver.
         XCTAssertTrue(notifications.label.hasSuffix("Turned off in iPhone Settings"), notifications.label)
         XCTAssertEqual(app.buttons[AccessibilityID.Settings.collections].label, "Collections, 5")
-        try audit(app)
 
         app.buttons[AccessibilityID.Settings.collections].tap()
         assertIdentifiers(AccessibilityID.Collections.all, in: app)
         XCTAssertEqual(
             app.buttons[AccessibilityID.Collections.row(.receipts)].label, "Receipts, Kept 3 months · 3 scans")
-        try audit(app)
 
         app.buttons[AccessibilityID.Collections.row(.receipts)].tap()
         let keepScansFor = app.buttons[AccessibilityID.CollectionSettings.keepScansFor]
         XCTAssertTrue(keepScansFor.appears(within: 5))
         XCTAssertEqual(keepScansFor.value as? String, "3 months")
-        try audit(app)
 
         // Longer asks nothing.
         keepScansFor.tap()
@@ -94,7 +91,7 @@ final class SettingsJourneyTests: XCTestCase {
 
     /// Appearance starts at System, and the menu checks the current choice. UI tests keep their preferences apart and
     /// empty them at every launch, so a choice surviving a launch is a Fast test (`AppPreferences`), not this one's.
-    func testAppearanceMenuChangesTheChoice() throws {
+    func testAppearanceMenuChangesTheChoice() {
         let app = seededApp()
         openSettings(in: app)
         let appearance = app.buttons[AccessibilityID.Settings.appearance]
@@ -114,12 +111,11 @@ final class SettingsJourneyTests: XCTestCase {
         XCTAssertTrue(menuItem("Dark", in: app).isSelected)
         menuItem("Light", in: app).tap()
         XCTAssertTrue(waitFor(appearance, value: "Light"))
-        try audit(app)
     }
 
     /// Send feedback and the Privacy policy sit under the switches and are reachable. Opening Mail or Safari is not
     /// driven: the simulator has no Mail, and leaving the app would end the test.
-    func testFeedbackRowsArePresentAndReachable() throws {
+    func testFeedbackRowsArePresentAndReachable() {
         let app = seededApp()
         openSettings(in: app)
         let feedback = app.buttons[AccessibilityID.Settings.feedback]
@@ -128,7 +124,6 @@ final class SettingsJourneyTests: XCTestCase {
         XCTAssertTrue(privacy.isHittable)
         XCTAssertEqual(feedback.label, "Send feedback")
         XCTAssertEqual(privacy.label, "Privacy policy")
-        try audit(app)
     }
 
     /// Collections rests with its title small; a pull brings out the large title, which stays after the pull ends (B6)
@@ -151,18 +146,6 @@ final class SettingsJourneyTests: XCTestCase {
 
         app.buttons[AccessibilityID.Collections.row(.receipts)].tap()
         assertIdentifiers(AccessibilityID.CollectionSettings.all, in: app)
-    }
-
-    func testAuditAtLargestTextSettings() throws {
-        let app = seededApp(largestText: true)
-        openSettings(in: app)
-        try audit(app)
-        app.buttons[AccessibilityID.Settings.collections].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Collections.row(.throwaways)].appears(within: 5))
-        try audit(app)
-        app.buttons[AccessibilityID.Collections.row(.throwaways)].tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.CollectionSettings.keepScansFor].appears(within: 5))
-        try audit(app)
     }
 
     /// With Apple Intelligence, turning its switch off takes effect on the next scan: the full sheet at once, asking

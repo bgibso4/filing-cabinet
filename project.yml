@@ -162,6 +162,32 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
 
+  # The accessibility audits, apart from the journeys so they can run less often (nightly, not in the PR gate or
+  # `make affected`). Out of process like the journeys, and shares their support code.
+  FilingCabinetAuditTests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: AuditTests
+        excludes:
+          - "**/.DS_Store"
+      - path: UITests/Support
+        excludes:
+          - "**/.DS_Store"
+    dependencies:
+      - target: FilingCabinet
+      - package: FilingCabinetKit
+        product: Core
+      - package: FilingCabinetKit
+        product: ScreenModels
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID).audittests
+        TEST_TARGET_NAME: FilingCabinet
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+
   # App-hosted timing on a real iPhone (A12, A14): `make device-perf` only, never `make full` or CI.
   # Understanding comes from the host app (TEST_HOST), as Screens does for the snapshot tests.
   FilingCabinetDeviceTests:
@@ -217,6 +243,7 @@ schemes:
         - package: FilingCabinetKit/ScreensTests
         - name: FilingCabinetSnapshotTests
         - name: FilingCabinetUITests
+        - name: FilingCabinetAuditTests
 
   # Mac-only loop: no app target, no simulator.
   Fast:

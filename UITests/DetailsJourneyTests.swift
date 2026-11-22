@@ -17,12 +17,11 @@ final class DetailsJourneyTests: XCTestCase {
         return app
     }
 
-    func testRenameMoveUndoAndExpiry() throws {
+    func testRenameMoveUndoAndExpiry() {
         let app = seededApp()
         openAReceipt(in: app)
         assertIdentifiers(AccessibilityID.Viewer.all.filter { $0 != AccessibilityID.Viewer.strip }, in: app)
         openDetails(in: app)
-        try audit(app)
 
         // Rename: tap the title, clear it, type, Return.
         app.buttons[AccessibilityID.Details.title].tap()
@@ -255,13 +254,6 @@ final class DetailsJourneyTests: XCTestCase {
             app.descendants(matching: .any)[AccessibilityID.Viewer.header].disappears(within: 5))
         XCTAssertTrue(app.header(.receipts).appears(within: 5))
         XCTAssertTrue(waitFor(tiles(in: app), count: before - 1))
-    }
-
-    func testAuditAtLargestTextDetails() throws {
-        let app = seededApp(largestText: true)
-        openAReceipt(in: app)
-        openDetails(in: app)
-        try audit(app)
     }
 
     // MARK: Steps

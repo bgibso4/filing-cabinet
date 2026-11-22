@@ -134,7 +134,7 @@ final class LockJourneyTests: XCTestCase {
 
     /// Turning the lock on asks Face ID (scripted yes); on, the subtitle says when it asks and the footer adds the
     /// backup advice. Off again, the advice goes.
-    func testSettingsSwitchTurnsTheLockOnAndOff() throws {
+    func testSettingsSwitchTurnsTheLockOnAndOff() {
         let app = launchApp(["-SeedScans", "3", "-Authenticator", "succeeds"])
         let lock = openSettingsLockSwitch(in: app)
         XCTAssertEqual(lock.value as? String, "0")
@@ -146,7 +146,6 @@ final class LockJourneyTests: XCTestCase {
         lock.tap()
         XCTAssertTrue(lock.satisfies("value == '1'", within: 5))
         XCTAssertTrue(advice.appears(within: 5))
-        try audit(app)
 
         lock.tap()
         XCTAssertTrue(lock.satisfies("value == '0'", within: 5))
@@ -154,42 +153,21 @@ final class LockJourneyTests: XCTestCase {
     }
 
     /// With no passcode on the phone there is nothing to lock with: the switch is disabled and says why.
-    func testSettingsSwitchIsDisabledWithoutAPasscode() throws {
+    func testSettingsSwitchIsDisabledWithoutAPasscode() {
         let app = launchApp(["-SeedScans", "3", "-Authenticator", "none"])
         let lock = openSettingsLockSwitch(in: app)
         XCTAssertFalse(lock.isEnabled)
         XCTAssertEqual(lock.value as? String, "0")
         XCTAssertTrue(lock.label.contains("Set a passcode in iPhone Settings to use this"), lock.label)
-        try audit(app)
-    }
-
-    func testAuditTheCover() throws {
-        let app = lockedApp(authenticator: "cancels")
-        XCTAssertTrue(app.buttons[AccessibilityID.Lock.unlock].appears(within: 5))
-        try audit(app)
-    }
-
-    func testAuditAtLargestTextTheCover() throws {
-        let app = lockedApp(authenticator: "cancels", largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Lock.unlock].appears(within: 5))
-        try audit(app)
-    }
-
-    func testAuditAtLargestTextSettings() throws {
-        let app = launchApp(["-SeedScans", "3", "-Authenticator", "succeeds", "-Lock", "on"], largestText: true)
-        let lock = openSettingsLockSwitch(in: app)
-        XCTAssertEqual(lock.value as? String, "1")
-        try audit(app)
     }
 
     // MARK: Steps
 
     /// The app with the lock on, three seeded scans and Face ID answering as `authenticator` says.
     func lockedApp(
-        authenticator: String, _ flags: [String] = [], largestText: Bool = false
+        authenticator: String, _ flags: [String] = []
     ) -> XCUIApplication {
-        launchApp(
-            ["-SeedScans", "3", "-Lock", "on", "-Authenticator", authenticator] + flags, largestText: largestText)
+        launchApp(["-SeedScans", "3", "-Lock", "on", "-Authenticator", authenticator] + flags)
     }
 
     /// The cover XCUITest can see: the shield's while it is up, the stack's otherwise (see the type's note).

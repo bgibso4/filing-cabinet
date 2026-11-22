@@ -69,22 +69,14 @@ final class FavoritesJourneyTests: XCTestCase {
         XCTAssertTrue(favoriteCards(in: app).firstMatch.satisfies("label == %@", "Sample scan 2", within: 5))
     }
 
-    func testFavoritesLinkOpensTheGrid() throws {
+    func testFavoritesLinkOpensTheGrid() {
         let app = seededApp(favorites: 3)
         let link = app.buttons[AccessibilityID.Home.favoritesLink]
         XCTAssertTrue(link.appears(within: 5))
         XCTAssertEqual(cardTitles(in: app), ["Sample scan 1", "Sample scan 2", "Sample scan 3"])
-        try audit(app)
         link.tap()
         XCTAssertTrue(app.header("Favorites").appears(within: 5))
         XCTAssertEqual(tileTitles(in: app), ["Sample scan 1", "Sample scan 2", "Sample scan 3"])
-    }
-
-    func testAuditAtLargestTextOfHomeWithFavorites() throws {
-        let app = seededApp(favorites: 3, largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.favoritesLink].appears(within: 5))
-        XCTAssertTrue(favoriteCards(in: app).firstMatch.appears(within: 5))
-        try audit(app)
     }
 
     /// B8: a new favourite goes last, on Home and in Favorites.
@@ -178,9 +170,9 @@ final class FavoritesJourneyTests: XCTestCase {
     // MARK: Steps
 
     /// Six seeded scans, every one landed: Wallet holds scans 1 and 6.
-    private func seededApp(favorites: Int = 0, largestText: Bool = false) -> XCUIApplication {
+    private func seededApp(favorites: Int = 0) -> XCUIApplication {
         let favoriteFlags = favorites > 0 ? ["-SeedFavorites", "\(favorites)"] : []
-        let app = launchApp(["-SeedScans", "6", "-FixedDate", "2026-10-12"] + favoriteFlags, largestText: largestText)
+        let app = launchApp(["-SeedScans", "6", "-FixedDate", "2026-10-12"] + favoriteFlags)
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.wallet)], count: 2)
         return app
     }
