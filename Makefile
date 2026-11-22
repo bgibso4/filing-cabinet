@@ -237,7 +237,8 @@ ci-checks: generate
 # each; journeys-1 and journeys-2 about 300 s each, audits apart. snapshots-2 and journeys-2 skip what
 # their pair runs rather than listing the rest, so a new class lands there by default.
 # smoke is the shared set (scripts/affected-tests.sh --shared-set: the package tests and the smoke journeys) without
-# the snapshot tests; it refuses to run without a journey, so a lost smoke list can't pass the gate having run none.
+# the snapshot tests, plus WaitTests (the waits every journey uses, a few seconds without the app); it refuses to run
+# without a journey, so a lost smoke list can't pass the gate having run none.
 # CaptureLayerContainmentTests extends ScanJourneyTests.
 SHARD             ?= all
 SHARD_SNAPSHOTS_1 := $(addprefix FilingCabinetSnapshotTests/,SettingsSnapshotTests SearchSnapshotTests \
@@ -248,7 +249,7 @@ SHARED_SET         = $(shell scripts/affected-tests.sh --shared-set)
 SHARD_ONLY_snapshots-1 := $(SHARD_SNAPSHOTS_1)
 SHARD_ONLY_snapshots-2 := FilingCabinetSnapshotTests
 SHARD_SKIP_snapshots-2 := $(SHARD_SNAPSHOTS_1)
-SHARD_ONLY_smoke        = $(filter-out FilingCabinetSnapshotTests,$(SHARED_SET))
+SHARD_ONLY_smoke        = $(filter-out FilingCabinetSnapshotTests,$(SHARED_SET)) FilingCabinetUITests/WaitTests
 SHARD_ONLY_journeys-1  := $(SHARD_JOURNEYS_1)
 SHARD_ONLY_journeys-2  := FilingCabinetUITests
 SHARD_SKIP_journeys-2  := $(SHARD_JOURNEYS_1)
