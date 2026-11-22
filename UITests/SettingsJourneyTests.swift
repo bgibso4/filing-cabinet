@@ -79,7 +79,7 @@ final class SettingsJourneyTests: XCTestCase {
 
         notifications.tap()
         let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
-        XCTAssertTrue(settings.wait(for: .runningForeground, timeout: 10))
+        XCTAssertTrue(settings.wait(for: .runningForeground, timeout: systemUITimeout))
 
         app.activate()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
