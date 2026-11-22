@@ -13,11 +13,15 @@ concurrency:
 
 permissions:
   contents: read
+  # The plan job asks whether a pull request already passed the gate on the same files (scripts/ci/gate-passed.sh).
+  actions: read
 
 jobs:
-  # Which jobs to run. checks always runs. The simulator suite (about 15 min on 3 runners) runs on main, and on a PR
-  # once it is ready for review, unless the PR changes only docs/, site/ and Markdown. While a PR is a draft, run the
-  # touched tests locally: make affected. design/ is code: design/tokens.json generates the tokens.
+  # Which jobs to run. checks always runs. The gate (snapshots in two jobs, and the smoke set with the package tests;
+  # about 14 min) runs on a PR once it is ready for review, unless the PR changes only docs/, site/ and Markdown, and
+  # on main unless a PR already passed it on exactly the same files (scripts/ci/gate-passed.sh). While a PR is a
+  # draft, run the touched tests locally: make affected. Every other journey and the audits run nightly (nightly.yml).
+  # design/ is code: design/tokens.json generates the tokens.
   plan:
     runs-on: ubuntu-latest
     outputs:
@@ -28,6 +32,7 @@ jobs:
           fetch-depth: 0
       - id: plan
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT: ${{ github.event_name }}
           DRAFT: ${{ github.event.pull_request.draft }}
           BASE: ${{ github.event.pull_request.base.sha }}
@@ -40,19 +45,20 @@ jobs:
             elif scripts/docs-only.sh "$BASE...$HEAD"; then
               sim=false; echo "Only docs/, site/ and Markdown changed: checks only."
             fi
+          elif passed="$(scripts/ci/gate-passed.sh "$GITHUB_SHA")"; then
+            sim=false; echo "Same files as $passed, which passed the gate: checks only."
           fi
           jobs='[{"job":"checks","target":"ci-checks"}]'
           if [ "$sim" = true ]; then
             jobs='[{"job":"checks","target":"ci-checks"},
-              {"job":"sim-main","target":"ci-sim SHARD=main"},
-              {"job":"sim-scan","target":"ci-sim SHARD=scan"},
-              {"job":"sim-browse","target":"ci-sim SHARD=browse"}]'
+              {"job":"snapshots-1","target":"ci-sim SHARD=snapshots-1"},
+              {"job":"snapshots-2","target":"ci-sim SHARD=snapshots-2"},
+              {"job":"smoke","target":"ci-sim SHARD=smoke"}]'
           fi
           echo "matrix=$(jq -c '{include: .}' <<< "$jobs")" >> "$GITHUB_OUTPUT"
 
   ci:
-    # The parts of `make ci`, side by side. SHARD=main skips the classes the other shards run, so together the three
-    # simulator jobs run the whole suite, and a new test class lands in main by default.
+    # The parts of the gate, side by side (the Makefile's shards).
     needs: plan
     name: ${{ matrix.job }}
     strategy:
@@ -73,46 +79,9 @@ jobs:
           # changed-snapshots.sh diffs against origin/main.
           fetch-depth: 0
 
-      # The xcode-27 runner image ships Xcode 27.x; pick it explicitly (newest 27.x app) so a second Xcode on the
-      # image can never be used by accident, and log what we got.
-      - name: Select Xcode 27
-        id: xcode
-        run: |
-          app="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
-          [ -n "$app" ] || { echo "error: no Xcode 27 on this image" >&2; exit 1; }
-          sudo xcode-select -s "$app/Contents/Developer"
-          xcodebuild -version
-          echo "version=$(xcodebuild -version | head -1 | tr -cd '0-9.')" >> "$GITHUB_OUTPUT"
-          xcrun simctl list runtimes
-
-      - name: Install tools
-        run: brew install xcodegen swiftlint xcbeautify jq bats-core periphery
-
-      # Local lint results must match CI: fail loudly if Homebrew's SwiftLint is not the version we develop with.
-      - name: Check SwiftLint version
-        run: |
-          [ "$(swiftlint version)" = "0.65.1" ] || { echo "error: SwiftLint $(swiftlint version), expected 0.65.1 (update ci.yml and local together)" >&2; exit 1; }
-
-      # Package checkouts only. A fresh checkout gives every source file a new modification time, so cached build
-      # products are never reused; caching them only cost a 1.4 GB upload per push and stale test results.
-      - name: Cache Swift packages
-        uses: actions/cache@v6
+      - uses: ./.github/actions/xcode-setup
         with:
-          path: |
-            .build/DerivedData/SourcePackages
-            ~/Library/Caches/com.github.peripheryapp/*/SourcePackages
-            ~/Library/Caches/org.swift.swiftpm
-          key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-${{ matrix.job == 'checks' && 'checks' || 'sim' }}-${{ hashFiles('Package.resolved', 'Packages/FilingCabinetKit/Package.swift', 'project.yml') }}
-
-      # Xcode's compilation cache (Makefile CAS_PATH). Its entries are keyed on what was compiled, not file dates, so
-      # unlike build products it survives a fresh checkout. Each run saves a new entry and restores the newest one.
-      - name: Cache compilations
-        if: matrix.job != 'checks'
-        uses: actions/cache@v6
-        with:
-          path: .build/CompilationCache
-          key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ matrix.job }}-
+          job: ${{ matrix.job }}
 
       - name: make ${{ matrix.target }}
         run: make ${{ matrix.target }}
