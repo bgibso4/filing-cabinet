@@ -104,3 +104,5 @@ SELF AppLaunchTests AppStartupTests
 # run nightly and in `make full`.
 SELF CameraOffAuditTests GridAuditTests HomeAuditTests LibraryFailureAuditTests LockAuditTests ReviewAuditTests
 SELF SearchAuditTests SettingsAuditTests TrashAuditTests ViewerAuditTests WelcomeAuditTests
+# The waits' own tests: no app, only UITests/Support/Wait.swift (which runs everything anyway).
+SELF WaitTests
