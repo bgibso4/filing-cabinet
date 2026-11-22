@@ -25,7 +25,9 @@ case " $* " in
 *" build-for-testing "*)
   [ "${STUB_BUILD_STATUS:-0}" -eq 0 ] && mkdir -p "$DERIVED/Build/Products/Debug-iphonesimulator/FilingCabinet.app"
   exit "${STUB_BUILD_STATUS:-0}" ;;
-*" test-without-building "*) exit "${STUB_TEST_STATUS:-0}" ;;
+*" test-without-building "*)
+  echo "variants=${TEST_RUNNER_SNAPSHOT_VARIANTS:-all}" >>"$CALLS"
+  exit "${STUB_TEST_STATUS:-0}" ;;
 esac
 STUB
   cat >"$FIX/bin/affected" <<'STUB'
@@ -193,4 +195,24 @@ called() { grep -q -- "$1" "$CALLS" 2>/dev/null; }
   printf 'other jpg\n' >design/prototype/scans/a.jpg
   ONLY="FilingCabinetUITests/A" sim retest
   [ "$status" -eq 2 ]
+}
+
+@test "affected draws light and largest text" {
+  STUB_AFFECTED="FilingCabinetSnapshotTests/B" sim affected
+  [ "$status" -eq 0 ]
+  called "variants=light,ax5"
+}
+
+@test "retest draws light and largest text" {
+  STUB_AFFECTED="FilingCabinetSnapshotTests/B" sim affected
+  : >"$CALLS"
+  ONLY=FilingCabinetSnapshotTests/B sim retest
+  [ "$status" -eq 0 ]
+  called "variants=light,ax5"
+}
+
+@test "full draws every variant" {
+  ONLY=FilingCabinetSnapshotTests/B sim full
+  [ "$status" -eq 0 ]
+  called "variants=all"
 }

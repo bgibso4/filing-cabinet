@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Every local simulator test run goes through here (`make full`, `make affected`, `make retest`).
-#   sim-tests.sh full      ONLY/SKIP as given; a whole-suite run needs ALL=1 (the run policy: once before a PR)
+#   sim-tests.sh full      ONLY/SKIP as given; a whole-suite run needs ALL=1 (never required: CI and the nightly run cover it)
 #   sim-tests.sh affected  the classes the branch's changes touch (scripts/affected-tests.sh, BASE=origin/main)
 #   sim-tests.sh retest    ONLY, or the affected classes, without building; refuses if the sources changed since
 #                          the last good build
@@ -24,7 +24,7 @@ policy() {
 Run policy (AGENTS.md):
   while fixing:             make retest ONLY=<Target/Class[/test]>   (no rebuild)
   at the end of a task:     make affected                            (the classes your changes touch)
-  once before a PR:         make full ALL=1                          (or let CI's Full suite run)
+  before a PR:              nothing more: CI's gate runs, and every journey and audit runs nightly
 EOF
 }
 
@@ -87,7 +87,11 @@ fi
 test_seconds=0
 if [ "$status" -eq 0 ]; then
 	start=$SECONDS
-	"$xcodebuild" test-without-building "${common[@]}" -destination "$SIM_DEST" ${args[@]+"${args[@]}"} | "$beautify"
+	# The end-of-task and while-fixing runs draw snapshots in light and at the largest text; full and CI draw dark too.
+	variants=""
+	[ "$mode" = full ] || variants="light,ax5"
+	TEST_RUNNER_SNAPSHOT_VARIANTS="$variants" \
+		"$xcodebuild" test-without-building "${common[@]}" -destination "$SIM_DEST" ${args[@]+"${args[@]}"} | "$beautify"
 	status=$?
 	test_seconds=$((SECONDS - start))
 fi

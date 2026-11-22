@@ -18,7 +18,8 @@ enum SnapshotHost {
         guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
             throw MissingWindowScene()
         }
-        for variant in variants {
+        let thisRun = try SnapshotConfig.variantsThisRun().map(\.name)
+        for variant in variants where thisRun.contains(variant.name) {
             let window = UIWindow(windowScene: scene)
             defer {
                 window.rootViewController = nil

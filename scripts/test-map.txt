@@ -97,7 +97,7 @@ Packages/FilingCabinetKit/Sources/ScreenModels/Cleanup/ CleanupJourneyTests Home
 Packages/FilingCabinetKit/Sources/ScreenModels/Spotlight/ ScanJourneyTests
 Packages/FilingCabinetKit/Sources/Understanding/ ScanJourneyTests ReviewSnapshotTests
 
-SELF CPUImageMatchTests
+SELF CPUImageMatchTests SnapshotVariantsTests
 # The app's launch: App/, Library/ and Core/ already run everything, so it needs no row of its own.
 SELF AppLaunchTests AppStartupTests
 # The accessibility audits (FilingCabinetAuditTests): never picked by a source change, only by their own files. They
