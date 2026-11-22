@@ -117,11 +117,4 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
             card.label,
             line: line)
     }
-
-    private func attachScreenshot(of app: XCUIApplication, named name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
 }

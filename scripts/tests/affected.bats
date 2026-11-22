@@ -297,3 +297,22 @@ change() {
   run -0 --separate-stderr "$AFFECTED" --shared-set
   [ "$output" = "$(printf '%s\n%s\n%s\n%s\n%s' CoreTests ScreensTests FilingCabinetSnapshotTests "$SMOKE_A" "$SMOKE_B")" ]
 }
+
+@test "a shared change plus a journey file runs the shared set and that journey" {
+  change Packages/FilingCabinetKit/Sources/Screens/DesignSystem/Tokens.swift UITests/CleanupJourneyTests.swift
+  run --separate-stderr "$AFFECTED" main
+  [ "$output" = "$(printf '%s\n%s' "$SHARED" FilingCabinetUITests/CleanupJourneyTests | sort)" ]
+}
+
+@test "the map check flags a missing smoke list" {
+  rm scripts/smoke-tests.txt
+  run "$AFFECTED" --check-map
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no smoke tests in scripts/smoke-tests.txt"* ]]
+}
+
+@test "the map check flags a smoke list with no tests" {
+  run "$AFFECTED" --check-map
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no smoke tests"* ]]
+}

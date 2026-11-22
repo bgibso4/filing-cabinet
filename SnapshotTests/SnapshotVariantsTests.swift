@@ -21,4 +21,9 @@ struct SnapshotVariantsTests {
             try SnapshotConfig.variants(named: "light,lite")
         }
     }
+
+    /// The failure names the variant, so a typo in the run's settings is found from the test log alone.
+    @Test func anUnknownNamesFailureSaysWhichName() {
+        #expect(UnknownSnapshotVariant(name: "lite").localizedDescription.contains("\"lite\""))
+    }
 }

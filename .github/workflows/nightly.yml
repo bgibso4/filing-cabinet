@@ -65,7 +65,8 @@ jobs:
         run: make ci-sim SHARD=${{ matrix.job }}
 
       - name: Upload the results
-        if: failure()
+        # A job that hits its time limit is cancelled, not failed: a hung simulator still files its issue.
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: nightly-${{ matrix.job }}
@@ -75,7 +76,8 @@ jobs:
             .build/xcodebuild.log
 
       - name: File issues
-        if: failure()
+        # A job that hits its time limit is cancelled, not failed: a hung simulator still files its issue.
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

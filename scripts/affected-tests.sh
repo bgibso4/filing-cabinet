@@ -187,8 +187,11 @@ check_map() {
 		[ -n "$(target_of "$class")" ] || continue # extensions of classes declared elsewhere
 		grep -qx "$class" <<<"$mapped" || { echo "$class is not in the map (scripts/test-map.txt)"; status=1; }
 	done
-	local id class test
-	for id in $(smoke_ids); do
+	local id class test ids
+	ids="$(smoke_ids 2>/dev/null)" || ids=""
+	# The gate's only journeys: without them its smoke job would pass having run none.
+	[ -n "$ids" ] || { echo "no smoke tests in $smoke_file"; status=1; }
+	for id in $ids; do
 		IFS=/ read -r _ class test <<<"$id"
 		if [ "$(target_of "$class")" != FilingCabinetUITests ] ||
 			! grep -lq "func $test(" UITests/"$class".swift UITests/"$class"+*.swift 2>/dev/null; then
@@ -227,20 +230,24 @@ while IFS= read -r path; do
 done <<<"$changed"
 
 smoke="$(smoke_ids)" || exit 1
-if [ -n "$all" ]; then
-	shared_set | sort -u
-	exit 0
-fi
 picked=""
 for class in $(echo "$classes" | sort -u); do
 	target="$(target_of "$class")"
 	if [ -z "$target" ]; then
 		echo "no test file declares $class: running the shared set" >&2
-		shared_set | sort -u
-		exit 0
+		all=1
+		continue
 	fi
 	[ "$target" = "$class" ] && picked+="$class"$'\n' || picked+="$target/$class"$'\n'
 done
+# The shared set, and still every class a change picked: a changed journey runs though shared code changed too.
+if [ -n "$all" ]; then
+	{
+		shared_set
+		printf '%s' "$picked"
+	} | grep . | sort -u
+	exit 0
+fi
 [ -n "$picked" ] || exit 0
 # The smoke set, but not a test whose class already runs whole.
 {

@@ -237,7 +237,8 @@ ci-checks: generate
 # each; journeys-1 and journeys-2 about 300 s each, audits apart. snapshots-2 and journeys-2 skip what
 # their pair runs rather than listing the rest, so a new class lands there by default.
 # smoke is the shared set (scripts/affected-tests.sh --shared-set: the package tests and the smoke journeys) without
-# the snapshot tests, plus WaitTests (the waits' own tests). CaptureLayerContainmentTests extends ScanJourneyTests.
+# the snapshot tests; it refuses to run without a journey, so a lost smoke list can't pass the gate having run none.
+# CaptureLayerContainmentTests extends ScanJourneyTests.
 SHARD             ?= all
 SHARD_SNAPSHOTS_1 := $(addprefix FilingCabinetSnapshotTests/,SettingsSnapshotTests SearchSnapshotTests \
 	HomeSnapshotTests TrashSnapshotTests WelcomeSnapshotTests LockCoverSnapshotTests CameraOffSnapshotTests)
@@ -247,7 +248,7 @@ SHARED_SET         = $(shell scripts/affected-tests.sh --shared-set)
 SHARD_ONLY_snapshots-1 := $(SHARD_SNAPSHOTS_1)
 SHARD_ONLY_snapshots-2 := FilingCabinetSnapshotTests
 SHARD_SKIP_snapshots-2 := $(SHARD_SNAPSHOTS_1)
-SHARD_ONLY_smoke        = $(filter-out FilingCabinetSnapshotTests,$(SHARED_SET)) FilingCabinetUITests/WaitTests
+SHARD_ONLY_smoke        = $(filter-out FilingCabinetSnapshotTests,$(SHARED_SET))
 SHARD_ONLY_journeys-1  := $(SHARD_JOURNEYS_1)
 SHARD_ONLY_journeys-2  := FilingCabinetUITests
 SHARD_SKIP_journeys-2  := $(SHARD_JOURNEYS_1)
@@ -267,6 +268,8 @@ ci-sim: SKIP = $(SHARD_SKIP_$(SHARD))
 ci-sim: generate
 	@case '$(SHARD)' in all|snapshots-1|snapshots-2|smoke|journeys-1|journeys-2|audits) ;; \
 		*) echo "error: SHARD must be all, snapshots-1, snapshots-2, smoke, journeys-1, journeys-2 or audits" >&2; exit 1;; esac
+	@case '$(SHARD) $(ONLY) ' in 'smoke '*' FilingCabinetUITests/'*|[!s]*|s[!m]*) ;; \
+		*) echo "error: the smoke shard has no journeys: check scripts/smoke-tests.txt" >&2; exit 1;; esac
 	scripts/build-fingerprint.sh forget
 	# The simulator boots while the tests build, and the tests wait until it has finished booting. Left to xcodebuild
 	# on a slow CI runner, the UI test runner once started before accessibility had loaded and failed before any
