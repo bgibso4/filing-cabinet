@@ -24,7 +24,7 @@ Rules, commands and the definition of done are in AGENTS.md. This file holds wha
 
 Use the `ios-verifier` agent for build/test evidence (see the definition of done in AGENTS.md).
 
-Follow the run policy in AGENTS.md: `make retest ONLY=…` while fixing, `make affected` at the end of a task, `make full ALL=1` once before a PR. Ask `ios-verifier` for exactly those commands. CI runs `checks` on every push; the simulator suite runs on `main` and once a PR is ready for review (not on drafts, and not when a PR changes only `docs/` and Markdown).
+Follow the run policy in AGENTS.md: `make retest ONLY=…` while fixing, `make affected` at the end of a task; no whole-suite run before a PR. Ask `ios-verifier` for exactly those commands. CI runs `checks` on every push; the gate (snapshots and the smoke journeys) runs once a PR is ready for review (not on drafts, and not when a PR changes only `docs/` and Markdown) and on `main` unless a PR passed it on the same files. Every journey and audit runs nightly on `main`; its failures arrive as `nightly` issues and block nothing.
 
 ## Workspace
 

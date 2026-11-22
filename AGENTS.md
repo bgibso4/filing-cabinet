@@ -53,9 +53,11 @@ Packages/FilingCabinetKit/   all logic, one local package (Package.swift)
                              ReaderComparisonTests (the bake-off report, not a gate),
                              SuggestionEvaluationTests (`make eval-suggestions`: the made-up scans and the report, not a gate)
 SnapshotTests/               app-hosted snapshot tests; references live beside the tests
-UITests/                     journey UI tests, with identifier coverage and accessibility audits
+UITests/                     journey UI tests, with identifier coverage; scripts/smoke-tests.txt names the few in CI's gate
+AuditTests/                  the accessibility audits, one class per screen (nightly and `make full`, not the gate)
 DeviceTests/                 reader timing on a real iPhone (`make device-perf`), never in `full` or CI
 scripts/                     token generator, compare, pre-commit, lint-rule tests; make-eval-scans.swift makes the made-up test scans
+scripts/ci/                  CI: gate-passed.sh (a merge skips the gate a PR passed on the same files), nightly-issues.sh (the nightly run's issues), with bats tests
 scripts/testflight/          TestFlight: archive.sh (archive and upload), asc.swift (App Store Connect API), plan.sh (what a push needs), with bats tests
 scripts/hooks/               Claude Code hooks (see CLAUDE.md) and their bats tests
 design/                      design handoff and tokens.json (source of the generated tokens)
@@ -76,13 +78,13 @@ Strings live in the owning module's `Localizable.xcstrings`, read with `bundle: 
 | `make generate` | token generator + XcodeGen; copies `Package.resolved` into the project |
 | `make build` | build the app for the pinned simulator (`FC iPhone 17`: an iPhone 17 on iOS 27.0, this project's own; `SIM_DEVICE=` overrides) |
 | `make fast` | Fast tests on macOS, no simulator |
-| `make affected` | the snapshot and UI test classes the branch's changes touch (`scripts/test-map.txt`; `BASE=<ref>` diffs against another ref). The end-of-task run |
-| `make retest` | re-run without building: `ONLY="<Target/Class[/test]> …"`, or the affected classes. Refuses when the sources changed since the last build. The while-fixing run |
-| `make full` | simulator tests: `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out). A whole suite (no `ONLY`, or a whole target) needs `ALL=1`: everything, package, snapshot and UI tests, once before a PR |
+| `make affected` | the snapshot and UI test classes the branch's changes touch (`scripts/test-map.txt`; `BASE=<ref>` diffs against another ref), plus the smoke journeys (`scripts/smoke-tests.txt`); a change that could affect anything runs the shared set: package tests, every snapshot and the smoke journeys, no other journey and no audit (about 6 to 7 min). Snapshots draw light and largest text only (CI draws dark too). The end-of-task run |
+| `make retest` | re-run without building: `ONLY="<Target/Class[/test]> …"`, or the affected classes. Refuses when the sources changed since the last build. Snapshots draw light and largest text only. The while-fixing run |
+| `make full` | simulator tests: `ONLY="<Target/Class> …"` runs just those (`SKIP=` leaves some out). A whole suite (no `ONLY`, or a whole target) needs `ALL=1`: everything, package, snapshot, UI and audit tests. Never required: CI's gate and the nightly run cover it |
 | `make audit-report` | every accessibility audit issue and exemption use in the newest test results (`RESULT=<.xcresult>` for another) |
 | `make ci` | everything CI runs: `ci-checks`, then `ci-sim` |
 | `make ci-checks` | generated-file drift check, lint, hook tests, lint-rule tests, macOS slice, Periphery, changed snapshots, `check-resolved` |
-| `make ci-sim` | the full simulator suite and `check-resolved`. CI runs it as three parallel jobs: `SHARD=scan` (the Scan, Trash, Settings, Details, Favorites and Search journeys), `SHARD=browse` (the Browse journey and the snapshot tests) and `SHARD=main` (everything else), split so the three take similar time |
+| `make ci-sim` | the simulator suite and `check-resolved`, whole or one shard. CI's gate on a ready PR and on `main` (about 14 min) is `SHARD=snapshots-1`, `snapshots-2` and `smoke` (the package tests and the smoke journeys); a push to `main` skips them when a PR passed them on the same files. The nightly run (`nightly.yml`, 3 a.m. Eastern) is `SHARD=journeys-1`, `journeys-2` and `audits`; a failing test opens or comments on its own issue (label `nightly`) and blocks nothing |
 | `make lint` / `make format` | SwiftLint + swift-format strict lint / apply swift-format |
 | `make unused` | Periphery dead-code scan |
 | `make snapshots-record` | re-record the snapshot references that fail or are missing, on the pinned simulator (`ONLY=` for some classes; `SNAPSHOT_RECORD=all` rewrites every one) |
@@ -159,7 +161,7 @@ Four units with narrow interfaces: Capture → Understanding → Classification 
 4. lint and format are clean,
 5. for anything visual, the hand-off lists the image paths the agent actually opened (snapshot, `make compare` output or simulator screenshot).
 
-**A branch is done** when the **Full** suite is green in CI and the whole-branch review has passed.
+**A branch is done** when CI's gate is green on its PR and the whole-branch review has passed.
 
 ### Run policy
 
@@ -169,7 +171,7 @@ The simulator suites are slow, so run the narrowest one that answers the questio
 |---|---|
 | While fixing: re-running a failing class or test, or after re-recording snapshots, with no source change since the last build | `make retest ONLY="<Target/Class[/test]>"` |
 | At the end of a task | `make affected` (`BASE=<the task's first commit>^` for just the task's changes) |
-| Once before a PR goes ready for review | `make full ALL=1`, or let CI's Full suite run |
+| When the PR goes ready for review | nothing more locally: CI's gate runs. A journey or audit outside the smoke set, when the change is about one: `make full ONLY="<Target/Class>"` |
 
 Run tests through these targets, not `xcodebuild test` or XcodeBuildMCP's test tools: the targets keep the build check `retest` relies on and the run log (`.build/test-runs.log`). To learn what an audit flagged, run `make audit-report` rather than exporting the results by hand; it also lists the exemptions no audit used.
 
