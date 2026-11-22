@@ -60,7 +60,7 @@ fast: generate
 		-destination 'platform=macOS' -derivedDataPath $(DERIVED) | $(BEAUTIFY) && \
 		scripts/hooks/swift-fingerprint.sh record "$$fp"
 
-SWIFT_DIRS := App Intents Controls Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests DeviceTests
+SWIFT_DIRS := App Intents Controls Packages/FilingCabinetKit/Sources Packages/FilingCabinetKit/Tests SnapshotTests UITests AuditTests DeviceTests
 
 # swift-format owns formatting; SwiftLint owns everything else. Both are strict.
 lint:
@@ -83,8 +83,8 @@ snapshots-record: sim generate
 		| $(BEAUTIFY)
 
 # Simulator test runs, all through scripts/sim-tests.sh. It builds once, runs test-without-building and appends a line
-# per run to .build/test-runs.log. The run policy (AGENTS.md): retest while fixing, affected at the end of a task,
-# full ALL=1 once before a PR.
+# per run to .build/test-runs.log. The run policy (AGENTS.md): retest while fixing, affected at the end of a task;
+# CI's gate and the nightly run do the rest.
 #   make full ONLY="<Target/Class> …"  just those (SKIP= leaves some out); a whole-suite run needs ALL=1
 #   make affected                      the classes the branch's changes touch (scripts/test-map.txt; BASE=<ref>)
 #   make retest [ONLY=…]               no build; refuses when the sources changed since the last build
@@ -197,7 +197,7 @@ test-hooks:
 
 # bats tests for the scripts (affected, sim-tests, audit-report, docs-only, the TestFlight plan, archive and asc.swift).
 test-scripts:
-	bats scripts/tests scripts/testflight/tests
+	bats scripts/tests scripts/testflight/tests scripts/ci/tests
 
 # Fixture tests for the SwiftLint custom rules.
 test-lint:
@@ -231,23 +231,28 @@ ci-checks: generate
 	scripts/changed-snapshots.sh $(BASE_REF)
 	$(MAKE) --no-print-directory check-resolved
 
-# The simulator suite: whole (SHARD=all, the default) or one CI shard. The wait is the slowest shard, so the three are
-# kept at similar test time. browse takes the snapshot tests and the Browse journey. scan takes the Scan, Trash and
-# Settings journeys and, since main ran 22 min of tests against scan's 9 and browse's 15 (CI runs 44318604388,
-# 44299675245 and 44011074324), the Details, Favorites and Search journeys (about 410 s). The scan runner's speed
-# varies most (its first three classes took 350 to 600 s in those runs). main skips what the others run rather than
-# listing the rest, so a new test class lands in main: move a class out of main when it grows past the others.
-# CaptureLayerContainmentTests is an extension of ScanJourneyTests, so it runs in the scan shard.
-# The scan shard first flaked (4 of 10 CI runs): each read of the screen took 1 to 4 s there, and waits of 2 to 5 s
-# ran out. One launch per class (Launch.swift) and one read per check in the tight waits address that (#43).
+# The simulator suite: whole (SHARD=all, the default) or one CI shard. CI's gate (ci.yml) runs snapshots-1,
+# snapshots-2 and smoke; the nightly run (nightly.yml) runs journeys-1, journeys-2 and audits. Each pair is split so
+# its jobs take similar time, from local timings (2026-11-21, whole suite): snapshots-1 and snapshots-2 about 190 s
+# each; journeys-1 and journeys-2 about 300 s each, audits apart. snapshots-2 and journeys-2 skip what
+# their pair runs rather than listing the rest, so a new class lands there by default.
+# smoke is the shared set (scripts/affected-tests.sh --shared-set: the package tests and the smoke journeys) without
+# the snapshot tests; it refuses to run without a journey, so a lost smoke list can't pass the gate having run none.
+# CaptureLayerContainmentTests extends ScanJourneyTests.
 SHARD             ?= all
-SHARD_SCAN        := FilingCabinetUITests/ScanJourneyTests FilingCabinetUITests/TrashJourneyTests \
-	FilingCabinetUITests/SettingsJourneyTests FilingCabinetUITests/DetailsJourneyTests \
-	FilingCabinetUITests/FavoritesJourneyTests FilingCabinetUITests/SearchJourneyTests
-SHARD_BROWSE      := FilingCabinetUITests/BrowseJourneyTests FilingCabinetSnapshotTests
-SHARD_ONLY_scan   := $(SHARD_SCAN)
-SHARD_ONLY_browse := $(SHARD_BROWSE)
-SHARD_SKIP_main   := $(SHARD_SCAN) $(SHARD_BROWSE)
+SHARD_SNAPSHOTS_1 := $(addprefix FilingCabinetSnapshotTests/,SettingsSnapshotTests SearchSnapshotTests \
+	HomeSnapshotTests TrashSnapshotTests WelcomeSnapshotTests LockCoverSnapshotTests CameraOffSnapshotTests)
+SHARD_JOURNEYS_1  := $(addprefix FilingCabinetUITests/,ScanJourneyTests DetailsJourneyTests LockJourneyTests \
+	FavoritesJourneyTests ViewerSwipeDownJourneyTests SearchJourneyTests CameraAccessJourneyTests ReviewZoomJourneyTests)
+SHARED_SET         = $(shell scripts/affected-tests.sh --shared-set)
+SHARD_ONLY_snapshots-1 := $(SHARD_SNAPSHOTS_1)
+SHARD_ONLY_snapshots-2 := FilingCabinetSnapshotTests
+SHARD_SKIP_snapshots-2 := $(SHARD_SNAPSHOTS_1)
+SHARD_ONLY_smoke        = $(filter-out FilingCabinetSnapshotTests,$(SHARED_SET))
+SHARD_ONLY_journeys-1  := $(SHARD_JOURNEYS_1)
+SHARD_ONLY_journeys-2  := FilingCabinetUITests
+SHARD_SKIP_journeys-2  := $(SHARD_JOURNEYS_1)
+SHARD_ONLY_audits      := FilingCabinetAuditTests
 
 # Xcode's compilation cache: keyed on each compilation's inputs (not file dates), so CI restores it from earlier runs
 # and skips compiling what a change did not touch. ci.yml caches this folder.
@@ -261,7 +266,10 @@ CI_SIM_FLAGS   = $(XCB_FLAGS) -project $(PROJECT) -scheme FilingCabinet \
 ci-sim: ONLY = $(SHARD_ONLY_$(SHARD))
 ci-sim: SKIP = $(SHARD_SKIP_$(SHARD))
 ci-sim: generate
-	@case '$(SHARD)' in all|main|scan|browse) ;; *) echo "error: SHARD must be all, main, scan or browse" >&2; exit 1;; esac
+	@case '$(SHARD)' in all|snapshots-1|snapshots-2|smoke|journeys-1|journeys-2|audits) ;; \
+		*) echo "error: SHARD must be all, snapshots-1, snapshots-2, smoke, journeys-1, journeys-2 or audits" >&2; exit 1;; esac
+	@case '$(SHARD) $(ONLY) ' in 'smoke '*' FilingCabinetUITests/'*|[!s]*|s[!m]*) ;; \
+		*) echo "error: the smoke shard has no journeys: check scripts/smoke-tests.txt" >&2; exit 1;; esac
 	scripts/build-fingerprint.sh forget
 	# The simulator boots while the tests build, and the tests wait until it has finished booting. Left to xcodebuild
 	# on a slow CI runner, the UI test runner once started before accessibility had loaded and failed before any

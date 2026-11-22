@@ -1,0 +1,86 @@
+name: Nightly
+
+# Every journey and every accessibility audit, on main's head, once a night: the tests CI's gate leaves out (the gate
+# runs snapshots and the smoke set, ci.yml). A failing test opens or comments on its own issue (label `nightly`,
+# scripts/ci/nightly-issues.sh). Nothing waits on this run: it is not a required check, and merges and TestFlight
+# uploads never depend on it. Run workflow starts it by hand.
+on:
+  schedule:
+    # 08:00 UTC: 3 a.m. Eastern.
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  # A night when main hasn't changed since a nightly run passed on it runs nothing.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.plan.outputs.run }}
+    steps:
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/nightly.yml/runs?head_sha=$GITHUB_SHA&status=success&per_page=1" \
+            --jq '.total_count')" || passed=0
+          if [ "${passed:-0}" -gt 0 ] && [ "$GITHUB_EVENT_NAME" = schedule ]; then
+            echo "A nightly run already passed on $GITHUB_SHA: nothing to run."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  tests:
+    needs: plan
+    if: needs.plan.outputs.run == 'true'
+    name: ${{ matrix.job }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job: [journeys-1, journeys-2, audits]
+    # Xcode 27 image (actions/runner-images, macOS 27, iOS 27.0 simulators incl. iPhone 17).
+    runs-on: xcode-27
+    timeout-minutes: 60
+    env:
+      CODE_SIGNING_ALLOWED: "NO"
+      # The image's simulator. Locally the Makefile defaults to this project's own `FC iPhone 17`.
+      SIM_DEVICE: iPhone 17
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/xcode-setup
+        with:
+          job: ${{ matrix.job }}
+
+      - name: make ci-sim SHARD=${{ matrix.job }}
+        run: make ci-sim SHARD=${{ matrix.job }}
+
+      - name: Upload the results
+        # A job that hits its time limit is cancelled, not failed: a hung simulator still files its issue.
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-${{ matrix.job }}
+          if-no-files-found: ignore
+          path: |
+            .build/DerivedData/Logs/Test/*.xcresult
+            .build/xcodebuild.log
+
+      - name: File issues
+        # A job that hits its time limit is cancelled, not failed: a hung simulator still files its issue.
+        if: failure() || cancelled()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bundle="$(ls -td .build/DerivedData/Logs/Test/*.xcresult 2>/dev/null | head -1)"
+          scripts/ci/nightly-issues.sh "${{ matrix.job }}" "${bundle:-none}" \
+            "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"

@@ -65,20 +65,6 @@ final class GridSelectJourneyTests: XCTestCase {
         XCTAssertFalse(message.exists)
     }
 
-    /// Select mode at the largest text size: the subtitle, the ticks and Move to Trash in Scan's place.
-    func testAuditOfSelectModeAtLargestText() throws {
-        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: true)
-        let row = app.buttons[AccessibilityID.Home.collectionRow(.receipts)]
-        waitForSeeding(of: row, count: 3)
-        row.tap()
-        let select = app.buttons[AccessibilityID.Grid.select]
-        XCTAssertTrue(select.appears(within: 5))
-        select.tap()
-        tiles(in: app).element(boundBy: 0).tap()
-        XCTAssertTrue(app.buttons[AccessibilityID.Grid.moveToTrash].isEnabled)
-        try audit(app)
-    }
-
     /// The grid emptied by its own selection (its only card moved to Trash) comes out with the large title, the
     /// system's gap under the back button, and Select greyed out, as an empty grid opened from Home (review I3).
     func testMovingTheLastScanShowsTheEmptyGridLarge() {

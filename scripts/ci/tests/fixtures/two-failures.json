@@ -1,0 +1,39 @@
+{
+  "devices": [],
+  "testPlanConfigurations": [],
+  "testNodes": [
+    {
+      "nodeType": "Test Plan", "name": "FilingCabinet", "result": "Failed",
+      "children": [
+        {
+          "nodeType": "UI test bundle", "name": "FilingCabinetUITests", "result": "Failed",
+          "children": [
+            {
+              "nodeType": "Test Suite", "name": "FavoritesJourneyTests", "result": "Failed",
+              "children": [
+                {
+                  "nodeType": "Test Case", "name": "testFoo()", "nodeIdentifier": "FavoritesJourneyTests/testFoo()",
+                  "result": "Failed",
+                  "children": [
+                    { "nodeType": "Failure Message", "name": "FavoritesJourneyTests.swift:12: XCTAssertTrue failed: drag moved nothing" }
+                  ]
+                },
+                {
+                  "nodeType": "Test Case", "name": "testFooBar()", "nodeIdentifier": "FavoritesJourneyTests/testFooBar()",
+                  "result": "Failed",
+                  "children": [
+                    { "nodeType": "Failure Message", "name": "Failed to terminate com.cadre.filingcabinet" }
+                  ]
+                },
+                {
+                  "nodeType": "Test Case", "name": "testPasses()", "nodeIdentifier": "FavoritesJourneyTests/testPasses()",
+                  "result": "Passed"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

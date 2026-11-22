@@ -15,9 +15,9 @@ final class TrashJourneyTests: XCTestCase {
     /// Home shows before seeding ends: the Trash row is there once the library has scans, and reads "Trash" with no
     /// number until the last seeded scan has moved to Trash. So this waits for the 5, which also means every other row
     /// has its final count.
-    private func seededApp(largestText: Bool = false) -> XCUIApplication {
+    private func seededApp() -> XCUIApplication {
         let app = launchApp(
-            ["-SeedScans", "6", "-SeedTrash", "5", "-FixedDate", "2026-10-12"], largestText: largestText)
+            ["-SeedScans", "6", "-SeedTrash", "5", "-FixedDate", "2026-10-12"])
         waitForSeeding(of: app.buttons[AccessibilityID.Home.trashRow], count: 5)
         return app
     }
@@ -33,12 +33,11 @@ final class TrashJourneyTests: XCTestCase {
             ], in: app)
         // Soonest gone first: the scan moved 4 days ago has 26 days left.
         XCTAssertEqual(tiles(in: app).firstMatch.label, "Trashed scan 5, Throwaways, 26 days left")
-        try audit(app)
 
         try restoreByLongPress(in: app)
         askDeleteNowByLongPress(in: app)
-        try deleteTwoBySelecting(in: app)
-        try emptyTrash(in: app, deleting: "2 scans")
+        deleteTwoBySelecting(in: app)
+        emptyTrash(in: app, deleting: "2 scans")
 
         // Home: the restored scan is back in Throwaways, and Trash shows no number.
         app.buttons[AccessibilityID.Grid.back].tap()
@@ -50,7 +49,7 @@ final class TrashJourneyTests: XCTestCase {
 
     /// Trash emptied while it is open changes in place: one header, which comes out large and holds still, with Select
     /// greyed out (B5, B14). "No scans" under it is proven in Fast and the trash_empty snapshot.
-    func testEmptyingTrashInPlaceShowsTheLargeTitle() throws {
+    func testEmptyingTrashInPlaceShowsTheLargeTitle() {
         let app = seededApp()
         openTrash(in: app)
         XCTAssertTrue(waitFor(tiles(in: app), count: 5))
@@ -59,30 +58,13 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertEqual(
             app.staticTexts[AccessibilityID.Trash.notice].label,
             "Scans stay in Trash for 30 days, then they’re permanently deleted.")
-        try emptyTrash(in: app, deleting: "5 scans")
-    }
-
-    func testAuditAtLargestTextTrash() throws {
-        let app = seededApp(largestText: true)
-        openTrash(in: app)
-        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
-        try audit(app)
-    }
-
-    func testAuditAtLargestTextTrashViewer() throws {
-        let app = seededApp(largestText: true)
-        openTrash(in: app)
-        XCTAssertTrue(waitFor(tiles(in: app), count: 5))
-        openFirstTile(in: app)
-        // Audit entry 2 is scoped to the Trash screen by its header: under the viewer it is gone.
-        XCTAssertFalse(app.header("Trash").exists)
-        try audit(app)
+        emptyTrash(in: app, deleting: "5 scans")
     }
 
     /// 09-04: a tile opens the scan with Close, its days left in Trash, Delete now and Restore. Delete now asks first
     /// (09-06), and tapping away dismisses it so it can ask again; Restore asks nothing and goes back to Trash with one
     /// tile fewer, and the scan is in Throwaways again.
-    func testOpenATrashedScanAndRestoreIt() throws {
+    func testOpenATrashedScanAndRestoreIt() {
         let app = seededApp()
         let throwaways = app.buttons[AccessibilityID.Home.collectionRow(.throwaways)]
         XCTAssertTrue(throwaways.appears(within: 5))
@@ -95,7 +77,6 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertEqual(header.label, "Trashed scan 5")
         XCTAssertEqual(header.value as? String, "26 days left")
         XCTAssertFalse(app.buttons[AccessibilityID.Viewer.details].exists)
-        try audit(app)
 
         let deleteNow = app.buttons[AccessibilityID.TrashViewer.deleteNow]
         deleteNow.tap()
@@ -163,13 +144,9 @@ final class TrashJourneyTests: XCTestCase {
     }
 
     /// Select two, then Delete 2 asks first; deleting ends select mode.
-    private func deleteTwoBySelecting(in app: XCUIApplication) throws {
+    private func deleteTwoBySelecting(in app: XCUIApplication) {
         app.buttons[AccessibilityID.Trash.select].tap()
         XCTAssertTrue(app.buttons["Cancel"].appears(within: 5))
-        // Audited before ticking: the audit reads the last ticked tile's caption as "contrast nearly passed", every run,
-        // though the same caption passes unticked (#79). The bar's glass buttons are an overlay since 2026-11-10, so the
-        // audit now names that caption instead of reporting it with no element under the Trash exemption.
-        try audit(app)
         tiles(in: app).element(boundBy: 0).tap()
         tiles(in: app).element(boundBy: 1).tap()
         XCTAssertTrue(app.staticTexts["2 selected"].appears(within: 5))
@@ -188,7 +165,7 @@ final class TrashJourneyTests: XCTestCase {
 
     /// Empty Trash asks first, then the empty state shows, in place: the large title comes out over "No scans" and the
     /// screen holds still (B5), and Select stays, greyed out (B14).
-    private func emptyTrash(in app: XCUIApplication, deleting scans: String) throws {
+    private func emptyTrash(in app: XCUIApplication, deleting scans: String) {
         app.buttons[AccessibilityID.Trash.emptyTrash].tap()
         let empty = app.staticTexts["Empty Trash?"]
         XCTAssertTrue(empty.appears(within: 5))
@@ -202,7 +179,6 @@ final class TrashJourneyTests: XCTestCase {
         XCTAssertTrue(select.exists)
         XCTAssertFalse(select.isEnabled)
         assertEmptyTrashHoldsStill(in: app)
-        try audit(app)
     }
 
     /// The large title shows, and stays; drags either way move neither it nor the empty state.

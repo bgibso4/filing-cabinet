@@ -11,7 +11,7 @@ final class SearchJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testSearchFindsAScanByItsText() throws {
+    func testSearchFindsAScanByItsText() {
         let app = seededApp()
         let field = openSearch(in: app)
         XCTAssertTrue(app.keyboards.firstMatch.appears(within: systemUITimeout), "the field is focused on arrival")
@@ -33,7 +33,6 @@ final class SearchJourneyTests: XCTestCase {
         // With the keyboard down: its own buttons (Emoji) have no identifiers.
         XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5), "back from the viewer, the keyboard stays down")
         assertIdentifiers(AccessibilityID.Search.all + [AccessibilityID.Search.clearQuery], in: app)
-        try audit(app)
 
         closeSearch(in: app)
         openSearch(in: app)
@@ -117,18 +116,6 @@ final class SearchJourneyTests: XCTestCase {
         clear.tap()
         XCTAssertTrue(recent.disappears(within: 5))
         XCTAssertFalse(clear.exists)
-        closeSearch(in: app)
-    }
-
-    /// At the largest text, with results and the keyboard down: the keyboard's suggestion bar fails the audit by
-    /// itself (Task 1's spike), so the search is submitted first.
-    func testAuditAtLargestTextSearch() throws {
-        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"], largestText: true)
-        waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
-        openSearch(in: app).typeText("page\n")
-        XCTAssertTrue(results(in: app).firstMatch.appears(within: 5))
-        XCTAssertTrue(app.keyboards.firstMatch.disappears(within: 5))
-        try audit(app)
         closeSearch(in: app)
     }
 

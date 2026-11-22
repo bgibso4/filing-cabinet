@@ -17,6 +17,22 @@ enum SnapshotConfig {
         Variant(name: "ax5", style: .light, size: .accessibility5),
     ]
 
+    /// The variants a comma-separated list names, in `variants`' order; every variant when the list is nil or empty.
+    /// `make affected` and `make retest` pass "light,ax5" as `SNAPSHOT_VARIANTS`.
+    static func variants(named list: String?) throws -> [Variant] {
+        let names = (list ?? "").split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        if names.isEmpty { return variants }
+        if let unknown = names.first(where: { name in !variants.contains { $0.name == name } }) {
+            throw UnknownSnapshotVariant(name: unknown)
+        }
+        return variants.filter { names.contains($0.name) }
+    }
+
+    /// The variants this run draws, from `SNAPSHOT_VARIANTS`.
+    static func variantsThisRun() throws -> [Variant] {
+        try variants(named: ProcessInfo.processInfo.environment["SNAPSHOT_VARIANTS"])
+    }
+
     // iPhone 17, portrait. SnapshotTesting needs the safe area and size spelled out; without them the
     // content would sit under the status bar.
     private static let device = ViewImageConfig(

@@ -15,23 +15,6 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// At the largest text size the card puts Save under the title and line (12-03).
-    func testAuditAtLargestTextOnTheCard() throws {
-        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "arrives"], largestText: true)
-        scanOnePage(in: app)
-        waitForSuggestion(in: app)
-        attachScreenshot(of: app, named: "card-largest-text")
-        try audit(app)
-    }
-
-    func testAuditOnTheCard() throws {
-        let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "arrives"])
-        scanOnePage(in: app)
-        waitForSuggestion(in: app)
-        attachScreenshot(of: app, named: "card")
-        try audit(app)
-    }
-
     /// The suggestion fills the card and turns Save on; Save files the scan under its suggested title and collection.
     func testSuggestionArrivesAndSaves() {
         let app = launchApp(["-FakeCamera", "1", "-FakeReader", "-Suggestions", "arrives"])
@@ -133,12 +116,5 @@ final class ReviewSuggestionJourneyTests: XCTestCase {
             card.satisfies("label == %@", "City Pharmacy Receipt, Receipts · kept 3 months", within: 10),
             card.label,
             line: line)
-    }
-
-    private func attachScreenshot(of app: XCUIApplication, named name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
     }
 }

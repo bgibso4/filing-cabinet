@@ -7,7 +7,7 @@ final class CameraAccessJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testDeniedCameraShowsOpenSettings() throws {
+    func testDeniedCameraShowsOpenSettings() {
         let app = launchApp(["-CameraDenied"])
         let scan = tapScan(in: app)
 
@@ -17,24 +17,10 @@ final class CameraAccessJourneyTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Camera access is off"].exists)
         assertIdentifiers(AccessibilityID.CameraOff.all, in: app)
         attachScreenshot(of: app, named: "camera-off-sheet")
-        try audit(app)
 
         app.buttons[AccessibilityID.CameraOff.close].tap()
         XCTAssertTrue(openSettings.disappears(within: 5))
         XCTAssertTrue(scan.isHittable)
-    }
-
-    func testAuditAtLargestTextOfTheCameraOffSheet() throws {
-        let app = launchApp(["-CameraDenied"], largestText: true)
-        tapScan(in: app)
-        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.openSettings].appears(within: 5))
-        attachScreenshot(of: app, named: "camera-off-sheet-ax")
-        try audit(app)
-        // Scrolled to its end, the sheet keeps Close on its fixed header, clear of the text. The title can't scroll fully
-        // out of view at this size, and the audit flags a title cut by the scroll edge, so this asserts Close instead.
-        app.staticTexts[AccessibilityID.CameraOff.message].swipeUp()
-        attachScreenshot(of: app, named: "camera-off-sheet-ax-scrolled")
-        XCTAssertTrue(app.buttons[AccessibilityID.CameraOff.close].isHittable)
     }
 
     func testCancelledCameraReturnsHome() {

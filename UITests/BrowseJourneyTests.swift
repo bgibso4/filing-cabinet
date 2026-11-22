@@ -9,18 +9,17 @@ final class BrowseJourneyTests: XCTestCase {
 
     /// Waits for seeding to finish: Home's cleanup banner comes in as the last seeded scan lands, and an audit taken
     /// mid-way caught it half drawn (CI run 42500722527, "Contrast failed" on the banner).
-    private func seededApp(largestText: Bool = false, flags: [String] = []) -> XCUIApplication {
-        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"] + flags, largestText: largestText)
+    private func seededApp(flags: [String] = []) -> XCUIApplication {
+        let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12"] + flags)
         waitForSeeding(of: app.buttons[AccessibilityID.Home.collectionRow(.receipts)], count: 3)
         XCTAssertTrue(app.buttons[AccessibilityID.Home.cleanupBanner].appears(within: seedingTimeout))
         return app
     }
 
-    func testHomeRowsOpenTheirDestinations() throws {
+    func testHomeRowsOpenTheirDestinations() {
         let app = seededApp()
         // Recent, Favorites and All Scans appear once the seeded scans are in.
         assertIdentifiers(AccessibilityID.Home.all, in: app)
-        try audit(app)
 
         let rows =
             BuiltInCollection.allCases.map { (AccessibilityID.Home.collectionRow($0), app.header($0)) }
@@ -39,12 +38,11 @@ final class BrowseJourneyTests: XCTestCase {
         }
     }
 
-    func testOpenReceiptsThenScanPreselectsReceipts() throws {
+    func testOpenReceiptsThenScanPreselectsReceipts() {
         let app = launchApp(["-SeedScans", "12", "-FixedDate", "2026-10-12", "-FakeCamera", "1", "-FakeReader"])
         openReceipts(in: app)
         assertIdentifiers(AccessibilityID.Grid.all, in: app)
         XCTAssertGreaterThan(tiles(in: app).count, 0)
-        try audit(app)
 
         let scan = app.buttons[AccessibilityID.Grid.scan]
         XCTAssertTrue(scan.satisfies("isEnabled == true", within: 5))
@@ -60,13 +58,6 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertEqual(collection.label, "Collection")
         XCTAssertEqual(collection.value as? String, "Receipts")
         XCTAssertTrue(save.satisfies("isEnabled == true", within: 5))
-    }
-
-    func testAuditAtLargestTextOfAGrid() throws {
-        let app = seededApp(largestText: true)
-        openReceipts(in: app)
-        XCTAssertGreaterThan(tiles(in: app).count, 0)
-        try audit(app)
     }
 
     /// An empty collection rests with the large title showing and doesn't scroll (B5).
@@ -158,13 +149,12 @@ final class BrowseJourneyTests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.page].exists)
     }
 
-    func testOpenAScanFromAGridAndSwipePages() throws {
+    func testOpenAScanFromAGridAndSwipePages() {
         let app = seededApp()
         openThreePageScan(in: app)
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
         // Only the page on screen is in the accessibility tree (M5).
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: AccessibilityID.Viewer.page).count, 1)
-        try audit(app)
 
         assertPageLabel("Page 1 of 3", in: app)
         app.windows.firstMatch.swipeLeft()
@@ -187,23 +177,6 @@ final class BrowseJourneyTests: XCTestCase {
 
         app.buttons[AccessibilityID.Viewer.back].tap()
         XCTAssertTrue(app.header(.documents).appears(within: 5))
-    }
-
-    func testAuditAtLargestTextOfTheViewer() throws {
-        let app = seededApp(largestText: true)
-        openThreePageScan(in: app)
-        assertIdentifiers(AccessibilityID.Viewer.all, in: app)
-        try audit(app)
-    }
-
-    /// In dark mode the pill's whole detail line, time left included, is the primary colour (Ben, 2026-11-07).
-    func testViewerAuditInDarkMode() throws {
-        XCUIDevice.shared.appearance = .dark
-        // A teardown block, not `defer`: a failure stops the test with an exception that skips `defer`.
-        addTeardownBlock { @MainActor in XCUIDevice.shared.appearance = .light }
-        let app = seededApp()
-        openThreePageScan(in: app)
-        try audit(app)
     }
 
     func testEdgeSwipeGoesBackFromTheViewer() {
@@ -289,19 +262,4 @@ final class BrowseJourneyTests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix))
     }
 
-    /// Scan stays disabled until launch ends. `-HoldScan` keeps it disabled after seeding, so the audit runs on a still
-    /// Home. Auditing while 60 scans were still seeding failed on CI (runs 43120343687, 43134191294, 43421303926): the
-    /// counts ticked and popped and the rows moved through the whole audit, and it reported 'Receipts' as low contrast
-    /// though its own element screenshot reads black on white.
-    func testAuditAtLargestTextOfDisabledScan() throws {
-        let app = seededApp(largestText: true, flags: ["-HoldScan"])
-        XCTAssertFalse(app.buttons[AccessibilityID.Home.scan].isEnabled)
-        try audit(app)
-    }
-
-    func testAuditAtLargestTextOfHomeWithScans() throws {
-        let app = seededApp(largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.allRow].appears(within: 5))
-        try audit(app)
-    }
 }

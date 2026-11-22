@@ -17,14 +17,13 @@ final class ScanJourneyTests: XCTestCase {
         scanOnePage(in: app)
     }
 
-    func testScanReviewSaveShowsOnHome() throws {
+    func testScanReviewSaveShowsOnHome() {
         let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"])
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app)
         assertIdentifiers(Review.all, in: app)
         let save = app.buttons[Review.save]
         XCTAssertFalse(save.isEnabled)
-        try audit(app)
 
         app.descendants(matching: .any)[Review.collection].tap()
         let receipts = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Receipts'")).firstMatch
@@ -51,16 +50,14 @@ final class ScanJourneyTests: XCTestCase {
     }
 
     /// The whole of Plan 1: a three-page scan is read, filed under Documents, found there and paged through.
-    func testScanToViewer() throws {
+    func testScanToViewer() {
         let app = launchApp(["-FakeCamera", "3", "-FakeReader", "-FixedDate", "2026-10-12"])
-        try audit(app)
         scanOnePage(in: app)
         waitForTitle("City Pharmacy", in: app)
         XCTAssertEqual(app.descendants(matching: .any)[Review.pagePill].label, "New scan, Page 1 of 3")
         XCTAssertEqual(app.descendants(matching: .any)[Review.strip].label, "Page 1 of 3")
         choose("Documents", in: app)
         assertIdentifiers(Review.all, in: app)
-        try audit(app)
         let save = app.buttons[Review.save]
         XCTAssertEqual(save.label, "Save to Documents")
         save.tap()
@@ -71,7 +68,6 @@ final class ScanJourneyTests: XCTestCase {
         let header = app.header(.documents)
         XCTAssertTrue(header.appears(within: 5))
         assertIdentifiers(AccessibilityID.Grid.all, in: app)
-        try audit(app)
         let tile = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Grid.tilePrefix)
         ).firstMatch
@@ -80,7 +76,6 @@ final class ScanJourneyTests: XCTestCase {
 
         XCTAssertTrue(app.descendants(matching: .any)[AccessibilityID.Viewer.header].appears(within: 5))
         assertIdentifiers(AccessibilityID.Viewer.all, in: app)
-        try audit(app)
         let strip = app.descendants(matching: .any)[AccessibilityID.Viewer.strip]
         for page in 2...3 {
             app.windows.firstMatch.swipeLeft()
@@ -207,15 +202,6 @@ final class ScanJourneyTests: XCTestCase {
         day.tap()
         app.buttons[AccessibilityID.ExpiryDate.done].tap()
         waitForValue("Until Oct 20", of: expiry)
-    }
-
-    func testAuditAtLargestTextOfReview() throws {
-        let app = launchApp(["-FakeCamera", "1", "-FixedDate", "2026-10-12", "-FakeReader"], largestText: true)
-        scanOnePage(in: app)
-        waitForTitle("City Pharmacy", in: app)
-        XCTAssertTrue(app.buttons[Review.save].isHittable)
-        attachScreenshot(of: app, named: "review-sheet-ax")
-        try audit(app)
     }
 
     func testDiscardAsksFirst() {

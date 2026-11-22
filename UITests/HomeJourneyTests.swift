@@ -7,7 +7,7 @@ final class HomeJourneyTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testHomeShowsCollectionsAndScan() throws {
+    func testHomeShowsCollectionsAndScan() {
         let app = launchApp()
         // Literal identifiers on purpose: a drifted scheme in AccessibilityID must fail here.
         for collection in ["wallet", "receipts", "notes", "documents", "throwaways"] {
@@ -19,7 +19,6 @@ final class HomeJourneyTests: XCTestCase {
         XCTAssertTrue(scan.isHittable)
         XCTAssertEqual(scan.label, "Scan")
         assertIdentifiers([AccessibilityID.Home.scan], in: app)
-        try audit(app)
     }
 
     /// Home and Settings fit the screen, so a bounce shows no scroll bar there; a grid that scrolls keeps its own
@@ -70,10 +69,4 @@ final class HomeJourneyTests: XCTestCase {
         XCTAssertTrue(app.header("Settings").appears(within: 5))
     }
 
-    func testAuditAtLargestTextOfHome() throws {
-        let app = launchApp(largestText: true)
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].appears(within: 5))
-        XCTAssertTrue(app.buttons[AccessibilityID.Home.scan].isHittable)
-        try audit(app)
-    }
 }

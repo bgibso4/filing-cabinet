@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # The simulator test classes a branch's changes can affect (`make affected`, `make retest`).
-#   affected-tests.sh [BASE]      print the test identifiers to run, one per line (Target/Class), or ALL, or nothing
-#   affected-tests.sh --check-map exit 1 when scripts/test-map.txt names a class that doesn't exist, or a test class
-#                                 is missing from it
+#   affected-tests.sh [BASE]      print the test identifiers to run, one per line (Target, Target/Class or
+#                                 Target/Class/test), or nothing. The smoke set (scripts/smoke-tests.txt) joins any
+#                                 run; a change that could affect anything runs the shared set (see shared_set).
+#   affected-tests.sh --shared-set print the shared set (the Makefile's smoke shard is built from it)
+#   affected-tests.sh --check-map exit 1 when scripts/test-map.txt names a class that doesn't exist, a test class
+#                                 is missing from it, or a smoke test doesn't exist
 # Changed paths: everything since the merge base with BASE (default origin/main), committed or not, plus untracked
 # files. Rules are in scripts/test-map.txt. The reasoning goes to stderr.
 set -euo pipefail
@@ -10,7 +13,7 @@ export LC_ALL=C
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
 map="scripts/test-map.txt"
-test_dirs=(UITests SnapshotTests)
+test_dirs=(UITests SnapshotTests AuditTests)
 
 # The map's rules as "prefix<TAB>targets", comments and blank lines dropped.
 rules() { awk '!/^[[:space:]]*(#|$)/ { p = $1; $1 = ""; sub(/^ /, ""); print p "\t" $0 }' "$map"; }
@@ -77,7 +80,7 @@ string_targets() {
 		fi
 		if [ -z "$files" ]; then
 			[ "$present" = true ] || continue
-			echo "no code names the changed string \"$key\": running everything" >&2
+			echo "no code names the changed string \"$key\": running the shared set" >&2
 			echo ALL
 			return
 		fi
@@ -134,7 +137,7 @@ targets_for() {
 		found="$(echo "$path" | cut -d/ -f3)"
 		;;
 	UITests/Support/*) found="" ;;
-	UITests/* | SnapshotTests/*)
+	UITests/* | SnapshotTests/* | AuditTests/*)
 		found="$(types_in_file "$path")"
 		# A deleted test file: its name says which class it held.
 		[ -n "$found" ] || [ -f "$path" ] || found="$(basename "$path" .swift | cut -d+ -f1)"
@@ -143,7 +146,7 @@ targets_for() {
 	esac
 	[ -n "$found" ] || found="$(map_targets "$path")"
 	if [ -z "$found" ]; then
-		echo "no rule for $path: running everything" >&2
+		echo "no rule for $path: running the shared set" >&2
 		echo ALL
 		return
 	fi
@@ -152,6 +155,23 @@ targets_for() {
 	runs="$(echo "$found" | grep -vx NONE | tr '\n' ' ' | sed 's/ $//')"
 	echo "$path → ${runs:-nothing}" >&2
 	echo "$found" | grep -vx NONE || true
+}
+
+smoke_file="scripts/smoke-tests.txt"
+
+# The smoke set: the journeys every run takes (Target/Class/test), one per line.
+smoke_ids() {
+	[ -f "$smoke_file" ] || { echo "error: $smoke_file is missing" >&2; return 1; }
+	grep -vE '^[[:space:]]*(#|$)' "$smoke_file" || true # an empty list is no error
+}
+
+# What a shared change runs in place of everything: the FilingCabinet scheme's package test targets, the snapshot
+# tests and the smoke set. Journeys beyond the smoke set and the audits run nightly.
+shared_set() {
+	awk '/^  FilingCabinet:$/ { in_scheme = 1; next } /^  [^ ]/ { in_scheme = 0 }
+		in_scheme && /- package: FilingCabinetKit\// { sub(/.*FilingCabinetKit\//, ""); print }' project.yml
+	echo FilingCabinetSnapshotTests
+	smoke_ids
 }
 
 check_map() {
@@ -165,10 +185,27 @@ check_map() {
 	declared="$(for dir in "${test_dirs[@]}"; do for f in "$dir"/*.swift; do types_in_file "$f"; done; done | sort -u)"
 	for class in $declared; do
 		[ -n "$(target_of "$class")" ] || continue # extensions of classes declared elsewhere
-		echo "$mapped" | grep -qx "$class" || { echo "$class is not in the map (scripts/test-map.txt)"; status=1; }
+		grep -qx "$class" <<<"$mapped" || { echo "$class is not in the map (scripts/test-map.txt)"; status=1; }
+	done
+	local id class test ids
+	ids="$(smoke_ids 2>/dev/null)" || ids=""
+	# The gate's only journeys: without them its smoke job would pass having run none.
+	[ -n "$ids" ] || { echo "no smoke tests in $smoke_file"; status=1; }
+	for id in $ids; do
+		IFS=/ read -r _ class test <<<"$id"
+		if [ "$(target_of "$class")" != FilingCabinetUITests ] ||
+			! grep -lq "func $test(" UITests/"$class".swift UITests/"$class"+*.swift 2>/dev/null; then
+			echo "the smoke test $id doesn't exist ($smoke_file)"
+			status=1
+		fi
 	done
 	return $status
 }
+
+if [ "${1:-}" = "--shared-set" ]; then
+	shared_set
+	exit
+fi
 
 if [ "${1:-}" = "--check-map" ]; then
 	check_map
@@ -192,16 +229,28 @@ while IFS= read -r path; do
 	done
 done <<<"$changed"
 
-if [ -n "$all" ]; then
-	echo ALL
-	exit 0
-fi
+smoke="$(smoke_ids)" || exit 1
+picked=""
 for class in $(echo "$classes" | sort -u); do
 	target="$(target_of "$class")"
 	if [ -z "$target" ]; then
-		echo "no test file declares $class: running everything" >&2
-		echo ALL
-		exit 0
+		echo "no test file declares $class: running the shared set" >&2
+		all=1
+		continue
 	fi
-	[ "$target" = "$class" ] && echo "$class" || echo "$target/$class"
-done | sort
+	[ "$target" = "$class" ] && picked+="$class"$'\n' || picked+="$target/$class"$'\n'
+done
+# The shared set, and still every class a change picked: a changed journey runs though shared code changed too.
+if [ -n "$all" ]; then
+	{
+		shared_set
+		printf '%s' "$picked"
+	} | grep . | sort -u
+	exit 0
+fi
+[ -n "$picked" ] || exit 0
+# The smoke set, but not a test whose class already runs whole.
+{
+	printf '%s' "$picked"
+	for id in $smoke; do grep -qx "${id%/*}" <<<"$picked" || echo "$id"; done
+} | grep . | sort

@@ -1,0 +1,57 @@
+name: Xcode setup
+description: >-
+  What every Mac job needs before `make`: Xcode 27, the tools, and the package and compilation caches. Used by CI's
+  jobs (ci.yml) and the nightly run (nightly.yml).
+inputs:
+  job:
+    description: The job's name. `checks` gets its own package cache and no compilation cache.
+    required: true
+runs:
+  using: composite
+  steps:
+    # The xcode-27 runner image ships Xcode 27.x; pick it explicitly (newest 27.x app) so a second Xcode on the image
+    # can never be used by accident, and log what we got.
+    - name: Select Xcode 27
+      id: xcode
+      shell: bash
+      run: |
+        app="$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)"
+        [ -n "$app" ] || { echo "error: no Xcode 27 on this image" >&2; exit 1; }
+        sudo xcode-select -s "$app/Contents/Developer"
+        xcodebuild -version
+        echo "version=$(xcodebuild -version | head -1 | tr -cd '0-9.')" >> "$GITHUB_OUTPUT"
+        xcrun simctl list runtimes
+
+    - name: Install tools
+      shell: bash
+      run: brew install xcodegen swiftlint xcbeautify jq bats-core periphery
+
+    # Local lint results must match CI: fail loudly if Homebrew's SwiftLint is not the version we develop with.
+    - name: Check SwiftLint version
+      shell: bash
+      run: |
+        [ "$(swiftlint version)" = "0.65.1" ] || { echo "error: SwiftLint $(swiftlint version), expected 0.65.1 (update .github/actions/xcode-setup and local together)" >&2; exit 1; }
+
+    # Package checkouts only. A fresh checkout gives every source file a new modification time, so cached build
+    # products are never reused; caching them only cost a 1.4 GB upload per push and stale test results.
+    - name: Cache Swift packages
+      uses: actions/cache@v6
+      with:
+        path: |
+          .build/DerivedData/SourcePackages
+          ~/Library/Caches/com.github.peripheryapp/*/SourcePackages
+          ~/Library/Caches/org.swift.swiftpm
+        key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-${{ inputs.job == 'checks' && 'checks' || 'sim' }}-${{ hashFiles('Package.resolved', 'Packages/FilingCabinetKit/Package.swift', 'project.yml') }}
+
+    # Xcode's compilation cache (Makefile CAS_PATH). Its entries are keyed on what was compiled, not file dates, so
+    # unlike build products it survives a fresh checkout. Each run saves a new entry and restores the newest one: its
+    # own job's, else any job's.
+    - name: Cache compilations
+      if: inputs.job != 'checks'
+      uses: actions/cache@v6
+      with:
+        path: .build/CompilationCache
+        key: ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ inputs.job }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-${{ inputs.job }}-
+          ${{ runner.os }}-xcode${{ steps.xcode.outputs.version }}-cas-
