@@ -81,10 +81,7 @@ final class ViewerSwipeDownJourneyTests: XCTestCase {
     /// Search has its own navigation stack, so its own match between result and viewer.
     func testASwipeDownClosesASearchResult() {
         let app = seededApp()
-        app.buttons[AccessibilityID.Home.search].tap()
-        let field = app.textFields[AccessibilityID.Search.field]
-        XCTAssertTrue(field.appears(within: 5))
-        field.typeText("scan 4")
+        openSearch(in: app).typeText("scan 4")
         let result = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Search.resultPrefix)
         )

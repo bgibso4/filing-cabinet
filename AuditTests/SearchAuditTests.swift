@@ -25,12 +25,7 @@ final class SearchAuditTests: XCTestCase {
 
     /// Searches "page" (every seeded scan) and submits, which puts the keyboard away.
     private func searchAndPutTheKeyboardAway(in app: XCUIApplication) {
-        let homeField = app.buttons[AccessibilityID.Home.search]
-        XCTAssertTrue(homeField.appears(within: 5))
-        homeField.tap()
-        let field = app.textFields[AccessibilityID.Search.field]
-        XCTAssertTrue(field.appears(within: 5))
-        field.typeText("page\n")
+        openSearch(in: app).typeText("page\n")
         let results = app.buttons.matching(
             NSPredicate(format: "identifier BEGINSWITH %@", AccessibilityID.Search.resultPrefix))
         XCTAssertTrue(results.firstMatch.appears(within: 5))

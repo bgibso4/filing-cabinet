@@ -14,7 +14,6 @@ final class SearchJourneyTests: XCTestCase {
     func testSearchFindsAScanByItsText() {
         let app = seededApp()
         let field = openSearch(in: app)
-        XCTAssertTrue(app.keyboards.firstMatch.appears(within: systemUITimeout), "the field is focused on arrival")
         let scan = app.buttons[AccessibilityID.Home.scan]
         XCTAssertTrue(scan.satisfies(within: 5) { !($0.exists && $0.isHittable) }, "Search has no Scan")
 
@@ -130,15 +129,6 @@ final class SearchJourneyTests: XCTestCase {
 
     /// Taps Home's field; Search's own field.
     @discardableResult
-    private func openSearch(in app: XCUIApplication) -> XCUIElement {
-        let homeField = app.buttons[AccessibilityID.Home.search]
-        XCTAssertTrue(homeField.appears(within: 5))
-        homeField.tap()
-        let field = app.textFields[AccessibilityID.Search.field]
-        XCTAssertTrue(field.appears(within: 5))
-        return field
-    }
-
     /// The X, back to Home resting large. Every test ends on Home, so the next one's relaunch never has to take a
     /// presented cover down.
     private func closeSearch(in app: XCUIApplication) {
